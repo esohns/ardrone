@@ -1,4 +1,2 @@
 SUBDIRS = \
-  i2cdevlib \
-  msp430
-
+  i2cdevlib

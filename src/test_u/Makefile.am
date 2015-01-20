@@ -1,7 +1,7 @@
-#METASOURCES = AUTO
-
-ACLOCAL_AMFLAGS = -I m4
+#ACLOCAL_AMFLAGS = \
+#  -Im4
 AM_CPPFLAGS = \
+  -I$(top_srcdir)/src/include \
   -I/usr/share/gettext
 
 bin_PROGRAMS = \

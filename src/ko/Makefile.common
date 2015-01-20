@@ -1,29 +1,28 @@
-#moduledir = @moduledir@
-KERNEL_LOCATION = @kerneldir@
-#KERNEL_LOCATION = /home/esohns/Projects/A10/linux-sunxi
-#KERNEL_LOCATION = /lib/modules/$(shell uname -r)/build
-KBUILD_VERBOSE = 1
-#MOD_DEVDIR = $(PWD)
+if DO_CROSS_COMPILE
+  ARCH=arm
+  CROSS_COMPILE=arm-linux-gnu-
+#CROSS_COMPILE=ppc_6xxx-
+endif
+KBUILD_VERBOSE=1
 
-ARCH = arm
-CROSS_COMPILE = arm-linux-gnu-
-#CROSS_COMPILE = ppc_6xxx-
-
+export KDIR
 export module_DATA
+#export automake_dummy_CFLAGS
+export AM_ABSSRCDIR=$(abs_srcdir)
+export AM_CWDCDIR=$(shell pwd)
+export ARCH CROSS_COMPILE
 
-export automake_dummy_CFLAGS
-
-#	CPPFLAGS="" CFLAGS="" LDFLAGS="" \
-#	$(MAKE) -C $(KERNEL_LOCATION)
-#	        ARCH="x86_64" CC="gcc" M=$(PWD) modules
-#		KBUILD_VERBOSE=$(KBUILD_VERBOSE)
+#INSTALL_MOD_PATH=$(shell pwd)
+#INSTALL_MOD_DIR=$(shell pwd)
+#	CPPFLAGS="" CFLAGS="" LDFLAGS=""
 $(module_DATA): $(automake_dummy_SOURCES)
-	mv Makefile Makefile.automake
-	cp $(srcdir)/Makefile.kernel Makefile
-	$(MAKE) -C $(KERNEL_LOCATION) M=$(PWD) modules \
+#	mv Makefile Makefile.automake
+	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
+	$(MAKE) -C $(KDIR) M=$(abs_srcdir) \
   KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
-  V=$(KBUILD_VERBOSE)
-	mv Makefile.automake Makefile
+  V=$(KBUILD_VERBOSE) modules
+	rm -f $(abs_srcdir)/Makefile
+#	mv Makefile.automake Makefile
 
-CLEANFILES = $(module_DATA) .$(module_DATA).flags $(module_DATA:.o=.mod.c) $(module_DATA:.o=.@kernelext@) *~
-
+CLEANFILES=$(abs_srcdir)/$(module_DATA) $(abs_srcdir)/.$(module_DATA).flags $(abs_srcdir)/$(module_DATA:.o=.mod.c) $(abs_srcdir)/$(module_DATA:.o=.@kernelext@) $(abs_srcdir)/*~
+#DISTCLEANFILES=

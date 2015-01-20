@@ -30,6 +30,12 @@
 # MSVC project files
 *.sdf
 
+# kernel module files
+*.cmd
+Module.symvers
+modules.order
+*.ko
+
 aux_config/
 *~
 Makefile.in
@@ -46,3 +52,4 @@ config.h
 config.log
 config.status
 stamp-h1
+
