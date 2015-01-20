@@ -29,7 +29,7 @@ AC_INIT([olinuxino],
         [eriksohns@123mail.org],
         [OLinuxIno],
         [http://www.github.com/esohns/olinuxino])
-AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050.c])
+AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -47,8 +47,8 @@ AM_INIT_AUTOMAKE
 AM_SANITY_CHECK
 
 # prefix config.h
-AC_SUBST([OLINUXINO_CONFIG_H],[olinuxino_config.h])
-AX_PREFIX_CONFIG_H([$OLINUXINO_CONFIG_H], [olinuxino], [config.h])
+m4_define([OLINUXINO_CONFIG_H], [olinuxino_config.h])
+AX_PREFIX_CONFIG_H([OLINUXINO_CONFIG_H], [olinuxino], [config.h])
 
 # Checks for libraries.
 
@@ -72,6 +72,8 @@ AC_ARG_WITH(moduledir,
             [moduledir=${withval}],
             [moduledir=${moduledir_default}])
 AC_SUBST([moduledir])
+# *WARNING*: length must be <= 20 !
+AC_SUBST([modulename],[olimex_mod_mpu6050])
 # --> enable cross-compilation support ?
 AC_MSG_CHECKING(cross-compile (ARM) the kernel module)
 cross_compile_default="yes"
@@ -154,7 +156,7 @@ else
   AC_MSG_RESULT(no)
 fi
 
-# export these variable (so Makefile substitutions can be made
+# export this (so pkgconfig substitutions can be made)
 AC_SUBST([CXXFLAGS])
 
 dnl # checks for tools
@@ -205,8 +207,9 @@ AC_CONFIG_FILES([Makefile
                  src/test_u/Makefile
                  po/Makefile
                  scripts/Makefile])
-AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
-                [],
-                [OLINUXINO_VERSION_API=$OLINUXINO_VERSION_API])
+AC_CONFIG_FILES([olinuxino.pc:scripts/olinuxino.pc.in])
+#AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
+#                [],
+#                [OLINUXINO_VERSION_API=$OLINUXINO_VERSION_API])
 
 AC_OUTPUT

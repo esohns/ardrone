@@ -2,27 +2,31 @@ if DO_CROSS_COMPILE
   ARCH=arm
   CROSS_COMPILE=arm-linux-gnu-
 #CROSS_COMPILE=ppc_6xxx-
+  export ARCH CROSS_COMPILE
 endif
-KBUILD_VERBOSE=1
-
-export KDIR
-export module_DATA
-#export automake_dummy_CFLAGS
-export AM_ABSSRCDIR=$(abs_srcdir)
-export AM_CWDCDIR=$(shell pwd)
-export ARCH CROSS_COMPILE
 
 #INSTALL_MOD_PATH=$(shell pwd)
 #INSTALL_MOD_DIR=$(shell pwd)
-#	CPPFLAGS="" CFLAGS="" LDFLAGS=""
+#CPPFLAGS="" CFLAGS="" LDFLAGS=""
+KBUILD_VERBOSE=1
+
+export module_DATA module_NAME module_OBJS
+#export automake_dummy_CFLAGS
+export KDIR
+export AM_ABSSRCDIR=$(abs_srcdir)
+#export AM_CWDCDIR=$(shell pwd)
+export KBUILD_VERBOSE
+
+# rule(s)
 $(module_DATA): $(automake_dummy_SOURCES)
-#	mv Makefile Makefile.automake
-	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
-	$(MAKE) -C $(KDIR) M=$(abs_srcdir) \
-  KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
-  V=$(KBUILD_VERBOSE) modules
-	rm -f $(abs_srcdir)/Makefile
-#	mv Makefile.automake Makefile
+#	mv -f Makefile Makefile.automake
+#	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
+	$(MAKE) -C $(KDIR) M=$(abs_srcdir) V=$(KBUILD_VERBOSE) modules
+#	rm -f $(abs_srcdir)/Makefile
+#	mv -f Makefile.automake Makefile
+
+#	$(MAKE) -C $(KDIR) M=$(abs_srcdir) \
+#  KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
+#  V=$(KBUILD_VERBOSE) modules
 
 CLEANFILES=$(abs_srcdir)/$(module_DATA) $(abs_srcdir)/.$(module_DATA).flags $(abs_srcdir)/$(module_DATA:.o=.mod.c) $(abs_srcdir)/$(module_DATA:.o=.@kernelext@) $(abs_srcdir)/*~
-#DISTCLEANFILES=

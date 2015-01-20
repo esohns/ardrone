@@ -52,4 +52,5 @@ config.h
 config.log
 config.status
 stamp-h1
-
+po/
+m4/

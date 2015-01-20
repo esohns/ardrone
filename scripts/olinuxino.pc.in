@@ -1,12 +1,11 @@
-prefix=@prefix@
+prefix     =@prefix@
 exec_prefix=@exec_prefix@
-libdir=@libdir@
-includedir=@includedir@
+libdir     =@libdir@
+includedir =@includedir@
 
-Name: OLinuxIno
+Name       : @PACKAGE_NAME@
 Description: OLinuxIno MOD MPU6050 kernel driver unit test
-Requires: ACE
-Version: @ONLINUXINO_VERSION@
-Libs: -L${libdir}
-Cflags:
-
+Requires   : ACE
+Version    : @OLINUXINO_VERSION@
+Libs       : -L${libdir}
+Cflags     : @CXXFLAGS@
