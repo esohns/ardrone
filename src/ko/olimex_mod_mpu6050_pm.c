@@ -17,141 +17,216 @@
 
 #include "olimex_mod_mpu6050_pm.h"
 
-static
+#include <linux/pm.h>
+#include <linux/printk.h>
+
+struct dev_pm_ops i2c_mpu6050_pm_ops = {
+  .prepare = i2c_mpu6050_pm_prepare,                 // abstain from probe()ing new devices
+  .complete = i2c_mpu6050_pm_complete,               // resume probe()ing new devices
+  .suspend = i2c_mpu6050_pm_suspend,                 // sleep (preserve main memory)
+  .suspend_late = i2c_mpu6050_pm_suspend_late,       // continue operations started by suspend()
+  .resume = i2c_mpu6050_pm_resume,                   // wake up (from sleep)
+  .resume_early = i2c_mpu6050_pm_resume_early,       // prepare to execute resume()
+  .freeze = i2c_mpu6050_pm_freeze,                   // (prepare) deep-sleep (e.g. suspend to disk [hibernate])
+  .freeze_late = i2c_mpu6050_pm_freeze_late,         // continue operations started by freeze()
+  .thaw = i2c_mpu6050_pm_thaw,                       // (resume from) deep-sleep (e.g. load suspend to disk image)
+  .thaw_early = i2c_mpu6050_pm_thaw_early,           // prepare to execute thaw()
+  .poweroff = i2c_mpu6050_pm_poweroff,               // hibernate
+  .poweroff_late = i2c_mpu6050_pm_poweroff_late,     // continue operations started by poweroff()
+  .restore = i2c_mpu6050_pm_restore,                 // wake up (from hibernation)
+  .restore_early = i2c_mpu6050_pm_restore_early,     // prepare to execute restore()
+  //
+  .suspend_noirq = i2c_mpu6050_pm_suspend_noirq,     // complete the actions started by suspend()
+  .resume_noirq = i2c_mpu6050_pm_resume_noirq,       // prepare for the execution of resume()
+  .freeze_noirq = i2c_mpu6050_pm_freeze_noirq,       // complete the actions started by freeze()
+  .thaw_noirq = i2c_mpu6050_pm_thaw_noirq,           // prepare for the execution of thaw()
+  .poweroff_noirq = i2c_mpu6050_pm_poweroff_noirq,   // complete the actions started by poweroff()
+  .restore_noirq = i2c_mpu6050_pm_restore_noirq,     // prepare for the execution of restore()
+  //
+  .runtime_suspend = i2c_mpu6050_pm_runtime_suspend, // (prepare for) runtime suspend
+  .runtime_resume = i2c_mpu6050_pm_runtime_resume,   // resume from runtime suspend
+  .runtime_idle = i2c_mpu6050_pm_runtime_idle        // check for idleness
+};
+
 int
 i2c_mpu6050_pm_prepare(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+  
   return 0;
 }
-static
+
 void
 i2c_mpu6050_pm_complete(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
 
 }
-static
+
 int
 i2c_mpu6050_pm_suspend(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_resume(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_freeze(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_thaw(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_poweroff(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_restore(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_suspend_late(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_resume_early(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_freeze_late(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_thaw_early(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_poweroff_late(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_restore_early(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_suspend_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_resume_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_freeze_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_thaw_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_poweroff_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_restore_noirq(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_runtime_suspend(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_runtime_resume(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }
-static
+
 int
 i2c_mpu6050_pm_runtime_idle(struct device* device_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   return 0;
 }

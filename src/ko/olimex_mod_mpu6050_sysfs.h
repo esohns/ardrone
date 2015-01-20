@@ -15,50 +15,43 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <linux/kobject.h>
+#ifndef OLIMEX_MOD_MPU6050_SYSFS_H
+#define OLIMEX_MOD_MPU6050_SYSFS_H
 
-#include "olimex_mod_mpu6050_types.h"
+#include <linux/types.h>
+
+// forward declarations
+struct kobject;
+struct kobj_attribute;
+struct attribute;
+struct i2c_mpu6050_client_data_t;
+
+extern struct kobj_attribute store_attribute;
+extern struct kobj_attribute reg_attribute;
+extern struct kobj_attribute clearringbuffer_attribute;
+extern struct kobj_attribute intstate_attribute;
+extern struct kobj_attribute ledstate_attribute;
+extern struct attribute* i2c_mpu6050_attrs[];
+extern const struct attribute_group i2c_mpu6050_group;
+extern const struct attribute_group* i2c_mpu6050_groups[];
 
 // function declarations
-static ssize_t i2c_mpu6050_store_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
-static ssize_t i2c_mpu6050_store_show(struct kobject*, struct kobj_attribute*, char*);
+ssize_t i2c_mpu6050_store_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
+ssize_t i2c_mpu6050_store_show(struct kobject*, struct kobj_attribute*, char*);
 
 // register access
-static ssize_t i2c_mpu6050_reg_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
-static ssize_t i2c_mpu6050_reg_show(struct kobject*, struct kobj_attribute*, char*);
+ssize_t i2c_mpu6050_reg_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
+ssize_t i2c_mpu6050_reg_show(struct kobject*, struct kobj_attribute*, char*);
 
 // ringbuffer
-static void i2c_mpu6050_clearringbuffer(void*);
-static ssize_t i2c_mpu6050_clearringbuffer_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
+void i2c_mpu6050_clearringbuffer(void*);
+ssize_t i2c_mpu6050_clearringbuffer_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
 
 // INT / LED
-static ssize_t i2c_mpu6050_intstate_show(struct kobject*, struct kobj_attribute*, char*);
-static ssize_t i2c_mpu6050_ledstate_show(struct kobject*, struct kobj_attribute*, char*);
+ssize_t i2c_mpu6050_intstate_show(struct kobject*, struct kobj_attribute*, char*);
+ssize_t i2c_mpu6050_ledstate_show(struct kobject*, struct kobj_attribute*, char*);
 
-static struct kobj_attribute store_attribute =           __ATTR(data, 0666, i2c_mpu6050_store_show, i2c_mpu6050_store_store);
-static struct kobj_attribute reg_attribute =             __ATTR(addr, 0666, i2c_mpu6050_reg_show, i2c_mpu6050_reg_store);
-static struct kobj_attribute clearringbuffer_attribute = __ATTR(clear_ringbuffer, 0666, NULL, i2c_mpu6050_clearringbuffer_store);
-static struct kobj_attribute intstate_attribute =        __ATTR(int_state, 0666, i2c_mpu6050_intstate_show, NULL);
-static struct kobj_attribute ledstate_attribute =        __ATTR(led_state, 0666, i2c_mpu6050_ledstate_show, NULL);
-/* *NOTE*: use a group of attributes so that the kernel can create and destroy
- *         them all at once
- */
-static struct attribute* i2c_mpu6050_attrs[] = {
-  &store_attribute.attr,
-  &reg_attribute.attr,
-  &clearringbuffer_attribute.attr,
-  &intstate_attribute.attr,
-  &ledstate_attribute.attr,
-  NULL, // need to NULL terminate the list of attributes
-};
-//ATTRIBUTE_GROUPS(i2c_mpu6050);
-static const struct attribute_group i2c_mpu6050_group = {
-  .attrs = i2c_mpu6050_attrs,
-};
-static const struct attribute_group* i2c_mpu6050_groups[] = {
-  &i2c_mpu6050_group,
-  NULL, // need to NULL terminate the list of attribute groups
-};
+int i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t*);
+void i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t*);
 
-static bool i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t*);
-static void i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t*);
+#endif // #ifndef OLIMEX_MOD_MPU6050_SYSFS_H

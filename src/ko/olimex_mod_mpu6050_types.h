@@ -15,6 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef OLIMEX_MOD_MPU6050_TYPES_H
+#define OLIMEX_MOD_MPU6050_TYPES_H
+
 #include <linux/i2c.h>
 #include <linux/kobject.h>
 #include <linux/pinctrl/consumer.h>
@@ -64,3 +67,5 @@ struct i2c_mpu6050_client_data_t {
   spinlock_t sync_lock; // disable interrupts while i2c_sync() is running
   unsigned long sync_lock_flags;
 };
+
+#endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

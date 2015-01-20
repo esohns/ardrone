@@ -28,72 +28,76 @@
 //#include <linux/sched.h>
 //#include <linux/slab.h>
 //#include <linux/sysfs.h>
+#include <linux/workqueue.h>
 
-//#include "olimex_mod_mpu6050_types.h"
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_types.h"
 
-static
 void
-i2c_mpu6050_wq_fifo_handler(struct work_struct* work_in) {
-  struct fifo_work_t* work_p = NULL;
-  struct i2c_mpu6050_client_data_t* client_data_p = NULL;
+i2c_mpu6050_wq_fifo_handler(struct work_struct* work_in)
+{
+  struct fifo_work_t* work_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
   int i, j;
+
+  pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
   work_p = (struct fifo_work_t*)work_in;
   if (!work_p) {
-    printk(KERN_ERR "unable to retrieve client state\n");
+    pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
-  if (!client_data_p) {
-    printk(KERN_ERR "unable to retrieve client state\n");
+  if (IS_ERR(client_data_p)) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
     return;
   }
 
-  printk(KERN_DEBUG "work PROCESSFIFOSTORE called\n");
+  while (client_data_p->fifostorepos > 0) {
+    pr_debug("%s: %d entries in fifo store\n", __FUNCTION__,
+             client_data_p->fifostorepos);
+    pr_debug("%s: sending %d bytes\n", __FUNCTION__,
+             client_data_p->fifostore[0].size);
 
-  while (client_data_p->fifostorepos > 0) { // processing all items in the fifo store
-    printk(KERN_DEBUG "%d entries in fifo store\n", client_data_p->fifostorepos);
-
-    printk(KERN_DEBUG "sending %d bytes\n", client_data_p->fifostore[0].size);
-    //      BEAGLEBONE_LED3ON;
-    //      spi_write_reg_burst(SPIDEVDATAREG, fifostore[0].data, fifostore[0].size);
-    //      BEAGLEBONE_LED3OFF;
-
-    // left shifting the FIFO store
+    // left-shift the FIFO store
     for (i = 1; i < FIFOSTORESIZE; i++) {
       for (j = 0; j < client_data_p->fifostore[i].size; j++)
         client_data_p->fifostore[i-1].data[j] = client_data_p->fifostore[i].data[j];
       client_data_p->fifostore[i-1].size = client_data_p->fifostore[i].size;
     }
+  
     client_data_p->fifostorepos--;
   }
 
-  printk(KERN_DEBUG "work exit\n");
+  pr_debug("%s: work exit\n", __FUNCTION__);
 }
 
-static
 void
-i2c_mpu6050_wq_read_handler(struct work_struct* work_in) {
-  int err;
+i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
+{
   struct fifo_work_t* work_p = NULL;
   struct i2c_mpu6050_client_data_t* client_data_p = NULL;
+  int err;
+
+  pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
   work_p = (struct fifo_work_t*)work_in;
   if (!work_p) {
-    printk(KERN_ERR "unable to retrieve client state\n");
+    pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
-  if (!client_data_p) {
-    printk(KERN_ERR "unable to retrieve client state\n");
+  if (IS_ERR(client_data_p)) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
     return;
   }
 
-  printk(KERN_DEBUG "work READ called, ringbuf %.2x\n",
-         client_data_p->ringbufferpos);
+  pr_debug("%s: work READ called, ringbuffer %.2x\n", __FUNCTION__,
+           client_data_p->ringbufferpos);
 
   memset(&client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
          0,
@@ -105,65 +109,66 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in) {
                         client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
                         RINGBUFFERDATASIZE);
   if (err < 0) {
-    printk(KERN_ERR "unable to recieve device data: %d\n", -err);
+    pr_err("%s: i2c_master_recv() failed: %d\n", __FUNCTION__,
+           -err);
     return;
   }
 //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
-  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = RINGBUFFERDATASIZE;
+  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
 
-  printk(KERN_DEBUG "read stopped, ringbuf %.2x\n", client_data_p->ringbufferpos);
+  pr_debug("%s: read stopped, ringbuffer %.2x\n", __FUNCTION__,
+           client_data_p->ringbufferpos);
 
   client_data_p->ringbufferpos++;
   if (client_data_p->ringbufferpos == RINGBUFFERSIZE)
     client_data_p->ringbufferpos = 0;
 
-  printk(KERN_DEBUG "work exit\n");
+  pr_debug("%s: work exit\n", __FUNCTION__);
 }
 
-static
-bool
+int
 i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t* clientData_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   // sanity check(s)
-  if (!clientData_in)
-  {
-    pr_err("%s: invalid argument, aborting\n", __FUNCTION__);
-    return false;
+  if (!clientData_in) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -ENOSYS;
   }
-  if (client_data_p->workqueue)
-  {
-    pr_warn("%s: workqueue already initialized, returning\n", __FUNCTION__);
-    return true;
+  if (clientData_in->workqueue) {
+    pr_warn("%s: workqueue already initialized\n", __FUNCTION__);
+    return 0;
   }
 
-  client_data_p->workqueue = create_singlethread_workqueue(KO_OLIMEX_MOD_MPU6050_WQ_NAME);
-  if (IS_ERR(client_data_p->workqueue)) {
-    pr_err("%s: create_singlethread_workqueue(%s) failed: %d, aborting\n", __FUNCTION__,
+  clientData_in->workqueue = create_singlethread_workqueue(KO_OLIMEX_MOD_MPU6050_WQ_NAME);
+  if (IS_ERR(clientData_in->workqueue)) {
+    pr_err("%s: create_singlethread_workqueue(%s) failed: %ld, aborting\n", __FUNCTION__,
            KO_OLIMEX_MOD_MPU6050_WQ_NAME,
-           PTR_ERR(client_data_p->workqueue));
-    return false;
+           PTR_ERR(clientData_in->workqueue));
+    return -ENOSYS;
   }
 
-  INIT_WORK(&client_data_p->work_processfifostore.work, i2c_mpu6050_workqueue_fifo_handler);
-  client_data_p->work_processfifostore.client = client_data_p->client;
-  INIT_WORK(&client_data_p->work_read.work, i2c_mpu6050_workqueue_read_handler);
-  client_data_p->work_read.client = client_data_p->client;
+  INIT_WORK(&clientData_in->work_processfifostore.work, i2c_mpu6050_wq_fifo_handler);
+  clientData_in->work_processfifostore.client = clientData_in->client;
+  INIT_WORK(&clientData_in->work_read.work, i2c_mpu6050_wq_read_handler);
+  clientData_in->work_read.client = clientData_in->client;
 
-  return true;
+  return 0;
 }
 
-static
 void
 i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t* clientData_in)
 {
+  pr_debug("%s called.\n", __FUNCTION__);
+
   // sanity check(s)
-  if (!clientData_in)
-  {
-    pr_err("%s: invalid argument, returning\n", __FUNCTION__);
+  if (!clientData_in) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
 
   destroy_workqueue(clientData_in->workqueue);
-  client_data_p->workqueue = NULL;
+  clientData_in->workqueue = NULL;
 }

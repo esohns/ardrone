@@ -42,10 +42,6 @@ automake_dummy_CFLAGS = \
 
 module_DATA = @modulename@.o
 module_NAME = @modulename@
-module_OBJS = \
-  olimex_mod_mpu6050_pm.o \
-  olimex_mod_mpu6050_sysfs.o \
-  olimex_mod_mpu6050_wq.o \
-  olimex_mod_mpu6050_main.o
+module_OBJS = olimex_mod_mpu6050_pm.o olimex_mod_mpu6050_sysfs.o olimex_mod_mpu6050_wq.o olimex_mod_mpu6050_main.o
 
 include ./Makefile.common

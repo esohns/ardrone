@@ -15,13 +15,22 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <linux/workqueue.h>
+#ifndef OLIMEX_MOD_MPU6050_WQ_H
+#define OLIMEX_MOD_MPU6050_WQ_H
 
-#include "olimex_mod_mpu6050_types.h"
+//#include <linux/workqueue.h>
+
+//#include "olimex_mod_mpu6050_types.h"
+
+// forward declarations
+struct work_struct;
+struct i2c_mpu6050_client_data_t;
 
 // function declarations
-static void i2c_mpu6050_wq_fifo_handler(struct work_struct*);
-static void i2c_mpu6050_wq_read_handler(struct work_struct*);
+void i2c_mpu6050_wq_fifo_handler(struct work_struct*);
+void i2c_mpu6050_wq_read_handler(struct work_struct*);
 
-static bool i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t*);
-static void i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t*);
+int i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t*);
+void i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t*);
+
+#endif // #ifndef OLIMEX_MOD_MPU6050_WQ_H

@@ -15,6 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef OLIMEX_MOD_MPU6050_DEFINES_H
+#define OLIMEX_MOD_MPU6050_DEFINES_H
+
 // module
 #define KO_OLIMEX_MOD_MPU6050_LICENSE     "GPL"
 #define KO_OLIMEX_MOD_MPU6050_AUTHOR      "Erik Sohns"
@@ -43,3 +46,5 @@
 #define FIFOSTOREDATASIZE                 64
 #define RINGBUFFERSIZE                    20
 #define RINGBUFFERDATASIZE                64
+
+#endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H
