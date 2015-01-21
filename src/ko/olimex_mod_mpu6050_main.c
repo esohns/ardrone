@@ -17,11 +17,10 @@
 
 #include "olimex_mod_mpu6050_main.h"
 
-#include <linux/gpio.h>
+#include <linux/err.h>
 #include <linux/init.h>
-#include <linux/irq.h>
 #include <linux/module.h>
-#include <linux/printk.h>
+#include <linux/moduleparam.h>
 #include <linux/regmap.h>
 #include <linux/slab.h>
 
@@ -29,70 +28,13 @@
 #include "MPU6050.h"
 
 #include "olimex_mod_mpu6050_defines.h"
-#include "olimex_mod_mpu6050_types.h"
+#include "olimex_mod_mpu6050_device.h"
+#include "olimex_mod_mpu6050_irq.h"
 #include "olimex_mod_mpu6050_pm.h"
 #include "olimex_mod_mpu6050_sysfs.h"
+#include "olimex_mod_mpu6050_timer.h"
+#include "olimex_mod_mpu6050_types.h"
 #include "olimex_mod_mpu6050_wq.h"
-
-// *** irq handlers ***
-irqreturn_t
-i2c_mpu6050_interrupt_handler(int irq_in,
-                              void* dev_id_in)
-{
-  struct device* device_p;
-  struct i2c_client* client_p;
-  struct i2c_mpu6050_client_data_t* client_data_p;
-//  struct irq_data* irq_data_p;
-//  u32 type;
-
-  pr_debug("%s called.\n", __FUNCTION__);
-
-  // sanity check(s)
-  device_p = (struct device*)dev_id_in;
-  if (!device_p) {
-    pr_err("%s: invalid argument\n", __FUNCTION__);
-    return IRQ_NONE;
-  }
-  client_p = to_i2c_client(device_p);
-  if (IS_ERR(client_p)) {
-    pr_err("%s: to_i2c_client() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_p));
-    return IRQ_NONE;
-  }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
-    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p));
-    return IRQ_NONE;
-  }
-//  if (irq_in != client_p->irq) {
-//    pr_err("%s: expected irq %d (was: %d), aborting\n", __FUNCTION__,
-//           client_p->irq,
-//           irq_in);
-//    return IRQ_NONE;
-//  }
-//  irq_data_p = irq_get_irq_data(irq_in);
-//  if (IS_ERR(irq_data_p)) {
-//    pr_err("%s: irq_get_irq_data(%d) failed: %d\n", __FUNCTION__,
-//           irq_in);
-//    return IRQ_NONE;
-//  }
-//  type = irqd_get_trigger_type(irq_data_p);
-////    type = (gpio_get_value(irq_to_gpio(irq_in)) ? rising : falling);
-////    if (type != rising) {
-//  if ((type & IRQ_TYPE_SENSE_MASK) != IRQ_TYPE_EDGE_RISING) {
-//    pr_err("%s: expected irq %d type IRQ_TYPE_EDGE_RISING (was: %d), aborting\n", __FUNCTION__,
-//           irq_in,
-//           (type & IRQ_TYPE_SENSE_MASK));
-//    return IRQ_NONE;
-//  }
-
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PH02_LABEL);
-  queue_work(client_data_p->workqueue, &client_data_p->work_read.work);
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
-
-  return IRQ_HANDLED;
-}
 
 // *** driver ***
 // *NOTE*: see https://www.kernel.org/doc/Documentation/i2c/writing-clients
@@ -310,122 +252,21 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   i2c_mpu6050_clearringbuffer(client_data_p);
   spin_lock_init(&client_data_p->sync_lock);
 
-  // initialize interrupt for GPIO INT line
-//  client_data_p->pin_ctrl = devm_pinctrl_get(&client_in->dev);
-  client_data_p->pin_ctrl = pinctrl_get(&client_in->dev);
-  if (IS_ERR(client_data_p->pin_ctrl)) {
-    pr_err("%s: pinctrl_get() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p->pin_ctrl));
+  if (i2c_mpu6050_device_init(client_data_p)) {
+    pr_err("%s: i2c_mpu6050_device_init() failed\n", __FUNCTION__);
     goto error3;
   }
-  client_data_p->pin_ctrl_state = pinctrl_lookup_state(client_data_p->pin_ctrl,
-                                                       PINCTRL_STATE_DEFAULT);
-  if (IS_ERR(client_data_p->pin_ctrl_state)) {
-    pr_err("%s: pinctrl_lookup_state() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p->pin_ctrl_state));
-    goto error4;
-  }
-  err = pinctrl_select_state(client_data_p->pin_ctrl,
-                             client_data_p->pin_ctrl_state);
-  if (err < 0) {
-    pr_err("%s: pinctrl_select_state() failed: %d\n", __FUNCTION__,
-           err);
-    goto error4;
-  }
-  err = gpio_is_valid(GPIO_UEXT4_UART4RX_PG11_PIN);
-  if (err) {
-    pr_err("%s: gpio_is_valid(%d) failed\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_PIN);
-    goto error4;
-  }
-  err = gpio_is_valid(GPIO_LED_PH02_PIN);
-  if (err) {
-    pr_err("%s: gpio_is_valid(%d) failed\n", __FUNCTION__,
-           GPIO_LED_PH02_PIN);
-    goto error4;
-  }
-  err = devm_gpio_request(&client_in->dev,
-                          GPIO_UEXT4_UART4RX_PG11_PIN,
-                          GPIO_UEXT4_UART4RX_PG11_LABEL);
-  if (err < 0) {
-    pr_err("%s: devm_gpio_request(%d) failed\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_PIN);
-    goto error4;
-  }
-//  err = gpio_request_one(GPIO_UEXT4_UART4RX_PG11_PIN,
-//                         GPIOF_DIR_IN,
-//                         GPIO_UEXT4_UART4RX_PG11_LABEL);
-//  if (err) {
-//    pr_err("%s: gpio_request_one(%d) failed\n", __FUNCTION__,
-//           GPIO_UEXT4_UART4RX_PG11_PIN);
-//    goto error4;
-//  }
-  client_data_p->gpio_led_handle = gpio_request_ex("gpio_para",
-                                                   GPIO_LED_PH02_LABEL);
-  if (client_data_p->gpio_led_handle < 0) {
-    pr_err("%s: gpio_request_ex(%s) failed\n", __FUNCTION__,
-           GPIO_LED_PH02_LABEL);
-    goto error5;
-  }
-  // export GPIOs to userspace
-  err = gpio_export(GPIO_UEXT4_UART4RX_PG11_PIN,
-                    false);
-  if (err) {
-    pr_err("%s: gpio_export(%d) failed\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_PIN);
-    goto error6;
-  }
-  err = gpio_export(GPIO_LED_PH02_PIN,
-                    false);
-  if (err) {
-    pr_err("%s: gpio_export(%d) failed\n", __FUNCTION__,
-           GPIO_LED_PH02_PIN);
-    goto error7;
-  }
-  err = gpio_export_link(&client_data_p->client->dev,
-                         GPIO_UEXT4_UART4RX_PG11_LABEL,
-                         GPIO_UEXT4_UART4RX_PG11_PIN);
-  if (err) {
-    pr_err("%s: gpio_export_link(%s,%d) failed\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_LABEL,
-           GPIO_UEXT4_UART4RX_PG11_PIN);
-    goto error8;
-  }
-  client_data_p->client->irq = gpio_to_irq(GPIO_UEXT4_UART4RX_PG11_PIN);
-  if (client_data_p->client->irq < 0) {
-    pr_err("%s: gpio_to_irq(%d) failed: %d\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_PIN,
-           client_data_p->client->irq);
-    goto error8;
-  }
-  pr_info("%s: GPIO %s --> PIN %d --> IRQ %d\n", __FUNCTION__,
-         GPIO_UEXT4_UART4RX_PG11_LABEL,
-         GPIO_UEXT4_UART4RX_PG11_PIN,
-         client_data_p->client->irq);
-//  gpio_chip_p = gpio_to_chip(GPIO_UEXT4_UART4RX_PG11_PIN);
-//  if (!IS_ERR(gpio_chip_p)) {
-//    pr_err("%s: gpio_to_chip(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_UEXT4_UART4RX_PG11_PIN,
-//           PTR_ERR(gpio_chip_p));
-//    goto error8;
-//  }
-//  err = gpio_lock_as_irq(gpio_chip_p,
-//                         GPIO_UEXT4_UART4RX_PG11_PIN);
-//  if (err) {
-//    pr_err("%s: gpio_lock_as_irq(%d) failed\n", __FUNCTION__,
-//           GPIO_UEXT4_UART4RX_PG11_PIN);
-//    goto error8;
-//  }
-  err = request_irq(client_data_p->client->irq,
-                    i2c_mpu6050_interrupt_handler,
-                    (IRQ_TYPE_EDGE_RISING),
-                    GPIO_UEXT4_UART4RX_PG11_LABEL,
-                    &client_data_p->client->dev);
-  if (err) {
-    pr_err("%s: request_irq(%d) failed: %d\n", __FUNCTION__,
-           client_data_p->client->irq,
-           err);
-    goto error8;
+
+  if (noirq) {
+    if (i2c_mpu6050_timer_init(client_data_p)) {
+      pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
+      goto error4;
+    }
+  } else {
+   if (i2c_mpu6050_irq_init(client_data_p)) {
+     pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
+     goto error4;
+   }
   }
 
   // debug info
@@ -435,18 +276,8 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 
   return 0;
 
-error8:
-  gpio_unexport(GPIO_LED_PH02_PIN);
-error7:
-  gpio_unexport(GPIO_UEXT4_UART4RX_PG11_PIN);
-error6:
-  gpio_release(client_data_p->gpio_led_handle, 1);
-error5:
-  devm_gpio_free(&client_in->dev,
-                 GPIO_UEXT4_UART4RX_PG11_PIN);
 error4:
-//  devm_pinctrl_put(client_data_p->pin_ctrl);
-  pinctrl_put(client_data_p->pin_ctrl);
+  i2c_mpu6050_device_fini(client_data_p);
 error3:
   i2c_mpu6050_wq_fini(client_data_p);
 error2:
@@ -484,16 +315,12 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
 //    return -ENOSYS;
 //  }
 
-//  gpiochip_unlock_as_irq(gpio_chip_p,
-//                         GPIO_UEXT4_UART4RX_PG11_PIN);
-  free_irq(client_data_p->client->irq, NULL);
-  gpio_unexport(GPIO_LED_PH02_PIN);
-  gpio_unexport(GPIO_UEXT4_UART4RX_PG11_PIN);
-  gpio_release(client_data_p->gpio_led_handle, 1);
-  devm_gpio_free(&client_in->dev,
-                 GPIO_UEXT4_UART4RX_PG11_PIN);
-//  devm_pinctrl_put(client_data_p->pin_ctrl);
-  pinctrl_put(client_data_p->pin_ctrl);
+  if (noirq) {
+    i2c_mpu6050_timer_fini(client_data_p);
+  } else {
+    i2c_mpu6050_irq_fini(client_data_p);
+  }
+  i2c_mpu6050_device_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
   i2c_mpu6050_sysfs_fini(client_data_p);
   kfree(client_data_p);
@@ -613,6 +440,10 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
   .max_register = MPU6050_RA_WHO_AM_I,
 };
 
+int noirq=0;
+module_param(noirq, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(noirq, "use polling (instead of interrupt)");
+
 int
 __init i2c_mpu6050_init(void)
 {
@@ -654,10 +485,10 @@ __init i2c_mpu6050_init(void)
 
   return 0;
 
-init_error1:
-  i2c_del_driver(&i2c_mpu6050_i2c_driver);
+//init_error1:
+//  i2c_del_driver(&i2c_mpu6050_i2c_driver);
 
-  return -ENOSYS;
+//  return -ENOSYS;
 }
 
 void

@@ -18,16 +18,6 @@
 #include "olimex_mod_mpu6050_wq.h"
 
 #include <linux/i2c.h>
-//#include <linux/gpio.h>
-//#include <linux/irq.h>
-//#include <linux/kernel.h>
-//#include <linux/module.h>
-//#include <linux/pinctrl/consumer.h>
-//#include <linux/printk.h>
-//#include <linux/regmap.h>
-//#include <linux/sched.h>
-//#include <linux/slab.h>
-//#include <linux/sysfs.h>
 #include <linux/workqueue.h>
 
 #include "olimex_mod_mpu6050_defines.h"
@@ -96,29 +86,28 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
     return;
   }
 
-  pr_debug("%s: work READ called, ringbuffer %.2x\n", __FUNCTION__,
-           client_data_p->ringbufferpos);
-
-  memset(&client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
-         0,
-         RINGBUFFERDATASIZE);
+//  memset(&client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
+//         0,
+//         RINGBUFFERDATASIZE);
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 1;
 
-//  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PH02_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PH02_LABEL);
   err = i2c_master_recv(client_data_p->client,
                         client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
                         RINGBUFFERDATASIZE);
   if (err < 0) {
     pr_err("%s: i2c_master_recv() failed: %d\n", __FUNCTION__,
            -err);
+    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
     return;
   }
-//  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
+
+  pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
+           err, client_data_p->ringbufferpos);
+
   client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
-
-  pr_debug("%s: read stopped, ringbuffer %.2x\n", __FUNCTION__,
-           client_data_p->ringbufferpos);
 
   client_data_p->ringbufferpos++;
   if (client_data_p->ringbufferpos == RINGBUFFERSIZE)

@@ -30,21 +30,33 @@
 
 // defaults
 #define BUFSIZ                            256
+#define RESET_DELAY                       100 // ms
 
 // macros
 #define ARRAY_AND_SIZE(x)	                (x), ARRAY_SIZE(x)
+#define MS_TO_NS(x)                       (x * 1E6L)
 
 // gpio
 // *NOTE*: check the .fex file (bin2fex of script.bin) in the device boot partition
-#define GPIO_UEXT4_UART4RX_PG11_PIN       10
-#define GPIO_UEXT4_UART4RX_PG11_LABEL     "gpio_pin_10"
+// *TODO*: these should be defined elsewhere... (check linux-sunxi development)
+//#define GPIO_UEXT4_UART4RX_PG11_PIN       10
+//#define GPIO_UEXT4_UART4RX_PG11_LABEL     "gpio_pin_10"
 #define GPIO_LED_PH02_PIN                 20
 #define GPIO_LED_PH02_LABEL               "gpio_pin_20"
+#define GPIO_UEXT4_PH17_PIN               30 // *NOTE*: connect UEXT to GPIO-3 (!)
+#define GPIO_UEXT4_PH17_LABEL             "gpio_pin_30"
+#define GPIO_INT_PIN                      GPIO_UEXT4_PH17_PIN
+#define GPIO_INT_LABEL                    GPIO_UEXT4_PH17_LABEL
 
-// fifo
+// fifo / ringbuffer
 #define FIFOSTORESIZE                     20
 #define FIFOSTOREDATASIZE                 64
 #define RINGBUFFERSIZE                    20
 #define RINGBUFFERDATASIZE                64
 
+// timer
+#define TIMER_DELAY                       10L // ms
+
+// device
+#define WHO_AM_I_REG                      0x68
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

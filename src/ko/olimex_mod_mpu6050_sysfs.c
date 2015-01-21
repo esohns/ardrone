@@ -17,22 +17,18 @@
 
 #include "olimex_mod_mpu6050_sysfs.h"
 
-//#include <linux/device.h>
 #include <linux/gpio.h>
-//#include <linux/kernel.h>
 #include <linux/kobject.h>
-//#include <linux/printk.h>
-//#include <linux/sched.h>
-//#include <linux/slab.h>
-//#include <linux/sysfs.h>
 
 #include "olimex_mod_mpu6050_types.h"
+#include "olimex_mod_mpu6050_device.h"
 
 struct kobj_attribute store_attribute =           __ATTR(data, 0666, i2c_mpu6050_store_show, i2c_mpu6050_store_store);
 struct kobj_attribute reg_attribute =             __ATTR(addr, 0666, i2c_mpu6050_reg_show, i2c_mpu6050_reg_store);
-struct kobj_attribute clearringbuffer_attribute = __ATTR(clear_ringbuffer, 0666, NULL, i2c_mpu6050_clearringbuffer_store);
-struct kobj_attribute intstate_attribute =        __ATTR(int_state, 0666, i2c_mpu6050_intstate_show, NULL);
-struct kobj_attribute ledstate_attribute =        __ATTR(led_state, 0666, i2c_mpu6050_ledstate_show, NULL);
+struct kobj_attribute clearringbuffer_attribute = __ATTR(clear_ringbuffer, 0222, NULL, i2c_mpu6050_clearringbuffer_store);
+struct kobj_attribute intstate_attribute =        __ATTR(int_state, 0444, i2c_mpu6050_intstate_show, NULL);
+struct kobj_attribute ledstate_attribute =        __ATTR(led_state, 0444, i2c_mpu6050_ledstate_show, NULL);
+struct kobj_attribute fifostate_attribute =       __ATTR(fifo_state, 0444, i2c_mpu6050_fifostate_show, NULL);
 /* *NOTE*: use a group of attributes so that the kernel can create and destroy
  *         them all at once
  */
@@ -42,6 +38,7 @@ struct attribute* i2c_mpu6050_attrs[] = {
   &clearringbuffer_attribute.attr,
   &intstate_attribute.attr,
   &ledstate_attribute.attr,
+  &fifostate_attribute.attr,
   NULL, // need to NULL terminate the list of attributes
 };
 //ATTRIBUTE_GROUPS(i2c_mpu6050);
@@ -131,7 +128,7 @@ i2c_mpu6050_store_show(struct kobject* kobj_in,
   int i, currentbufsize;
 
   pr_debug("%s called.\n", __FUNCTION__);
-  
+
   // sanity check(s)
   if (!kobj_in) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
@@ -385,6 +382,40 @@ i2c_mpu6050_ledstate_show(struct kobject* kobj_in,
   return sprintf(buf_in, "%d\n", value);
 }
 
+ssize_t
+i2c_mpu6050_fifostate_show(struct kobject* kobj_in,
+                           struct kobj_attribute* attr_in,
+                           char* buf_in)
+{
+  struct i2c_client* client_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
+  int value;
+
+  pr_debug("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (!kobj_in) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -ENOSYS;
+  }
+  client_p = kobj_to_i2c_client(kobj_in);
+  if (IS_ERR(client_p)) {
+    pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_p));
+    return -ENOSYS;
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  if (IS_ERR(client_data_p)) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return -ENOSYS;
+  }
+
+  value = i2c_mpu6050_device_fifo_count(client_data_p);
+
+  return sprintf(buf_in, "%d\n", value);
+}
+
 int
 i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
 {
@@ -430,7 +461,7 @@ i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
 
 //    return -ENOMEM;
 //  }
-  
+
   return 0;
 }
 

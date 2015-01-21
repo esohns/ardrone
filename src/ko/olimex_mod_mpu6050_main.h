@@ -19,27 +19,19 @@
 #define OLIMEX_MOD_MPU6050_MAIN_H
 
 #include <linux/i2c.h>
-#include <linux/interrupt.h>
 #include <linux/pm.h>
 
 // forward declarations
 struct device_driver;
-struct i2c_adapter;
 struct regmap_config;
-
-// function declarations
-// irq handlers
-irqreturn_t i2c_mpu6050_interrupt_handler(int, void*);
 
 // driver
 extern struct i2c_device_id i2c_mpu6050_id_table[];
 extern struct i2c_board_info i2c_mpu6050_board_infos[];
-
 extern unsigned short normal_i2c[];
 //extern short normal_i2c_range[];
 //extern unsigned int normal_isa[];
 //extern unsigned int normal_isa_range[];
-
 //extern struct list_head i2c_mpu6050_clients;
 extern struct device_driver i2c_mpu6050_device_driver;
 
@@ -62,6 +54,8 @@ int i2c_mpu6050_detect(struct i2c_client*, struct i2c_board_info*);
 
 // module
 extern const struct regmap_config i2c_mpu6050_regmap_config;
+// parameters
+extern int noirq;
 
 int i2c_mpu6050_init(void);
 void i2c_mpu6050_exit(void);

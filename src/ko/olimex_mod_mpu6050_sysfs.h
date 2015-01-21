@@ -47,9 +47,10 @@ ssize_t i2c_mpu6050_reg_show(struct kobject*, struct kobj_attribute*, char*);
 void i2c_mpu6050_clearringbuffer(void*);
 ssize_t i2c_mpu6050_clearringbuffer_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
 
-// INT / LED
+// INT / LED / (device) FIFO
 ssize_t i2c_mpu6050_intstate_show(struct kobject*, struct kobj_attribute*, char*);
 ssize_t i2c_mpu6050_ledstate_show(struct kobject*, struct kobj_attribute*, char*);
+ssize_t i2c_mpu6050_fifostate_show(struct kobject*, struct kobj_attribute*, char*);
 
 int i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t*);
 void i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t*);

@@ -22,6 +22,7 @@
 #include <linux/kobject.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/spinlock.h>
+#include <linux/hrtimer.h>
 #include <linux/workqueue.h>
 
 #include <plat/sys_config.h>
@@ -50,6 +51,7 @@ struct fifo_work_t {
 };
 
 struct i2c_mpu6050_client_data_t {
+  struct hrtimer hr_timer;
   struct pinctrl* pin_ctrl;
   struct pinctrl_state* pin_ctrl_state;
   script_gpio_set_t gpio_int_data;

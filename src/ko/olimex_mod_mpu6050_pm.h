@@ -18,8 +18,6 @@
 #ifndef OLIMEX_MOD_MPU6050_PM_H
 #define OLIMEX_MOD_MPU6050_PM_H
 
-//#include <linux/pm.h>
-
 // forward declarations
 struct dev_pm_ops;
 struct device;

@@ -15,18 +15,18 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef OLIMEX_MOD_MPU6050_WQ_H
-#define OLIMEX_MOD_MPU6050_WQ_H
+#ifndef OLIMEX_MOD_MPU6050_IRQ_H
+#define OLIMEX_MOD_MPU6050_IRQ_H
+
+#include <linux/interrupt.h>
 
 // forward declarations
-struct work_struct;
 struct i2c_mpu6050_client_data_t;
 
 // function declarations
-void i2c_mpu6050_wq_fifo_handler(struct work_struct*);
-void i2c_mpu6050_wq_read_handler(struct work_struct*);
+irqreturn_t i2c_mpu6050_interrupt_handler(int, void*);
 
-int i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t*);
-void i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t*);
+int i2c_mpu6050_irq_init(struct i2c_mpu6050_client_data_t*);
+void i2c_mpu6050_irq_fini(struct i2c_mpu6050_client_data_t*);
 
-#endif // #ifndef OLIMEX_MOD_MPU6050_WQ_H
+#endif // #ifndef OLIMEX_MOD_MPU6050_IRQ_H
