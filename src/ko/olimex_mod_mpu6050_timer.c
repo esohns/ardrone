@@ -50,14 +50,14 @@ i2c_mpu6050_hr_timer_handler(struct hrtimer* timer_in)
     return HRTIMER_NORESTART;
   }
 
-  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PH02_LABEL);
+  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIn_LABEL);
   err = queue_work(client_data_p->workqueue, &client_data_p->work_read.work);
   if (err < 0) {
     pr_err("%s: queue_work failed: %d\n", __FUNCTION__,
            err);
     return HRTIMER_NORESTART;
   }
-  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
+  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIn_LABEL);
 
   // now = hrtimer_cb_get_time(timeri);
 //  now = ktime_get();

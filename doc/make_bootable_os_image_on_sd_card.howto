@@ -1,0 +1,75 @@
+0. Resources
+- https://olimex.wordpress.com/tag/accelerated/
+- Google Groups: https://groups.google.com/forum/#!forum/linux-sunxi
+- http://linux-sunxi.org/Mailing_list
+- https://github.com/linux-sunxi/u-boot-sunxi/wiki
+
+1. Setup the Toolchain
+1.1. Required packages
+gcc-4.7-arm-linux-gnueabihf ncurses-dev uboot-mkimage build-essential git
+
+2. Build the U-boot Bootloader
+mkdir A10_kernel_3.4/
+cd A10_kernel_3.4/
+
+git clone -b sunxi https://github.com/linux-sunxi/u-boot-sunxi.git
+cd u-boot-sunxi/
+make A10-OLinuXino-Lime CROSS_COMPILE=arm-linux-gnueabihf-
+[ls u-boot.bin u-boot-sunxi-with-spl.bin spl/sunxi-spl.bin spl/sunxi-spl.bin u-boot.bin u-boot-sunxi-with-spl.bin]
+cd ..
+
+3. Build the Linux Kernel
+git clone https://github.com/linux-sunxi/linux-sunxi
+cd linux-sunxi/
+cp a10lime_defconfig linux-sunxi/arch/arm/configs/
+make ARCH=arm a10lime_defconfig
+[make ARCH=arm menuconfig]
+[cp .config .]
+{patch -p0 < sunxi-i2c.patch}
+{patch -p0 < a10_sound.patch}
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 uImage
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules_install
+
+4. (Format and) setup the (SD-)card
+[ls /dev/mmcblkX]
+fdisk /dev/mmcblkX
+d <enter>
+d <enter>
+...
+n <enter> p <enter> 1 <enter> <enter> +16M
+n <enter> p <enter> 2 <enter> <enter> <enter>
+w <enter>
+mkfs.vfat /dev/mmcblkXp1
+mkfs.ext3 /dev/mmcblkXp2
+
+5. Write the U-boot Booloader
+dd if=u-boot-sunxi/u-boot-sunxi-with-spl.bin of=/dev/sdX bs=1024 seek=8
+
+6. Copy the Linux Kernel to the (SD-)card
+[mkdir /mnt/sd]
+mount /dev/mmcblkXp1 /mnt/sd
+cp linux-sunxi/arch/arm/boot/uImage /mnt/sd
+
+7. Write script.bin file and boot.scr file
+{sunxi-tools/fex2bin script_a10_lime_HDMI_modmpu6050.fex /mnt/sd/script.bin}
+[cp script.bin /mnt/sd]
+cp boot.scr /mnt/sd
+sync
+umount /dev/mmcblkXp1
+
+8. Create a (Debian) rootfs on the (SD-)card
+mount /dev/mmcblkXp2 /mnt/sd
+tar xzf a10-olinuxino-lime_2_release.tgz -C /mnt/sd
+rm -rf /mnt/sd/lib/modules/*
+cp -rf linux-sunxi/out/lib/modules/3.x.xx+/ /mnt/sd/lib/modules/
+rm -rf /mnt/sd/lib/firmware/
+cp -rf linux-sunxi/out/lib/firmware/ /mnt/sd/lib/
+sync
+umount /dev/mmcblkXp2
+
+9. Boot Linux
+Connect USB-SERIAL-CABLE-F to UEXT Tx.Rx and GND, or connect a HDMI screen. Put the SD-card in A10-OLinuXino-Lime and apply 5V power, you should see Uboot and then Kernel messages on the console
+
+default username/password is : root / olimex
+

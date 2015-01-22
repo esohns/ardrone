@@ -1,0 +1,10 @@
+obj-m += olimex_mod_mpu6050.o
+
+#CFLAGS_olimex_mod_mpu6050.o =
+#ccflags-y =
+
+all:
+  $(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+  $(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean

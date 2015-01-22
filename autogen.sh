@@ -50,6 +50,13 @@ echo `autoreconf$AC_POSTFIX --version | head -1` found
 #fi
 #echo `automake$AM_POSTFIX --version | head -1` found
 
+AUTOPOINT=`which autopoint`
+if ! test -x $AUTOPOINT; then
+  echo 'you need autopoint (0.18+ recommended) to generate the Makefile'
+  exit 1
+fi
+echo `autopoint --version | head -1` found
+
 autoreconf$AC_POSTFIX --force --install --symlink --warnings=all
 #autoconf$AC_POSTFIX
 #autoheader$AC_POSTFIX

@@ -44,7 +44,9 @@ i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*  clientData_in)
     * @see MPU6050_WHO_AM_I_BIT
     * @see MPU6050_WHO_AM_I_LENGTH
     */
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_WHO_AM_I);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
   reg &= ~(0xFF << (MPU6050_WHO_AM_I_BIT + 1));
   reg &= (0xFF << 1);
 
@@ -56,7 +58,6 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
 {
   u8 reg;
   s32 bytes_written;
-  int err;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
@@ -92,11 +93,14 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     /** @see MPU6050_RA_USER_CTRL
     * @see MPU6050_USERCTRL_SIG_COND_RESET_BIT
     */
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     reg |= (0x01 << MPU6050_USERCTRL_SIG_COND_RESET_BIT); // --> reset signal paths & registers
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
-                                              MPU6050_RA_USER_CTRL,
-                                              reg);
+                                              MPU6050_RA_USER_CTRL, reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     if (bytes_written) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_USER_CTRL, (int)reg,
@@ -123,37 +127,29 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     //    return;
     //  }
     //  pr_debug("%s: reset FIFO...\n", __FUNCTION__);
+    pr_debug("%s: reset device (warm)...\n", __FUNCTION__);
   }
   else {
-    // step1: reset device (#107, see page 40)
+    // reset device (#107, see page 40)
     /** @see MPU6050_RA_PWR_MGMT_1
       * @see MPU6050_PWR1_DEVICE_RESET_BIT
       */
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     reg |= (0x01 << MPU6050_PWR1_DEVICE_RESET_BIT); // --> reset device
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1,
                                               reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     if (bytes_written) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
              bytes_written);
       return;
     }
-    pr_debug("%s: reset device...\n", __FUNCTION__);
-    msleep(RESET_DELAY);
-    // step2: reset data
-    i2c_mpu6050_device_reset(clientData_in, 1);
-    msleep(RESET_DELAY);
-    pr_debug("%s: reset device...done\n", __FUNCTION__);
-    // step3: (re-)init device
-    err = i2c_mpu6050_device_init(clientData_in);
-    if (err < 0) {
-      pr_err("%s: i2c_mpu6050_device_init() failed: %d\n", __FUNCTION__,
-             err);
-      return;
-    }
-    pr_debug("%s: initialized device...\n", __FUNCTION__);
+    pr_debug("%s: reset device (cold)...\n", __FUNCTION__);
   }
 }
 
@@ -174,7 +170,10 @@ i2c_mpu6050_device_fifo_count(struct i2c_mpu6050_client_data_t* clientData_in)
   /** @see MPU6050_RA_FIFO_COUNTH
     * @see MPU6050_RA_FIFO_COUNTL
     */
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   bytes_read = i2c_smbus_read_word_data(clientData_in->client, MPU6050_RA_FIFO_COUNTH);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  be16_to_cpus(((__be16*)&bytes_read) + 1);
 
   pr_debug("%s FIFO buffer: %d\n", __FUNCTION__,
            bytes_read);
@@ -215,13 +214,17 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     * @see MPU6050_PWR1_CLKSEL_BIT
     * @see MPU6050_PWR1_CLKSEL_LENGTH
     */
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
   pr_debug("%s: clocksource was: %d\n", __FUNCTION__,
            (reg & ~(0xFF << (MPU6050_PWR1_CLKSEL_BIT + 1))));
   reg |= ((0xFF << (MPU6050_PWR1_CLKSEL_BIT + 1)) | MPU6050_CLOCK_PLL_XGYRO);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                             MPU6050_RA_PWR_MGMT_1,
                                             reg);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
   if (bytes_written) {
     pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
            MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -337,51 +340,61 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  }
 //  pr_debug("%s: set accelerometer range...\n", __FUNCTION__);
 
-  // step2: enable FIFO
-  // step2a: configure FIFO (#35, see page 16)
-  /** @see MPU6050_RA_FIFO_EN
+  // step2: enable FIFO ?
+  if (fifo) {
+    // step2a: configure FIFO (#35, see page 16)
+    /** @see MPU6050_RA_FIFO_EN
     * @see MPU6050_TEMP_FIFO_EN_BIT
     * @see MPU6050_XG_FIFO_EN_BIT
     * @see MPU6050_YG_FIFO_EN_BIT
     * @see MPU6050_ZG_FIFO_EN_BIT
     * @see MPU6050_ACCEL_FIFO_EN_BIT
     */
-  reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_FIFO_EN);
-  pr_debug("%s: FIFO setting was: 0x%x\n", __FUNCTION__,
-           reg);
-  reg |= ((0x01 << MPU6050_TEMP_FIFO_EN_BIT) |  // --> thermometer
-          (0x01 << MPU6050_XG_FIFO_EN_BIT)   |  // --> gyroscope (x-axis)
-          (0x01 << MPU6050_YG_FIFO_EN_BIT)   |  // --> gyroscope (y-axis)
-          (0x01 << MPU6050_ZG_FIFO_EN_BIT)   |  // --> gyroscope (z-axis)
-          (0x01 << MPU6050_ACCEL_FIFO_EN_BIT)); // --> accelerometer
-  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
-                                            MPU6050_RA_FIFO_EN,
-                                            reg);
-  if (bytes_written) {
-    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
-           MPU6050_RA_FIFO_EN, (int)reg,
-           bytes_written);
-    return -ENOSYS;
-  }
-  pr_debug("%s: configured FIFO...\n", __FUNCTION__);
-  // step2b: enable FIFO (#106, see page 38)
-  /** @see MPU6050_RA_USER_CTRL
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_FIFO_EN);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    pr_debug("%s: FIFO setting was: 0x%x\n", __FUNCTION__,
+             reg);
+    reg |= ((0x01 << MPU6050_TEMP_FIFO_EN_BIT) |  // --> thermometer
+            (0x01 << MPU6050_XG_FIFO_EN_BIT)   |  // --> gyroscope (x-axis)
+            (0x01 << MPU6050_YG_FIFO_EN_BIT)   |  // --> gyroscope (y-axis)
+            (0x01 << MPU6050_ZG_FIFO_EN_BIT)   |  // --> gyroscope (z-axis)
+            (0x01 << MPU6050_ACCEL_FIFO_EN_BIT)); // --> accelerometer
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
+                                              MPU6050_RA_FIFO_EN,
+                                              reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    if (bytes_written) {
+      pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
+             MPU6050_RA_FIFO_EN, (int)reg,
+             bytes_written);
+      return -ENOSYS;
+    }
+    pr_debug("%s: configured FIFO...\n", __FUNCTION__);
+    // step2b: enable FIFO (#106, see page 38)
+    /** @see MPU6050_RA_USER_CTRL
     * @see MPU6050_USERCTRL_FIFO_EN_BIT
     */
-  reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
-  pr_debug("%s: FIFO setting was: 0x%x\n", __FUNCTION__,
-           reg);
-  reg |= (0x01 << MPU6050_USERCTRL_FIFO_EN_BIT); // --> enable
-  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
-                                            MPU6050_RA_USER_CTRL,
-                                            reg);
-  if (bytes_written) {
-    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
-           MPU6050_RA_USER_CTRL, (int)reg,
-           bytes_written);
-    return -ENOSYS;
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    pr_debug("%s: FIFO setting was: 0x%x\n", __FUNCTION__,
+             reg);
+    reg |= (0x01 << MPU6050_USERCTRL_FIFO_EN_BIT); // --> enable
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
+                                              MPU6050_RA_USER_CTRL,
+                                              reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    if (bytes_written) {
+      pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
+             MPU6050_RA_USER_CTRL, (int)reg,
+             bytes_written);
+      return -ENOSYS;
+    }
+    pr_debug("%s: enabled FIFO...\n", __FUNCTION__);
   }
-  pr_debug("%s: enabled FIFO...\n", __FUNCTION__);
 
   // step5: enable (data ready-) interrupt(s) ?
   if (noirq == 0) {
@@ -395,7 +408,9 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       * @see MPU6050_INTCFG_FSYNC_INT_EN_BIT
       * @see [MPU6050_INTCFG_I2C_BYPASS_EN_BIT]
       */
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_INT_PIN_CFG);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     reg &= ~(0x01 << MPU6050_INTCFG_INT_LEVEL_BIT);       // --> active-high
     reg &= ~(0x01 << MPU6050_INTCFG_INT_OPEN_BIT);        // --> push-pull
     reg &= ~(0x01 << MPU6050_INTCFG_LATCH_INT_EN_BIT);    // --> latch off (50us pulse)
@@ -403,9 +418,11 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //    reg &= ~(0x01 << MPU6050_INTCFG_FSYNC_INT_LEVEL_BIT); // --> FSYNC active-high
     reg &= ~(0x01 << MPU6050_INTCFG_FSYNC_INT_EN_BIT);    // --> FSYNC INT disabled
 //    reg &= ~(0x01 << MPU6050_INTCFG_I2C_BYPASS_EN_BIT);   // --> direct aux I2C bus access disabled
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_INT_PIN_CFG,
                                               reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     if (bytes_written) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_INT_PIN_CFG, (int)reg,
@@ -423,11 +440,15 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       * @see [MPU6050_INTERRUPT_DMP_INT_BIT]
       * @see MPU6050_INTERRUPT_DATA_RDY_BIT
       */
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_INT_ENABLE);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     reg |= (0x01 << MPU6050_INTERRUPT_DATA_RDY_BIT);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_INT_ENABLE,
                                               reg);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
     if (bytes_written) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_INT_ENABLE, (int)reg,
@@ -441,11 +462,15 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_SLEEP_BIT
     */
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
   reg |= (0x01 << MPU6050_PWR1_SLEEP_BIT);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
   bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                             MPU6050_RA_PWR_MGMT_1,
                                             reg);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
   if (bytes_written) {
     pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
            MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -468,4 +493,5 @@ i2c_mpu6050_device_fini(struct i2c_mpu6050_client_data_t* clientData_in)
     return;
   }
 
+  i2c_mpu6050_device_reset(clientData_in, 0);
 }

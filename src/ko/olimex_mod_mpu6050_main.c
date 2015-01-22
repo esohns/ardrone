@@ -53,7 +53,7 @@ struct __initdata i2c_board_info i2c_mpu6050_board_infos[] = {
     .platform_data = NULL,
     .archdata      = NULL,
     .of_node       = NULL,
-//    .irq           = gpio_to_irq(GPIO_UEXT4_UART4RX_PG11_PIN),
+//    .irq           = gpio_to_irq(GPIO_INT_PIN),
   },
 };
 
@@ -187,9 +187,10 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     return -ENOSYS;
   }
   if (!i2c_check_functionality(client_in->adapter,
-                               (I2C_FUNC_SMBUS_BYTE_DATA |
-                                I2C_FUNC_SMBUS_WORD_DATA |
-                                I2C_FUNC_SMBUS_I2C_BLOCK))) {
+                               (I2C_FUNC_SMBUS_BYTE_DATA       |
+                                I2C_FUNC_SMBUS_READ_WORD_DATA  |
+                                I2C_FUNC_SMBUS_READ_BLOCK_DATA |
+                                I2C_FUNC_SMBUS_READ_I2C_BLOCK))) {
     pr_err("%s: needed i2c functionality is not supported\n", __FUNCTION__);
     return -ENODEV;
   }
@@ -221,21 +222,21 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     goto error1;
   }
   err = script_parser_fetch("gpio_para",
-                            GPIO_UEXT4_UART4RX_PG11_LABEL,
+                            GPIO_INT_PIN_LABEL,
                             (int*)&client_data_p->gpio_int_data,
                             sizeof(script_gpio_set_t));
   if (err) {
     pr_err("%s: script_parser_fetch(\"gpio_para\",\"%s\") failed\n", __FUNCTION__,
-           GPIO_UEXT4_UART4RX_PG11_LABEL);
+           GPIO_INT_PIN_LABEL);
     goto error1;
   }
   err = script_parser_fetch("gpio_para",
-                            GPIO_LED_PH02_LABEL,
+                            GPIO_LED_PIN_LABEL,
                             (int*)&client_data_p->gpio_led_data,
                             sizeof(script_gpio_set_t));
   if (err) {
     pr_err("%s: script_parser_fetch(\"gpio_para\",\"%s\") failed\n", __FUNCTION__,
-           GPIO_LED_PH02_LABEL);
+           GPIO_LED_PIN_LABEL);
     goto error1;
   }
 
@@ -307,10 +308,10 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
            PTR_ERR(client_data_p));
     return -ENOSYS;
   }
-//  gpio_chip_p = gpio_to_chip(GPIO_UEXT4_UART4RX_PG11_PIN);
+//  gpio_chip_p = gpio_to_chip(GPIO_INT_PIN);
 //  if (IS_ERR(gpio_chip_p)) {
 //    pr_err("%s: gpio_to_chip(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_UEXT4_UART4RX_PG11_PIN,
+//           GPIO_INT_PIN,
 //           PTR_ERR(gpio_chip_p));
 //    return -ENOSYS;
 //  }
@@ -443,6 +444,9 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
 int noirq=0;
 module_param(noirq, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(noirq, "use polling (instead of interrupt)");
+int fifo=1;
+module_param(fifo, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(fifo, "use device FIFO");
 
 int
 __init i2c_mpu6050_init(void)
@@ -462,10 +466,10 @@ __init i2c_mpu6050_init(void)
     return -ENOSYS;
   }
 
-//  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(GPIO_UEXT4_UART4RX_PG11_PIN);
+//  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(GPIO_INT_PIN);
 //  if (i2c_mpu6050_board_infos[0].irq < 0) {
 //    pr_err("%s: gpio_to_irq(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_UEXT4_UART4RX_PG11_PIN,
+//           GPIO_INT_PIN,
 //           err);
 //    goto init_error1;
 //  }
