@@ -55,7 +55,7 @@ if ! test -x $AUTOPOINT; then
   echo 'you need autopoint (0.18+ recommended) to generate the Makefile'
   exit 1
 fi
-echo `autopoint --version | head -1` found
+echo $($(basename $AUTOPOINT) --version | head -1) found
 
 autoreconf$AC_POSTFIX --force --install --symlink --warnings=all
 #autoconf$AC_POSTFIX

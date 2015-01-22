@@ -98,7 +98,7 @@ AM_COND_IF([DO_CROSS_COMPILE],
 #CXXFLAGS="-fno-implicit-templates"
 CXXFLAGS=
 # --> enable debug support ?
-AC_MSG_CHECKING(enable debugging)
+AC_MSG_CHECKING([enable debugging])
 debug_default="no"
 AC_ARG_ENABLE([debug],
               [AS_HELP_STRING([--enable-debug], [turn on debugging [default="${debug_default}"]])],
@@ -111,14 +111,14 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 if test x$debug = xyes; then
   CXXFLAGS="${CXXFLAGS} -g -O0 -Wall -D_DEBUG -DDEBUG_DEBUGGER"
-  AC_MSG_RESULT(yes)
+  AC_MSG_RESULT([yes])
 else
   CXXFLAGS="${CXXFLAGS} -O3 -DNDEBUG -Wall -Werror"
-  AC_MSG_RESULT(no)
+  AC_MSG_RESULT([no])
 fi
 
 # --> enable tracing support ?
-AC_MSG_CHECKING(enable tracing)
+AC_MSG_CHECKING([enable tracing])
 tracing_default="no"
 AC_ARG_ENABLE([tracing],
               [AS_HELP_STRING([--enable-tracing], [turn on tracing [default="${tracing_default}"]])],
@@ -131,14 +131,14 @@ AC_ARG_ENABLE([tracing],
 AM_CONDITIONAL([TRACING], [test x$tracing = xyes])
 if test x$tracing = xyes; then
   CXXFLAGS="${CXXFLAGS} -DOLINUXINO_NTRACE=0"
-  AC_MSG_RESULT(yes)
+  AC_MSG_RESULT([yes])
 else
   CXXFLAGS="${CXXFLAGS} -DOLINUXINO_NTRACE=1"
-  AC_MSG_RESULT(no)
+  AC_MSG_RESULT([no])
 fi
 
 # --> enable valgrind support ?
-AC_MSG_CHECKING(enable valgrind support)
+AC_MSG_CHECKING([enable valgrind support])
 valgrind_support_default="no"
 AC_ARG_ENABLE([valgrind-support],
               [AS_HELP_STRING([--enable-valgrind_support], [turn on valgrind support [default="$valgrind_support_default"]])],
@@ -151,9 +151,9 @@ AC_ARG_ENABLE([valgrind-support],
 AM_CONDITIONAL([VALGRIND_SUPPORT], [test x$valgrind_support = xyes])
 if test x$valgrind_support = xyes; then
   CXXFLAGS="${CXXFLAGS} -DOLINUXINO_ENABLE_VALGRIND_SUPPORT"
-  AC_MSG_RESULT(yes)
+  AC_MSG_RESULT([yes])
 else
-  AC_MSG_RESULT(no)
+  AC_MSG_RESULT([no])
 fi
 
 # export this (so pkgconfig substitutions can be made)
@@ -176,7 +176,7 @@ AC_CHECK_LIB([ACE], [main])
 #AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-lxerces-c':
 #AC_CHECK_LIB([xerces-c], [main])
-AM_GNU_GETTEXT_VERSION(0.18)
+AM_GNU_GETTEXT_VERSION([0.18])
 AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 #AM_GNU_GETTEXT_INTL_SUBDIR
 
