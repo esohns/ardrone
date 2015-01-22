@@ -176,7 +176,7 @@ AC_CHECK_LIB([ACE], [main])
 #AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-lxerces-c':
 #AC_CHECK_LIB([xerces-c], [main])
-AM_GNU_GETTEXT_VERSION(0.18.3)
+AM_GNU_GETTEXT_VERSION(0.18)
 AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 #AM_GNU_GETTEXT_INTL_SUBDIR
 

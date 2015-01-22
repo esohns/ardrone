@@ -20,7 +20,12 @@
 #include <linux/i2c.h>
 #include <linux/workqueue.h>
 
+// *NOTE*: taken from i2cdevlib (see also: http://www.i2cdevlib.com/devices/mpu6050#source)
+#include "MPU6050.h"
+
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_device.h"
+#include "olimex_mod_mpu6050_main.h"
 #include "olimex_mod_mpu6050_types.h"
 
 void
@@ -67,9 +72,10 @@ i2c_mpu6050_wq_fifo_handler(struct work_struct* work_in)
 void
 i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 {
-  struct fifo_work_t* work_p = NULL;
-  struct i2c_mpu6050_client_data_t* client_data_p = NULL;
+  struct fifo_work_t* work_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
   int err;
+  s32 bytes_read, bytes_to_read = 0;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
@@ -91,29 +97,82 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 //         RINGBUFFERDATASIZE);
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 1;
 
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PH02_LABEL);
-  err = i2c_master_recv(client_data_p->client,
-                        client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
-                        RINGBUFFERDATASIZE);
-  if (err < 0) {
-    pr_err("%s: i2c_master_recv() failed: %d\n", __FUNCTION__,
-           -err);
-    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
-    return;
+  if (fifo) {
+    // *TODO*: use a single transaction for efficiency...
+//    reg = MPU6050_RA_FIFO_R_W;
+//    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+//    err = i2c_master_send(client_data_p->client,
+//                          &reg, 1);
+//    if (err != 1) {
+//      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+//      pr_err("%s: i2c_master_send() failed: %d\n", __FUNCTION__,
+//             err);
+//      return;
+//    }
+//    err = i2c_master_recv(client_data_p->client,
+//                          client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
+//                          RINGBUFFERDATASIZE);
+//    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+//    if (err <= 0) {
+//      pr_err("%s: i2c_master_recv() failed: %d\n", __FUNCTION__,
+//             err);
+//      return;
+//    }
+    bytes_to_read = i2c_mpu6050_device_fifo_count(client_data_p);
+    if (bytes_to_read < 0) {
+      pr_err("%s: i2c_mpu6050_device_fifo_count() failed: %d\n", __FUNCTION__,
+             bytes_to_read);
+      return;
+    }
+    bytes_read = 0;
+do_loop:
+    while (bytes_read < bytes_to_read) {
+      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+      err = i2c_smbus_read_block_data(client_data_p->client,
+                                      MPU6050_RA_FIFO_R_W,
+                                      client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
+      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      if (err < 0) {
+        pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d\n", __FUNCTION__,
+               err);
+        return;
+      }
+      bytes_read += err;
+      goto do_dispatch;
+    }
   }
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PH02_LABEL);
+  else {
+    // *NOTE*: read one complete set of data only...
+    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    bytes_read = i2c_smbus_read_i2c_block_data(client_data_p->client,
+                                               MPU6050_RA_ACCEL_XOUT_H, BLOCK_LENGTH,
+                                               client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
+    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    if (bytes_read != BLOCK_LENGTH) {
+      pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d (expected: %d)\n", __FUNCTION__,
+             bytes_read, BLOCK_LENGTH);
+      return;
+    }
+  }
 
+do_dispatch:
+//  pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
+//           err, client_data_p->ringbufferpos);
   pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
-           err, client_data_p->ringbufferpos);
+           bytes_read, client_data_p->ringbufferpos);
 
-  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
+//  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
+  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = bytes_read;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
 
   client_data_p->ringbufferpos++;
   if (client_data_p->ringbufferpos == RINGBUFFERSIZE)
     client_data_p->ringbufferpos = 0;
+  if (fifo && (bytes_read < bytes_to_read)) goto do_loop;
 
   pr_debug("%s: work exit\n", __FUNCTION__);
+
+  return;
 }
 
 int

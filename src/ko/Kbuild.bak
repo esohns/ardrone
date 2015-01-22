@@ -1,0 +1,58 @@
+ifeq ($(module_OBJ),)
+  echo "module_OBJ not set, cannot proceed"
+  exit 1
+else
+endif
+ifeq ($(module_NAME),)
+  echo "module_NAME not set, cannot proceed"
+  exit 1
+else
+endif
+ifeq ($(module_OBJS),)
+  echo "module_OBJS not set, cannot proceed"
+  exit 1
+else
+endif
+ifeq ($(KDIR),)
+  echo "KDIR not set, setting to default"
+  export KDIR="/lib/modules/$(shell uname -r)/build"
+else
+endif
+ifeq ($(AM_ABSSRCDIR),)
+  echo "AM_ABSSRCDIR not set, cannot proceed"
+  exit 1
+else
+endif
+ifeq ($(ARCH),)
+  echo "ARCH not set, setting to default: x86"
+  export ARCH=x86
+  export CROSS_COMPILE=
+else
+endif
+#ifeq ($(AM_CWDCDIR),)
+#echo "AM_CWDCDIR not set, cannot proceed"
+#exit 1
+#endif
+
+obj-m            += $(module_OBJ)
+$(module_NAME)-y := $(module_OBJS)
+#MI_OBJS = $(module_DATA)
+ccflags-y        := \
+  -I$(KDIR)arch/$(ARCH)/include \
+  -I$(KDIR)arch/$(ARCH)/uapi/include \
+  -I$(KDIR)arch/sh/include \
+  -I$(AM_ABSSRCDIR)/3rd_party/i2cdevlib
+#  -I$(KDIR)include \
+#  -I$(KDIR)arch/arm/mach-sun4i/include \
+#  -I$(KDIR)arch/arm/plat-sunxi/include \
+#KBUILD_EXTRA_SYMBOLS
+#INSTALL_MOD_PATH=$(AM_CWDCDIR)
+#INSTALL_MOD_DIR=$(AM_CWDCDIR)
+
+all: modules
+modules:
+	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) V=$(KBUILD_VERBOSE) modules
+#	$(MAKE) -C $(KDIR) M=$(PWD)          V=$(KBUILD_VERBOSE) modules
+clean:
+	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) V=$(KBUILD_VERBOSE) clean
+#	$(MAKE) -C $(KDIR) M=$(PWD)          V=$(KBUILD_VERBOSE) clean

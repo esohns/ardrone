@@ -335,7 +335,7 @@ i2c_mpu6050_intstate_show(struct kobject* kobj_in,
     return -ENOSYS;
   }
 //  gpio = irq_to_gpio(client_p->irq);
-  gpio = GPIO_UEXT4_UART4RX_PG11_PIN;
+  gpio = GPIO_INT_PIN;
 //  if (gpio < 0) {
 //    pr_err("%s: irq_to_gpio(%d) failed\n", __FUNCTION__,
 //           client_p->irq);
@@ -377,7 +377,7 @@ i2c_mpu6050_ledstate_show(struct kobject* kobj_in,
   }
 
   value = gpio_read_one_pin_value(client_data_p->gpio_led_handle,
-                                  GPIO_LED_PH02_LABEL);
+                                  GPIO_LED_PIN_LABEL);
 
   return sprintf(buf_in, "%d\n", value);
 }
