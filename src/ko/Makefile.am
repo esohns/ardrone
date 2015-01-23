@@ -6,7 +6,7 @@ if HAVE_KERNEL_SRC_DIR_ENV
 else !HAVE_KERNEL_SRC_DIR_ENV
   KDIR=@kerneldir@
 if !HAVE_KERNEL_SRC
-    echo "kernel src dir not set, setting to default"
+#    echo "kernel src dir not set, setting to default"
     KDIR="/lib/modules/$(shell uname -r)/build"
 endif !HAVE_KERNEL_SRC
 endif !HAVE_KERNEL_SRC_DIR_ENV

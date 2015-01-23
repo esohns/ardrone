@@ -65,7 +65,8 @@ AC_TYPE_SSIZE_T
 AC_ARG_VAR([KERNEL_SRC_DIR], [kernel src directory (overrides --with-kerneldir)])
 AM_CONDITIONAL([HAVE_KERNEL_SRC_DIR_ENV], [test x${KERNEL_SRC_DIR} != x])
 AC_PATH_KERNEL_SOURCE
-AM_CONDITIONAL([HAVE_KERNEL_SRC], [test x${kerneldir} != x])
+AM_CONDITIONAL([HAVE_KERNEL_SRC], [test x${no_kernel} != xyes])
+#AM_CONDITIONAL([HAVE_KERNEL_SRC], [test x${kerneldir} != x -a x${kerneldir} != $(shell pwd)])
 moduledir_default="/lib/modules/`uname -r`/misc"
 AC_ARG_WITH(moduledir,
             [AS_HELP_STRING([--with-moduledir=DIR], [kernel modules in DIR [default="${moduledir_default}"]])],
@@ -89,7 +90,8 @@ AC_ARG_ENABLE([cross-compile],
                  *) AC_MSG_ERROR([bad value ${enableval} for --enable-cross-compile]) ;;
                esac],
               [cross_compile=$cross_compile_default])
-AM_CONDITIONAL([DO_CROSS_COMPILE], [test x$cross_compile = xyes])
+BUILD_PLATFORM=`uname -m | head -c3 -`
+AM_CONDITIONAL([DO_CROSS_COMPILE], [test x$cross_compile = xyes -a ${BUILD_PLATFORM} != arm])
 AM_COND_IF([DO_CROSS_COMPILE],
            [AC_MSG_RESULT(yes)],
            [AC_MSG_RESULT(no)])

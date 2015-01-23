@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -Im4
+
 SUBDIRS = \
   m4 \
   src \
@@ -5,4 +7,5 @@ SUBDIRS = \
   scripts
 
 EXTRA_DIST = \
-  autogen.sh
+  autogen.sh \
+  COPYING
