@@ -21,7 +21,7 @@ endif
 obj-m += $(module_DATA)
 $(module_NAME)-y := $(module_OBJS)
 #MI_OBJS = $(module_DATA)
-ccflags-y       = \
+ccflags-y         = \
   -I$(KDIR)arch/$(ARCH)/include \
   -I$(KDIR)arch/$(ARCH)/uapi/include \
   -I$(KDIR)arch/sh/include \
@@ -29,6 +29,11 @@ ccflags-y       = \
 #  -I$(KDIR)include \
 #  -I$(KDIR)arch/arm/mach-sun4i/include \
 #  -I$(KDIR)arch/arm/plat-sunxi/include \
+
+ifeq ($(DEBUG),1)
+  ccflags-y      += -DDEBUG
+endif
+
 #KBUILD_EXTRA_SYMBOLS
 #INSTALL_MOD_PATH=$(AM_CWDCDIR)
 #INSTALL_MOD_DIR=$(AM_CWDCDIR)

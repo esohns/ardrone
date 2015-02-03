@@ -5,6 +5,11 @@ if DO_CROSS_COMPILE
   export ARCH CROSS_COMPILE
 endif
 
+if DEBUG
+  DEBUG=1
+  export DEBUG
+endif
+
 #INSTALL_MOD_PATH=$(shell pwd)
 #INSTALL_MOD_DIR=$(shell pwd)
 #CPPFLAGS="" CFLAGS="" LDFLAGS=""
@@ -27,7 +32,8 @@ export KBUILD_VERBOSE
 # rule(s)
 $(module_DATA): $(automake_dummy_SOURCES)
 #	mv -f Makefile Makefile.automake
-	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
+	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Kbuild
+	echo "created Kbuild Makefile"
 	$(MAKE) -C $(abs_srcdir)
 #	$(MAKE) -C $(KDIR) M=$(abs_srcdir) V=$(KBUILD_VERBOSE) modules
 #	mv -f Makefile.automake Makefile

@@ -2,6 +2,3 @@
 	[- install kernel source packages]
 	- install platform-specific kernel headers
 	- verify make process
-
-
-
