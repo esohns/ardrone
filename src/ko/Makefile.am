@@ -21,8 +21,8 @@ AM_CPPFLAGS = \
 #-I$(KDIR)arch/$(ARCH)/plat-sunxi/include
 
 EXTRA_DIST = \
-  Makefile.kernel \
-  Makefile.common
+  Makefile.common \
+  Makefile.kernel
 EXTRA_PROGRAMS = \
   automake_dummy
 automake_dummy_SOURCES = \

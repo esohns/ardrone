@@ -1,5 +1,5 @@
 ifeq ($(KDIR),)
-  echo "a"
+  echo "KDIR not set, cannot proceed"
   export KDIR="/lib/modules/$(shell uname -r)/build"
 endif
 ifeq ($(module_DATA),)
@@ -19,6 +19,7 @@ ifeq ($(ARCH),)
 endif
 
 obj-m += $(module_DATA)
+$(module_NAME)-y := $(module_OBJS)
 #MI_OBJS = $(module_DATA)
 ccflags-y       = \
   -I$(KDIR)arch/$(ARCH)/include \
@@ -40,4 +41,6 @@ V=$(KBUILD_VERBOSE) modules
 #	$(MAKE) -C $(KDIR) M=$(PWD) modules
 clean:
 	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) clean
+	rm -rf $(abs_srcdir)/.tmp_versions
+#	mv -f $(abs_builddir)/Makefile.automake Makefile
 #	$(MAKE) -C $(KDIR) M=$(PWD) clean

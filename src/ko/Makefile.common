@@ -17,16 +17,23 @@ export AM_ABSSRCDIR=$(abs_srcdir)
 #export AM_CWDCDIR=$(shell pwd)
 export KBUILD_VERBOSE
 
+#CLEANFILES = \
+#  $(abs_srcdir)/$(module_DATA) \
+#  $(abs_srcdir)/$(module_DATA:.o=.@kernelext@) \
+#  $(abs_srcdir)/$(module_OBJS) \
+#  $(abs_srcdir)/*.cmd \
+#  $(abs_srcdir)/*~
+
 # rule(s)
 $(module_DATA): $(automake_dummy_SOURCES)
 #	mv -f Makefile Makefile.automake
-#	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
-	$(MAKE) -C $(KDIR) M=$(abs_srcdir) V=$(KBUILD_VERBOSE) modules
-#	rm -f $(abs_srcdir)/Makefile
+	cp -f $(abs_srcdir)/Makefile.kernel $(abs_srcdir)/Makefile
+	$(MAKE) -C $(abs_srcdir)
+#	$(MAKE) -C $(KDIR) M=$(abs_srcdir) V=$(KBUILD_VERBOSE) modules
 #	mv -f Makefile.automake Makefile
-
 #	$(MAKE) -C $(KDIR) M=$(abs_srcdir) \
 #  KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
 #  V=$(KBUILD_VERBOSE) modules
 
-CLEANFILES=$(abs_srcdir)/$(module_DATA) $(abs_srcdir)/.$(module_DATA).flags $(abs_srcdir)/$(module_DATA:.o=.mod.c) $(abs_srcdir)/$(module_DATA:.o=.@kernelext@) $(abs_srcdir)/*~
+clean-local:
+	$(MAKE) -C $(abs_srcdir) clean

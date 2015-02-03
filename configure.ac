@@ -112,10 +112,10 @@ AC_ARG_ENABLE([debug],
               [debug=$debug_default])
 AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 if test x$debug = xyes; then
-  CXXFLAGS="${CXXFLAGS} -g -O0 -Wall -D_DEBUG -DDEBUG_DEBUGGER"
+  CXXFLAGS="${CXXFLAGS} -g -O0 -Wall -DDEBUG"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS="${CXXFLAGS} -O3 -DNDEBUG -Wall -Werror"
+  CXXFLAGS="${CXXFLAGS} -O3 -Wall -Werror"
   AC_MSG_RESULT([no])
 fi
 
