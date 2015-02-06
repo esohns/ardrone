@@ -128,9 +128,13 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 do_loop:
     while (bytes_read < bytes_to_read) {
       gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
-      err = i2c_smbus_read_block_data(client_data_p->client,
-                                      MPU6050_RA_FIFO_R_W,
-                                      client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
+//      err = i2c_smbus_read_block_data(client_data_p->client,
+//                                      MPU6050_RA_FIFO_R_W,
+//                                      client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
+      err = i2c_smbus_read_i2c_block_data(client_data_p->client,
+                                          MPU6050_RA_FIFO_R_W,
+                                          bytes_to_read,
+                                          client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
       gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
       if (err < 0) {
         pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d\n", __FUNCTION__,

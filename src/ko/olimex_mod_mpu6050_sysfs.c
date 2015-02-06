@@ -63,11 +63,11 @@ i2c_mpu6050_store_store(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-  if (count_in > FIFOSTOREDATASIZE) {
+  if (unlikely(count_in > FIFOSTOREDATASIZE)) {
     pr_err("%s: invalid argument %d (expected <= %d)", __FUNCTION__,
            count_in,
            FIFOSTOREDATASIZE);
@@ -77,24 +77,24 @@ i2c_mpu6050_store_store(struct kobject* kobj_in,
 ////  struct kobj_type* ktype = get_ktype(kobj_in);
 ////  if (ktype == &device_ktype)
 ////    device_p = to_dev(kobj_in);
-//  if (!device_p) {
-//    printk(KERN_ERR "%s: invalid parameter (not a device ?)\n", __func__);
+//  if (unlikely(!device_p)) {
+//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
 //    return -ENODEV;
 //  }
 //  client_p = to_i2c_client(device_p);
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return -ENOSYS;
   }
-  if (client_data_p->fifostorepos >= FIFOSTORESIZE) {
+  if (unlikely(client_data_p->fifostorepos >= FIFOSTORESIZE)) {
     pr_err("%s: can't store data because FIFO is full.", __FUNCTION__);
     return -ENOSYS;
   }
@@ -109,7 +109,7 @@ i2c_mpu6050_store_store(struct kobject* kobj_in,
   pr_debug("%s: queueing work PROCESSFIFOSTORE\n", __FUNCTION__);
   err = queue_work(client_data_p->workqueue,
                    &client_data_p->work_processfifostore.work);
-  if (err < 0) {
+  if (unlikely(err < 0)) {
     pr_err("%s: queue_work failed: %d\n", __FUNCTION__,
            err);
     return -ENOSYS;
@@ -130,7 +130,7 @@ i2c_mpu6050_store_show(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
@@ -138,19 +138,19 @@ i2c_mpu6050_store_show(struct kobject* kobj_in,
 //  struct kobj_type* ktype = get_ktype(kobj_in);
 //  if (ktype == &device_ktype)
 //    device_p = to_dev(kobj_in);
-//  if (!device_p) {
-//    printk(KERN_ERR "%s: invalid parameter (not a device ?)\n", __func__);
+//  if (unlikely(!device_p)) {
+//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
 //    return -ENODEV;
 //  }
 //  client_p = to_i2c_client(device_p);
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return -ENOSYS;
@@ -162,9 +162,8 @@ i2c_mpu6050_store_show(struct kobject* kobj_in,
     if (client_data_p->ringbuffer[i].completed) {
       currentbufsize = client_data_p->ringbuffer[i].size;
       // found a used & completed slot, outputting
-      pr_debug("%s: outputting ringbuffer %.2x, %d bytes\n", __FUNCTION__,
-               i,
-               currentbufsize);
+      pr_debug("%s: outputting ringbuffer slot %.2x, %d bytes\n", __FUNCTION__,
+               i, currentbufsize);
       memcpy(buf_in, client_data_p->ringbuffer[i].data, currentbufsize);
       client_data_p->ringbuffer[i].completed = client_data_p->ringbuffer[i].used = 0;
       return currentbufsize;
@@ -190,17 +189,17 @@ i2c_mpu6050_reg_store(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-  if (count_in != 2) {
+  if (unlikely(count_in != 2)) {
     pr_err("%s: invalid argument: %d (expected: %d)\n", __FUNCTION__,
            count_in, 2);
     return -ENOSYS;
   }
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
@@ -209,9 +208,14 @@ i2c_mpu6050_reg_store(struct kobject* kobj_in,
   err = sscanf(buf_in, "%x", &reg);
   err = sscanf(buf_in + 1, "%x", &val);
   bytes_written = i2c_smbus_write_byte_data(client_p, (u8)reg, (u8)val);
-  pr_debug("%s: stored %.2x to register %.2x\n", __FUNCTION__,
-           (u8)reg,
-           (u8)val);
+  if (unlikely(bytes_written != 1)) {
+    pr_err("%s: i2c_smbus_write_byte_data(0x%x) failed: %d\n", __FUNCTION__,
+           reg, bytes_written);
+    return -EIO;
+  }
+
+  pr_debug("%s: wrote %.2x to register %.2x\n", __FUNCTION__,
+           (u8)reg, (u8)val);
 
   return count_in;
 }
@@ -229,12 +233,12 @@ i2c_mpu6050_reg_show(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
@@ -242,6 +246,12 @@ i2c_mpu6050_reg_show(struct kobject* kobj_in,
 
   err = sscanf(buf_in, "%x", &reg);
   bytes_read = i2c_smbus_read_byte_data(client_p, (u8)reg);
+  // *TODO*: how can this work ?
+  if (unlikely(bytes_read < 0)) {
+    pr_err("%s: i2c_smbus_read_byte_data(0x%x) failed: %d\n", __FUNCTION__,
+           reg, bytes_read);
+    return -EIO;
+  }
 
   return sprintf(buf_in, "%x\n", bytes_read);
 }
@@ -255,12 +265,12 @@ i2c_mpu6050_clearringbuffer(void* data_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!data_in) {
+  if (unlikely(!data_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)data_in;
-  if (!client_data_p) {
+  if (unlikely(!client_data_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
@@ -280,7 +290,7 @@ i2c_mpu6050_clearringbuffer_store(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
@@ -288,19 +298,19 @@ i2c_mpu6050_clearringbuffer_store(struct kobject* kobj_in,
 ////  struct kobj_type* ktype = get_ktype(kobj_in);
 ////  if (ktype == &device_ktype)
 ////    device_p = to_dev(kobj_in);
-//  if (!device_p) {
-//    printk(KERN_ERR "%s: invalid parameter (not a device ?)\n", __func__);
+//  if (unlikely(!device_p)) {
+//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
 //    return -ENODEV;
 //  }
 //  client_p = to_i2c_client(device_p);
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return -ENOSYS;
@@ -324,19 +334,19 @@ i2c_mpu6050_intstate_show(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
 //  gpio = irq_to_gpio(client_p->irq);
   gpio = GPIO_INT_PIN;
-//  if (gpio < 0) {
+//  if (unlikely(gpio < 0)) {
 //    pr_err("%s: irq_to_gpio(%d) failed\n", __FUNCTION__,
 //           client_p->irq);
 //    return -ENOSYS;
@@ -359,18 +369,18 @@ i2c_mpu6050_ledstate_show(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return -ENOSYS;
@@ -394,18 +404,18 @@ i2c_mpu6050_fifostate_show(struct kobject* kobj_in,
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!kobj_in) {
+  if (unlikely(!kobj_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
   client_p = kobj_to_i2c_client(kobj_in);
-  if (IS_ERR(client_p)) {
+  if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return -ENOSYS;
@@ -422,41 +432,41 @@ i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-  if (clientData_in->object) {
-    pr_warn("%s: sysfs handle already initialized, returning\n", __FUNCTION__);
-    return 0;
-  }
+//  if (unlikely(clientData_in->object)) {
+//    pr_warn("%s: sysfs handle already initialized, returning\n", __FUNCTION__);
+//    return 0;
+//  }
 
-  clientData_in->object = kobject_create_and_add(KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
-                                                 kernel_kobj);
-  if (IS_ERR(clientData_in->object)) {
-    pr_err("%s: kobject_create_and_add(%s) failed: %ld, aborting\n", __FUNCTION__,
-           KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
-           PTR_ERR(clientData_in->object));
-    return -ENOSYS;
-  }
+//  clientData_in->object = kobject_create_and_add(KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
+//                                                 kernel_kobj);
+//  if (unlikely(IS_ERR(clientData_in->object))) {
+//    pr_err("%s: kobject_create_and_add(%s) failed: %ld, aborting\n", __FUNCTION__,
+//           KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
+//           PTR_ERR(clientData_in->object));
+//    return -ENOSYS;
+//  }
 //  // create the files associated with this kobject
 //  err = sysfs_create_group(client_data_p->object, &i2c_mpu6050_attribute_group);
-//  if (err) {
-//    printk(KERN_ERR "unable to create sysfs files\n");
+//  if (unlikely(err)) {
+//    pr_err("%s: unable to create sysfs files\n", __FUNCTION__);
 
 //    // clean up
-//    kobject_del(client_data_p->object);
+//    kobject_put(client_data_p->object);
 //    kfree(client_data_p);
 
 //    return -ENOMEM;
 //  }
   // *TODO*: announce new sysfs object
 //  err = kobject_uevent(client_data_p->object, enum kobject_action action);
-//  if (err) {
-//    printk(KERN_ERR "unable to announce sysfs files\n");
+//  if (unlikely(err)) {
+//    pr_err("%s: unable to announce sysfs files\n", __FUNCTION__);
 
 //    // clean up
-//    kobject_unregister(client_data_p->object);
+//    kobject_put(client_data_p->object);
 //    kfree(client_data_p);
 
 //    return -ENOMEM;
@@ -471,11 +481,11 @@ i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
 
-  kobject_del(clientData_in->object);
-  clientData_in->object = NULL;
+//  kobject_put(clientData_in->object);
+//  clientData_in->object = NULL;
 }

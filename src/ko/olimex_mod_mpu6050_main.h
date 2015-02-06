@@ -35,14 +35,14 @@ extern unsigned short normal_i2c[];
 //extern struct list_head i2c_mpu6050_clients;
 extern struct device_driver i2c_mpu6050_device_driver;
 
-int i2c_mpu6050_attach_adapter(struct i2c_adapter*);
-int i2c_mpu6050_detach_adapter(struct i2c_adapter*);
+//int i2c_mpu6050_attach_adapter(struct i2c_adapter*);
+//int i2c_mpu6050_detach_adapter(struct i2c_adapter*);
 
 int i2c_mpu6050_probe(struct i2c_client*, const struct i2c_device_id*);
 int i2c_mpu6050_remove(struct i2c_client*);
 void i2c_mpu6050_shutdown(struct i2c_client*);
-int i2c_mpu6050_suspend(struct i2c_client*, pm_message_t);
-int i2c_mpu6050_resume(struct i2c_client*);
+//int i2c_mpu6050_suspend(struct i2c_client*, pm_message_t);
+//int i2c_mpu6050_resume(struct i2c_client*);
 
 void i2c_mpu6050_alert(struct i2c_client*, unsigned int);
 

@@ -58,7 +58,7 @@ struct i2c_mpu6050_client_data_t {
   script_gpio_set_t gpio_led_data;
   unsigned gpio_led_handle;
   struct i2c_client* client;
-  struct kobject* object; // used for the sysfs entries
+//  struct kobject* object; // used for the sysfs entries
   struct workqueue_struct* workqueue;
   struct fifo_work_t work_processfifostore;
   struct read_work_t work_read;
