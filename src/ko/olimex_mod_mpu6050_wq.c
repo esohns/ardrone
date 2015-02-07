@@ -17,6 +17,7 @@
 
 #include "olimex_mod_mpu6050_wq.h"
 
+#include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/workqueue.h>
 
@@ -39,12 +40,12 @@ i2c_mpu6050_wq_fifo_handler(struct work_struct* work_in)
 
   // sanity check(s)
   work_p = (struct fifo_work_t*)work_in;
-  if (!work_p) {
+  if (unlikely(!work_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return;
@@ -81,12 +82,12 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 
   // sanity check(s)
   work_p = (struct fifo_work_t*)work_in;
-  if (!work_p) {
+  if (unlikely(!work_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return;
@@ -97,32 +98,35 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 //         RINGBUFFERDATASIZE);
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 1;
 
-  if (fifo) {
+  if (likely(fifo)) {
     // *TODO*: use a single transaction for efficiency...
 //    reg = MPU6050_RA_FIFO_R_W;
 //    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
 //    err = i2c_master_send(client_data_p->client,
 //                          &reg, 1);
-//    if (err != 1) {
+//    if (unlikely(err != 1)) {
 //      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
 //      pr_err("%s: i2c_master_send() failed: %d\n", __FUNCTION__,
 //             err);
-//      return;
+//      goto clean_up;
 //    }
 //    err = i2c_master_recv(client_data_p->client,
 //                          client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
 //                          RINGBUFFERDATASIZE);
 //    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-//    if (err <= 0) {
+//    if (unlikely(err <= 0)) {
 //      pr_err("%s: i2c_master_recv() failed: %d\n", __FUNCTION__,
 //             err);
-//      return;
+//      goto clean_up;
 //    }
     bytes_to_read = i2c_mpu6050_device_fifo_count(client_data_p);
-    if (bytes_to_read < 0) {
+    if (unlikely(bytes_to_read < 0)) {
       pr_err("%s: i2c_mpu6050_device_fifo_count() failed: %d\n", __FUNCTION__,
              bytes_to_read);
-      return;
+      goto clean_up;
+    }
+    if (unlikely(bytes_to_read == 0)) {
+      goto clean_up;
     }
     bytes_read = 0;
 do_loop:
@@ -136,10 +140,10 @@ do_loop:
                                           bytes_to_read,
                                           client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
       gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-      if (err < 0) {
+      if (unlikely(err < 0)) {
         pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d\n", __FUNCTION__,
                err);
-        return;
+        goto clean_up;
       }
       bytes_read += err;
       goto do_dispatch;
@@ -152,10 +156,10 @@ do_loop:
                                                MPU6050_RA_ACCEL_XOUT_H, BLOCK_LENGTH,
                                                client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
     gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_read != BLOCK_LENGTH) {
+    if (unlikely(bytes_read != BLOCK_LENGTH)) {
       pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d (expected: %d)\n", __FUNCTION__,
              bytes_read, BLOCK_LENGTH);
-      return;
+      goto clean_up;
     }
   }
 
@@ -163,20 +167,24 @@ do_dispatch:
 //  pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
 //           err, client_data_p->ringbufferpos);
   pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
-           bytes_read, client_data_p->ringbufferpos);
+           bytes_read,
+           client_data_p->ringbufferpos);
 
 //  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].size = bytes_read;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
 
   client_data_p->ringbufferpos++;
-  if (client_data_p->ringbufferpos == RINGBUFFERSIZE)
+  if (unlikely(client_data_p->ringbufferpos == RINGBUFFERSIZE))
     client_data_p->ringbufferpos = 0;
-  if (fifo && (bytes_read < bytes_to_read)) goto do_loop;
+  if (likely(fifo && (bytes_read < bytes_to_read))) goto do_loop;
 
   pr_debug("%s: work exit\n", __FUNCTION__);
 
   return;
+
+clean_up:
+  client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 0;
 }
 
 int
@@ -185,17 +193,17 @@ i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-  if (clientData_in->workqueue) {
+  if (unlikely(clientData_in->workqueue)) {
     pr_warn("%s: workqueue already initialized\n", __FUNCTION__);
     return 0;
   }
 
   clientData_in->workqueue = create_singlethread_workqueue(KO_OLIMEX_MOD_MPU6050_WQ_NAME);
-  if (IS_ERR(clientData_in->workqueue)) {
+  if (unlikely(IS_ERR(clientData_in->workqueue))) {
     pr_err("%s: create_singlethread_workqueue(%s) failed: %ld, aborting\n", __FUNCTION__,
            KO_OLIMEX_MOD_MPU6050_WQ_NAME,
            PTR_ERR(clientData_in->workqueue));
@@ -216,7 +224,7 @@ i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }

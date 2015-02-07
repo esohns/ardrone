@@ -34,7 +34,7 @@ i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*  clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENODEV;
   }
@@ -62,7 +62,7 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
@@ -101,7 +101,7 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_USER_CTRL, reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_USER_CTRL, (int)reg,
              bytes_written);
@@ -120,7 +120,7 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
     //                                            MPU6050_RA_USER_CTRL,
     //                                            reg);
-    //  if (bytes_written) {
+    //  if (unlikely(bytes_written)) {
     //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
     //           MPU6050_RA_USER_CTRL, (int)reg,
     //           bytes_written);
@@ -143,7 +143,7 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
                                               MPU6050_RA_PWR_MGMT_1,
                                               reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
              bytes_written);
@@ -161,7 +161,7 @@ i2c_mpu6050_device_fifo_count(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
@@ -190,7 +190,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
@@ -225,7 +225,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                             MPU6050_RA_PWR_MGMT_1,
                                             reg);
   gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-  if (bytes_written) {
+  if (unlikely(bytes_written)) {
     pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
            MPU6050_RA_PWR_MGMT_1, (int)reg,
            bytes_written);
@@ -243,7 +243,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
 //                                            MPU6050_RA_SMPLRT_DIV,
 //                                            reg);
-//  if (bytes_written) {
+//  if (unlikely(bytes_written)) {
 //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
 //           MPU6050_RA_SMPLRT_DIV, (int)reg,
 //           bytes_written);
@@ -263,7 +263,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
 //                                            MPU6050_RA_CONFIG,
 //                                            reg);
-//  if (bytes_written) {
+//  if (unlikely(bytes_written)) {
 //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
 //           MPU6050_RA_CONFIG, (int)reg,
 //           bytes_written);
@@ -280,7 +280,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
 //                                            MPU6050_RA_PWR_MGMT_1,
 //                                            reg);
-//  if (bytes_written) {
+//  if (unlikely(bytes_written)) {
 //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
 //           MPU6050_RA_PWR_MGMT_1, (int)reg,
 //           bytes_written);
@@ -306,7 +306,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
 //                                            MPU6050_RA_GYRO_CONFIG,
 //                                            reg);
-//  if (bytes_written) {
+//  if (unlikely(bytes_written)) {
 //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
 //           MPU6050_RA_GYRO_CONFIG, (int)reg,
 //           bytes_written);
@@ -332,7 +332,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //  bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
 //                                            MPU6050_RA_ACCEL_CONFIG,
 //                                            reg);
-//  if (bytes_written) {
+//  if (unlikely(bytes_written)) {
 //    pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
 //           MPU6050_RA_ACCEL_CONFIG, (int)reg,
 //           bytes_written);
@@ -365,7 +365,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                               MPU6050_RA_FIFO_EN,
                                               reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_FIFO_EN, (int)reg,
              bytes_written);
@@ -387,7 +387,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                               MPU6050_RA_USER_CTRL,
                                               reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_USER_CTRL, (int)reg,
              bytes_written);
@@ -423,7 +423,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                               MPU6050_RA_INT_PIN_CFG,
                                               reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_INT_PIN_CFG, (int)reg,
              bytes_written);
@@ -449,7 +449,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                               MPU6050_RA_INT_ENABLE,
                                               reg);
     gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (bytes_written) {
+    if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_INT_ENABLE, (int)reg,
              bytes_written);
@@ -471,7 +471,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
                                             MPU6050_RA_PWR_MGMT_1,
                                             reg);
   gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-  if (bytes_written) {
+  if (unlikely(bytes_written)) {
     pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
            MPU6050_RA_PWR_MGMT_1, (int)reg,
            bytes_written);
@@ -488,7 +488,7 @@ i2c_mpu6050_device_fini(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }

@@ -3,6 +3,7 @@
 - Google Groups: https://groups.google.com/forum/#!forum/linux-sunxi
 - http://linux-sunxi.org/Mailing_list
 - https://github.com/linux-sunxi/u-boot-sunxi/wiki
+- http://linux-sunxi.org/A10/PIO
 
 1. Setup the Toolchain
 1.1. Required packages
@@ -14,8 +15,9 @@ cd A10_kernel_3.4/
 
 git clone -b sunxi https://github.com/linux-sunxi/u-boot-sunxi.git
 cd u-boot-sunxi/
-make A10-OLinuXino-Lime CROSS_COMPILE=arm-linux-gnueabihf-
-[ls u-boot.bin u-boot-sunxi-with-spl.bin spl/sunxi-spl.bin spl/sunxi-spl.bin u-boot.bin u-boot-sunxi-with-spl.bin]
+make A10-OLinuXino-Lime_config CROSS_COMPILE=arm-linux-gnu-
+make CROSS_COMPILE=arm-linux-gnu-
+[ls -la spl/u-boot-spl.bin spl/sunxi-spl.bin u-boot.bin u-boot.img u-boot-sunxi-with-spl.bin u-boot.srec]
 cd ..
 
 3. Build the Linux Kernel
@@ -27,9 +29,9 @@ make ARCH=arm a10lime_defconfig
 [cp .config .]
 {patch -p0 < sunxi-i2c.patch}
 {patch -p0 < a10_sound.patch}
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 uImage
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules_install
+make ARCH=arm CROSS_COMPILE=arm-linux-gnu- -j4 uImage
+make ARCH=arm CROSS_COMPILE=arm-linux-gnu- -j4 INSTALL_MOD_PATH=out modules
+make ARCH=arm CROSS_COMPILE=arm-linux-gnu- -j4 INSTALL_MOD_PATH=out modules_install
 
 4. (Format and) setup the (SD-)card
 [ls /dev/mmcblkX]
@@ -44,7 +46,7 @@ mkfs.vfat /dev/mmcblkXp1
 mkfs.ext3 /dev/mmcblkXp2
 
 5. Write the U-boot Booloader
-dd if=u-boot-sunxi/u-boot-sunxi-with-spl.bin of=/dev/sdX bs=1024 seek=8
+dd if=u-boot-sunxi/u-boot-sunxi-with-spl.bin of=/dev/mmcblkX bs=1024 seek=8
 
 6. Copy the Linux Kernel to the (SD-)card
 [mkdir /mnt/sd]

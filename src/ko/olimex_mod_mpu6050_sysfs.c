@@ -17,6 +17,7 @@
 
 #include "olimex_mod_mpu6050_sysfs.h"
 
+#include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/kobject.h>
 

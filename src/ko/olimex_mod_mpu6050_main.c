@@ -18,6 +18,7 @@
 #include "olimex_mod_mpu6050_main.h"
 
 #include <linux/err.h>
+#include <linux/gpio.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -222,7 +223,8 @@ int
 __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
                             const struct i2c_device_id* id_in)
 {
-  int err, gpio_used;
+  int err;
+//  int gpio_used;
 //  struct i2c_client* client_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
 //  struct gpio_chip* gpio_chip_p;
@@ -244,67 +246,90 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     pr_err("%s: required i2c functionality is not supported on this adapter\n", __FUNCTION__);
     return -EIO;
   }
-
-//  client_p = i2c_new_probed_device(client_in->adapter,
-//                                   &i2c_mpu6050_board_infos[0],
-//                                   normal_i2c,
-//                                   NULL); // use default probing method
-//  if (unlikely(IS_ERR(client_p))) {
-//    pr_err("%s: i2c_new_probed_device() failed: %ld\n", __FUNCTION__,
-//           PTR_ERR(client_p));
-//    return -ENOSYS;
-//  }
+  if (unlikely(!gpio_is_valid(GPIO_LED_PIN))) {
+    pr_err("%s: gpio_is_valid(%d) failed\n", __FUNCTION__,
+           GPIO_LED_PIN);
+    return -ENOSYS;
+  }
 
   client_data_p = kzalloc(sizeof(struct i2c_mpu6050_client_data_t), GFP_KERNEL);
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: kzalloc() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
-    err = -ENOMEM;
-    goto error1;
+    return -ENOMEM;
   }
-//  client_data_p->client = client_p;
+
+  //  client_p = i2c_new_probed_device(client_in->adapter,
+  //                                   &i2c_mpu6050_board_infos[0],
+  //                                   normal_i2c,
+  //                                   NULL); // use default probing method
+  //  if (unlikely(IS_ERR(client_p))) {
+  //    pr_err("%s: i2c_new_probed_device() failed: %ld\n", __FUNCTION__,
+  //           PTR_ERR(client_p));
+  //    return -ENODEV;
+  //  }
+  //  client_data_p->client = client_p;
   client_data_p->client = client_in;
   i2c_set_clientdata(client_in, client_data_p);
 
-  err = script_parser_fetch("gpio_para",
-                            "gpio_used",
-                            &gpio_used,
-                            sizeof(gpio_used)/sizeof(int));
-  if (unlikely(err)) {
-    pr_err("%s: script_parser_fetch(\"gpio_para\",\"gpio_used\") failed\n", __FUNCTION__);
-    goto error2;
-  }
-  err = script_parser_fetch("gpio_para",
-                            GPIO_INT_PIN_LABEL,
-                            (int*)&client_data_p->gpio_int_data,
-                            sizeof(script_gpio_set_t));
-  if (unlikely(err)) {
-    pr_err("%s: script_parser_fetch(\"gpio_para\",\"%s\") failed\n", __FUNCTION__,
-           GPIO_INT_PIN_LABEL);
-    goto error2;
-  }
-  err = script_parser_fetch("gpio_para",
+//  err = script_parser_fetch(GPIO_FEX_SECTION_HEADER,
+//                            "gpio_used",
+//                            &gpio_used,
+//                            sizeof(gpio_used)/sizeof(int));
+//  if (unlikely(err)) {
+//    pr_err("%s: script_parser_fetch(\"%s\",\"gpio_used\") failed\n", __FUNCTION__,
+//           GPIO_FEX_SECTION_HEADER);
+//    goto error2;
+//  }
+  err = script_parser_fetch(GPIO_FEX_SECTION_HEADER,
                             GPIO_LED_PIN_LABEL,
                             (int*)&client_data_p->gpio_led_data,
                             sizeof(script_gpio_set_t));
-  if (unlikely(err)) {
-    pr_err("%s: script_parser_fetch(\"gpio_para\",\"%s\") failed\n", __FUNCTION__,
-           GPIO_LED_PIN_LABEL);
+  if (unlikely(err != SCRIPT_PARSER_OK)) {
+    pr_err("%s: script_parser_fetch(\"%s\",\"%s\") failed: %d\n", __FUNCTION__,
+           GPIO_FEX_SECTION_HEADER,
+           GPIO_LED_PIN_LABEL,
+           err);
     goto error2;
   }
+  client_data_p->gpio_led_handle = gpio_request_ex(GPIO_FEX_SECTION_HEADER,
+                                                   GPIO_LED_PIN_LABEL);
+  if (unlikely(!client_data_p->gpio_led_handle)) {
+    pr_err("%s: gpio_request_ex(\"%s\") failed\n", __FUNCTION__,
+           GPIO_LED_PIN_LABEL);
+    err = -ENOSYS;
+    goto error2;
+  }
+  
+//  err = gpio_request(GPIO_LED_PIN,
+//                     GPIO_LED_PIN_LABEL);
+//  if (unlikely(err)) {
+//    pr_err("%s: gpio_request(%d) failed: %d\n", __FUNCTION__,
+//           GPIO_LED_PIN,
+//           err);
+//    goto error3;
+//  }
+//  err = gpio_export(GPIO_LED_PIN,
+//                    false);
+//  if (unlikely(err)) {
+//    pr_err("%s: gpio_export(%d) failed: %d\n", __FUNCTION__,
+//           GPIO_LED_PIN,
+//           err);
+//    goto error4;
+//  }
 
   err = i2c_mpu6050_sysfs_init(client_data_p);
   if (unlikely(err < 0)) {
     pr_err("%s: i2c_mpu6050_sysfs_init() failed\n", __FUNCTION__);
     err = -ENOSYS;
-    goto error2;
+    goto error5;
   }
 
   err = i2c_mpu6050_wq_init(client_data_p);
   if (unlikely(err < 0)) {
     pr_err("%s: i2c_mpu6050_wq_init() failed\n", __FUNCTION__);
     err = -ENOSYS;
-    goto error3;
+    goto error6;
   }
 
   i2c_mpu6050_clearringbuffer(client_data_p);
@@ -314,20 +339,20 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   if (unlikely(err < 0)) {
     pr_err("%s: i2c_mpu6050_device_init() failed\n", __FUNCTION__);
     err = -ENOSYS;
-    goto error4;
+    goto error7;
   }
 
   if (unlikely(noirq)) {
     if (unlikely(i2c_mpu6050_timer_init(client_data_p))) {
       pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
       err = -ENOSYS;
-      goto error5;
+      goto error8;
     }
   } else {
    if (unlikely(i2c_mpu6050_irq_init(client_data_p))) {
      pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
      err = -ENOSYS;
-     goto error5;
+     goto error8;
    }
   }
 
@@ -338,16 +363,22 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 
   return 0;
 
-error5:
+error8:
   i2c_mpu6050_device_fini(client_data_p);
-error4:
+error7:
   i2c_mpu6050_wq_fini(client_data_p);
-error3:
+error6:
   i2c_mpu6050_sysfs_fini(client_data_p);
+error5:
+//  gpio_unexport(GPIO_LED_PIN);
+//error4:
+//  gpio_free(GPIO_LED_PIN);
+//error3:
+  gpio_release(client_data_p->gpio_led_handle, 1);
 error2:
-  kfree(client_data_p);
-error1:
 //  i2c_unregister_device(client_data_p->client);
+//error1:
+  kfree(client_data_p);
 
   return err;
 }
@@ -387,7 +418,10 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   i2c_mpu6050_device_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
   i2c_mpu6050_sysfs_fini(client_data_p);
-  i2c_unregister_device(client_data_p->client);
+//  gpio_unexport(GPIO_LED_PIN);
+//  gpio_free(GPIO_LED_PIN);
+  gpio_release(client_data_p->gpio_led_handle, 1);
+//  i2c_unregister_device(client_data_p->client);
   kfree(client_data_p);
 
   return 0;
@@ -476,10 +510,10 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
 };
 
 int noirq=0;
-module_param(noirq, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(noirq, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(noirq, "use polling (instead of interrupt)");
 int fifo=1;
-module_param(fifo, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(fifo, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(fifo, "use device FIFO");
 
 int

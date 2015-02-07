@@ -39,25 +39,24 @@ i2c_mpu6050_hr_timer_handler(struct hrtimer* timer_in)
            jiffies);
 
   // sanity check(s)
-  if (!timer_in) {
+  if (unlikely(!timer_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return HRTIMER_NORESTART;
   }
   client_data_p = container_of(timer_in, struct i2c_mpu6050_client_data_t, hr_timer);
-  if (IS_ERR(client_data_p)) {
+  if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: container_of() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
     return HRTIMER_NORESTART;
   }
 
-  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIn_LABEL);
+//  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIn_LABEL);
   err = queue_work(client_data_p->workqueue, &client_data_p->work_read.work);
-  if (err < 0) {
-    pr_err("%s: queue_work failed: %d\n", __FUNCTION__,
-           err);
+  if (unlikely(err == 0)) {
+    pr_err("%s: queue_work() failed\n", __FUNCTION__);
     return HRTIMER_NORESTART;
   }
-  //  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIn_LABEL);
+//  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIn_LABEL);
 
   // now = hrtimer_cb_get_time(timeri);
 //  now = ktime_get();
@@ -78,7 +77,7 @@ i2c_mpu6050_timer_init(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
@@ -87,19 +86,19 @@ i2c_mpu6050_timer_init(struct i2c_mpu6050_client_data_t* clientData_in)
   hrtimer_init(&clientData_in->hr_timer,
                CLOCK_MONOTONIC,
                HRTIMER_MODE_REL);
-  clientData_in->hr_timer.function = &i2c_mpu6050_hr_timer_handler;
-
-  pr_debug("%s: starting timer (interval: %ldms) @%ld\n", __FUNCTION__,
-           TIMER_DELAY, jiffies);
+  clientData_in->hr_timer.function = i2c_mpu6050_hr_timer_handler;
 
   err = hrtimer_start(&clientData_in->hr_timer,
                       delay,
                       HRTIMER_MODE_REL);
-  if (err < 0) {
+  if (unlikely(err)) {
     pr_err("%s: hrtimer_start() failed: %d\n", __FUNCTION__,
-           -err);
-    return -ENOSYS;
+           err);
+    return err;
   }
+
+  pr_debug("%s: started timer (interval: %ldms) @%ld\n", __FUNCTION__,
+           TIMER_DELAY, jiffies);
 
   return 0;
 }
@@ -112,15 +111,15 @@ i2c_mpu6050_timer_fini(struct i2c_mpu6050_client_data_t* clientData_in)
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  if (!clientData_in) {
+  if (unlikely(!clientData_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
 
   err = hrtimer_cancel(&clientData_in->hr_timer);
-  if (err < 0) {
+  if (unlikely(err)) {
     pr_err("%s: hrtimer_cancel() failed: %d\n", __FUNCTION__,
-           -err);
+           err);
     return;
   }
 

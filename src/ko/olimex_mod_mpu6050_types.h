@@ -53,9 +53,10 @@ struct fifo_work_t {
 struct i2c_mpu6050_client_data_t {
   struct hrtimer hr_timer;
   struct pinctrl* pin_ctrl;
-  struct pinctrl_state* pin_ctrl_state;
-  script_gpio_set_t gpio_int_data;
+//  struct pinctrl_state* pin_ctrl_state;
+//  script_gpio_set_t gpio_int_data;
   script_gpio_set_t gpio_led_data;
+  unsigned gpio_int_handle;
   unsigned gpio_led_handle;
   struct i2c_client* client;
 //  struct kobject* object; // used for the sysfs entries

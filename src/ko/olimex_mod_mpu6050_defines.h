@@ -36,16 +36,17 @@
 #define MS_TO_NS(x)                       (x * 1E6L)
 
 // gpio
+#define GPIO_FEX_SECTION_HEADER           "gpio_para"
 // *NOTE*: check the .fex file (bin2fex of script.bin) in the device boot partition
 // *TODO*: these should be defined elsewhere... (check linux-sunxi development)
-//#define GPIO_INT_PIN       10
-//#define GPIO_INT_PIN_LABEL     "gpio_pin_10"
+#define GPIO_UEXT4_PG11_PIN               10 // *NOTE*: connect UEXT to GPIO-1 port
+#define GPIO_UEXT4_PG11_LABEL             "gpio_pin_10"
+//#define GPIO_UEXT4_PH17_PIN               30 // *NOTE*: connect UEXT to GPIO-3 port
+//#define GPIO_UEXT4_PH17_LABEL             "gpio_pin_30"
 #define GPIO_LED_PH02_PIN                 20
 #define GPIO_LED_PH02_LABEL               "gpio_pin_20"
-#define GPIO_UEXT4_PH17_PIN               30 // *NOTE*: connect UEXT to GPIO-3 (!)
-#define GPIO_UEXT4_PH17_LABEL             "gpio_pin_30"
-#define GPIO_INT_PIN                      GPIO_UEXT4_PH17_PIN
-#define GPIO_INT_PIN_LABEL                GPIO_UEXT4_PH17_LABEL
+#define GPIO_INT_PIN                      GPIO_UEXT4_PG11_PIN
+#define GPIO_INT_PIN_LABEL                GPIO_UEXT4_PG11_LABEL
 #define GPIO_LED_PIN                      GPIO_LED_PH02_PIN
 #define GPIO_LED_PIN_LABEL                GPIO_LED_PH02_LABEL
 
