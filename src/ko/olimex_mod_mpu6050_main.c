@@ -300,7 +300,8 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     err = -ENOSYS;
     goto error2;
   }
-  
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+
 //  err = gpio_request(GPIO_LED_PIN,
 //                     GPIO_LED_PIN_LABEL);
 //  if (unlikely(err)) {
@@ -319,50 +320,59 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 //  }
 
   err = i2c_mpu6050_sysfs_init(client_data_p);
-  if (unlikely(err < 0)) {
+  if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_sysfs_init() failed\n", __FUNCTION__);
-    err = -ENOSYS;
     goto error5;
   }
 
+  spin_lock_init(&client_data_p->sync_lock);
+  i2c_mpu6050_ringbuffer_clear(client_data_p);
+
   err = i2c_mpu6050_wq_init(client_data_p);
-  if (unlikely(err < 0)) {
+  if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_wq_init() failed\n", __FUNCTION__);
-    err = -ENOSYS;
     goto error6;
   }
 
-  i2c_mpu6050_clearringbuffer(client_data_p);
-  spin_lock_init(&client_data_p->sync_lock);
-
   err = i2c_mpu6050_device_init(client_data_p);
-  if (unlikely(err < 0)) {
+  if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_device_init() failed\n", __FUNCTION__);
-    err = -ENOSYS;
     goto error7;
   }
 
   if (unlikely(noirq)) {
-    if (unlikely(i2c_mpu6050_timer_init(client_data_p))) {
+    err = i2c_mpu6050_timer_init(client_data_p);
+    if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
-      err = -ENOSYS;
       goto error8;
     }
   } else {
-   if (unlikely(i2c_mpu6050_irq_init(client_data_p))) {
-     pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
-     err = -ENOSYS;
-     goto error8;
-   }
+    err = i2c_mpu6050_irq_init(client_data_p);
+    if (unlikely(err)) {
+      pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
+      goto error8;
+    }
+  }
+
+  err = i2c_mpu6050_device_ping(client_data_p);
+  if (unlikely(err)) {
+    pr_err("%s: i2c_mpu6050_device_ping() failed\n", __FUNCTION__);
+    goto error9;
   }
 
   // debug info
   dev_info(&client_data_p->client->dev,
-           "%s created\n",
+           "%s initialized\n",
            KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
 
   return 0;
 
+error9:
+  if (unlikely(noirq)) {
+    i2c_mpu6050_timer_fini(client_data_p);
+  } else {
+    i2c_mpu6050_irq_fini(client_data_p);
+  }
 error8:
   i2c_mpu6050_device_fini(client_data_p);
 error7:
@@ -512,9 +522,9 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
 int noirq=0;
 module_param(noirq, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(noirq, "use polling (instead of interrupt)");
-int fifo=1;
-module_param(fifo, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(fifo, "use device FIFO");
+int nofifo=0;
+module_param(nofifo, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(nofifo, "do not use device FIFO buffer");
 
 int
 __init i2c_mpu6050_init(void)

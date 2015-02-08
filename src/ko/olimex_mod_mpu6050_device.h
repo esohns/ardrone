@@ -23,8 +23,10 @@ struct i2c_mpu6050_client_data_t;
 
 // function declarations
 int i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*);
-void i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t*, int);
 int i2c_mpu6050_device_fifo_count(struct i2c_mpu6050_client_data_t*);
+
+void i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t*, int, int);
+int i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t*);
 
 int i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t*);
 void i2c_mpu6050_device_fini(struct i2c_mpu6050_client_data_t*);

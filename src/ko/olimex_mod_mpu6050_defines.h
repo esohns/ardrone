@@ -33,7 +33,6 @@
 
 // macros
 #define ARRAY_AND_SIZE(x)	                (x), ARRAY_SIZE(x)
-#define MS_TO_NS(x)                       (x * 1E6L)
 
 // gpio
 #define GPIO_FEX_SECTION_HEADER           "gpio_para"
@@ -50,18 +49,20 @@
 #define GPIO_LED_PIN                      GPIO_LED_PH02_PIN
 #define GPIO_LED_PIN_LABEL                GPIO_LED_PH02_LABEL
 
-// fifo / ringbuffer
-#define FIFOSTORESIZE                     20
-#define FIFOSTOREDATASIZE                 64
-#define RINGBUFFERSIZE                    20
-#define RINGBUFFERDATASIZE                64
+// ringbuffer
+#define RINGBUFFER_SIZE                   64
+#define RINGBUFFER_DATA_SIZE              14
 
 // timer
-#define TIMER_DELAY                       10L // ms
+//#define TIMER_DELAY_MS                    10L // ms
+#define TIMER_DELAY_MS                    500L // ms
 
 // device
-#define RESET_DELAY                       100 // ms
-#define BLOCK_LENGTH                      14
-#define WHO_AM_I_REG                      0x68
+#define RESET_DELAY_MS                    100 // ms
+#define BLOCK_LENGTH                      14 // bytes
+#define ACCEL_SENSITIVITY                 16384 // LSB/g
+#define THERMO_SENSITIVITY                340.0F
+#define THERMO_OFFSET                     36.53F
+#define GYRO_SENSITIVITY                  131 // LSB/(°/s)
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

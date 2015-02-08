@@ -16,9 +16,6 @@ AM_CPPFLAGS = \
   -I$(KDIR)arch/$(ARCH)/include \
   -I$(KDIR)arch/$(ARCH)/uapi/include \
   -I$(KDIR)arch/sh/include
-#-I$(KDIR)include \
-#-I$(KDIR)arch/$(ARCH)/mach-sun4i/include \
-#-I$(KDIR)arch/$(ARCH)/plat-sunxi/include
 
 EXTRA_DIST = \
   Makefile.common \

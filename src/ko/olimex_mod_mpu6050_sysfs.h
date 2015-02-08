@@ -26,9 +26,8 @@ struct kobj_attribute;
 struct attribute;
 struct i2c_mpu6050_client_data_t;
 
-extern struct kobj_attribute store_attribute;
 extern struct kobj_attribute reg_attribute;
-extern struct kobj_attribute clearringbuffer_attribute;
+extern struct kobj_attribute ringbuffer_attribute;
 extern struct kobj_attribute intstate_attribute;
 extern struct kobj_attribute ledstate_attribute;
 extern struct attribute* i2c_mpu6050_attrs[];
@@ -36,21 +35,18 @@ extern const struct attribute_group i2c_mpu6050_group;
 extern const struct attribute_group* i2c_mpu6050_groups[];
 
 // function declarations
-ssize_t i2c_mpu6050_store_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
-ssize_t i2c_mpu6050_store_show(struct kobject*, struct kobj_attribute*, char*);
-
 // register access
 ssize_t i2c_mpu6050_reg_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
 ssize_t i2c_mpu6050_reg_show(struct kobject*, struct kobj_attribute*, char*);
 
-// ringbuffer
-void i2c_mpu6050_clearringbuffer(void*);
-ssize_t i2c_mpu6050_clearringbuffer_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
+// ringbuffer access
+void i2c_mpu6050_ringbuffer_clear(void*);
+ssize_t i2c_mpu6050_ringbuffer_store(struct kobject*, struct kobj_attribute*, const char*, size_t);
+ssize_t i2c_mpu6050_ringbuffer_show(struct kobject*, struct kobj_attribute*, char*);
 
 // INT / LED / (device) FIFO
 ssize_t i2c_mpu6050_intstate_show(struct kobject*, struct kobj_attribute*, char*);
 ssize_t i2c_mpu6050_ledstate_show(struct kobject*, struct kobj_attribute*, char*);
-ssize_t i2c_mpu6050_fifostate_show(struct kobject*, struct kobj_attribute*, char*);
 
 int i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t*);
 void i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t*);

@@ -26,12 +26,24 @@ ccflags-y         = \
   -I$(KDIR)arch/$(ARCH)/uapi/include \
   -I$(KDIR)arch/sh/include \
   -I$(AM_ABSSRCDIR)/3rd_party/i2cdevlib
-#  -I$(KDIR)include \
-#  -I$(KDIR)arch/arm/mach-sun4i/include \
-#  -I$(KDIR)arch/arm/plat-sunxi/include \
 
+ccflags-y        += \
+  -mfloat-abi=hard \
+  -mfpu=neon \
+  -mcpu=cortex-a8 \
+  -mtune=cortex-a8
 ifeq ($(DEBUG),1)
-  ccflags-y      += -DDEBUG
+#  ccflags-y      -= -O2
+  ccflags-y      += \
+    -O0 \
+    -DDEBUG
+else
+#  ccflags-y      -= -g
+  ccflags-y      += \
+    -funroll-loops \
+    -ftree-vectorize \
+    -fassociative-math \
+    -funsafe-math-optimizations
 endif
 
 #KBUILD_EXTRA_SYMBOLS
@@ -39,13 +51,12 @@ endif
 #INSTALL_MOD_DIR=$(AM_CWDCDIR)
 
 all: modules
+
 modules:
 	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) \
-KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
-V=$(KBUILD_VERBOSE) modules
-#	$(MAKE) -C $(KDIR) M=$(PWD) modules
+  KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
+  V=$(KBUILD_VERBOSE) modules
+
 clean:
 	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) clean
-	rm -rf $(abs_srcdir)/.tmp_versions
-#	mv -f $(abs_builddir)/Makefile.automake Makefile
-#	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	rm -rf $(AM_ABSSRCDIR)/.tmp_versions

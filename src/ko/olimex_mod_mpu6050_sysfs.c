@@ -24,22 +24,18 @@
 #include "olimex_mod_mpu6050_types.h"
 #include "olimex_mod_mpu6050_device.h"
 
-struct kobj_attribute store_attribute =           __ATTR(data, 0666, i2c_mpu6050_store_show, i2c_mpu6050_store_store);
-struct kobj_attribute reg_attribute =             __ATTR(addr, 0666, i2c_mpu6050_reg_show, i2c_mpu6050_reg_store);
-struct kobj_attribute clearringbuffer_attribute = __ATTR(clear_ringbuffer, 0222, NULL, i2c_mpu6050_clearringbuffer_store);
-struct kobj_attribute intstate_attribute =        __ATTR(int_state, 0444, i2c_mpu6050_intstate_show, NULL);
-struct kobj_attribute ledstate_attribute =        __ATTR(led_state, 0444, i2c_mpu6050_ledstate_show, NULL);
-struct kobj_attribute fifostate_attribute =       __ATTR(fifo_state, 0444, i2c_mpu6050_fifostate_show, NULL);
+struct kobj_attribute reg_attribute        = __ATTR(reg, 0666, i2c_mpu6050_reg_show, i2c_mpu6050_reg_store);
+struct kobj_attribute ringbuffer_attribute = __ATTR(buffer, 0444, i2c_mpu6050_ringbuffer_show, NULL);
+struct kobj_attribute intstate_attribute   = __ATTR(int_state, 0444, i2c_mpu6050_intstate_show, NULL);
+struct kobj_attribute ledstate_attribute   = __ATTR(led_state, 0444, i2c_mpu6050_ledstate_show, NULL);
 /* *NOTE*: use a group of attributes so that the kernel can create and destroy
  *         them all at once
  */
 struct attribute* i2c_mpu6050_attrs[] = {
-  &store_attribute.attr,
   &reg_attribute.attr,
-  &clearringbuffer_attribute.attr,
+  &ringbuffer_attribute.attr,
   &intstate_attribute.attr,
   &ledstate_attribute.attr,
-  &fifostate_attribute.attr,
   NULL, // need to NULL terminate the list of attributes
 };
 //ATTRIBUTE_GROUPS(i2c_mpu6050);
@@ -50,132 +46,6 @@ const struct attribute_group* i2c_mpu6050_groups[] = {
   &i2c_mpu6050_group,
   NULL, // need to NULL terminate the list of attribute groups
 };
-
-ssize_t
-i2c_mpu6050_store_store(struct kobject* kobj_in,
-                        struct kobj_attribute* attr_in,
-                        const char* buf_in,
-                        size_t count_in)
-{
-  struct i2c_client* client_p;
-  struct i2c_mpu6050_client_data_t* client_data_p;
-  int err;
-
-  pr_debug("%s called.\n", __FUNCTION__);
-
-  // sanity check(s)
-  if (unlikely(!kobj_in)) {
-    pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
-  }
-  if (unlikely(count_in > FIFOSTOREDATASIZE)) {
-    pr_err("%s: invalid argument %d (expected <= %d)", __FUNCTION__,
-           count_in,
-           FIFOSTOREDATASIZE);
-    return -ENOSYS;
-  }
-//  struct device* device_p = kobj_to_dev(kobj_in);
-////  struct kobj_type* ktype = get_ktype(kobj_in);
-////  if (ktype == &device_ktype)
-////    device_p = to_dev(kobj_in);
-//  if (unlikely(!device_p)) {
-//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
-//    return -ENODEV;
-//  }
-//  client_p = to_i2c_client(device_p);
-  client_p = kobj_to_i2c_client(kobj_in);
-  if (unlikely(IS_ERR(client_p))) {
-    pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_p));
-    return -ENOSYS;
-  }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (unlikely(IS_ERR(client_data_p))) {
-    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p));
-    return -ENOSYS;
-  }
-  if (unlikely(client_data_p->fifostorepos >= FIFOSTORESIZE)) {
-    pr_err("%s: can't store data because FIFO is full.", __FUNCTION__);
-    return -ENOSYS;
-  }
-
-  pr_debug("%s: storing %d bytes to store pos 0x%.2x\n", __FUNCTION__,
-           (int)count_in,
-           client_data_p->fifostorepos);
-  memcpy(client_data_p->fifostore[client_data_p->fifostorepos].data, buf_in, count_in);
-  client_data_p->fifostore[client_data_p->fifostorepos].size = count_in;
-  client_data_p->fifostorepos++;
-
-  pr_debug("%s: queueing work PROCESSFIFOSTORE\n", __FUNCTION__);
-  err = queue_work(client_data_p->workqueue,
-                   &client_data_p->work_processfifostore.work);
-  if (unlikely(err < 0)) {
-    pr_err("%s: queue_work failed: %d\n", __FUNCTION__,
-           err);
-    return -ENOSYS;
-  }
-
-  return count_in;
-}
-
-ssize_t
-i2c_mpu6050_store_show(struct kobject* kobj_in,
-                       struct kobj_attribute* attr_in,
-                       char* buf_in)
-{
-  struct i2c_client* client_p;
-  struct i2c_mpu6050_client_data_t* client_data_p;
-  int i, currentbufsize;
-
-  pr_debug("%s called.\n", __FUNCTION__);
-
-  // sanity check(s)
-  if (unlikely(!kobj_in)) {
-    pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
-  }
-//  struct device* device_p = NULL;
-//  struct kobj_type* ktype = get_ktype(kobj_in);
-//  if (ktype == &device_ktype)
-//    device_p = to_dev(kobj_in);
-//  if (unlikely(!device_p)) {
-//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
-//    return -ENODEV;
-//  }
-//  client_p = to_i2c_client(device_p);
-  client_p = kobj_to_i2c_client(kobj_in);
-  if (unlikely(IS_ERR(client_p))) {
-    pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_p));
-    return -ENOSYS;
-  }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (unlikely(IS_ERR(client_data_p))) {
-    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p));
-    return -ENOSYS;
-  }
-
-  i = (client_data_p->ringbufferpos + 1);
-  if (i == RINGBUFFERSIZE) i = 0;
-  while (i != client_data_p->ringbufferpos) {
-    if (client_data_p->ringbuffer[i].completed) {
-      currentbufsize = client_data_p->ringbuffer[i].size;
-      // found a used & completed slot, outputting
-      pr_debug("%s: outputting ringbuffer slot %.2x, %d bytes\n", __FUNCTION__,
-               i, currentbufsize);
-      memcpy(buf_in, client_data_p->ringbuffer[i].data, currentbufsize);
-      client_data_p->ringbuffer[i].completed = client_data_p->ringbuffer[i].used = 0;
-      return currentbufsize;
-    }
-
-    i++;
-    if (i == RINGBUFFERSIZE) i = 0;
-  }
-
-  return 0;
-}
 
 ssize_t
 i2c_mpu6050_reg_store(struct kobject* kobj_in,
@@ -215,7 +85,7 @@ i2c_mpu6050_reg_store(struct kobject* kobj_in,
     return -EIO;
   }
 
-  pr_debug("%s: wrote %.2x to register %.2x\n", __FUNCTION__,
+  pr_debug("%s: wrote 0x%.2x to register 0x%.2x\n", __FUNCTION__,
            (u8)reg, (u8)val);
 
   return count_in;
@@ -258,7 +128,7 @@ i2c_mpu6050_reg_show(struct kobject* kobj_in,
 }
 
 void
-i2c_mpu6050_clearringbuffer(void* data_in)
+i2c_mpu6050_ringbuffer_clear(void* data_in)
 {
   struct i2c_mpu6050_client_data_t* client_data_p;
   int i;
@@ -276,14 +146,16 @@ i2c_mpu6050_clearringbuffer(void* data_in)
     return;
   }
 
-  for (i = 0; i < RINGBUFFERSIZE; i++)
+  spin_lock(&client_data_p->sync_lock);
+  for (i = 0; i < RINGBUFFER_SIZE; i++)
     client_data_p->ringbuffer[i].completed = client_data_p->ringbuffer[i].used = 0;
+  spin_unlock(&client_data_p->sync_lock);
 }
 
 ssize_t
-i2c_mpu6050_clearringbuffer_store(struct kobject* kobj_in,
-                                  struct kobj_attribute* attr_in,
-                                  const char* buf_in, size_t count_in)
+i2c_mpu6050_ringbuffer_store(struct kobject* kobj_in,
+                             struct kobj_attribute* attr_in,
+                             const char* buf_in, size_t count_in)
 {
   struct i2c_client* client_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
@@ -295,15 +167,6 @@ i2c_mpu6050_clearringbuffer_store(struct kobject* kobj_in,
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-//  struct device* device_p = kobj_to_dev(kobj_in);
-////  struct kobj_type* ktype = get_ktype(kobj_in);
-////  if (ktype == &device_ktype)
-////    device_p = to_dev(kobj_in);
-//  if (unlikely(!device_p)) {
-//    pr_err("%s: invalid parameter (not a device ?)\n", __FUNCTION__);
-//    return -ENODEV;
-//  }
-//  client_p = to_i2c_client(device_p);
   client_p = kobj_to_i2c_client(kobj_in);
   if (unlikely(IS_ERR(client_p))) {
     pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
@@ -317,20 +180,21 @@ i2c_mpu6050_clearringbuffer_store(struct kobject* kobj_in,
     return -ENOSYS;
   }
 
-  i2c_mpu6050_clearringbuffer(client_data_p);
+  i2c_mpu6050_ringbuffer_clear(client_data_p);
 
-  pr_debug("%s: ringbuffer cleared.\n", __FUNCTION__);
-
-  return count_in;
+  return 0;
 }
 
 ssize_t
-i2c_mpu6050_intstate_show(struct kobject* kobj_in,
-                          struct kobj_attribute* attr_in,
-                          char* buf_in)
+i2c_mpu6050_ringbuffer_show(struct kobject* kobj_in,
+                            struct kobj_attribute* attr_in,
+                            char* buf_in)
 {
   struct i2c_client* client_p;
-  int gpio, value;
+  struct i2c_mpu6050_client_data_t* client_data_p;
+  int i;
+  u8* reg_p;
+  u16 value;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
@@ -345,15 +209,89 @@ i2c_mpu6050_intstate_show(struct kobject* kobj_in,
            PTR_ERR(client_p));
     return -ENOSYS;
   }
-//  gpio = irq_to_gpio(client_p->irq);
-  gpio = GPIO_INT_PIN;
-//  if (unlikely(gpio < 0)) {
-//    pr_err("%s: irq_to_gpio(%d) failed\n", __FUNCTION__,
-//           client_p->irq);
-//    return -ENOSYS;
-//  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  if (unlikely(IS_ERR(client_data_p))) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return -ENOSYS;
+  }
 
-  value = gpio_get_value(gpio);
+  spin_lock(&client_data_p->sync_lock);
+  for (i = 0; i < RINGBUFFER_SIZE; i++) {
+    if (!client_data_p->ringbuffer[i].completed ||
+        !client_data_p->ringbuffer[i].used)
+      continue; // unused slot
+
+    reg_p = client_data_p->ringbuffer[i].data;
+    value = ~*(u16*)reg_p;
+//    kernel_fpu_begin();
+    pr_info("%s: acceleration (x): %.5f g\n", __FUNCTION__,
+            (float)value / (float)ACCEL_SENSITIVITY);
+    reg_p += 2;
+    value = ~*(u16*)reg_p;
+    pr_info("%s: acceleration (y): %.5f g\n", __FUNCTION__,
+            (float)value / (float)ACCEL_SENSITIVITY);
+    reg_p += 2;
+    value = ~*(u16*)reg_p;
+    pr_info("%s: acceleration (z): %.5f g\n", __FUNCTION__,
+            (float)value / (float)ACCEL_SENSITIVITY);
+    reg_p += 2;
+    value = *(s16*)reg_p;
+    pr_info("%s: temperature: %.5f °C\n", __FUNCTION__,
+            ((float)(s16)value / THERMO_SENSITIVITY) + THERMO_OFFSET);
+    reg_p += 2;
+    value = ~*(u16*)reg_p;
+    pr_info("%s: rotation (x): %.5f °/s\n", __FUNCTION__,
+            (float)value / (float)GYRO_SENSITIVITY);
+    reg_p += 2;
+    value = ~*(u16*)reg_p;
+    pr_info("%s: rotation (y): %.5f °/s\n", __FUNCTION__,
+            (float)value / (float)GYRO_SENSITIVITY);
+    reg_p += 2;
+    value = ~*(u16*)reg_p;
+    pr_info("%s: rotation (z): %.5f °/s\n", __FUNCTION__,
+            (float)value / (float)GYRO_SENSITIVITY);
+//    kernel_fpu_end();
+  }
+  spin_unlock(&client_data_p->sync_lock);
+
+  i2c_mpu6050_ringbuffer_clear(client_data_p);
+  pr_debug("%s: ringbuffer cleared.\n", __FUNCTION__);
+
+  return 0;
+}
+
+ssize_t
+i2c_mpu6050_intstate_show(struct kobject* kobj_in,
+                          struct kobj_attribute* attr_in,
+                          char* buf_in)
+{
+  struct i2c_client* client_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
+  int value;
+
+  pr_debug("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (unlikely(!kobj_in)) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -ENOSYS;
+  }
+  client_p = kobj_to_i2c_client(kobj_in);
+  if (unlikely(IS_ERR(client_p))) {
+    pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_p));
+    return -ENOSYS;
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  if (unlikely(IS_ERR(client_data_p))) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return -ENOSYS;
+  }
+
+  value = gpio_read_one_pin_value(client_data_p->gpio_int_handle,
+                                  GPIO_INT_PIN_LABEL);
 
   return sprintf(buf_in, "%d\n", value);
 }
@@ -393,43 +331,11 @@ i2c_mpu6050_ledstate_show(struct kobject* kobj_in,
   return sprintf(buf_in, "%d\n", value);
 }
 
-ssize_t
-i2c_mpu6050_fifostate_show(struct kobject* kobj_in,
-                           struct kobj_attribute* attr_in,
-                           char* buf_in)
-{
-  struct i2c_client* client_p;
-  struct i2c_mpu6050_client_data_t* client_data_p;
-  int value;
-
-  pr_debug("%s called.\n", __FUNCTION__);
-
-  // sanity check(s)
-  if (unlikely(!kobj_in)) {
-    pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
-  }
-  client_p = kobj_to_i2c_client(kobj_in);
-  if (unlikely(IS_ERR(client_p))) {
-    pr_err("%s: kobj_to_i2c_client() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_p));
-    return -ENOSYS;
-  }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
-  if (unlikely(IS_ERR(client_data_p))) {
-    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p));
-    return -ENOSYS;
-  }
-
-  value = i2c_mpu6050_device_fifo_count(client_data_p);
-
-  return sprintf(buf_in, "%d\n", value);
-}
-
 int
 i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
 {
+  int err;
+
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
@@ -437,43 +343,41 @@ i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-//  if (unlikely(clientData_in->object)) {
-//    pr_warn("%s: sysfs handle already initialized, returning\n", __FUNCTION__);
-//    return 0;
-//  }
+  if (unlikely(clientData_in->sysfs_object)) {
+    pr_warn("%s: sysfs handle already initialized, returning\n", __FUNCTION__);
+    return 0;
+  }
 
-//  clientData_in->object = kobject_create_and_add(KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
-//                                                 kernel_kobj);
-//  if (unlikely(IS_ERR(clientData_in->object))) {
-//    pr_err("%s: kobject_create_and_add(%s) failed: %ld, aborting\n", __FUNCTION__,
-//           KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
-//           PTR_ERR(clientData_in->object));
-//    return -ENOSYS;
-//  }
-//  // create the files associated with this kobject
-//  err = sysfs_create_group(client_data_p->object, &i2c_mpu6050_attribute_group);
-//  if (unlikely(err)) {
-//    pr_err("%s: unable to create sysfs files\n", __FUNCTION__);
-
-//    // clean up
-//    kobject_put(client_data_p->object);
-//    kfree(client_data_p);
-
-//    return -ENOMEM;
-//  }
-  // *TODO*: announce new sysfs object
-//  err = kobject_uevent(client_data_p->object, enum kobject_action action);
-//  if (unlikely(err)) {
-//    pr_err("%s: unable to announce sysfs files\n", __FUNCTION__);
-
-//    // clean up
-//    kobject_put(client_data_p->object);
-//    kfree(client_data_p);
-
-//    return -ENOMEM;
-//  }
+  clientData_in->sysfs_object = kobject_create_and_add(KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
+                                                       kernel_kobj);
+  if (unlikely(IS_ERR(clientData_in->sysfs_object))) {
+    pr_err("%s: kobject_create_and_add(%s) failed: %ld\n", __FUNCTION__,
+           KO_OLIMEX_MOD_MPU6050_DRIVER_NAME,
+           PTR_ERR(clientData_in->sysfs_object));
+    return PTR_ERR(clientData_in->sysfs_object);
+  }
+  err = sysfs_create_group(clientData_in->sysfs_object, &i2c_mpu6050_group);
+  if (unlikely(err)) {
+    pr_err("%s: sysfs_create_group() failed: %d\n", __FUNCTION__,
+           err);
+    goto error1;
+  }
+  err = kobject_uevent(clientData_in->sysfs_object, KOBJ_ADD);
+  if (unlikely(err)) {
+    pr_err("%s: kobject_uevent(%d) failed: %d\n", __FUNCTION__,
+           KOBJ_ADD,
+           err);
+    goto error2;
+  }
 
   return 0;
+
+error2:
+  sysfs_remove_group(clientData_in->sysfs_object, &i2c_mpu6050_group);
+error1:
+  kobject_put(clientData_in->sysfs_object);
+
+  return err;
 }
 
 void
@@ -487,6 +391,6 @@ i2c_mpu6050_sysfs_fini(struct i2c_mpu6050_client_data_t* clientData_in)
     return;
   }
 
-//  kobject_put(clientData_in->object);
-//  clientData_in->object = NULL;
+  sysfs_remove_group(clientData_in->sysfs_object, &i2c_mpu6050_group);
+  kobject_put(clientData_in->sysfs_object);
 }

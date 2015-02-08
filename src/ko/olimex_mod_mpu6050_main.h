@@ -56,7 +56,7 @@ int i2c_mpu6050_detect(struct i2c_client*, struct i2c_board_info*);
 extern const struct regmap_config i2c_mpu6050_regmap_config;
 // parameters
 extern int noirq;
-extern int fifo;
+extern int nofifo;
 
 int i2c_mpu6050_init(void);
 void i2c_mpu6050_exit(void);

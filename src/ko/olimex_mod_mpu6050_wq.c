@@ -30,58 +30,17 @@
 #include "olimex_mod_mpu6050_types.h"
 
 void
-i2c_mpu6050_wq_fifo_handler(struct work_struct* work_in)
-{
-  struct fifo_work_t* work_p;
-  struct i2c_mpu6050_client_data_t* client_data_p;
-  int i, j;
-
-  pr_debug("%s called.\n", __FUNCTION__);
-
-  // sanity check(s)
-  work_p = (struct fifo_work_t*)work_in;
-  if (unlikely(!work_p)) {
-    pr_err("%s: invalid argument\n", __FUNCTION__);
-    return;
-  }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
-  if (unlikely(IS_ERR(client_data_p))) {
-    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
-           PTR_ERR(client_data_p));
-    return;
-  }
-
-  while (client_data_p->fifostorepos > 0) {
-    pr_debug("%s: %d entries in fifo store\n", __FUNCTION__,
-             client_data_p->fifostorepos);
-    pr_debug("%s: sending %d bytes\n", __FUNCTION__,
-             client_data_p->fifostore[0].size);
-
-    // left-shift the FIFO store
-    for (i = 1; i < FIFOSTORESIZE; i++) {
-      for (j = 0; j < client_data_p->fifostore[i].size; j++)
-        client_data_p->fifostore[i-1].data[j] = client_data_p->fifostore[i].data[j];
-      client_data_p->fifostore[i-1].size = client_data_p->fifostore[i].size;
-    }
-  
-    client_data_p->fifostorepos--;
-  }
-
-  pr_debug("%s: work exit\n", __FUNCTION__);
-}
-
-void
 i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 {
-  struct fifo_work_t* work_p;
+  struct read_work_t* work_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
+  s32 bytes_to_read, bytes_read = 0;
   int err;
-  s32 bytes_read, bytes_to_read = 0;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  work_p = (struct fifo_work_t*)work_in;
+  work_p = (struct read_work_t*)work_in;
   if (unlikely(!work_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
@@ -93,12 +52,13 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
     return;
   }
 
+  spin_lock(&client_data_p->sync_lock);
 //  memset(&client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
 //         0,
 //         RINGBUFFERDATASIZE);
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 1;
 
-  if (likely(fifo)) {
+  if (likely(nofifo == 0)) {
     // *TODO*: use a single transaction for efficiency...
 //    reg = MPU6050_RA_FIFO_R_W;
 //    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
@@ -128,7 +88,6 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
     if (unlikely(bytes_to_read == 0)) {
       goto clean_up;
     }
-    bytes_read = 0;
 do_loop:
     while (bytes_read < bytes_to_read) {
       gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
@@ -141,7 +100,8 @@ do_loop:
                                           client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
       gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
       if (unlikely(err < 0)) {
-        pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d\n", __FUNCTION__,
+        pr_err("%s: i2c_smbus_read_i2c_block_data(0x%x) failed: %d\n", __FUNCTION__,
+               MPU6050_RA_FIFO_R_W,
                err);
         goto clean_up;
       }
@@ -151,33 +111,34 @@ do_loop:
   }
   else {
     // *NOTE*: read one complete set of data only...
+    bytes_to_read = BLOCK_LENGTH;
     gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
     bytes_read = i2c_smbus_read_i2c_block_data(client_data_p->client,
-                                               MPU6050_RA_ACCEL_XOUT_H, BLOCK_LENGTH,
+                                               MPU6050_RA_ACCEL_XOUT_H, bytes_to_read,
                                                client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
     gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (unlikely(bytes_read != BLOCK_LENGTH)) {
-      pr_err("%s: i2c_smbus_read_i2c_block_data() failed: %d (expected: %d)\n", __FUNCTION__,
-             bytes_read, BLOCK_LENGTH);
+    if (unlikely(bytes_read != bytes_to_read)) {
+      pr_err("%s: i2c_smbus_read_i2c_block_data(0x%x) failed: %d (expected: %d)\n", __FUNCTION__,
+             MPU6050_RA_ACCEL_XOUT_H,
+             bytes_read, bytes_to_read);
       goto clean_up;
     }
   }
 
 do_dispatch:
-//  pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
-//           err, client_data_p->ringbufferpos);
-  pr_debug("%s: read %d bytes into ringbuffer slot# %.2x...\n", __FUNCTION__,
+  pr_debug("%s: read %d bytes into (ring-)buffer (slot# %d)...\n", __FUNCTION__,
            bytes_read,
            client_data_p->ringbufferpos);
 
-//  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = err;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].size = bytes_read;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
 
   client_data_p->ringbufferpos++;
-  if (unlikely(client_data_p->ringbufferpos == RINGBUFFERSIZE))
+  if (unlikely(client_data_p->ringbufferpos == RINGBUFFER_SIZE))
     client_data_p->ringbufferpos = 0;
-  if (likely(fifo && (bytes_read < bytes_to_read))) goto do_loop;
+  if (likely((nofifo == 0) &&
+             (bytes_read < bytes_to_read))) goto do_loop;
+  spin_unlock(&client_data_p->sync_lock);
 
   pr_debug("%s: work exit\n", __FUNCTION__);
 
@@ -185,6 +146,9 @@ do_dispatch:
 
 clean_up:
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 0;
+  spin_unlock(&client_data_p->sync_lock);
+
+  pr_debug("%s: work exit\n", __FUNCTION__);
 }
 
 int
@@ -210,8 +174,6 @@ i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t* clientData_in)
     return -ENOSYS;
   }
 
-  INIT_WORK(&clientData_in->work_processfifostore.work, i2c_mpu6050_wq_fifo_handler);
-  clientData_in->work_processfifostore.client = clientData_in->client;
   INIT_WORK(&clientData_in->work_read.work, i2c_mpu6050_wq_read_handler);
   clientData_in->work_read.client = clientData_in->client;
 

@@ -29,23 +29,14 @@
 
 #include "olimex_mod_mpu6050_defines.h"
 
-struct fifostoreentry_t {
-  uint8_t data[FIFOSTOREDATASIZE];
-  int size;
-};
-
 struct ringbufferentry_t {
   int used;
   int completed;
-  uint8_t data[RINGBUFFERDATASIZE];
+  uint8_t data[RINGBUFFER_DATA_SIZE];
   int size;
 };
 
 struct read_work_t {
-  struct work_struct work;
-  struct i2c_client* client;
-};
-struct fifo_work_t {
   struct work_struct work;
   struct i2c_client* client;
 };
@@ -59,13 +50,10 @@ struct i2c_mpu6050_client_data_t {
   unsigned gpio_int_handle;
   unsigned gpio_led_handle;
   struct i2c_client* client;
-//  struct kobject* object; // used for the sysfs entries
+  struct kobject* sysfs_object;
   struct workqueue_struct* workqueue;
-  struct fifo_work_t work_processfifostore;
   struct read_work_t work_read;
-  struct fifostoreentry_t fifostore[FIFOSTORESIZE];
-  int fifostorepos;
-  struct ringbufferentry_t ringbuffer[RINGBUFFERSIZE];
+  struct ringbufferentry_t ringbuffer[RINGBUFFER_SIZE];
   int ringbufferpos;
   spinlock_t sync_lock; // disable interrupts while i2c_sync() is running
   unsigned long sync_lock_flags;
