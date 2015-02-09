@@ -28,9 +28,6 @@
 #define KO_OLIMEX_MOD_MPU6050_DRIVER_NAME "olimex_mod_mpu6050"
 #define KO_OLIMEX_MOD_MPU6050_WQ_NAME     "olimex_mod_mpu6050_wq"
 
-// defaults
-#define BUFSIZ                            256
-
 // macros
 #define ARRAY_AND_SIZE(x)	                (x), ARRAY_SIZE(x)
 

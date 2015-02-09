@@ -37,7 +37,7 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
   s32 bytes_to_read, bytes_read = 0;
   int err;
 
-  pr_debug("%s called.\n", __FUNCTION__);
+//  pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
   work_p = (struct read_work_t*)work_in;
@@ -52,7 +52,7 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
     return;
   }
 
-  spin_lock(&client_data_p->sync_lock);
+  mutex_lock(&client_data_p->sync_lock);
 //  memset(&client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
 //         0,
 //         RINGBUFFERDATASIZE);
@@ -126,9 +126,9 @@ do_loop:
   }
 
 do_dispatch:
-  pr_debug("%s: read %d bytes into (ring-)buffer (slot# %d)...\n", __FUNCTION__,
-           bytes_read,
-           client_data_p->ringbufferpos);
+//  pr_debug("%s: read %d bytes into (ring-)buffer (slot# %d)...\n", __FUNCTION__,
+//           bytes_read,
+//           client_data_p->ringbufferpos);
 
   client_data_p->ringbuffer[client_data_p->ringbufferpos].size = bytes_read;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].completed = 1;
@@ -138,17 +138,13 @@ do_dispatch:
     client_data_p->ringbufferpos = 0;
   if (likely((nofifo == 0) &&
              (bytes_read < bytes_to_read))) goto do_loop;
-  spin_unlock(&client_data_p->sync_lock);
-
-  pr_debug("%s: work exit\n", __FUNCTION__);
+  mutex_unlock(&client_data_p->sync_lock);
 
   return;
 
 clean_up:
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 0;
-  spin_unlock(&client_data_p->sync_lock);
-
-  pr_debug("%s: work exit\n", __FUNCTION__);
+  mutex_unlock(&client_data_p->sync_lock);
 }
 
 int

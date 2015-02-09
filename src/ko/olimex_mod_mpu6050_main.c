@@ -140,7 +140,7 @@ struct i2c_driver i2c_mpu6050_i2c_driver = {
 //    .suspend             = ,
 //    .resume              = ,
     .groups                = i2c_mpu6050_groups,
-    .pm	                   = &i2c_mpu6050_pm_ops,
+    .pm                    = &i2c_mpu6050_pm_ops,
     .p                     = NULL,
   },
   .id_table       = i2c_mpu6050_id_table,  // List of I2C devices supported by this driver
@@ -160,20 +160,18 @@ struct i2c_driver i2c_mpu6050_i2c_driver = {
 
 //  client_p = kmalloc(sizeof(*client_p), GFP_KERNEL);
 //  if (!client_p) {
-//    printk(KERN_ERR "%s: failed to kmalloc\n", __func__);
-//    return -ENOMEM;
+//    pr_err("%s: failed to kmalloc\n", __FUNCTION__);
+//    return -EINVAL;
 //  }
-//  memset(client_p, 0, sizeof(*client_p));
 //  client_data_p = kmalloc(sizeof(*client_data_p), GFP_KERNEL);
 //  if (!client_data_p) {
-//    printk(KERN_ERR "%s: failed to kmalloc\n", __func__);
+//    pr_err("%s: failed to kmalloc\n", __FUNCTION__);
 
 //    // clean up
 //    kfree(client_p);
 
 //    return -ENOMEM;
 //  }
-//  memset(client_data_p, 0, sizeof(*client_data_p));
 
 //  i2c_set_clientdata(client_p, client_data_p);
 //  client_p->addr = address_in;
@@ -187,13 +185,13 @@ struct i2c_driver i2c_mpu6050_i2c_driver = {
 //  err = i2c_attach_client(client_p);
 //  if (IS_ERR(err))
 //  {
-//    printk(KERN_ERR "failed to i2c_attach_client: %d\n", err);
+//    pr_err("%s: failed to i2c_attach_client: %d\n", __FUNCTION__, err);
 
 //    // clean up
 //    kfree(client_p);
 //    kfree(client_data_p);
 
-//    return -ENODEV;
+//    return -ENOSYS;
 //  }
 
 //  return 0;
@@ -235,7 +233,7 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   if (unlikely(!client_in))
   {
     pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
+    return -EINVAL;
   }
   if (unlikely(!i2c_check_functionality(client_in->adapter,
 //                                        (I2C_FUNC_SMBUS_QUICK           |
@@ -258,7 +256,6 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
            PTR_ERR(client_data_p));
     return -ENOMEM;
   }
-
   //  client_p = i2c_new_probed_device(client_in->adapter,
   //                                   &i2c_mpu6050_board_infos[0],
   //                                   normal_i2c,
@@ -319,14 +316,14 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 //    goto error4;
 //  }
 
+  mutex_init(&client_data_p->sync_lock);
+  i2c_mpu6050_ringbuffer_clear(client_data_p);
+
   err = i2c_mpu6050_sysfs_init(client_data_p);
   if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_sysfs_init() failed\n", __FUNCTION__);
     goto error5;
   }
-
-  spin_lock_init(&client_data_p->sync_lock);
-  i2c_mpu6050_ringbuffer_clear(client_data_p);
 
   err = i2c_mpu6050_wq_init(client_data_p);
   if (unlikely(err)) {
@@ -380,6 +377,7 @@ error7:
 error6:
   i2c_mpu6050_sysfs_fini(client_data_p);
 error5:
+  mutex_destroy(&client_data_p->sync_lock);
 //  gpio_unexport(GPIO_LED_PIN);
 //error4:
 //  gpio_free(GPIO_LED_PIN);
@@ -404,13 +402,13 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   // sanity check(s)
   if (unlikely(!client_in)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
+    return -EINVAL;
   }
   client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_in);
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
-    return -ENOSYS;
+    return -EINVAL;
   }
 //  gpio_chip_p = gpio_to_chip(GPIO_INT_PIN);
 //  if (IS_ERR(gpio_chip_p)) {
@@ -428,6 +426,7 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   i2c_mpu6050_device_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
   i2c_mpu6050_sysfs_fini(client_data_p);
+  mutex_destroy(&client_data_p->sync_lock);
 //  gpio_unexport(GPIO_LED_PIN);
 //  gpio_free(GPIO_LED_PIN);
   gpio_release(client_data_p->gpio_led_handle, 1);
@@ -484,7 +483,7 @@ __devinit i2c_mpu6050_detect(struct i2c_client* client_in, struct i2c_board_info
   // sanity check(s)
   if (!client_in || !info_in) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
-    return -ENOSYS;
+    return -EINVAL;
   }
 
   pr_debug("%s() called.\n", __FUNCTION__);
@@ -529,7 +528,6 @@ MODULE_PARM_DESC(nofifo, "do not use device FIFO buffer");
 int
 __init i2c_mpu6050_init(void)
 {
-  char buffer[BUFSIZ];
   int err;
 
   pr_debug("%s called.\n", __FUNCTION__);
@@ -560,9 +558,8 @@ __init i2c_mpu6050_init(void)
     return -ENODEV;
   }
 
-  sprintf(buffer, "%s...added\n", KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
-  pr_info("%s: %s", __FUNCTION__,
-          buffer);
+  pr_info("%s: %s...added", __FUNCTION__,
+          KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
 
   return 0;
 
@@ -575,15 +572,12 @@ __init i2c_mpu6050_init(void)
 void
 __exit i2c_mpu6050_exit(void)
 {
-  char buffer[BUFSIZ];
-
   pr_debug("%s called.\n", __FUNCTION__);
 
   i2c_del_driver(&i2c_mpu6050_i2c_driver);
 
-  sprintf(buffer, "%s...removed\n", KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
-  pr_info("%s: %s", __FUNCTION__,
-          buffer);
+  pr_info("%s: %s...removed", __FUNCTION__,
+          KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
 }
 
 module_init(i2c_mpu6050_init);

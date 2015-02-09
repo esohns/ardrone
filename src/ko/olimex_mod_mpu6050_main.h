@@ -33,7 +33,8 @@ extern unsigned short normal_i2c[];
 //extern unsigned int normal_isa[];
 //extern unsigned int normal_isa_range[];
 //extern struct list_head i2c_mpu6050_clients;
-extern struct device_driver i2c_mpu6050_device_driver;
+//extern struct device_driver i2c_mpu6050_device_driver;
+extern struct i2c_driver i2c_mpu6050_i2c_driver;
 
 //int i2c_mpu6050_attach_adapter(struct i2c_adapter*);
 //int i2c_mpu6050_detach_adapter(struct i2c_adapter*);

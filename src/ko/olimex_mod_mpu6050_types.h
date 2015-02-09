@@ -21,7 +21,7 @@
 #include <linux/i2c.h>
 #include <linux/kobject.h>
 #include <linux/pinctrl/consumer.h>
-#include <linux/spinlock.h>
+#include <linux/mutex.h>
 #include <linux/hrtimer.h>
 #include <linux/workqueue.h>
 
@@ -50,12 +50,12 @@ struct i2c_mpu6050_client_data_t {
   unsigned gpio_int_handle;
   unsigned gpio_led_handle;
   struct i2c_client* client;
-  struct kobject* sysfs_object;
+//  struct kobject* sysfs_object;
   struct workqueue_struct* workqueue;
   struct read_work_t work_read;
   struct ringbufferentry_t ringbuffer[RINGBUFFER_SIZE];
   int ringbufferpos;
-  spinlock_t sync_lock; // disable interrupts while i2c_sync() is running
+  struct mutex sync_lock;
   unsigned long sync_lock_flags;
 };
 

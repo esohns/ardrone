@@ -27,19 +27,16 @@ ccflags-y         = \
   -I$(KDIR)arch/sh/include \
   -I$(AM_ABSSRCDIR)/3rd_party/i2cdevlib
 
-ccflags-y        += \
-  -mfloat-abi=hard \
-  -mfpu=neon \
-  -mcpu=cortex-a8 \
-  -mtune=cortex-a8
+#ccflags-y        += \
+#  -mfloat-abi=softfp
 ifeq ($(DEBUG),1)
-#  ccflags-y      -= -O2
   ccflags-y      += \
-    -O0 \
     -DDEBUG
 else
-#  ccflags-y      -= -g
   ccflags-y      += \
+    -mfpu=neon \
+    -mcpu=cortex-a8 \
+    -mtune=cortex-a8
     -funroll-loops \
     -ftree-vectorize \
     -fassociative-math \

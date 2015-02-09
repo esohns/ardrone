@@ -34,8 +34,8 @@ i2c_mpu6050_hr_timer_handler(struct hrtimer* timer_in)
   ktime_t delay;
   u64 missed_intervals;
 
-  pr_debug("%s called (%ld).\n", __FUNCTION__,
-           jiffies);
+//  pr_debug("%s called (%ld).\n", __FUNCTION__,
+//           jiffies);
 
   // sanity check(s)
   if (unlikely(!timer_in)) {
