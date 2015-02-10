@@ -58,6 +58,7 @@ extern const struct regmap_config i2c_mpu6050_regmap_config;
 // parameters
 extern int noirq;
 extern int nofifo;
+extern int nonetlink;
 
 int i2c_mpu6050_init(void);
 void i2c_mpu6050_exit(void);

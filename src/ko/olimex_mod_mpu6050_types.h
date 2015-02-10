@@ -18,12 +18,13 @@
 #ifndef OLIMEX_MOD_MPU6050_TYPES_H
 #define OLIMEX_MOD_MPU6050_TYPES_H
 
+#include <linux/hrtimer.h>
 #include <linux/i2c.h>
 #include <linux/kobject.h>
-#include <linux/pinctrl/consumer.h>
 #include <linux/mutex.h>
-#include <linux/hrtimer.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/workqueue.h>
+//#include <net/sock.h>
 
 #include <plat/sys_config.h>
 
@@ -31,9 +32,9 @@
 
 struct ringbufferentry_t {
   int used;
-  int completed;
   uint8_t data[RINGBUFFER_DATA_SIZE];
   int size;
+  u64 timestamp;
 };
 
 struct read_work_t {
@@ -56,7 +57,7 @@ struct i2c_mpu6050_client_data_t {
   struct ringbufferentry_t ringbuffer[RINGBUFFER_SIZE];
   int ringbufferpos;
   struct mutex sync_lock;
-  unsigned long sync_lock_flags;
+//  struct sock* netlink_socket;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

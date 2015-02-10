@@ -46,20 +46,27 @@
 #define GPIO_LED_PIN                      GPIO_LED_PH02_PIN
 #define GPIO_LED_PIN_LABEL                GPIO_LED_PH02_LABEL
 
-// ringbuffer
-#define RINGBUFFER_SIZE                   64
-#define RINGBUFFER_DATA_SIZE              14
-
 // timer
 //#define TIMER_DELAY_MS                    10L // ms
 #define TIMER_DELAY_MS                    500L // ms
 
 // device
 #define RESET_DELAY_MS                    100 // ms
+#define REG_SET_DELAY_MS                  5 // ms
 #define BLOCK_LENGTH                      14 // bytes
 #define ACCEL_SENSITIVITY                 16384 // LSB/g
-#define THERMO_SENSITIVITY                340.0F
+#define THERMO_SENSITIVITY                340
 #define THERMO_OFFSET                     36.53F
 #define GYRO_SENSITIVITY                  131 // LSB/(°/s)
+
+// ringbuffer
+#define RINGBUFFER_SIZE                   64
+#define RINGBUFFER_DATA_SIZE              BLOCK_LENGTH
+
+// network
+// *WARNING*: check <linux/netlink.h> for available identifiers !
+//#define NETLINK_PROTOCOL_TYPE             NETLINK_GENERIC
+#define NETLINK_PROTOCOL_FAMILY_NAME      "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
+#define NETLINK_PROTOCOL_VERSION          1
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

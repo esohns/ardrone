@@ -17,8 +17,12 @@
 
 #include "olimex_mod_mpu6050_pm.h"
 
+#include <linux/err.h>
+#include <linux/i2c.h>
 #include <linux/pm.h>
 #include <linux/printk.h>
+
+#include "olimex_mod_mpu6050_device.h"
 
 struct dev_pm_ops i2c_mpu6050_pm_ops = {
   .prepare = i2c_mpu6050_pm_prepare,                 // abstain from probe()ing new devices
@@ -66,7 +70,30 @@ i2c_mpu6050_pm_complete(struct device* device_in)
 int
 i2c_mpu6050_pm_suspend(struct device* device_in)
 {
+  struct i2c_client* client_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
+
   pr_debug("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (unlikely(!device_in)) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -EINVAL;
+  }
+  client_p = to_i2c_client(device_in);
+  if (unlikely(IS_ERR(client_p))) {
+    pr_err("%s: to_i2c_client() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_p));
+    return PTR_ERR(client_p);
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  if (unlikely(IS_ERR(client_data_p))) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return PTR_ERR(client_data_p);
+  }
+
+  i2c_mpu6050_device_reset(client_data_p, 0, 1);
 
   return 0;
 }
@@ -74,7 +101,36 @@ i2c_mpu6050_pm_suspend(struct device* device_in)
 int
 i2c_mpu6050_pm_resume(struct device* device_in)
 {
+  struct i2c_client* client_p;
+  struct i2c_mpu6050_client_data_t* client_data_p;
+  int err;
+
   pr_debug("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (unlikely(!device_in)) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -EINVAL;
+  }
+  client_p = to_i2c_client(device_in);
+  if (unlikely(IS_ERR(client_p))) {
+    pr_err("%s: to_i2c_client() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_p));
+    return PTR_ERR(client_p);
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  if (unlikely(IS_ERR(client_data_p))) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return PTR_ERR(client_data_p);
+  }
+
+  err = i2c_mpu6050_device_init(client_data_p);
+  if (unlikely(err)) {
+    pr_err("%s: i2c_mpu6050_device_init() failed: %d\n", __FUNCTION__,
+           err);
+    return err;
+  }
 
   return 0;
 }

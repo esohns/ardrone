@@ -26,8 +26,7 @@
 #include "olimex_mod_mpu6050_types.h"
 
 irqreturn_t
-i2c_mpu6050_interrupt_handler(int irq_in,
-                              void* dev_id_in)
+i2c_mpu6050_interrupt_handler(int irq_in, void* dev_id_in)
 {
   struct device* device_p;
   struct i2c_client* client_p;

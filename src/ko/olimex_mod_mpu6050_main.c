@@ -31,6 +31,7 @@
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_device.h"
 #include "olimex_mod_mpu6050_irq.h"
+#include "olimex_mod_mpu6050_netlink.h"
 #include "olimex_mod_mpu6050_pm.h"
 #include "olimex_mod_mpu6050_sysfs.h"
 #include "olimex_mod_mpu6050_timer.h"
@@ -223,7 +224,6 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 {
   int err;
 //  int gpio_used;
-//  struct i2c_client* client_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
 //  struct gpio_chip* gpio_chip_p;
 
@@ -265,8 +265,8 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   //           PTR_ERR(client_p));
   //    return -ENODEV;
   //  }
-  //  client_data_p->client = client_p;
   client_data_p->client = client_in;
+  mutex_init(&client_data_p->sync_lock);
   i2c_set_clientdata(client_in, client_data_p);
 
 //  err = script_parser_fetch(GPIO_FEX_SECTION_HEADER,
@@ -316,45 +316,50 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 //    goto error4;
 //  }
 
-  mutex_init(&client_data_p->sync_lock);
-  i2c_mpu6050_ringbuffer_clear(client_data_p);
-
   err = i2c_mpu6050_sysfs_init(client_data_p);
   if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_sysfs_init() failed\n", __FUNCTION__);
     goto error5;
   }
 
-  err = i2c_mpu6050_wq_init(client_data_p);
+  err = i2c_mpu6050_device_ping(client_data_p);
   if (unlikely(err)) {
-    pr_err("%s: i2c_mpu6050_wq_init() failed\n", __FUNCTION__);
+    pr_err("%s: i2c_mpu6050_device_ping() failed\n", __FUNCTION__);
     goto error6;
   }
 
   err = i2c_mpu6050_device_init(client_data_p);
   if (unlikely(err)) {
     pr_err("%s: i2c_mpu6050_device_init() failed\n", __FUNCTION__);
+    goto error6;
+  }
+
+  err = i2c_mpu6050_wq_init(client_data_p);
+  if (unlikely(err)) {
+    pr_err("%s: i2c_mpu6050_wq_init() failed\n", __FUNCTION__);
     goto error7;
+  }
+
+  if (likely(nonetlink == 0)) {
+    err = i2c_mpu6050_netlink_init(client_data_p);
+    if (unlikely(err)) {
+      pr_err("%s: i2c_mpu6050_netlink_init() failed\n", __FUNCTION__);
+      goto error8;
+    }
   }
 
   if (unlikely(noirq)) {
     err = i2c_mpu6050_timer_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
-      goto error8;
+      goto error9;
     }
   } else {
     err = i2c_mpu6050_irq_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
-      goto error8;
+      goto error9;
     }
-  }
-
-  err = i2c_mpu6050_device_ping(client_data_p);
-  if (unlikely(err)) {
-    pr_err("%s: i2c_mpu6050_device_ping() failed\n", __FUNCTION__);
-    goto error9;
   }
 
   // debug info
@@ -365,19 +370,15 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   return 0;
 
 error9:
-  if (unlikely(noirq)) {
-    i2c_mpu6050_timer_fini(client_data_p);
-  } else {
-    i2c_mpu6050_irq_fini(client_data_p);
-  }
+  if (likely(nonetlink == 0))
+    i2c_mpu6050_netlink_fini(client_data_p);
 error8:
-  i2c_mpu6050_device_fini(client_data_p);
-error7:
   i2c_mpu6050_wq_fini(client_data_p);
+error7:
+  i2c_mpu6050_device_fini(client_data_p);
 error6:
   i2c_mpu6050_sysfs_fini(client_data_p);
 error5:
-  mutex_destroy(&client_data_p->sync_lock);
 //  gpio_unexport(GPIO_LED_PIN);
 //error4:
 //  gpio_free(GPIO_LED_PIN);
@@ -386,6 +387,7 @@ error5:
 error2:
 //  i2c_unregister_device(client_data_p->client);
 //error1:
+  mutex_destroy(&client_data_p->sync_lock);
   kfree(client_data_p);
 
   return err;
@@ -408,14 +410,14 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
-    return -EINVAL;
+    return PTR_ERR(client_data_p);
   }
 //  gpio_chip_p = gpio_to_chip(GPIO_INT_PIN);
 //  if (IS_ERR(gpio_chip_p)) {
 //    pr_err("%s: gpio_to_chip(%d) failed: %d\n", __FUNCTION__,
 //           GPIO_INT_PIN,
 //           PTR_ERR(gpio_chip_p));
-//    return -ENOSYS;
+//    return PTR_ERR(gpio_chip_p);
 //  }
 
   if (unlikely(noirq)) {
@@ -423,14 +425,16 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   } else {
     i2c_mpu6050_irq_fini(client_data_p);
   }
-  i2c_mpu6050_device_fini(client_data_p);
+  if (likely(nonetlink == 0))
+    i2c_mpu6050_netlink_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
+  i2c_mpu6050_device_fini(client_data_p);
   i2c_mpu6050_sysfs_fini(client_data_p);
-  mutex_destroy(&client_data_p->sync_lock);
 //  gpio_unexport(GPIO_LED_PIN);
 //  gpio_free(GPIO_LED_PIN);
   gpio_release(client_data_p->gpio_led_handle, 1);
 //  i2c_unregister_device(client_data_p->client);
+  mutex_destroy(&client_data_p->sync_lock);
   kfree(client_data_p);
 
   return 0;
@@ -439,8 +443,23 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
 void
 i2c_mpu6050_shutdown(struct i2c_client* client_in)
 {
+  struct i2c_mpu6050_client_data_t* client_data_p;
+
   pr_debug("%s called.\n", __FUNCTION__);
 
+  // sanity check(s)
+  if (unlikely(!client_in)) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return;
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_in);
+  if (unlikely(IS_ERR(client_data_p))) {
+    pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
+           PTR_ERR(client_data_p));
+    return;
+  }
+
+  i2c_mpu6050_device_reset(client_data_p, 0, 0);
 }
 
 //int
@@ -520,10 +539,13 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
 
 int noirq=0;
 module_param(noirq, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(noirq, "use polling (instead of interrupt)");
-int nofifo=0;
+MODULE_PARM_DESC(noirq, "use polling (instead of INT line (default))");
+int nofifo=1;
 module_param(nofifo, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(nofifo, "do not use device FIFO buffer");
+MODULE_PARM_DESC(nofifo, "do not use the device FIFO buffer (default)");
+int nonetlink=0;
+module_param(nonetlink, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(nonetlink, "do not forward sensor data over a netlink socket");
 
 int
 __init i2c_mpu6050_init(void)

@@ -204,7 +204,7 @@ i2c_mpu6050_ringbuffer_clear(void* data_in)
 
   mutex_lock(&client_data_p->sync_lock);
   for (i = 0; i < RINGBUFFER_SIZE; i++)
-    client_data_p->ringbuffer[i].completed = client_data_p->ringbuffer[i].used = 0;
+    client_data_p->ringbuffer[i].used = 0;
   mutex_unlock(&client_data_p->sync_lock);
 }
 
@@ -220,7 +220,9 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
   struct i2c_mpu6050_client_data_t* client_data_p;
   int i;
   u8* reg_p;
-  u16 value_x, value_y, value_z;
+  int a_x, a_y, a_z;
+  int g_x, g_y, g_z;
+  int t;
   int err;
   ssize_t bytes_written = 0;
   unsigned int remaining = PAGE_SIZE;
@@ -250,80 +252,41 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
   i = ((client_data_p->ringbufferpos == (RINGBUFFER_SIZE - 1)) ? 0
                                                                : (client_data_p->ringbufferpos + 1));
   do {
-    if (!client_data_p->ringbuffer[i].completed ||
-        !client_data_p->ringbuffer[i].used)
+    if (client_data_p->ringbuffer[i].used == 0)
       goto done; // unused slot --> continue
 
     reg_p = client_data_p->ringbuffer[i].data;
-    value_x = ~*(u16*)reg_p;
-//    pr_info("%s: acceleration (x): %.5f g\n", __FUNCTION__,
-//            (float)value / (float)ACCEL_SENSITIVITY);
-//    reg_p += 2;
-//    value = ~*(u16*)reg_p;
-//    pr_info("%s: acceleration (y): %.5f g\n", __FUNCTION__,
-//            (float)value / (float)ACCEL_SENSITIVITY);
-//    reg_p += 2;
-//    value = ~*(u16*)reg_p;
-//    pr_info("%s: acceleration (z): %.5f g\n", __FUNCTION__,
-//            (float)value / (float)ACCEL_SENSITIVITY);
-//    reg_p += 2;
-//    value = *(s16*)reg_p;
-//    pr_info("%s: temperature: %.5f °C\n", __FUNCTION__,
-//            ((float)(s16)value / THERMO_SENSITIVITY) + THERMO_OFFSET);
-//    reg_p += 2;
-//    value = ~*(u16*)reg_p;
-//    pr_info("%s: rotation (x): %.5f °/s\n", __FUNCTION__,
-//            (float)value / (float)GYRO_SENSITIVITY);
-//    reg_p += 2;
-//    value = ~*(u16*)reg_p;
-//    pr_info("%s: rotation (y): %.5f °/s\n", __FUNCTION__,
-//            (float)value / (float)GYRO_SENSITIVITY);
-//    reg_p += 2;
-//    value = ~*(u16*)reg_p;
-//    pr_info("%s: rotation (z): %.5f °/s\n", __FUNCTION__,
-//            (float)value / (float)GYRO_SENSITIVITY);
+    // *NOTE*: i2c uses a big-endian transfer syntax
+    be16_to_cpus((__be16*)reg_p);
+    // convert two's complement
+    a_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
     reg_p += 2;
-    value_y = ~*(u16*)reg_p;
+    be16_to_cpus((__be16*)reg_p);
+    a_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
     reg_p += 2;
-    value_z = ~*(u16*)reg_p;
+    be16_to_cpus((__be16*)reg_p);
+    a_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
+    reg_p += 2;
+    be16_to_cpus((__be16*)reg_p);
+    t = *(s16*)reg_p;
+    reg_p += 2;
+    be16_to_cpus((__be16*)reg_p);
+    g_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
+    reg_p += 2;
+    be16_to_cpus((__be16*)reg_p);
+    g_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
+    reg_p += 2;
+    be16_to_cpus((__be16*)reg_p);
+    g_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
+                              : *(s16*)reg_p);
     err = scnprintf(buf_in + bytes_written, remaining,
-                    "#%d: acceleration (x,y,z): %d,%d,%d\n",
-                    i,
-                    value_x, value_y, value_z);
-    if (unlikely(err < 0)) {
-      pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,
-             err);
-      bytes_written = err;
-      break;
-    }
-    bytes_written += err;
-    remaining -= err;
-    if (remaining == 0) break;
-    reg_p += 2;
-    value_x = *(s16*)reg_p;
-    err = scnprintf(buf_in + bytes_written, remaining,
-                    "#%d: temperature: %d\n",
-                    i,
-                    (s16)value_x);
-    if (unlikely(err < 0)) {
-      pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,
-             err);
-      bytes_written = err;
-      break;
-    }
-    bytes_written += err;
-    remaining -= err;
-    if (remaining == 0) break;
-    reg_p += 2;
-    value_x = ~*(u16*)reg_p;
-    reg_p += 2;
-    value_y = ~*(u16*)reg_p;
-    reg_p += 2;
-    value_z = ~*(u16*)reg_p;
-    err = scnprintf(buf_in + bytes_written, remaining,
-                    "#%d: rotation (x,y,z): %d,%d,%d\n",
-                    i,
-                    value_x, value_y, value_z);
+                    "%d,%d,%d,%d,%d,%d,%d\n",
+                    a_x, a_y, a_z, t, g_x, g_y, g_z);
     if (unlikely(err < 0)) {
       pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,
              err);
@@ -493,6 +456,7 @@ i2c_mpu6050_sysfs_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //           err);
 //    goto error1;
 //  }
+  sysfs_bin_attr_init(dev_attr_buffer);
   err = sysfs_create_bin_file(&clientData_in->client->dev.kobj,
                               &dev_attr_buffer);
   if (unlikely(err)) {

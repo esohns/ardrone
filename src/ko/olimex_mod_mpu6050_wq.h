@@ -23,8 +23,9 @@ struct work_struct;
 struct i2c_mpu6050_client_data_t;
 
 // function declarations
-void i2c_mpu6050_wq_fifo_handler(struct work_struct*);
 void i2c_mpu6050_wq_read_handler(struct work_struct*);
+
+void i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t*, int, int);
 
 int i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t*);
 void i2c_mpu6050_wq_fini(struct i2c_mpu6050_client_data_t*);
