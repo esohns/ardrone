@@ -12,6 +12,17 @@ noinst_HEADERS = \
 
 olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050.cpp \
+  olimex_mod_mpu6050_eventhandler.cpp \
+  olimex_mod_mpu6050_eventhandler.h \
+  olimex_mod_mpu6050_inotify.h \
+  olimex_mod_mpu6050_macros.h \
+  olimex_mod_mpu6050_message.cpp \
+  olimex_mod_mpu6050_message.h \
+  olimex_mod_mpu6050_message_base.cpp \
+  olimex_mod_mpu6050_message_base.h \
+  olimex_mod_mpu6050_module_eventhandler.cpp \
+  olimex_mod_mpu6050_module_eventhandler.h \
+  olimex_mod_mpu6050_types.h \
   stdafx.cpp \
   stdafx.h
 #olimex_mod_mpu6050_CPPFLAGS = \
