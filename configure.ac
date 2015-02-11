@@ -33,6 +33,8 @@ AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_SUBDIRS([modules/libCommon
+                   modules/libACEStream])
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -201,14 +203,15 @@ AC_TYPE_UINT8_T
 
 AC_CONFIG_FILES([Makefile
                  m4/Makefile
+                 modules/Makefile
+                 po/Makefile
+                 scripts/Makefile
                  src/Makefile
                  src/include/Makefile
                  src/ko/Makefile
                  src/ko/3rd_party/Makefile
                  src/ko/3rd_party/i2cdevlib/Makefile
-                 src/test_u/Makefile
-                 po/Makefile
-                 scripts/Makefile])
+                 src/test_u/Makefile])
 AC_CONFIG_FILES([olinuxino.pc:scripts/olinuxino.pc.in])
 #AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
 #                [],
