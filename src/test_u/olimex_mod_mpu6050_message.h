@@ -27,13 +27,16 @@
 class ACE_Allocator;
 class ACE_Data_Block;
 class ACE_Message_Block;
-class Olimex_Mod_MPU6050_MessageAllocator;
+//class Olimex_Mod_MPU6050_MessageAllocator;
+class Olimex_Mod_MPU6050_SessionMessage;
 
 class Olimex_Mod_MPU6050_Message
  : public Olimex_Mod_MPU6050_MessageBase
 {
   // enable access to specific private ctors...
-  friend class Olimex_Mod_MPU6050_MessageAllocator;
+//  friend class Olimex_Mod_MPU6050_MessageAllocator;
+  friend class Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
+                                                 Olimex_Mod_MPU6050_SessionMessage>;
 
  public:
   virtual ~Olimex_Mod_MPU6050_Message ();

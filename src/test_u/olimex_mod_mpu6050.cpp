@@ -41,27 +41,34 @@
 #include "olinuxino_config.h"
 #endif
 
-#include "rpg_stream_allocatorheap.h"
+#include "common_tools.h"
 
-#include "rpg_net_defines.h"
-#include "rpg_net_common_tools.h"
-#include "rpg_net_connection_manager.h"
-#include "rpg_net_stream_messageallocator.h"
-#include "rpg_net_module_eventhandler.h"
+#include "stream_allocatorheap.h"
 
-#include "rpg_net_client_defines.h"
-#include "rpg_net_client_connector.h"
-#include "rpg_net_client_asynchconnector.h"
+//#include "net_defines.h"
+//#include "net_common_tools.h"
+//#include "net_stream_messageallocator.h"
+//#include "net_module_eventhandler.h"
 
-#include "rpg_net_server_defines.h"
+//#include "net_client_defines.h"
+#include "net_client_connector.h"
+#include "net_client_asynchconnector.h"
+
+//#include "net_server_defines.h"
 
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_eventhandler.h"
+#include "olimex_mod_mpu6050_macros.h"
+#include "olimex_mod_mpu6050_module_eventhandler.h"
+#include "olimex_mod_mpu6050_signalhandler.h"
+#include "olimex_mod_mpu6050_stream.h"
 #include "olimex_mod_mpu6050_types.h"
 
 void
 do_printVersion (const std::string& programName_in)
 {
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_printVersion"));
+
   // step1: program version
   //   std::cout << programName_in << ACE_TEXT(" : ") << VERSION << std::endl;
   std::cout << programName_in
@@ -91,65 +98,68 @@ do_printVersion (const std::string& programName_in)
 }
 
 void
-do_printUsage(const std::string& programName_in)
+do_printUsage (const std::string& programName_in)
 {
-  RPG_TRACE(ACE_TEXT("::do_printUsage"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_printUsage"));
 
   // enable verbatim boolean output
   std::cout.setf(ios::boolalpha);
 
-  std::cout << ACE_TEXT("usage: ")
+  std::cout << ACE_TEXT ("usage: ")
             << programName_in
-            << ACE_TEXT(" [OPTIONS]")
+            << ACE_TEXT (" [OPTIONS]")
             << std::endl
             << std::endl;
-  std::cout << ACE_TEXT("currently available options:")
+  std::cout << ACE_TEXT ("currently available options:")
             << std::endl;
-  std::cout << ACE_TEXT("-l           : log to a file [")
+  std::cout << ACE_TEXT ("-l           : log to a file [")
             << false
-            << ACE_TEXT("]")
+            << ACE_TEXT ("]")
             << std::endl;
-  std::cout << ACE_TEXT("-r           : use reactor [")
-            << DEF_USE_REACTOR
-            << ACE_TEXT("]")
+  std::cout << ACE_TEXT ("-r           : use reactor [")
+            << DEFAULT_USE_REACTOR
+            << ACE_TEXT ("]")
             << std::endl;
-  std::cout << ACE_TEXT("-t           : trace information [")
+  std::cout << ACE_TEXT ("-s           : server address[:port] (IPv4)")
+            << std::endl;
+  std::cout << ACE_TEXT ("-t           : trace information [")
             << false
-            << ACE_TEXT("]")
+            << ACE_TEXT ("]")
             << std::endl;
-  std::cout << ACE_TEXT("-v           : print version information and exit [")
+  std::cout << ACE_TEXT ("-v           : print version information and exit [")
             << false
-            << ACE_TEXT("]")
+            << ACE_TEXT ("]")
             << std::endl;
 }
 
 bool
-do_processArguments(const int& argc_in,
-                    ACE_TCHAR** argv_in, // cannot be const...
-                    bool& logToFile_out,
-                    bool& useReactor_out,
-                    bool& traceInformation_out,
-                    bool& printVersionAndExit_out)
+do_processArguments (int argc_in,
+                     ACE_TCHAR** argv_in, // cannot be const...
+                     bool& logToFile_out,
+                     bool& useReactor_out,
+                     ACE_INET_Addr& peerAddress_out,
+                     bool& traceInformation_out,
+                     bool& printVersionAndExit_out)
 {
-  RPG_TRACE(ACE_TEXT("::do_processArguments"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_processArguments"));
 
   // init results
   logToFile_out           = false;
-  useReactor_out          = DEF_USE_REACTOR;
+  useReactor_out          = DEFAULT_USE_REACTOR;
   traceInformation_out    = false;
   printVersionAndExit_out = false;
 
-  ACE_Get_Opt argumentParser(argc_in,
-                             argv_in,
-                             ACE_TEXT("lrtv"),
-                             1,                          // skip command name
-                             1,                          // report parsing errors
-                             ACE_Get_Opt::PERMUTE_ARGS,  // ordering
-                             0);                         // for now, don't use long options
+  ACE_Get_Opt argumentParser (argc_in,
+                              argv_in,
+                              ACE_TEXT ("lrs:tv"),
+                              1,                          // skip command name
+                              1,                          // report parsing errors
+                              ACE_Get_Opt::PERMUTE_ARGS,  // ordering
+                              0);                         // for now, don't use long options
 
   int option = 0;
   std::stringstream converter;
-  while ((option = argumentParser()) != EOF)
+  while ((option = argumentParser ()) != EOF)
   {
     switch (option)
     {
@@ -161,6 +171,17 @@ do_processArguments(const int& argc_in,
       case 'r':
       {
         useReactor_out = true;
+        break;
+      }
+      case 's':
+      {
+        if (peerAddress_out.set (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ())) == -1)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", aborting\n"),
+                      ACE_TEXT (argumentParser.opt_arg ())));
+          return false;
+        } // end IF
         break;
       }
       case 't':
@@ -176,29 +197,29 @@ do_processArguments(const int& argc_in,
       // error handling
       case ':':
       {
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("option \"%c\" requires an argument, aborting\n"),
-                   argumentParser.opt_opt()));
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("option \"%c\" requires an argument, aborting\n"),
+                    argumentParser.opt_opt ()));
         return false;
       }
       case '?':
       {
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("unrecognized option \"%s\", aborting\n"),
-                   ACE_TEXT(argumentParser.last_option())));
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("unrecognized option \"%s\", aborting\n"),
+                    ACE_TEXT (argumentParser.last_option ())));
         return false;
       }
       case 0:
       {
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("found long option \"%s\", aborting\n"),
-                   ACE_TEXT(argumentParser.long_option())));
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("found long option \"%s\", aborting\n"),
+                    ACE_TEXT (argumentParser.long_option ())));
         return false;
       }
       default:
       {
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("parse error, aborting\n")));
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("parse error, aborting\n")));
         return false;
       }
     } // end SWITCH
@@ -208,144 +229,160 @@ do_processArguments(const int& argc_in,
 }
 
 void
-do_work(bool useReactor_in)
+do_initSignals (ACE_Sig_Set& signals_inout)
 {
-  // step0: init stream
-  Olimex_Mod_MPU6050_GtkCBData_t CBData;
-  Olimex_Mod_MPU6050_EventHandler event_handler(&CBData);
-  RPG_Net_Module_EventHandler_Module event_handler(std::string("EventHandler"),
-                                                   NULL);
-  RPG_Net_Module_EventHandler* eventHandler_impl = NULL;
-  eventHandler_impl =
-      dynamic_cast<RPG_Net_Module_EventHandler*>(event_handler.writer());
-  if (!eventHandler_impl)
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_initSignals"));
+
+  // init return value(s)
+  if (signals_inout.empty_set () == -1)
   {
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT("dynamic_cast<RPG_Net_Module_EventHandler> failed, aborting\n")));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", aborting\n")));
+
     return;
   } // end IF
-  eventHandler_impl->init(&CBData_in.subscribers,
-                          &CBData_in.lock);
-  eventHandler_impl->subscribe(&ui_event_handler);
-  RPG_Stream_AllocatorHeap heapAllocator;
-  RPG_Net_StreamMessageAllocator messageAllocator(RPG_NET_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                  &heapAllocator);
-  RPG_Net_ConfigPOD configuration;
-  ACE_OS::memset(&configuration, 0, sizeof(configuration));
-  // ************ connection config data ************
-  configuration.peerPingInterval =
-      ((actionMode_in == Net_Client_TimeoutHandler::ACTION_STRESS) ? 0
-                                                                   : serverPingInterval_in);
-  configuration.pingAutoAnswer = true;
-  configuration.printPongMessages = true;
-  configuration.streamSocketConfiguration.socketBufferSize = RPG_NET_DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
-  configuration.streamSocketConfiguration.messageAllocator = &messageAllocator;
-  configuration.streamSocketConfiguration.bufferSize = RPG_NET_STREAM_BUFFER_SIZE;
-//  config.useThreadPerConnection = false;
-//  config.serializeOutput = false;
-  // ************ stream config data ************
-//  config.notificationStrategy = NULL;
-  configuration.streamSocketConfiguration.module = (hasUI_in ? &event_handler
-                                                             : NULL);
-//  config.delete_module = false;
+
+  // *PORTABILITY*: on Windows most signals are not defined,
+  // and ACE_Sig_Set::fill_set() doesn't really work as specified
+  // --> add valid signals (see <signal.h>)...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  signals_inout.sig_add(SIGINT);         // 2       /* interrupt */
+  signals_inout.sig_add(SIGILL);         // 4       /* illegal instruction - invalid function image */
+  signals_inout.sig_add(SIGFPE);         // 8       /* floating point exception */
+//  signals_inout.sig_add(SIGSEGV);        // 11      /* segment violation */
+  signals_inout.sig_add(SIGTERM);        // 15      /* Software termination signal from kill */
+  if (allowUserRuntimeConnect_in)
+    signals_inout.sig_add(SIGBREAK);     // 21      /* Ctrl-Break sequence */
+  signals_inout.sig_add(SIGABRT);        // 22      /* abnormal termination triggered by abort call */
+  signals_inout.sig_add(SIGABRT_COMPAT); // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
+#else
+  if (signals_inout.fill_set () == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", aborting\n")));
+    return;
+  } // end IF
+  // *NOTE*: cannot handle some signals --> registration fails for these...
+  signals_inout.sig_del (SIGKILL);        // 9       /* Kill signal */
+  signals_inout.sig_del (SIGSTOP);        // 19      /* Stop process */
+  // ---------------------------------------------------------------------------
+//  if (!allowUserRuntimeConnect_in)
+//    signals_inout.sig_del (SIGUSR1);      // 10      /* User-defined signal 1 */
+  // *NOTE* core dump on SIGSEGV
+  signals_inout.sig_del (SIGSEGV);        // 11      /* Segmentation fault: Invalid memory reference */
+  // *NOTE* don't care about SIGPIPE
+  signals_inout.sig_del (SIGPIPE);        // 12      /* Broken pipe: write to pipe with no readers */
+
+  // *TODO*
+#ifdef ENABLE_VALGRIND_SUPPORT
+  // *NOTE*: valgrind uses SIGRT32 (--> SIGRTMAX ?) and apparently will not work
+  // if the application installs its own handler (see documentation)
+  if (RUNNING_ON_VALGRIND)
+    signals_inout.sig_del (SIGRTMAX);     // 64
+#endif
+#endif
+}
+
+void
+do_work (const ACE_INET_Addr& peerAddress_in,
+         bool useReactor_in)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
+
+  // step1: init stream
+  Olimex_Mod_MPU6050_GtkCBData_t cb_data;
+  Olimex_Mod_MPU6050_EventHandler event_handler (&cb_data);
+  Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (std::string ("EventHandler"),
+                                                                      NULL);
+  Olimex_Mod_MPU6050_Module_EventHandler* event_handler_impl = NULL;
+  event_handler_impl =
+      dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler*> (event_handler_module.writer ());
+  if (!event_handler_impl)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler> failed, returning\n")));
+    return;
+  } // end IF
+  event_handler_impl->init (&cb_data.subscribers,
+                            &cb_data.lock);
+  event_handler_impl->subscribe (&event_handler);
+  Stream_AllocatorHeap heap_allocator;
+  Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+                                                           &heap_allocator);
+  Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t stream_data;
+  ACE_OS::memset (&stream_data, 0, sizeof (stream_data));
+  // ******************* connection configuration data *************************
+  stream_data.configuration.socketBufferSize = DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
+  stream_data.configuration.messageAllocator = &message_allocator;
+  stream_data.configuration.bufferSize = DEFAULT_STREAM_BUFFER_SIZE;
+  // ******************** stream configuration data ****************************
+  stream_data.configuration.notificationStrategy = NULL;
+  stream_data.configuration.module = &event_handler_module;
+  stream_data.configuration.deleteModule = false;
   // *WARNING*: set at runtime, by the appropriate connection handler
-//  config.sessionID = 0; // (== socket handle !)
-//  config.statisticsReportingInterval = 0; // == off
-//	config.printFinalReport = false;
-  // ************ runtime data ************
-//	config.currentStatistics = {};
-//	config.lastCollectionTimestamp = ACE_Time_Value::zero;
+  stream_data.configuration.statisticsReportingInterval = 0; // == off
+  stream_data.configuration.printFinalReport = false;
+//  // ******************** protocol configuration data **************************
+//  stream_data.peerPingInterval = 0; // don't ping the server
+//  stream_data.pingAutoAnswer = false;
+//  stream_data.printPongMessages = false;
+  // *************************** runtime data **********************************
+  stream_data.sessionID = 0; // (== socket handle !)
+  //  stream_data.currentStatistics = {};
+  stream_data.lastCollectionTimestamp = ACE_Time_Value::zero;
 
-  // step0d: init event dispatch
-  if (!RPG_Net_Common_Tools::initEventDispatch(useReactor_in,
-                                               numDispatchThreads_in,
-                                               configuration.streamSocketConfiguration.serializeOutput))
+  // step2: init event dispatch
+  bool serialize_output;
+  if (!Common_Tools::initEventDispatch (useReactor_in,
+                                        1,
+                                        serialize_output))
   {
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT("failed to init event dispatch, aborting\n")));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::initEventDispatch(), returning\n")));
     return;
   } // end IF
 
-  // step1: init client connector
-  RPG_Net_Client_IConnector* connector = NULL;
+  // step3: init client connector
+  Net_Client_IConnector* connector = NULL;
   if (useReactor_in)
-    ACE_NEW_NORETURN(connector, RPG_Net_Client_Connector());
+    ACE_NEW_NORETURN (connector, Net_Client_Connector ());
   else
-    ACE_NEW_NORETURN(connector, RPG_Net_Client_AsynchConnector());
+    ACE_NEW_NORETURN (connector, Net_Client_AsynchConnector ());
   if (!connector)
   {
-    ACE_DEBUG((LM_CRITICAL,
-               ACE_TEXT("failed to allocate memory, aborting\n")));
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate memory, aborting\n")));
     return;
   } // end IF
 
-  // step2: init connection manager
-  RPG_NET_CONNECTIONMANAGER_SINGLETON::instance()->init(std::numeric_limits<unsigned int>::max());
-  RPG_NET_CONNECTIONMANAGER_SINGLETON::instance()->set(configuration); // will be passed to all handlers
+  // step4: init connection manager
+  CONNECTIONMANAGER_SINGLETON::instance ()->init (std::numeric_limits<unsigned int>::max ());
+  CONNECTIONMANAGER_SINGLETON::instance ()->set (stream_data); // will be passed to all handlers
 
-  // step3: init action timer ?
-  ACE_INET_Addr peer_address(serverPortNumber_in,
-                             serverHostname_in.c_str(),
-                             AF_INET);
-  Net_Client_TimeoutHandler timeout_handler((hasUI_in ? Net_Client_TimeoutHandler::ACTION_STRESS
-                                                      : actionMode_in),
-                                            maxNumConnections_in,
-                                            peer_address,
-                                            connector);
-  CBData_in.timeout_handler = &timeout_handler;
-  CBData_in.timer_id = -1;
-  if (!hasUI_in)
+  // step5: init signal handling
+  Olimex_Mod_MPU6050_SignalHandler signal_handler (cb_data.timer_id, // action timer id
+                                                   peerAddress_in,   // remote SAP
+                                                   connector,        // connector
+                                                   useReactor_in);   // use reactor ?
+  ACE_Sig_Set signal_set (0);
+  do_initSignals (signal_set);
+  Common_SignalActions_t previous_signal_actions;
+  if (!Common_Tools::preInitSignals (signal_set,
+                                     useReactor_in,
+                                     previous_signal_actions))
   {
-    // schedule action interval timer
-    ACE_Event_Handler* event_handler = &timeout_handler;
-    ACE_Time_Value interval(((actionMode_in == Net_Client_TimeoutHandler::ACTION_STRESS) ? (NET_CLIENT_DEF_SERVER_STRESS_INTERVAL / 1000)
-                                                                                         : connectionInterval_in),
-                            ((actionMode_in == Net_Client_TimeoutHandler::ACTION_STRESS) ? ((NET_CLIENT_DEF_SERVER_STRESS_INTERVAL % 1000) * 1000)
-                                                                                         : 0));
-    CBData_in.timer_id =
-      RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->schedule(event_handler,                       // event handler
-                                                              NULL,                                // ACT
-                                                              RPG_COMMON_TIME_POLICY() + interval, // first wakeup time
-                                                              interval);                           // interval
-    if (CBData_in.timer_id == -1)
-    {
-      ACE_DEBUG((LM_DEBUG,
-                 ACE_TEXT("failed to schedule action timer: \"%m\", aborting\n")));
-
-      // clean up
-      RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->stop();
-      delete connector;
-
-      return;
-    } // end IF
-  } // end IF
-
-  // step4: init signal handling
-  Net_Client_SignalHandler signal_handler(CBData_in.timer_id, // action timer id
-                                          peer_address,       // remote SAP
-                                          connector,          // connector
-                                          useReactor_in);     // use reactor ?
-  if (!RPG_Common_Tools::initSignals(signalSet_inout,
-                                     &signal_handler,
-                                     previousSignalActions_inout))
-  {
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT("failed to init signal handling, aborting\n")));
-
-    // clean up
-    if (CBData_in.timer_id != -1)
-    {
-      const void* act = NULL;
-      if (RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->cancel(CBData_in.timer_id,
-                                                                &act) <= 0)
-        ACE_DEBUG((LM_DEBUG,
-                   ACE_TEXT("failed to cancel timer (ID: %d): \"%m\", continuing\n"),
-                   CBData_in.timer_id));
-    } // end IF
-    RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->stop();
-    connector->abort();
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::preInitSignals(), aborting\n")));
     delete connector;
-
+    return;
+  } // end IF
+  if (!Common_Tools::initSignals (signal_set,
+                                  &signal_handler,
+                                  previous_signal_actions))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to init signal handling, aborting\n")));
+    delete connector;
     return;
   } // end IF
 
@@ -353,132 +390,89 @@ do_work(bool useReactor_in)
   // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
   // [- signal timer expiration to perform server queries] (see above)
 
-  // step5a: start GTK event loop ?
-  if (hasUI_in)
+  // step6a: start GTK event loop
+  CLIENT_GTK_MANAGER_SINGLETON::instance ()->start ();
+  if (!CLIENT_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
   {
-    RPG_CLIENT_GTK_MANAGER_SINGLETON::instance()->start();
-    if (!RPG_CLIENT_GTK_MANAGER_SINGLETON::instance()->isRunning())
-    {
-      ACE_DEBUG((LM_ERROR,
-                 ACE_TEXT("failed to start GTK event dispatch, aborting\n")));
-
-      // clean up
-      if (CBData_in.timer_id != -1)
-      {
-        const void* act = NULL;
-        if (RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->cancel(CBData_in.timer_id,
-                                                                  &act) <= 0)
-          ACE_DEBUG((LM_DEBUG,
-                     ACE_TEXT("failed to cancel timer (ID: %d): \"%m\", continuing\n"),
-                     CBData_in.timer_id));
-      } // end IF
-      RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->stop();
-      connector->abort();
-      delete connector;
-      RPG_Common_Tools::finiSignals(signalSet_inout,
-                                    useReactor_in,
-                                    previousSignalActions_inout);
-
-      return;
-    } // end IF
-  } // end IF
-
-  // step5b: init worker(s)
-  int group_id = -1;
-  if (!RPG_Net_Common_Tools::startEventDispatch(useReactor_in,
-                                                numDispatchThreads_in,
-                                                group_id))
-  {
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT("failed to start event dispatch, aborting\n")));
-
-    // clean up
-    if (CBData_in.timer_id != -1)
-    {
-      const void* act = NULL;
-      if (RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->cancel(CBData_in.timer_id,
-                                                                &act) <= 0)
-        ACE_DEBUG((LM_DEBUG,
-                   ACE_TEXT("failed to cancel timer (ID: %d): \"%m\", continuing\n"),
-                   CBData_in.timer_id));
-    } // end IF
-//		{ // synch access
-//			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(CBData_in.lock);
-
-//			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin();
-//					 iterator != CBData_in.event_source_ids.end();
-//					 iterator++)
-//				g_source_remove(*iterator);
-//		} // end lock scope
-    RPG_CLIENT_GTK_MANAGER_SINGLETON::instance()->stop();
-    RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->stop();
-    connector->abort();
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
+    Common_Tools::finiSignals (signal_set,
+                               useReactor_in,
+                               previous_signal_actions);
     delete connector;
-    RPG_Common_Tools::finiSignals(signalSet_inout,
-                                  useReactor_in,
-                                  previousSignalActions_inout);
-
     return;
   } // end IF
 
-  ACE_DEBUG((LM_DEBUG,
-             ACE_TEXT("started event dispatch...\n")));
-
-  // step5c: connect immediately ?
-  if (!hasUI_in && (connectionInterval_in == 0))
-    connector->connect(peer_address);
-
-  // *NOTE*: from this point on, we need to clean up any remote connections !
-
-  // step6: dispatch events
-  // *NOTE*: when using a thread pool, handle things differently...
-  if (numDispatchThreads_in > 1)
+  // step6b: init worker(s)
+  int group_id = -1;
+  if (!Common_Tools::startEventDispatch (useReactor_in,
+                                         1,
+                                         group_id))
   {
-    if (ACE_Thread_Manager::instance()->wait_grp(group_id) == -1)
-      ACE_DEBUG((LM_ERROR,
-                 ACE_TEXT("failed to ACE_Thread_Manager::wait_grp(%d): \"%m\", continuing\n"),
-                 group_id));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to start event dispatch, aborting\n")));
+//		{ // synch access
+//			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
+
+//			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
+//					 iterator != CBData_in.event_source_ids.end ();
+//					 iterator++)
+//				g_source_remove (*iterator);
+//		} // end lock scope
+    CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    Common_Tools::finiSignals (signal_set,
+                               useReactor_in,
+                               previous_signal_actions);
+    delete connector;
+    return;
   } // end IF
-  else
+
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("started event dispatch...\n")));
+
+  // step7: connect
+  connector->connect (peerAddress_in);
+
+  // *WARNING*: from this point on, clean up any remote connections !
+
+  // step8: dispatch events
+  // *NOTE*: when using a thread pool, handle things differently...
+  if (useReactor_in)
   {
-    if (useReactor_in)
-    {
 /*      // *WARNING*: restart system calls (after e.g. SIGINT) for the reactor
       ACE_Reactor::instance()->restart(1);
 */
-      if (ACE_Reactor::instance()->run_reactor_event_loop(0) == -1)
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("failed to handle events: \"%m\", aborting\n")));
-    } // end IF
-    else
-      if (ACE_Proactor::instance()->proactor_run_event_loop(0) == -1)
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("failed to handle events: \"%m\", aborting\n")));
-  } // end ELSE
+    if (ACE_Reactor::instance ()->run_reactor_event_loop (0) == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to handle events: \"%m\", aborting\n")));
+  } // end IF
+  else
+    if (ACE_Proactor::instance ()->proactor_run_event_loop (0) == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to handle events: \"%m\", aborting\n")));
 
-  ACE_DEBUG((LM_DEBUG,
-             ACE_TEXT("finished event dispatch...\n")));
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("finished event dispatch...\n")));
 
-  // step7: clean up
+  // step9: clean up
   // *NOTE*: any action timer has been cancelled, connections have been
   // aborted and any GTK event dispatcher has returned by now...
-  RPG_Common_Tools::finiSignals(signalSet_inout,
-                                useReactor_in,
-                                previousSignalActions_inout);
+  Common_Tools::finiSignals (signal_set,
+                             useReactor_in,
+                             previous_signal_actions);
 //  { // synch access
-//    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(CBData_in.lock);
+//    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (CBData_in.lock);
 
-//		for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin();
-//				 iterator != CBData_in.event_source_ids.end();
+//		for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
+//				 iterator != CBData_in.event_source_ids.end ();
 //				 iterator++)
-//			g_source_remove(*iterator);
+//			g_source_remove (*iterator);
 //	} // end lock scope
-//  RPG_CLIENT_GTK_MANAGER_SINGLETON::instance()->stop();
-  RPG_COMMON_TIMERMANAGER_SINGLETON::instance()->stop();
+//  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
   delete connector;
 
-  ACE_DEBUG((LM_DEBUG,
-             ACE_TEXT("finished working...\n")));
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("finished working...\n")));
 }
 
 int
@@ -498,21 +492,23 @@ ACE_TMAIN (int argc_in,
 #endif
 
   // step1: process commandline options (if any)
-  log_to_file            = false;
-  use_reactor            = DEF_USE_REACTOR;
-  trace_information      = false;
-  print_version_and_exit = false;
+  bool log_to_file            = false;
+  bool use_reactor            = DEFAULT_USE_REACTOR;
+  ACE_INET_Addr peer_address;
+  bool trace_information      = false;
+  bool print_version_and_exit = false;
   if (!do_processArguments (argc_in,
                             argv_in,
                             log_to_file,
                             use_reactor,
+                            peer_address,
                             trace_information,
                             print_version_and_exit))
   {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to do_processArguments(), aborting\n")));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to do_processArguments(), aborting\n")));
 
-    do_printVersion (ACE::basename (argv_in[0]));
+    do_printUsage (ACE::basename (argv_in[0]));
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -524,12 +520,30 @@ ACE_TMAIN (int argc_in,
     return EXIT_FAILURE;
   } // end IF
 
-  // step2: initialize logging and/or tracing
+  // step2: validate configuration
+  if (peer_address.is_any ())
+  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to validate configuration, aborting\n")));
+
+    do_printUsage (ACE::basename (argv_in[0]));
+
+    // *PORTABILITY*: on Windows, ACE needs finalization...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    if (ACE::fini () == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif
+
+    return EXIT_FAILURE;
+  } // end IF
+
+  // step3: initialize logging and/or tracing
   char buffer[PATH_MAX];
-  if (ACE::getcwd (buffer, sizeof (buffer)))
+  if (ACE_OS::getcwd (buffer, sizeof (buffer)))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE::getcwd(): \"%m\", aborting\n")));
+                ACE_TEXT ("failed to ACE_OS::getcwd(): \"%m\", aborting\n")));
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -542,62 +556,16 @@ ACE_TMAIN (int argc_in,
   } // end IF
   std::string log_file = buffer;
   log_file += ACE_DIRECTORY_SEPARATOR_STR;
-  log_file += ACE_TEXT_ALWAYS_CHAR (DEF_LOG_FILE);
-  // *NOTE*: default log target is stderr
-  u_long options_flags = ACE_Log_Msg::STDERR;
-  if (log_to_file)
+  log_file += ACE_TEXT_ALWAYS_CHAR (DEFAULT_LOG_FILE);
+  if (!Common_Tools::initLogging (ACE::basename (argv_in[0]),
+                                  log_file,
+                                  false,
+                                  trace_information,
+                                  true,
+                                  NULL))
   {
-    options_flags |= ACE_Log_Msg::OSTREAM;
-
-    ACE_OSTREAM_TYPE* log_stream;
-    std::ios_base::openmode open_mode = (std::ios_base::out |
-                                         std::ios_base::trunc);
-    ACE_NEW_NORETURN(log_stream,
-                     std::ofstream (log_file.c_str (),
-                                    open_mode));
-    if (!log_stream)
-    {
-      ACE_DEBUG((LM_CRITICAL,
-                 ACE_TEXT("failed to allocate memory: \"%m\", aborting\n")));
-
-      // *PORTABILITY*: on Windows, ACE needs finalization...
-  #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      if (ACE::fini () == -1)
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-  #endif
-
-      return EXIT_FAILURE;
-    } // end IF
-    if (log_stream->fail ())
-    {
-      ACE_DEBUG((LM_ERROR,
-                 ACE_TEXT("failed to initialize logfile: \"%m\", aborting\n")));
-
-      // clean up
-      delete log_stream;
-
-      // *PORTABILITY*: on Windows, ACE needs finalization...
-  #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      if (ACE::fini () == -1)
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-  #endif
-
-      return EXIT_FAILURE;
-    } // end IF
-
-    // *NOTE*: the logger singleton assumes ownership of the stream lifecycle
-    ACE_LOG_MSG->msg_ostream (log_stream, 1);
-  } // end IF
-  if (ACE_LOG_MSG->open (ACE_TEXT_CHAR_TO_TCHAR (ACE::basename (argv_in[0])),
-                         options_flags,
-                         NULL) == -1)
-  {
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT ("failed to ACE_Log_Msg::open(\"%s\", %u): \"%m\", aborting\n"),
-               ACE_TEXT (ACE::basename (argv_in[0])),
-               options_flags));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to init logging, aborting\n")));
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -609,24 +577,7 @@ ACE_TMAIN (int argc_in,
     return EXIT_FAILURE;
   } // end IF
 
-  // set new mask...
-  u_long process_priority_mask = (LM_SHUTDOWN |
-                                  LM_TRACE    |
-                                  LM_DEBUG    |
-                                  LM_INFO     |
-                                  LM_NOTICE   |
-                                  LM_WARNING  |
-                                  LM_STARTUP  |
-                                  LM_ERROR    |
-                                  LM_CRITICAL |
-                                  LM_ALERT    |
-                                  LM_EMERGENCY);
-  if (!trace_information)
-    process_priority_mask &= ~LM_TRACE;
-  ACE_LOG_MSG->priority_mask(process_priority_mask,
-                             ACE_Log_Msg::PROCESS);
-
-  // step3: init NLS
+  // step4: init NLS
 #ifdef ENABLE_NLS
 #ifdef HAVE_LOCALE_H
   setlocale (LC_ALL, "");
@@ -636,13 +587,14 @@ ACE_TMAIN (int argc_in,
   textdomain (PACKAGE);
 #endif
 
-  // step4: run program
+  // step5: run program
   if (print_version_and_exit)
     do_printVersion (ACE::basename (argv_in[0]));
   else
-    do_work (use_reactor);
+    do_work (peer_address,
+             use_reactor);
 
-  // step5: clean up
+  // step6: clean up
   // *PORTABILITY*: on Windows, must fini ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (ACE::fini () == -1)

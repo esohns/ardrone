@@ -18,19 +18,34 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef OLIMEX_MOD_MPU6050_INOTIFY_H
-#define OLIMEX_MOD_MPU6050_INOTIFY_H
+#ifndef OLIMEX_MOD_MPU6050_SESSIONCONFIGURATION_H
+#define OLIMEX_MOD_MPU6050_SESSIONCONFIGURATION_H
 
-template <typename MessageType>
-class Olimex_Mod_MPU6050_INotify
+#include "ace/Global_Macros.h"
+#include "ace/Time_Value.h"
+
+#include "stream_session_configuration_base.h"
+
+#include "olimex_mod_mpu6050_types.h"
+
+class Olimex_Mod_MPU6050_SessionConfiguration
+ : public Stream_SessionConfigurationBase_T<Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t>
 {
  public:
-  virtual ~Olimex_Mod_MPU6050_INotify () {};
+  Olimex_Mod_MPU6050_SessionConfiguration (const Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t&, // user data
+                                           const ACE_Time_Value& = ACE_Time_Value::zero,                 // "official" start of session
+                                           bool = false);                                                // session ended because of user abort ?
+  virtual ~Olimex_Mod_MPU6050_SessionConfiguration ();
 
-  // API
-  virtual void start () = 0;
-  virtual void notify (MessageType*) = 0; // data
-  virtual void end () = 0;
+  // override Common_IDumpState
+  virtual void dump_state () const;
+
+ private:
+  typedef Stream_SessionConfigurationBase_T<Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionConfiguration ());
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionConfiguration (const Olimex_Mod_MPU6050_SessionConfiguration&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionConfiguration& operator= (const Olimex_Mod_MPU6050_SessionConfiguration&));
 };
 
 #endif

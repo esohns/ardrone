@@ -19,8 +19,20 @@
 #define OLIMEX_MOD_MPU6050_TYPES_H
 
 #include <deque>
+#include <list>
 
+#include "ace/Notification_Strategy.h"
+#include "ace/Singleton.h"
 #include "ace/Synch.h"
+#include "ace/Time_Value.h"
+
+#include "common.h"
+#include "common_inotify.h"
+
+#include "net_connection_manager.h"
+#include "net_stream_common.h"
+
+#include "olimex_mod_mpu6050_message.h"
 
 enum Olimex_Mod_MPU6050_Event_t
 {
@@ -37,6 +49,10 @@ typedef Olimex_Mod_MPU6050_Events_t::const_iterator Olimex_Mod_MPU6050_EventsIte
 typedef std::deque<Olimex_Mod_MPU6050_Message*> Olimex_Mod_MPU6050_Messages_t;
 typedef Olimex_Mod_MPU6050_Messages_t::const_iterator Olimex_Mod_MPU6050_MessagesIterator_t;
 
+typedef Common_INotify_T<Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
+typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
+typedef Olimex_Mod_MPU6050_Subscribers_t::const_iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
+
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
@@ -52,10 +68,25 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  mutable ACE_Recursive_Thread_Mutex lock;
  Olimex_Mod_MPU6050_Events_t        event_queue;
  Olimex_Mod_MPU6050_Messages_t      message_queue;
- // RPG_Net_NotifySubscribers_t        subscribers;
+ Olimex_Mod_MPU6050_Subscribers_t   subscribers;
 // Net_GTK_EventSourceIDs_t           event_source_ids;
 // Net_Client_TimeoutHandler*         timeout_handler; // *NOTE*: client only !
  long                               timer_id;        // *NOTE*: client only !
 };
+
+struct Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t
+{
+  // *********************** stream / socket data ******************************
+  Net_StreamSocketConfiguration_t configuration;
+  // **************************** runtime data *********************************
+  unsigned int                    sessionID; // (== socket handle !)
+  Net_RuntimeStatistic_t          currentStatistics;
+  ACE_Time_Value                  lastCollectionTimestamp;
+};
+
+typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t,
+                                 Net_RuntimeStatistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
+typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
+                      ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

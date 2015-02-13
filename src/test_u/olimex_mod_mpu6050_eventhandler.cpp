@@ -57,8 +57,15 @@ Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& messa
 
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
+  Olimex_Mod_MPU6050_Message* message_p = message_in.duplicate ();
+  if (!message_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("Olimex_Mod_MPU6050_Message::duplicate() failed, returning\n")));
+    return;
+  } // end IF
   GtkCBData_->event_queue.push_back (OLIMEX_MOD_MPU6050_EVENT_MESSAGE);
-  GtkCBData_->message_queue.push_back (message_in);
+  GtkCBData_->message_queue.push_back (message_p);
 }
 
 void

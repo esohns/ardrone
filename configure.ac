@@ -34,6 +34,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SUBDIRS([modules/libCommon
+                   modules/libACENetwork
                    modules/libACEStream])
 
 AC_USE_SYSTEM_EXTENSIONS
@@ -41,6 +42,10 @@ AC_USE_SYSTEM_EXTENSIONS
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_LEX
+AC_PROG_LN_S
+AC_PROG_RANLIB
+AC_PROG_YACC
 AM_PROG_CC_C_O
 
 # init other tools
@@ -117,7 +122,7 @@ if test x$debug = xyes; then
   CXXFLAGS="${CXXFLAGS} -g -O0 -Wall"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS="${CXXFLAGS} -O3 -Wall -Werror"
+  CXXFLAGS="${CXXFLAGS} -O3 -DACE_NDEBUG -Wall -Werror"
   AC_MSG_RESULT([no])
 fi
 
@@ -177,7 +182,7 @@ dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Fou
 # FIXME: Replace `main' with a function in `-lACE':
 AC_CHECK_LIB([ACE], [main])
 # FIXME: Replace `main' with a function in `-lpthread':
-#AC_CHECK_LIB([pthread], [main])
+AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-lxerces-c':
 #AC_CHECK_LIB([xerces-c], [main])
 AM_GNU_GETTEXT_VERSION([0.18])
@@ -185,10 +190,13 @@ AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 #AM_GNU_GETTEXT_INTL_SUBDIR
 
 # checks for functions
+AC_CHECK_FUNCS([getcwd])
 AC_CHECK_FUNCS([memset])
-AC_CHECK_FUNCS([setenv])
 AC_CHECK_FUNCS([setlocale])
+#AC_CHECK_FUNCS([setenv])
+AC_CHECK_FUNCS([strerror])
 AC_FUNC_MALLOC
+AC_FUNC_ERROR_AT_LINE
 
 # checks for headers
 AC_CHECK_HEADERS([libintl.h])

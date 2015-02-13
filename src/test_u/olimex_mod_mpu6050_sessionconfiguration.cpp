@@ -17,35 +17,40 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#include "stdafx.h"
 
-#ifndef OLIMEX_MOD_MPU6050_EVENTHANDLER_H
-#define OLIMEX_MOD_MPU6050_EVENTHANDLER_H
+#include "olimex_mod_mpu6050_sessionconfiguration.h"
 
-#include "olimex_mod_mpu6050_types.h"
+#include "olimex_mod_mpu6050_macros.h"
 
-// forward declarations
-struct Olimex_Mod_MPU6050_GtkCBData_t;
-
-class Olimex_Mod_MPU6050_EventHandler
- : public Olimex_Mod_MPU6050_Notification_t
+Olimex_Mod_MPU6050_SessionConfiguration::Olimex_Mod_MPU6050_SessionConfiguration (const Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t& configuration_in,
+                                                                                  const ACE_Time_Value& startOfSession_in,
+                                                                                  bool userAbort_in)
+ : inherited (configuration_in,
+              startOfSession_in,
+              userAbort_in)
 {
- public:
-  Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t*); // Gtk state
-  virtual ~Olimex_Mod_MPU6050_EventHandler ();
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SessionConfiguration::Olimex_Mod_MPU6050_SessionConfiguration"));
 
-  // implement Common_INotify_T
-  virtual void start ();
-  virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
-  virtual void end ();
+}
 
- private:
-  typedef Olimex_Mod_MPU6050_Notification_t inherited;
+Olimex_Mod_MPU6050_SessionConfiguration::~Olimex_Mod_MPU6050_SessionConfiguration ()
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SessionConfiguration::~Olimex_Mod_MPU6050_SessionConfiguration"));
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler ());
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler (const Olimex_Mod_MPU6050_EventHandler&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&));
+}
 
-  Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_;
-};
+void
+Olimex_Mod_MPU6050_SessionConfiguration::dump_state () const
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SessionConfiguration::dump_state"));
 
-#endif
+  // *TODO*
+  ACE_ASSERT (false);
+//   ACE_DEBUG ((LM_DEBUG,
+//               ACE_TEXT ("start of session: %d\n%s"),
+//               startOfSession_,
+//               (userAbort_ ? ACE_TEXT("user abort !")
+//                           : ACE_TEXT(""))));
+  inherited::dump_state ();
+}

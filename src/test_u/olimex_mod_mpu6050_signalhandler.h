@@ -18,34 +18,43 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef OLIMEX_MOD_MPU6050_EVENTHANDLER_H
-#define OLIMEX_MOD_MPU6050_EVENTHANDLER_H
+#ifndef OLIMEX_MOD_MPU6050_SIGNALHANDLER_H
+#define OLIMEX_MOD_MPU6050_SIGNALHANDLER_H
 
-#include "olimex_mod_mpu6050_types.h"
+#include "ace/Global_Macros.h"
+#include "ace/INET_Addr.h"
 
-// forward declarations
-struct Olimex_Mod_MPU6050_GtkCBData_t;
+#include "common_signalhandler.h"
+#include "common_isignal.h"
 
-class Olimex_Mod_MPU6050_EventHandler
- : public Olimex_Mod_MPU6050_Notification_t
+#include "net_client_iconnector.h"
+
+class Olimex_Mod_MPU6050_SignalHandler
+ : public Common_SignalHandler,
+   public Common_ISignal
 {
  public:
-  Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t*); // Gtk state
-  virtual ~Olimex_Mod_MPU6050_EventHandler ();
+  Olimex_Mod_MPU6050_SignalHandler (long,                   // action timer id
+                                    const ACE_INET_Addr&,   // peer SAP
+                                    Net_Client_IConnector*, // connector
+                                    // -----------------------------------------
+                                    bool);                  // use reactor ?
+  virtual ~Olimex_Mod_MPU6050_SignalHandler ();
 
-  // implement Common_INotify_T
-  virtual void start ();
-  virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
-  virtual void end ();
+  // implement Common_ISignal
+  virtual bool handleSignal (int); // signal
 
  private:
-  typedef Olimex_Mod_MPU6050_Notification_t inherited;
+  typedef Common_SignalHandler inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler ());
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler (const Olimex_Mod_MPU6050_EventHandler&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler ());
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler (const Olimex_Mod_MPU6050_SignalHandler&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler& operator= (const Olimex_Mod_MPU6050_SignalHandler&));
 
-  Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_;
+  long                   actionTimerID_;
+  ACE_INET_Addr          peerAddress_;
+  Net_Client_IConnector* connector_;
+  bool                   useReactor_;
 };
 
 #endif
