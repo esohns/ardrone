@@ -19,159 +19,162 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "rpg_net_module_eventhandler.h"
+#include "olimex_mod_mpu6050_module_eventhandler.h"
 
-#include "rpg_common_macros.h"
+#include "ace/Guard_T.h"
+#include "ace/Log_Msg.h"
+#include "ace/Synch.h"
 
-#include "rpg_net_sessionmessage.h"
+#include "olimex_mod_mpu6050_macros.h"
+#include "olimex_mod_mpu6050_message.h"
+#include "olimex_mod_mpu6050_sessionmessage.h"
 
-RPG_Net_Module_EventHandler::RPG_Net_Module_EventHandler()
- : //inherited(),
-   myLock(NULL),
-   mySubscribers(NULL)
+Olimex_Mod_MPU6050_Module_EventHandler::Olimex_Mod_MPU6050_Module_EventHandler ()
+ : //inherited (),
+   lock_ (NULL)
+ , subscribers_ (NULL)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::RPG_Net_Module_EventHandler"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::Olimex_Mod_MPU6050_Module_EventHandler"));
 
 }
 
-RPG_Net_Module_EventHandler::~RPG_Net_Module_EventHandler()
+Olimex_Mod_MPU6050_Module_EventHandler::~Olimex_Mod_MPU6050_Module_EventHandler ()
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::~RPG_Net_Module_EventHandler"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::~Olimex_Mod_MPU6050_Module_EventHandler"));
 
 }
 
 void
-RPG_Net_Module_EventHandler::init(RPG_Net_NotifySubscribers_t* subscribers_in,
-                                  ACE_Recursive_Thread_Mutex* lock_in)
+Olimex_Mod_MPU6050_Module_EventHandler::init (Olimex_Mod_MPU6050_Subscribers_t* subscribers_in,
+                                              ACE_Recursive_Thread_Mutex* lock_in)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::init"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::init"));
 
   // sanity check(s)
-  ACE_ASSERT(subscribers_in);
-  ACE_ASSERT(lock_in);
+  ACE_ASSERT (subscribers_in);
+  ACE_ASSERT (lock_in);
 
-  myLock = lock_in;
-  mySubscribers = subscribers_in;
+  lock_ = lock_in;
+  subscribers_ = subscribers_in;
 }
 
 void
-RPG_Net_Module_EventHandler::handleDataMessage(RPG_Net_Message*& message_inout,
-                                               bool& passMessageDownstream_out)
+Olimex_Mod_MPU6050_Module_EventHandler::handleDataMessage (Olimex_Mod_MPU6050_Message*& message_inout,
+                                                           bool& passMessageDownstream_out)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::handleDataMessage"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::handleDataMessage"));
 
   // don't care (implies yes per default, if we're part of a stream)
-  ACE_UNUSED_ARG(passMessageDownstream_out);
+  ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)
-  ACE_ASSERT(message_inout);
+  ACE_ASSERT (message_inout);
 
-//   // debug info
 //   try
 //   {
-//     message_inout->getData()->dump_state();
+//     message_inout->getData ()->dump_state ();
 //   }
 //   catch (...)
 //   {
-//     ACE_DEBUG((LM_ERROR,
-//                ACE_TEXT("caught exception in RPG_Common_IDumpState::dump_state(), continuing\n")));
+//     ACE_DEBUG ((LM_ERROR,
+//                 ACE_TEXT ("caught exception in Common_IDumpState::dump_state(), continuing\n")));
 //   }
 
   // refer the data back to any subscriber(s)
 
   // synch access
   {
-    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(*myLock);
+    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
     // *WARNING* if users unsubscribe() within the callback Bad Things (TM)
     // would happen, as the current iter would be invalidated
     // --> use a slightly modified for-loop (advance first and THEN invoke the
     // callback (*NOTE*: works for MOST containers...)
     // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
-    for (RPG_Net_NotifySubscribersIterator_t iterator = mySubscribers->begin();
-         iterator != mySubscribers->end();)
+    for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
+         iterator != subscribers_->end ();)
     {
       try
       {
-        (*iterator++)->notify(*message_inout);
+        (*iterator++)->notify (*message_inout);
       }
       catch (...)
       {
         ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT("caught exception in RPG_Net_INotify::notify(), continuing\n")));
+                   ACE_TEXT ("caught exception in Common_INotify::notify (), continuing\n")));
       }
     } // end FOR
   } // end lock scope
 }
 
 void
-RPG_Net_Module_EventHandler::handleSessionMessage(RPG_Net_SessionMessage*& message_inout,
-                                                  bool& passMessageDownstream_out)
+Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050_SessionMessage*& message_inout,
+                                                              bool& passMessageDownstream_out)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::handleSessionMessage"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage"));
 
   // don't care (implies yes per default, if we're part of a stream)
-  ACE_UNUSED_ARG(passMessageDownstream_out);
+  ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)
-  ACE_ASSERT(message_inout);
+  ACE_ASSERT (message_inout);
 
-  switch (message_inout->getType())
+  switch (message_inout->getType ())
   {
-    case RPG_Stream_SessionMessage::MB_STREAM_SESSION_BEGIN:
+    case SESSION_BEGIN:
     {
       // refer the data back to any subscriber(s)
 
       // synch access
       {
-        ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(*myLock);
+        ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
         // *WARNING* if users unsubscribe() within the callback Bad Things (TM)
         // would happen, as the current iter would be invalidated
         // --> use a slightly modified for-loop (advance first and THEN invoke the
         // callback (*NOTE*: works for MOST containers...)
         // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
-        for (RPG_Net_NotifySubscribersIterator_t iterator = mySubscribers->begin();
-             iterator != mySubscribers->end();)
+        for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
+             iterator != subscribers_->end ();)
         {
           try
           {
-            (*iterator++)->start();
+            (*iterator++)->start ();
           }
           catch (...)
           {
-            ACE_DEBUG((LM_ERROR,
-                       ACE_TEXT("caught exception in RPG_Net_INotify::start(), continuing\n")));
+            ACE_DEBUG ((LM_ERROR,
+                        ACE_TEXT ("caught exception in Common_INotify::start(), continuing\n")));
           }
         } // end FOR
       } // end lock scope
 
       break;
     }
-    case RPG_Stream_SessionMessage::MB_STREAM_SESSION_END:
+    case SESSION_END:
     {
       // refer the data back to any subscriber(s)
 
       // synch access
       {
-        ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(*myLock);
+        ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
         // *WARNING* if users unsubscribe() within the callback Bad Things (TM)
         // would happen, as the current iter would be invalidated
         // --> use a slightly modified for-loop (advance first and THEN invoke the
         // callback (*NOTE*: works for MOST containers...)
         // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
-        for (RPG_Net_NotifySubscribersIterator_t iterator = mySubscribers->begin();
-             iterator != mySubscribers->end();)
+        for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
+             iterator != subscribers_->end ();)
         {
           try
           {
-            (*(iterator++))->end();
+            (*(iterator++))->end ();
           }
           catch (...)
           {
-            ACE_DEBUG((LM_ERROR,
-                       ACE_TEXT("caught exception in RPG_Net_INotify::end(), continuing\n")));
+            ACE_DEBUG ((LM_ERROR,
+                        ACE_TEXT ("caught exception in Common_INotify::end(), continuing\n")));
           }
         } // end FOR
       } // end lock scope
@@ -184,78 +187,77 @@ RPG_Net_Module_EventHandler::handleSessionMessage(RPG_Net_SessionMessage*& messa
 }
 
 void
-RPG_Net_Module_EventHandler::subscribe(RPG_Net_INotify_t* dataCallback_in)
+Olimex_Mod_MPU6050_Module_EventHandler::subscribe (Olimex_Mod_MPU6050_Notification_t* interfaceHandle_in)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::subscribe"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::subscribe"));
 
   // sanity check(s)
-  ACE_ASSERT(dataCallback_in);
+  ACE_ASSERT (interfaceHandle_in);
 
   // synch access to subscribers
-  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(*myLock);
+  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
-  mySubscribers->push_back(dataCallback_in);
+  subscribers_->push_back (interfaceHandle_in);
 }
 
 void
-RPG_Net_Module_EventHandler::unsubscribe(RPG_Net_INotify_t* dataCallback_in)
+Olimex_Mod_MPU6050_Module_EventHandler::unsubscribe (Olimex_Mod_MPU6050_Notification_t* interfaceHandle_in)
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::unsubscribe"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::unsubscribe"));
 
   // sanity check(s)
-  ACE_ASSERT(dataCallback_in);
+  ACE_ASSERT (interfaceHandle_in);
 
   // synch access to subscribers
-  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard(*myLock);
+  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
-  RPG_Net_NotifySubscribersIterator_t iterator = mySubscribers->begin();
+  Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
   for (;
-       iterator != mySubscribers->end();
+       iterator != subscribers_->end ();
        iterator++)
-    if ((*iterator) == dataCallback_in)
+    if ((*iterator) == interfaceHandle_in)
       break;
 
-  if (iterator != mySubscribers->end())
-    mySubscribers->erase(iterator);
+  if (iterator != subscribers_->end ())
+    subscribers_->erase (iterator);
   else
-    ACE_DEBUG((LM_ERROR,
-               ACE_TEXT("invalid argument (was: %@), aborting\n"),
-               dataCallback_in));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("invalid argument (was: %@), aborting\n"),
+                interfaceHandle_in));
 }
 
-MODULE_TYPE*
-RPG_Net_Module_EventHandler::clone()
+Common_Module_t*
+Olimex_Mod_MPU6050_Module_EventHandler:: clone ()
 {
-  RPG_TRACE(ACE_TEXT("RPG_Net_Module_EventHandler::clone"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::clone"));
 
   // init return value(s)
-  MODULE_TYPE* result = NULL;
+  Common_Module_t* result = NULL;
 
-  ACE_NEW_NORETURN(result,
-                   RPG_Net_Module_EventHandler_Module(ACE_TEXT_ALWAYS_CHAR(inherited::name()),
-                                                      NULL));
+  ACE_NEW_NORETURN (result,
+                    Olimex_Mod_MPU6050_Module_EventHandler_Module (ACE_TEXT_ALWAYS_CHAR (inherited::name ()),
+                                                                   NULL));
   if (!result)
-    ACE_DEBUG((LM_CRITICAL,
-               ACE_TEXT("failed to allocate memory(%u): %m, aborting\n"),
-               sizeof(RPG_Net_Module_EventHandler_Module)));
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate memory(%u): %m, aborting\n"),
+                sizeof (Olimex_Mod_MPU6050_Module_EventHandler_Module)));
   else
   {
-    RPG_Net_Module_EventHandler* eventHandler_impl = NULL;
-    eventHandler_impl = dynamic_cast<RPG_Net_Module_EventHandler*>(result->writer());
+    Olimex_Mod_MPU6050_Module_EventHandler* eventHandler_impl = NULL;
+    eventHandler_impl = dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler*> (result->writer ());
     if (!eventHandler_impl)
     {
-      ACE_DEBUG((LM_ERROR,
-                 ACE_TEXT("dynamic_cast<RPG_Net_Module_EventHandler> failed, aborting\n")));
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler> failed, aborting\n")));
 
       // clean up
       delete result;
 
       return NULL;
     } // end IF
-    eventHandler_impl->init(mySubscribers,
-                            myLock);
+    eventHandler_impl->init (subscribers_,
+                             lock_);
   } // end ELSE
 
   return result;
 }
-

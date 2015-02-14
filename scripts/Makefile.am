@@ -1,2 +1,2 @@
 EXTRA_DIST = \
-	olinuxino.pc.in
+  olinuxino.pc.in

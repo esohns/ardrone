@@ -19,14 +19,14 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "Olimex_Mod_MPU6050_SessionMessage.h"
+#include "olimex_mod_mpu6050_sessionmessage.h"
 
 #include "ace/Malloc_Base.h"
 
 #include "olimex_mod_mpu6050_macros.h"
 
 Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage (unsigned int sessionID_in,
-                                                                      Stream_SessionMessageType& messageType_in,
+                                                                      Stream_SessionMessageType_t messageType_in,
                                                                       Olimex_Mod_MPU6050_SessionConfiguration*& configuration_inout)
  : inherited (sessionID_in,
               messageType_in,

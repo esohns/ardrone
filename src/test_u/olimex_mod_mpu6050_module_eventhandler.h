@@ -21,6 +21,8 @@
 #ifndef OLIMEX_MOD_MPU6050_MODULE_EVENTHANDLER_H
 #define OLIMEX_MOD_MPU6050_MODULE_EVENTHANDLER_H
 
+#include "ace/Global_Macros.h"
+
 #include "common.h"
 #include "common_isubscribe.h"
 #include "common_iclone.h"

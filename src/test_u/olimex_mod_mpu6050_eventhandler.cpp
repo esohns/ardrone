@@ -25,7 +25,7 @@
 
 #include "olimex_mod_mpu6050_macros.h"
 
-Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_Gtk_CBData_t* GtkCBData_in)
+Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_in)
  : GtkCBData_ (GtkCBData_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler"));
@@ -57,7 +57,8 @@ Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& messa
 
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
-  Olimex_Mod_MPU6050_Message* message_p = message_in.duplicate ();
+  Olimex_Mod_MPU6050_Message* message_p =
+      dynamic_cast<Olimex_Mod_MPU6050_Message*> (message_in.duplicate ());
   if (!message_p)
   {
     ACE_DEBUG ((LM_ERROR,

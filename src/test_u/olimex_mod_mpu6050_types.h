@@ -51,18 +51,18 @@ typedef Olimex_Mod_MPU6050_Messages_t::const_iterator Olimex_Mod_MPU6050_Message
 
 typedef Common_INotify_T<Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
-typedef Olimex_Mod_MPU6050_Subscribers_t::const_iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
+typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
 
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
-  : lock (NULL, NULL),
+  : lock (NULL, NULL)//,
 //    event_queue (),
 //    message_queue (),
 //    subscribers (),
 //    event_source_ids (),
 //    timeout_handler (NULL),
-    timer_id (-1)
+//    timer_id (-1)
  { };
 
  mutable ACE_Recursive_Thread_Mutex lock;
@@ -71,7 +71,7 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  Olimex_Mod_MPU6050_Subscribers_t   subscribers;
 // Net_GTK_EventSourceIDs_t           event_source_ids;
 // Net_Client_TimeoutHandler*         timeout_handler; // *NOTE*: client only !
- long                               timer_id;        // *NOTE*: client only !
+// long                               timer_id;        // *NOTE*: client only !
 };
 
 struct Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t

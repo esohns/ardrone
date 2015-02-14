@@ -34,8 +34,7 @@ class Olimex_Mod_MPU6050_SignalHandler
    public Common_ISignal
 {
  public:
-  Olimex_Mod_MPU6050_SignalHandler (long,                   // action timer id
-                                    const ACE_INET_Addr&,   // peer SAP
+  Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr&,   // peer SAP
                                     Net_Client_IConnector*, // connector
                                     // -----------------------------------------
                                     bool);                  // use reactor ?

@@ -43,6 +43,8 @@
 
 #include "common_tools.h"
 
+#include "common_ui_gtk_manager.h"
+
 #include "stream_allocatorheap.h"
 
 //#include "net_defines.h"
@@ -345,9 +347,11 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   // step3: init client connector
   Net_Client_IConnector* connector = NULL;
   if (useReactor_in)
-    ACE_NEW_NORETURN (connector, Net_Client_Connector ());
+    ACE_NEW_NORETURN (connector,
+                      Net_Client_Connector (CONNECTIONMANAGER_SINGLETON::instance ()));
   else
-    ACE_NEW_NORETURN (connector, Net_Client_AsynchConnector ());
+    ACE_NEW_NORETURN (connector,
+                      Net_Client_AsynchConnector (CONNECTIONMANAGER_SINGLETON::instance ()));
   if (!connector)
   {
     ACE_DEBUG ((LM_CRITICAL,
@@ -360,8 +364,7 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   CONNECTIONMANAGER_SINGLETON::instance ()->set (stream_data); // will be passed to all handlers
 
   // step5: init signal handling
-  Olimex_Mod_MPU6050_SignalHandler signal_handler (cb_data.timer_id, // action timer id
-                                                   peerAddress_in,   // remote SAP
+  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,   // remote SAP
                                                    connector,        // connector
                                                    useReactor_in);   // use reactor ?
   ACE_Sig_Set signal_set (0);
@@ -391,8 +394,8 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step6a: start GTK event loop
-  CLIENT_GTK_MANAGER_SINGLETON::instance ()->start ();
-  if (!CLIENT_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
+  if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
@@ -419,7 +422,7 @@ do_work (const ACE_INET_Addr& peerAddress_in,
 //					 iterator++)
 //				g_source_remove (*iterator);
 //		} // end lock scope
-    CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
     Common_Tools::finiSignals (signal_set,
                                useReactor_in,
                                previous_signal_actions);
@@ -540,7 +543,7 @@ ACE_TMAIN (int argc_in,
 
   // step3: initialize logging and/or tracing
   char buffer[PATH_MAX];
-  if (ACE_OS::getcwd (buffer, sizeof (buffer)))
+  if (!ACE_OS::getcwd (buffer, sizeof (buffer)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_OS::getcwd(): \"%m\", aborting\n")));

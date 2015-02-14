@@ -23,23 +23,19 @@
 
 #include "ace/Log_Msg.h"
 
-#include "common_timer_manager.h"
+#include "common_tools.h"
 
-#include "net_common_tools.h"
-
-#include "client_GTK_manager.h"
+#include "common_ui_gtk_manager.h"
 
 #include "olimex_mod_mpu6050_macros.h"
 #include "olimex_mod_mpu6050_types.h"
 
-Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (long actionTimerID_in,
-                                                                    const ACE_INET_Addr& peerSAP_in,
+Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr& peerSAP_in,
                                                                     Net_Client_IConnector* connector_in,
                                                                     // ---------
                                                                     bool useReactor_in)
  : inherited (this,          // event handler handle
               useReactor_in) // use reactor ?
- , actionTimerID_ (actionTimerID_in)
  , peerAddress_ (peerSAP_in)
  , connector_ (connector_in)
  , useReactor_ (useReactor_in)
@@ -129,7 +125,7 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     catch (...)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in RPG_Net_IConnector::connect(), aborting\n")));
+                  ACE_TEXT ("caught exception in Net_IConnector::connect(), aborting\n")));
 
       return false;
     }
@@ -142,28 +138,7 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     // - leave reactor event loop handling signals, sockets, (maintenance) timers...
     // --> (try to) terminate in a well-behaved manner
 
-    // step1: stop all open connections
-
-    // stop action timer (might spawn new connections otherwise)
-    if (actionTimerID_ >= 0)
-    {
-      const void* act = NULL;
-      if (COMMON_TIMERMANAGER_SINGLETON::instance ()->cancel (actionTimerID_,
-                                                              &act) <= 0)
-      {
-        ACE_DEBUG ((LM_DEBUG,
-                    ACE_TEXT ("failed to cancel timer (ID: %d): \"%m\", aborting\n"),
-                    actionTimerID_));
-
-        // clean up
-        actionTimerID_ = -1;
-
-        return false;
-      } // end IF
-
-      // clean up
-      actionTimerID_ = -1;
-    } // end IF
+    // step1: close open connection(s)
     try
     {
       connector_->abort ();
@@ -171,7 +146,7 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     catch (...)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in RPG_Net_IConnector::abort(), aborting\n")));
+                  ACE_TEXT ("caught exception in Net_IConnector::abort(), aborting\n")));
 
       return false;
     }
@@ -182,12 +157,12 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     //CONNECTIONMANAGER_SINGLETON::instance ()->waitConnections ();
 
     // step2: stop GTK event dispatch
-    CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 
     // step3: stop reactor (&& proactor, if applicable)
-    Net_Common_Tools::finiEventDispatch (true,         // stop reactor ?
-                                         !useReactor_, // stop proactor ?
-                                         -1);          // group ID (--> don't block !)
+    Common_Tools::finiEventDispatch (true,         // stop reactor ?
+                                     !useReactor_, // stop proactor ?
+                                     -1);          // group ID (--> don't block !)
   } // end IF
 
   return true;
