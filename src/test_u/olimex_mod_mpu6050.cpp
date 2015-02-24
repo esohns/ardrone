@@ -28,14 +28,15 @@
 #endif
 #include "gettext.h"
 
-#include "ace/OS.h"
-#include "ace/OS_main.h"
 #include "ace/ACE.h"
 #include "ace/Get_Opt.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "ace/Init_ACE.h"
 #endif
 #include "ace/Log_Msg.h"
+#include "ace/OS.h"
+#include "ace/OS_main.h"
+#include "ace/Time_Value.h"
 
 #ifdef HAVE_CONFIG_H
 #include "olinuxino_config.h"
@@ -240,7 +241,6 @@ do_initSignals (ACE_Sig_Set& signals_inout)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", aborting\n")));
-
     return;
   } // end IF
 
@@ -248,15 +248,14 @@ do_initSignals (ACE_Sig_Set& signals_inout)
   // and ACE_Sig_Set::fill_set() doesn't really work as specified
   // --> add valid signals (see <signal.h>)...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  signals_inout.sig_add(SIGINT);         // 2       /* interrupt */
-  signals_inout.sig_add(SIGILL);         // 4       /* illegal instruction - invalid function image */
-  signals_inout.sig_add(SIGFPE);         // 8       /* floating point exception */
-//  signals_inout.sig_add(SIGSEGV);        // 11      /* segment violation */
-  signals_inout.sig_add(SIGTERM);        // 15      /* Software termination signal from kill */
-  if (allowUserRuntimeConnect_in)
-    signals_inout.sig_add(SIGBREAK);     // 21      /* Ctrl-Break sequence */
-  signals_inout.sig_add(SIGABRT);        // 22      /* abnormal termination triggered by abort call */
-  signals_inout.sig_add(SIGABRT_COMPAT); // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
+  signals_inout.sig_add (SIGINT);         // 2       /* interrupt */
+  signals_inout.sig_add (SIGILL);         // 4       /* illegal instruction - invalid function image */
+  signals_inout.sig_add (SIGFPE);         // 8       /* floating point exception */
+  //signals_inout.sig_add (SIGSEGV);        // 11      /* segment violation */
+  signals_inout.sig_add (SIGTERM);        // 15      /* Software termination signal from kill */
+  //signals_inout.sig_add (SIGBREAK);       // 21      /* Ctrl-Break sequence */
+  signals_inout.sig_add (SIGABRT);        // 22      /* abnormal termination triggered by abort call */
+  signals_inout.sig_add (SIGABRT_COMPAT); // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
 #else
   if (signals_inout.fill_set () == -1)
   {
@@ -268,8 +267,7 @@ do_initSignals (ACE_Sig_Set& signals_inout)
   signals_inout.sig_del (SIGKILL);        // 9       /* Kill signal */
   signals_inout.sig_del (SIGSTOP);        // 19      /* Stop process */
   // ---------------------------------------------------------------------------
-//  if (!allowUserRuntimeConnect_in)
-//    signals_inout.sig_del (SIGUSR1);      // 10      /* User-defined signal 1 */
+  //signals_inout.sig_del (SIGUSR1);        // 10      /* User-defined signal 1 */
   // *NOTE* core dump on SIGSEGV
   signals_inout.sig_del (SIGSEGV);        // 11      /* Segmentation fault: Invalid memory reference */
   // *NOTE* don't care about SIGPIPE
@@ -311,27 +309,39 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   Stream_AllocatorHeap heap_allocator;
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                            &heap_allocator);
-  Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t stream_data;
-  ACE_OS::memset (&stream_data, 0, sizeof (stream_data));
-  // ******************* connection configuration data *************************
-  stream_data.configuration.socketBufferSize = DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
-  stream_data.configuration.messageAllocator = &message_allocator;
-  stream_data.configuration.bufferSize = DEFAULT_STREAM_BUFFER_SIZE;
-  // ******************** stream configuration data ****************************
-  stream_data.configuration.notificationStrategy = NULL;
-  stream_data.configuration.module = &event_handler_module;
-  stream_data.configuration.deleteModule = false;
+  Olimex_Mod_MPU6050_SessionData_t session_data;
+  ACE_OS::memset (&session_data, 0, sizeof (session_data));
+  Stream_State_t stream_state;
+  ACE_OS::memset (&stream_state, 0, sizeof (stream_state));
+  Olimex_Mod_MPU6050_StreamSessionData_t stream_session_data (&session_data,
+                                                              false,
+                                                              &stream_state,
+                                                              ACE_Time_Value::zero,
+                                                              false);
+  Olimex_Mod_MPU6050_Configuration_t configuration;
+  ACE_OS::memset (&configuration, 0, sizeof (configuration));
+  // ******************* socket configuration data ****************************
+  configuration.socketConfiguration.bufferSize = DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
+  // ******************** stream configuration data ***************************
+  configuration.streamConfiguration.messageAllocator = &message_allocator;
+  configuration.streamConfiguration.bufferSize = DEFAULT_STREAM_BUFFER_SIZE;
+  configuration.streamConfiguration.useThreadPerConnection = false;
+  //configuration.streamConfiguration.serializeOutput = false;
+  configuration.streamConfiguration.notificationStrategy = NULL;
+  configuration.streamConfiguration.module = &event_handler_module;
+  configuration.streamConfiguration.deleteModule = false;
   // *WARNING*: set at runtime, by the appropriate connection handler
-  stream_data.configuration.statisticsReportingInterval = 0; // == off
-  stream_data.configuration.printFinalReport = false;
-//  // ******************** protocol configuration data **************************
-//  stream_data.peerPingInterval = 0; // don't ping the server
-//  stream_data.pingAutoAnswer = false;
-//  stream_data.printPongMessages = false;
-  // *************************** runtime data **********************************
-  stream_data.sessionID = 0; // (== socket handle !)
-  //  stream_data.currentStatistics = {};
-  stream_data.lastCollectionTimestamp = ACE_Time_Value::zero;
+  configuration.streamConfiguration.statisticsReportingInterval = 0; // == off
+  configuration.streamConfiguration.printFinalReport = false;
+//  // ******************** protocol configuration data ***********************
+//  configuration.protocolConfiguration.peerPingInterval = 0; // don't ping the server
+//  configuration.protocolConfiguration.pingAutoAnswer = false;
+//  configuration.protocolConfiguration.printPongMessages = false;
+
+  //// *************************** runtime data **********************************
+  //configuration.sessionID = 0; // (== socket handle !)
+  ////  configuration.currentStatistics = {};
+  //configuration.lastCollectionTimestamp = ACE_Time_Value::zero;
 
   // step2: init event dispatch
   bool serialize_output;
@@ -345,13 +355,13 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   } // end IF
 
   // step3: init client connector
-  Net_Client_IConnector* connector = NULL;
+  Olimex_Mod_MPU6050_Connector_t* connector = NULL;
   if (useReactor_in)
     ACE_NEW_NORETURN (connector,
-                      Net_Client_Connector (CONNECTIONMANAGER_SINGLETON::instance ()));
+                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
   else
     ACE_NEW_NORETURN (connector,
-                      Net_Client_AsynchConnector (CONNECTIONMANAGER_SINGLETON::instance ()));
+                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
   if (!connector)
   {
     ACE_DEBUG ((LM_CRITICAL,
@@ -361,7 +371,7 @@ do_work (const ACE_INET_Addr& peerAddress_in,
 
   // step4: init connection manager
   CONNECTIONMANAGER_SINGLETON::instance ()->init (std::numeric_limits<unsigned int>::max ());
-  CONNECTIONMANAGER_SINGLETON::instance ()->set (stream_data); // will be passed to all handlers
+  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration); // will be passed to all handlers
 
   // step5: init signal handling
   Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,   // remote SAP

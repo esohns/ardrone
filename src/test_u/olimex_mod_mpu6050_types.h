@@ -29,8 +29,13 @@
 #include "common.h"
 #include "common_inotify.h"
 
+#include "stream_session_data_base.h"
+
+#include "net_configuration.h"
 #include "net_connection_manager.h"
 #include "net_stream_common.h"
+
+#include "net_client_connector.h"
 
 #include "olimex_mod_mpu6050_message.h"
 
@@ -74,18 +79,27 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
 // long                               timer_id;        // *NOTE*: client only !
 };
 
-struct Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t
+struct Olimex_Mod_MPU6050_SessionData_t
 {
-  // *********************** stream / socket data ******************************
-  Net_StreamSocketConfiguration_t configuration;
-  // **************************** runtime data *********************************
-  unsigned int                    sessionID; // (== socket handle !)
-  Net_RuntimeStatistic_t          currentStatistics;
-  ACE_Time_Value                  lastCollectionTimestamp;
+
 };
 
-typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t,
-                                 Net_RuntimeStatistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
+typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
+
+struct Olimex_Mod_MPU6050_Configuration_t
+{
+  // **************************** socket data **********************************
+  Net_SocketConfiguration_t socketConfiguration;
+  // **************************** stream data **********************************
+  Stream_Configuration_t    streamConfiguration;
+  //Net_UserData_t            userData;
+  // *************************** protocol data *********************************
+};
+
+typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t> Olimex_Mod_MPU6050_Connector_t;
+
+typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
+                                 Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;
 

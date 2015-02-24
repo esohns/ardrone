@@ -25,11 +25,9 @@
 
 #include "olimex_mod_mpu6050_macros.h"
 
-Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage (unsigned int sessionID_in,
-                                                                      Stream_SessionMessageType_t messageType_in,
-                                                                      Olimex_Mod_MPU6050_SessionConfiguration*& configuration_inout)
- : inherited (sessionID_in,
-              messageType_in,
+Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType_t messageType_in,
+                                                                      Olimex_Mod_MPU6050_StreamSessionData_t*& configuration_inout)
+ : inherited (messageType_in,
               configuration_inout)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage"));
