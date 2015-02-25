@@ -21,6 +21,7 @@
 #include "ace/Default_Constants.h"
 
 #define DEFAULT_USE_REACTOR                         true
+#define DEFAULT_USE_ASYNCH_CONNECTOR                false
 #define DEFAULT_LOG_FILE                            "olimex_mod_mpu6050.log"
 
 // *** network-related ***

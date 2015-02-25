@@ -35,6 +35,7 @@
 #include "net_connection_manager.h"
 #include "net_stream_common.h"
 
+#include "net_client_asynchconnector.h"
 #include "net_client_connector.h"
 
 #include "olimex_mod_mpu6050_message.h"
@@ -81,7 +82,7 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
 
 struct Olimex_Mod_MPU6050_SessionData_t
 {
-
+ int test;
 };
 
 typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
@@ -98,6 +99,8 @@ struct Olimex_Mod_MPU6050_Configuration_t
 
 typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t,
                              Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Connector_t;
+typedef Net_Client_AsynchConnector<Olimex_Mod_MPU6050_Configuration_t,
+                                   Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_AsynchConnector_t;
 
 typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
                                  Olimex_Mod_MPU6050_StreamSessionData_t,

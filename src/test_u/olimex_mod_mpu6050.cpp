@@ -178,7 +178,13 @@ do_processArguments (int argc_in,
       }
       case 's':
       {
-        if (peerAddress_out.set (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ())) == -1)
+        int result = -1;
+        std::string address = ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ());
+        if (address.find (':') != std::string::npos)
+          result = peerAddress_out.set (address.c_str (), 0);
+        else
+          result = peerAddress_out.set (DEFAULT_PORT, address.c_str (), 1, 0);
+        if (result == -1)
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", aborting\n"),
@@ -285,6 +291,7 @@ do_initSignals (ACE_Sig_Set& signals_inout)
 
 void
 do_work (const ACE_INET_Addr& peerAddress_in,
+         bool useAsynchConnector_in,
          bool useReactor_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
@@ -355,10 +362,10 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   } // end IF
 
   // step3: init client connector
-  Olimex_Mod_MPU6050_Connector_t* connector = NULL;
-  if (useReactor_in)
+  Net_Client_IConnector* connector = NULL;
+  if (useAsynchConnector_in)
     ACE_NEW_NORETURN (connector,
-                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
+                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
   else
     ACE_NEW_NORETURN (connector,
                       Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
@@ -445,8 +452,28 @@ do_work (const ACE_INET_Addr& peerAddress_in,
               ACE_TEXT ("started event dispatch...\n")));
 
   // step7: connect
-  connector->connect (peerAddress_in);
+  if (!connector->connect (peerAddress_in))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to connect, aborting\n")));
+    Common_Tools::finiEventDispatch (useReactor_in,
+                                     !useReactor_in,
+                                     group_id);
+    //		{ // synch access
+    //			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
 
+    //			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
+    //					 iterator != CBData_in.event_source_ids.end ();
+    //					 iterator++)
+    //				g_source_remove (*iterator);
+    //		} // end lock scope
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    Common_Tools::finiSignals (signal_set,
+                               useReactor_in,
+                               previous_signal_actions);
+    delete connector;
+    return;
+  }
   // *WARNING*: from this point on, clean up any remote connections !
 
   // step8: dispatch events
@@ -507,6 +534,7 @@ ACE_TMAIN (int argc_in,
 
   // step1: process commandline options (if any)
   bool log_to_file            = false;
+  bool use_asynch_connector   = DEFAULT_USE_ASYNCH_CONNECTOR;
   bool use_reactor            = DEFAULT_USE_REACTOR;
   ACE_INET_Addr peer_address;
   bool trace_information      = false;
@@ -535,10 +563,11 @@ ACE_TMAIN (int argc_in,
   } // end IF
 
   // step2: validate configuration
-  if (peer_address.is_any ())
+  if (peer_address.is_any () ||
+      (use_reactor && use_asynch_connector))
   {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to validate configuration, aborting\n")));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to validate configuration, aborting\n")));
 
     do_printUsage (ACE::basename (argv_in[0]));
 
@@ -571,6 +600,7 @@ ACE_TMAIN (int argc_in,
   std::string log_file = buffer;
   log_file += ACE_DIRECTORY_SEPARATOR_STR;
   log_file += ACE_TEXT_ALWAYS_CHAR (DEFAULT_LOG_FILE);
+  if (!log_to_file) log_file.clear ();
   if (!Common_Tools::initLogging (ACE::basename (argv_in[0]),
                                   log_file,
                                   false,
@@ -606,6 +636,7 @@ ACE_TMAIN (int argc_in,
     do_printVersion (ACE::basename (argv_in[0]));
   else
     do_work (peer_address,
+             use_asynch_connector,
              use_reactor);
 
   // step6: clean up
