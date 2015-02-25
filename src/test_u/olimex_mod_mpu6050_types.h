@@ -96,9 +96,11 @@ struct Olimex_Mod_MPU6050_Configuration_t
   // *************************** protocol data *********************************
 };
 
-typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t> Olimex_Mod_MPU6050_Connector_t;
+typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t,
+                             Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Connector_t;
 
 typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
+                                 Olimex_Mod_MPU6050_StreamSessionData_t,
                                  Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;

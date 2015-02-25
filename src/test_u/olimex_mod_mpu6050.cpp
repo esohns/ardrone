@@ -371,7 +371,8 @@ do_work (const ACE_INET_Addr& peerAddress_in,
 
   // step4: init connection manager
   CONNECTIONMANAGER_SINGLETON::instance ()->init (std::numeric_limits<unsigned int>::max ());
-  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration); // will be passed to all handlers
+  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                 stream_session_data); // will be passed to all handlers
 
   // step5: init signal handling
   Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,   // remote SAP
