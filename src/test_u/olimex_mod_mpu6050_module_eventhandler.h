@@ -48,8 +48,8 @@ class Olimex_Mod_MPU6050_Module_EventHandler
   Olimex_Mod_MPU6050_Module_EventHandler ();
   virtual ~Olimex_Mod_MPU6050_Module_EventHandler ();
 
-  void init (Olimex_Mod_MPU6050_Subscribers_t*, // subscribers (handle)
-             ACE_Recursive_Thread_Mutex*);      // subscribers lock
+  void initialize (Olimex_Mod_MPU6050_Subscribers_t*, // subscribers (handle)
+                   ACE_Recursive_Thread_Mutex*);      // subscribers lock
 
   // implement (part of) Stream_ITaskBase_T
   virtual void handleDataMessage (Olimex_Mod_MPU6050_Message*&, // data message handle

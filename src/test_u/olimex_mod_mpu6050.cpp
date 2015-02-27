@@ -48,17 +48,10 @@
 
 #include "stream_allocatorheap.h"
 
-//#include "net_defines.h"
-//#include "net_common_tools.h"
-//#include "net_stream_messageallocator.h"
-//#include "net_module_eventhandler.h"
-
-//#include "net_client_defines.h"
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
-//#include "net_server_defines.h"
-
+#include "olimex_mod_mpu6050_callbacks.h"
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_eventhandler.h"
 #include "olimex_mod_mpu6050_macros.h"
@@ -129,6 +122,8 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT ("]")
             << std::endl;
+  std::cout << ACE_TEXT ("-u           : interface definition file")
+            << std::endl;
   std::cout << ACE_TEXT ("-v           : print version information and exit [")
             << false
             << ACE_TEXT ("]")
@@ -142,19 +137,21 @@ do_processArguments (int argc_in,
                      bool& useReactor_out,
                      ACE_INET_Addr& peerAddress_out,
                      bool& traceInformation_out,
+                     std::string& interfaceDefinitionFile_out,
                      bool& printVersionAndExit_out)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_processArguments"));
 
   // init results
-  logToFile_out           = false;
-  useReactor_out          = DEFAULT_USE_REACTOR;
-  traceInformation_out    = false;
-  printVersionAndExit_out = false;
+  logToFile_out               = false;
+  useReactor_out              = DEFAULT_USE_REACTOR;
+  traceInformation_out        = false;
+  interfaceDefinitionFile_out = ACE_TEXT_ALWAYS_CHAR (DEFAULT_UI_DEFINITION_FILE);
+  printVersionAndExit_out     = false;
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
-                              ACE_TEXT ("lrs:tv"),
+                              ACE_TEXT ("lrs:tu:v"),
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -196,6 +193,12 @@ do_processArguments (int argc_in,
       case 't':
       {
         traceInformation_out = true;
+        break;
+      }
+      case 'u':
+      {
+        interfaceDefinitionFile_out =
+            ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ());
         break;
       }
       case 'v':
@@ -290,9 +293,12 @@ do_initSignals (ACE_Sig_Set& signals_inout)
 }
 
 void
-do_work (const ACE_INET_Addr& peerAddress_in,
+do_work (int argc_in,
+         ACE_TCHAR** argv_in,
+         const ACE_INET_Addr& peerAddress_in,
          bool useAsynchConnector_in,
-         bool useReactor_in)
+         bool useReactor_in,
+         const std::string& interfaceDefinitionFile_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
 
@@ -310,8 +316,8 @@ do_work (const ACE_INET_Addr& peerAddress_in,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler> failed, returning\n")));
     return;
   } // end IF
-  event_handler_impl->init (&cb_data.subscribers,
-                            &cb_data.lock);
+  event_handler_impl->initialize (&cb_data.subscribers,
+                                  &cb_data.lock);
   event_handler_impl->subscribe (&event_handler);
   Stream_AllocatorHeap heap_allocator;
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
@@ -352,20 +358,23 @@ do_work (const ACE_INET_Addr& peerAddress_in,
 
   // step2: init event dispatch
   bool serialize_output;
-  if (!Common_Tools::initEventDispatch (useReactor_in,
-                                        1,
-                                        serialize_output))
+  if (!Common_Tools::initializeEventDispatch (useReactor_in,
+                                              1,
+                                              serialize_output))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::initEventDispatch(), returning\n")));
+                ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
     return;
   } // end IF
 
   // step3: init client connector
   Net_Client_IConnector* connector = NULL;
   if (useAsynchConnector_in)
-    ACE_NEW_NORETURN (connector,
-                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
+  {
+//    ACE_NEW_NORETURN (connector,
+//                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
+    ACE_ASSERT (false);
+  } // end IF
   else
     ACE_NEW_NORETURN (connector,
                       Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
@@ -377,7 +386,7 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   } // end IF
 
   // step4: init connection manager
-  CONNECTIONMANAGER_SINGLETON::instance ()->init (std::numeric_limits<unsigned int>::max ());
+  CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
   CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
                                                  stream_session_data); // will be passed to all handlers
 
@@ -388,21 +397,21 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   ACE_Sig_Set signal_set (0);
   do_initSignals (signal_set);
   Common_SignalActions_t previous_signal_actions;
-  if (!Common_Tools::preInitSignals (signal_set,
-                                     useReactor_in,
-                                     previous_signal_actions))
+  if (!Common_Tools::preInitializeSignals (signal_set,
+                                           useReactor_in,
+                                           previous_signal_actions))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::preInitSignals(), aborting\n")));
+                ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
     delete connector;
     return;
   } // end IF
-  if (!Common_Tools::initSignals (signal_set,
-                                  &signal_handler,
-                                  previous_signal_actions))
+  if (!Common_Tools::initializeSignals (signal_set,
+                                        &signal_handler,
+                                        previous_signal_actions))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to init signal handling, aborting\n")));
+                ACE_TEXT ("failed to initialize signal handling, aborting\n")));
     delete connector;
     return;
   } // end IF
@@ -412,14 +421,23 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step6a: start GTK event loop
+  Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
+  Olimex_Mod_MPU6050_GTKUIDefinition interface_definition (argc_in,
+                                                           argv_in,
+                                                           &gtk_cb_data);
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
+                                                            argv_in,
+                                                            interfaceDefinitionFile_in,
+                                                            &interface_definition);
   COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
+  ACE_OS::sleep (ACE_Time_Value (0, UI_INITIALIZATION_DELAY));
   if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
-    Common_Tools::finiSignals (signal_set,
-                               useReactor_in,
-                               previous_signal_actions);
+    Common_Tools::finalizeSignals (signal_set,
+                                   useReactor_in,
+                                   previous_signal_actions);
     delete connector;
     return;
   } // end IF
@@ -441,9 +459,9 @@ do_work (const ACE_INET_Addr& peerAddress_in,
 //				g_source_remove (*iterator);
 //		} // end lock scope
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-    Common_Tools::finiSignals (signal_set,
-                               useReactor_in,
-                               previous_signal_actions);
+    Common_Tools::finalizeSignals (signal_set,
+                                   useReactor_in,
+                                   previous_signal_actions);
     delete connector;
     return;
   } // end IF
@@ -456,9 +474,9 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to connect, aborting\n")));
-    Common_Tools::finiEventDispatch (useReactor_in,
-                                     !useReactor_in,
-                                     group_id);
+    Common_Tools::finalizeEventDispatch (useReactor_in,
+                                         !useReactor_in,
+                                         group_id);
     //		{ // synch access
     //			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
 
@@ -468,9 +486,9 @@ do_work (const ACE_INET_Addr& peerAddress_in,
     //				g_source_remove (*iterator);
     //		} // end lock scope
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-    Common_Tools::finiSignals (signal_set,
-                               useReactor_in,
-                               previous_signal_actions);
+    Common_Tools::finalizeSignals (signal_set,
+                                   useReactor_in,
+                                   previous_signal_actions);
     delete connector;
     return;
   }
@@ -498,9 +516,9 @@ do_work (const ACE_INET_Addr& peerAddress_in,
   // step9: clean up
   // *NOTE*: any action timer has been cancelled, connections have been
   // aborted and any GTK event dispatcher has returned by now...
-  Common_Tools::finiSignals (signal_set,
-                             useReactor_in,
-                             previous_signal_actions);
+  Common_Tools::finalizeSignals (signal_set,
+                                 useReactor_in,
+                                 previous_signal_actions);
 //  { // synch access
 //    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (CBData_in.lock);
 
@@ -538,6 +556,8 @@ ACE_TMAIN (int argc_in,
   bool use_reactor            = DEFAULT_USE_REACTOR;
   ACE_INET_Addr peer_address;
   bool trace_information      = false;
+  std::string interface_definition_file =
+      ACE_TEXT_ALWAYS_CHAR (DEFAULT_UI_DEFINITION_FILE);
   bool print_version_and_exit = false;
   if (!do_processArguments (argc_in,
                             argv_in,
@@ -545,6 +565,7 @@ ACE_TMAIN (int argc_in,
                             use_reactor,
                             peer_address,
                             trace_information,
+                            interface_definition_file,
                             print_version_and_exit))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -601,15 +622,15 @@ ACE_TMAIN (int argc_in,
   log_file += ACE_DIRECTORY_SEPARATOR_STR;
   log_file += ACE_TEXT_ALWAYS_CHAR (DEFAULT_LOG_FILE);
   if (!log_to_file) log_file.clear ();
-  if (!Common_Tools::initLogging (ACE::basename (argv_in[0]),
-                                  log_file,
-                                  false,
-                                  trace_information,
-                                  true,
-                                  NULL))
+  if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0]),
+                                        log_file,
+                                        false,
+                                        trace_information,
+                                        true,
+                                        NULL))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to init logging, aborting\n")));
+                ACE_TEXT ("failed to initialize logging, aborting\n")));
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -635,9 +656,12 @@ ACE_TMAIN (int argc_in,
   if (print_version_and_exit)
     do_printVersion (ACE::basename (argv_in[0]));
   else
-    do_work (peer_address,
+    do_work (argc_in,
+             argv_in,
+             peer_address,
              use_asynch_connector,
-             use_reactor);
+             use_reactor,
+             interface_definition_file);
 
   // step6: clean up
   // *PORTABILITY*: on Windows, must fini ACE...

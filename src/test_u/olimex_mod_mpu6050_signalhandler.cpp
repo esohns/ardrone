@@ -160,9 +160,9 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finiEventDispatch (true,         // stop reactor ?
-                                     !useReactor_, // stop proactor ?
-                                     -1);          // group ID (--> don't block !)
+    Common_Tools::finalizeEventDispatch (true,         // stop reactor ?
+                                         !useReactor_, // stop proactor ?
+                                         -1);          // group ID (--> don't block !)
   } // end IF
 
   return true;

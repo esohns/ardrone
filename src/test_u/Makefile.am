@@ -26,6 +26,8 @@ noinst_HEADERS = \
 
 olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050.cpp \
+  olimex_mod_mpu6050_callbacks.cpp \
+  olimex_mod_mpu6050_callbacks.h \
   olimex_mod_mpu6050_defines.h \
   olimex_mod_mpu6050_eventhandler.cpp \
   olimex_mod_mpu6050_eventhandler.h \
@@ -35,8 +37,6 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_module_eventhandler.cpp \
   olimex_mod_mpu6050_module_eventhandler.h \
   olimex_mod_mpu6050_network.h \
-  olimex_mod_mpu6050_sessionconfiguration.cpp \
-  olimex_mod_mpu6050_sessionconfiguration.h \
   olimex_mod_mpu6050_sessionmessage.cpp \
   olimex_mod_mpu6050_sessionmessage.h \
   olimex_mod_mpu6050_signalhandler.cpp \
@@ -65,3 +65,6 @@ olimex_mod_mpu6050_LDADD = \
   -lACEStream \
   -lACENetwork \
   -lACENetwork_Client
+
+EXTRA_DIST = \
+  olimex_mod_mpu6050.glade

@@ -21,10 +21,8 @@
 #ifndef OLIMEX_MOD_MPU6050_EVENTHANDLER_H
 #define OLIMEX_MOD_MPU6050_EVENTHANDLER_H
 
+#include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_types.h"
-
-// forward declarations
-struct Olimex_Mod_MPU6050_GtkCBData_t;
 
 class Olimex_Mod_MPU6050_EventHandler
  : public Olimex_Mod_MPU6050_Notification_t

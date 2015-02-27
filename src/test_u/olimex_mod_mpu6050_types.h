@@ -26,14 +26,20 @@
 #include "ace/Synch.h"
 #include "ace/Time_Value.h"
 
+#include "gtk/gtk.h"
+#include "glade/glade.h"
+
 #include "common.h"
 #include "common_inotify.h"
+
+#include "common_ui_types.h"
 
 #include "stream_session_data_base.h"
 
 #include "net_configuration.h"
 #include "net_connection_manager.h"
-#include "net_stream_common.h"
+#include "net_netlinkconnection.h"
+#include "net_transportlayer_netlink.h"
 
 #include "net_client_asynchconnector.h"
 #include "net_client_connector.h"
@@ -62,27 +68,31 @@ typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_Subscriber
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
-  : lock (NULL, NULL)//,
-//    event_queue (),
-//    message_queue (),
-//    subscribers (),
-//    event_source_ids (),
-//    timeout_handler (NULL),
-//    timer_id (-1)
+  : lock (NULL, NULL)
+//  , event_queue ()
+//  , message_queue ()
+//  , subscribers ()
+//  , event_source_ids ()
+//  , timeout_handler (NULL)
+//  , timer_id (-1)
+  , xml (NULL)
  { };
 
  mutable ACE_Recursive_Thread_Mutex lock;
  Olimex_Mod_MPU6050_Events_t        event_queue;
  Olimex_Mod_MPU6050_Messages_t      message_queue;
  Olimex_Mod_MPU6050_Subscribers_t   subscribers;
-// Net_GTK_EventSourceIDs_t           event_source_ids;
+ Common_UI_GTK_EventSourceIDs_t     event_source_ids;
 // Net_Client_TimeoutHandler*         timeout_handler; // *NOTE*: client only !
 // long                               timer_id;        // *NOTE*: client only !
+
+ GladeXML*                          xml;
+ guint                              opengl_refresh_timer_id;
 };
 
 struct Olimex_Mod_MPU6050_SessionData_t
 {
- int test;
+
 };
 
 typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
@@ -98,12 +108,17 @@ struct Olimex_Mod_MPU6050_Configuration_t
 };
 
 typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t,
-                             Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Connector_t;
-typedef Net_Client_AsynchConnector<Olimex_Mod_MPU6050_Configuration_t,
-                                   Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_AsynchConnector_t;
+                             Olimex_Mod_MPU6050_StreamSessionData_t,
+                             Net_TransportLayer_Netlink,
+                             Net_NetlinkConnection> Olimex_Mod_MPU6050_Connector_t;
+//typedef Net_Client_AsynchConnector<Olimex_Mod_MPU6050_Configuration_t,
+//                                   Olimex_Mod_MPU6050_StreamSessionData_t,
+//                                   Net_TransportLayer_Netlink,
+//                                   Net_AsynchNetlinkConnection> Olimex_Mod_MPU6050_AsynchConnector_t;
 
 typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
                                  Olimex_Mod_MPU6050_StreamSessionData_t,
+                                 Net_TransportLayer_Netlink,
                                  Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;

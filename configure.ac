@@ -175,7 +175,7 @@ dnl if test ! -x "$MAKE" ; then MAKE=`which make 2>/dev/null` ; fi
 dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Foundation"` = "0"])
 
 # checks for libraries
-PKG_CHECK_MODULES([PKGLIB], [libpng sdl SDL_ttf libglade-2.0 gmodule-export-2.0 gthread-2.0 gtk+-2.0])
+PKG_CHECK_MODULES([PKGLIB], [libglade-2.0 gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0])
 
 # checks for other libraries (non-pkg-config)
 # FIXME: Replace `main' with a function in `-lACE':

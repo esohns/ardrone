@@ -45,10 +45,10 @@ Olimex_Mod_MPU6050_Module_EventHandler::~Olimex_Mod_MPU6050_Module_EventHandler 
 }
 
 void
-Olimex_Mod_MPU6050_Module_EventHandler::init (Olimex_Mod_MPU6050_Subscribers_t* subscribers_in,
-                                              ACE_Recursive_Thread_Mutex* lock_in)
+Olimex_Mod_MPU6050_Module_EventHandler::initialize (Olimex_Mod_MPU6050_Subscribers_t* subscribers_in,
+                                                    ACE_Recursive_Thread_Mutex* lock_in)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::init"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::initialize"));
 
   // sanity check(s)
   ACE_ASSERT (subscribers_in);
@@ -255,8 +255,8 @@ Olimex_Mod_MPU6050_Module_EventHandler:: clone ()
 
       return NULL;
     } // end IF
-    eventHandler_impl->init (subscribers_,
-                             lock_);
+    eventHandler_impl->initialize (subscribers_,
+                                   lock_);
   } // end ELSE
 
   return result;

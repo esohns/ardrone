@@ -24,6 +24,18 @@
 #define DEFAULT_USE_ASYNCH_CONNECTOR                false
 #define DEFAULT_LOG_FILE                            "olimex_mod_mpu6050.log"
 
+// *** glade UI-related ***
+#define DEFAULT_UI_DEFINITION_FILE                  "olimex_mod_mpu6050.glade"
+#define DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH    800
+#define DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT   600
+#define UI_INITIALIZATION_DELAY                     100 // ms
+#define UI_WIDGET_NAME_WINDOW_MAIN                  "main_window"
+#define UI_WIDGET_NAME_DIALOG_ABOUT                 "about_dialog"
+#define UI_WIDGET_NAME_OPENGL_CONTAINER             "opengl_container"
+#define UI_WIDGET_GL_REFRESH_INTERVAL               1000 / 60 // ms
+#define UI_WIDGET_NAME_MENU_FILE_QUIT               "quit"
+#define UI_WIDGET_NAME_MENU_HELP_ABOUT              "about"
+
 // *** network-related ***
 // *PORTABILITY*: interface names are not portable, so we let the
 // user choose the interface from a list on Windows (see select_Interface())...
