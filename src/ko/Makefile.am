@@ -34,6 +34,8 @@ automake_dummy_SOURCES = \
   olimex_mod_mpu6050_netlink.h \
   olimex_mod_mpu6050_pm.c \
   olimex_mod_mpu6050_pm.h \
+  olimex_mod_mpu6050_server.c \
+  olimex_mod_mpu6050_server.h \
   olimex_mod_mpu6050_sysfs.c \
   olimex_mod_mpu6050_sysfs.h \
   olimex_mod_mpu6050_timer.c \
@@ -53,6 +55,7 @@ module_OBJS = \
   olimex_mod_mpu6050_main.o \
   olimex_mod_mpu6050_netlink.o \
   olimex_mod_mpu6050_pm.o \
+  olimex_mod_mpu6050_server.o \
   olimex_mod_mpu6050_sysfs.o \
   olimex_mod_mpu6050_timer.o \
   olimex_mod_mpu6050_wq.o

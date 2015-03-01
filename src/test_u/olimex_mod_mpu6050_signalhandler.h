@@ -27,17 +27,17 @@
 #include "common_signalhandler.h"
 #include "common_isignal.h"
 
-#include "net_client_iconnector.h"
+#include "olimex_mod_mpu6050_network.h"
 
 class Olimex_Mod_MPU6050_SignalHandler
  : public Common_SignalHandler,
    public Common_ISignal
 {
  public:
-  Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr&,   // peer SAP
-                                    Net_Client_IConnector*, // connector
+  Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr&,             // peer address
+                                    Olimex_Mod_MPU6050_IConnector_t*, // connector
                                     // -----------------------------------------
-                                    bool);                  // use reactor ?
+                                    bool);                            // use reactor ?
   virtual ~Olimex_Mod_MPU6050_SignalHandler ();
 
   // implement Common_ISignal
@@ -50,10 +50,10 @@ class Olimex_Mod_MPU6050_SignalHandler
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler (const Olimex_Mod_MPU6050_SignalHandler&));
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler& operator= (const Olimex_Mod_MPU6050_SignalHandler&));
 
-  long                   actionTimerID_;
-  ACE_INET_Addr          peerAddress_;
-  Net_Client_IConnector* connector_;
-  bool                   useReactor_;
+  long                             actionTimerID_;
+  Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_;
+  ACE_INET_Addr                    peerAddress_;
+  bool                             useReactor_;
 };
 
 #endif

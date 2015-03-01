@@ -21,10 +21,7 @@
 #include <deque>
 #include <list>
 
-#include "ace/Notification_Strategy.h"
-#include "ace/Singleton.h"
 #include "ace/Synch.h"
-#include "ace/Time_Value.h"
 
 #include "gtk/gtk.h"
 #include "glade/glade.h"
@@ -34,15 +31,10 @@
 
 #include "common_ui_types.h"
 
+#include "stream_common.h"
 #include "stream_session_data_base.h"
 
 #include "net_configuration.h"
-#include "net_connection_manager.h"
-#include "net_netlinkconnection.h"
-#include "net_transportlayer_netlink.h"
-
-#include "net_client_asynchconnector.h"
-#include "net_client_connector.h"
 
 #include "olimex_mod_mpu6050_message.h"
 
@@ -106,21 +98,5 @@ struct Olimex_Mod_MPU6050_Configuration_t
   //Net_UserData_t            userData;
   // *************************** protocol data *********************************
 };
-
-typedef Net_Client_Connector<Olimex_Mod_MPU6050_Configuration_t,
-                             Olimex_Mod_MPU6050_StreamSessionData_t,
-                             Net_TransportLayer_Netlink,
-                             Net_NetlinkConnection> Olimex_Mod_MPU6050_Connector_t;
-//typedef Net_Client_AsynchConnector<Olimex_Mod_MPU6050_Configuration_t,
-//                                   Olimex_Mod_MPU6050_StreamSessionData_t,
-//                                   Net_TransportLayer_Netlink,
-//                                   Net_AsynchNetlinkConnection> Olimex_Mod_MPU6050_AsynchConnector_t;
-
-typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
-                                 Olimex_Mod_MPU6050_StreamSessionData_t,
-                                 Net_TransportLayer_Netlink,
-                                 Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
-typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
-                      ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

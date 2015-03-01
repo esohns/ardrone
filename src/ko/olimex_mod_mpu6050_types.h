@@ -24,11 +24,13 @@
 #include <linux/mutex.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/workqueue.h>
-//#include <net/sock.h>
 
 #include <plat/sys_config.h>
 
 #include "olimex_mod_mpu6050_defines.h"
+
+// forward declarations
+struct server_t;
 
 struct ringbufferentry_t {
   int used;
@@ -58,6 +60,7 @@ struct i2c_mpu6050_client_data_t {
   int ringbufferpos;
   struct mutex sync_lock;
 //  struct sock* netlink_socket;
+  struct server_t* server;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

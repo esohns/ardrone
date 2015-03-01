@@ -56,6 +56,7 @@
 #include "olimex_mod_mpu6050_eventhandler.h"
 #include "olimex_mod_mpu6050_macros.h"
 #include "olimex_mod_mpu6050_module_eventhandler.h"
+#include "olimex_mod_mpu6050_network.h"
 #include "olimex_mod_mpu6050_signalhandler.h"
 #include "olimex_mod_mpu6050_stream.h"
 #include "olimex_mod_mpu6050_types.h"
@@ -368,16 +369,17 @@ do_work (int argc_in,
   } // end IF
 
   // step3: init client connector
-  Net_Client_IConnector* connector = NULL;
+  Olimex_Mod_MPU6050_IConnector_t* connector = NULL;
   if (useAsynchConnector_in)
   {
-//    ACE_NEW_NORETURN (connector,
-//                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
-    ACE_ASSERT (false);
+    ACE_NEW_NORETURN (connector,
+                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance (),
+                                                            &configuration));
   } // end IF
   else
     ACE_NEW_NORETURN (connector,
-                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance ()));
+                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance (),
+                                                      &configuration));
   if (!connector)
   {
     ACE_DEBUG ((LM_CRITICAL,

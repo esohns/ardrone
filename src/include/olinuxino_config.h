@@ -1,1 +1,1 @@
-../../build/olinuxino_config.h
+../../build/debug/olinuxino_config.h

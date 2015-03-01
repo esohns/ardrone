@@ -28,16 +28,15 @@
 #include "common_ui_gtk_manager.h"
 
 #include "olimex_mod_mpu6050_macros.h"
-#include "olimex_mod_mpu6050_types.h"
 
-Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr& peerSAP_in,
-                                                                    Net_Client_IConnector* connector_in,
+Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr& peerAddress_in,
+                                                                    Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_in,
                                                                     // ---------
                                                                     bool useReactor_in)
  : inherited (this,          // event handler handle
               useReactor_in) // use reactor ?
- , peerAddress_ (peerSAP_in)
- , connector_ (connector_in)
+ , interfaceHandle_ (interfaceHandle_in)
+ , peerAddress_ (peerAddress_in)
  , useReactor_ (useReactor_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler"));
@@ -116,16 +115,17 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
   } // end IF
 
   // ...connect ?
-  if (connect)
+  if (connect &&
+      interfaceHandle_)
   {
     try
     {
-      connector_->connect (peerAddress_);
+      interfaceHandle_->connect (peerAddress_);
     }
     catch (...)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in Net_IConnector::connect(), aborting\n")));
+                  ACE_TEXT ("caught exception in Olimex_Mod_MPU6050_IConnector_t::connect(), aborting\n")));
 
       return false;
     }
@@ -139,17 +139,20 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     // --> (try to) terminate in a well-behaved manner
 
     // step1: close open connection(s)
-    try
+    if (interfaceHandle_)
     {
-      connector_->abort ();
-    }
-    catch (...)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in Net_IConnector::abort(), aborting\n")));
+      try
+      {
+        interfaceHandle_->abort ();
+      }
+      catch (...)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in Olimex_Mod_MPU6050_IConnector_t::abort(), aborting\n")));
 
-      return false;
-    }
+        return false;
+      }
+    } // end IF
     CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
     CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
     // *IMPORTANT NOTE*: as long as connections are inactive (i.e. events are

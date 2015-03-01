@@ -18,16 +18,42 @@
 #ifndef OLIMEX_MOD_MPU6050_NETWORK_H
 #define OLIMEX_MOD_MPU6050_NETWORK_H
 
+#include "ace/INET_Addr.h"
 #include "ace/Singleton.h"
 #include "ace/Synch.h"
 
-#include "net_connectionmanager.h"
+#include "stream_common.h"
+
+#include "net_configuration.h"
+#include "net_connection_manager.h"
+#include "net_transportlayer_udp.h"
+#include "net_udpconnection.h"
+
+#include "net_client_asynchconnector.h"
+#include "net_client_connector.h"
+#include "net_client_iconnector.h"
 
 #include "olimex_mod_mpu6050_types.h"
 
-typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_StreamProtocolConfigurationState_t,
-                                 Olimex_Mod_MPU6050_StreamStatistic_t> Connection_Manager_t;
-typedef ACE_Singleton<Connection_Manager_t,
+typedef Net_Client_IConnector_T<ACE_INET_Addr,
+                                Olimex_Mod_MPU6050_Configuration_t> Olimex_Mod_MPU6050_IConnector_t;
+
+typedef Net_Client_Connector_T<ACE_INET_Addr,
+                               Olimex_Mod_MPU6050_Configuration_t,
+                               Olimex_Mod_MPU6050_StreamSessionData_t,
+                               Net_TransportLayer_UDP,
+                               Net_UDPConnection> Olimex_Mod_MPU6050_Connector_t;
+typedef Net_Client_AsynchConnector_T<ACE_INET_Addr,
+                                     Olimex_Mod_MPU6050_Configuration_t,
+                                     Olimex_Mod_MPU6050_StreamSessionData_t,
+                                     Net_TransportLayer_UDP,
+                                     Net_AsynchUDPConnection> Olimex_Mod_MPU6050_AsynchConnector_t;
+
+typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
+                                 Olimex_Mod_MPU6050_StreamSessionData_t,
+                                 Net_TransportLayer_UDP,
+                                 Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
+typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_NETWORK_H

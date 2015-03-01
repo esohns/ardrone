@@ -33,6 +33,7 @@
 #include "olimex_mod_mpu6050_irq.h"
 #include "olimex_mod_mpu6050_netlink.h"
 #include "olimex_mod_mpu6050_pm.h"
+#include "olimex_mod_mpu6050_server.h"
 #include "olimex_mod_mpu6050_sysfs.h"
 #include "olimex_mod_mpu6050_timer.h"
 #include "olimex_mod_mpu6050_types.h"
@@ -348,17 +349,25 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     }
   }
 
+  if (likely(noserver == 0)) {
+    err = i2c_mpu6050_server_init(client_data_p);
+    if (unlikely(err)) {
+      pr_err("%s: i2c_mpu6050_server_init() failed\n", __FUNCTION__);
+      goto error9;
+    }
+  }
+
   if (unlikely(noirq)) {
     err = i2c_mpu6050_timer_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
-      goto error9;
+      goto error10;
     }
   } else {
     err = i2c_mpu6050_irq_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
-      goto error9;
+      goto error10;
     }
   }
 
@@ -369,6 +378,9 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 
   return 0;
 
+error10:
+  if (likely(noserver == 0))
+    i2c_mpu6050_server_fini(client_data_p);
 error9:
   if (likely(nonetlink == 0))
     i2c_mpu6050_netlink_fini(client_data_p);
@@ -425,6 +437,8 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
   } else {
     i2c_mpu6050_irq_fini(client_data_p);
   }
+  if (likely(noserver == 0))
+    i2c_mpu6050_server_fini(client_data_p);
   if (likely(nonetlink == 0))
     i2c_mpu6050_netlink_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
@@ -543,9 +557,12 @@ MODULE_PARM_DESC(noirq, "use polling (instead of INT line (default))");
 int nofifo=1;
 module_param(nofifo, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(nofifo, "do not use the device FIFO buffer (default)");
-int nonetlink=0;
+int nonetlink=1;
 module_param(nonetlink, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(nonetlink, "do not forward sensor data over a netlink socket");
+int noserver=0;
+module_param(noserver, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(noserver, "do not forward sensor data over a UDP socket");
 
 int
 __init i2c_mpu6050_init(void)
