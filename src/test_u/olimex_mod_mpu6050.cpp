@@ -48,6 +48,8 @@
 
 #include "stream_allocatorheap.h"
 
+#include "net_configuration.h"
+
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
@@ -323,16 +325,18 @@ do_work (int argc_in,
   Stream_AllocatorHeap heap_allocator;
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                            &heap_allocator);
-  Olimex_Mod_MPU6050_SessionData_t session_data;
+  //Olimex_Mod_MPU6050_SessionData_t session_data;
+  Net_SessionData_t session_data;
   ACE_OS::memset (&session_data, 0, sizeof (session_data));
   Stream_State_t stream_state;
   ACE_OS::memset (&stream_state, 0, sizeof (stream_state));
-  Olimex_Mod_MPU6050_StreamSessionData_t stream_session_data (&session_data,
-                                                              false,
-                                                              &stream_state,
-                                                              ACE_Time_Value::zero,
-                                                              false);
-  Olimex_Mod_MPU6050_Configuration_t configuration;
+  //Olimex_Mod_MPU6050_StreamSessionData_t stream_session_data (&session_data,
+  Net_StreamSessionData_t stream_session_data (&session_data,
+                                               false,
+                                               &stream_state,
+                                               ACE_Time_Value::zero,
+                                               false);
+  Net_Configuration_t configuration;
   ACE_OS::memset (&configuration, 0, sizeof (configuration));
   // ******************* socket configuration data ****************************
   configuration.socketConfiguration.bufferSize = DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
@@ -369,6 +373,7 @@ do_work (int argc_in,
   } // end IF
 
   // step3: init client connector
+//  Net_IUDPConnectionManager_t* connection_manager_p = ;
   Olimex_Mod_MPU6050_IConnector_t* connector = NULL;
   if (useAsynchConnector_in)
   {
@@ -393,9 +398,9 @@ do_work (int argc_in,
                                                  stream_session_data); // will be passed to all handlers
 
   // step5: init signal handling
-  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,   // remote SAP
-                                                   connector,        // connector
-                                                   useReactor_in);   // use reactor ?
+  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in, // peer address
+                                                   connector,      // connector
+                                                   useReactor_in); // use reactor ?
   ACE_Sig_Set signal_set (0);
   do_initSignals (signal_set);
   Common_SignalActions_t previous_signal_actions;

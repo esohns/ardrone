@@ -29,11 +29,12 @@ struct i2c_mpu6050_client_data_t;
 struct server_t
 {
   struct task_struct* thread;
-  struct socket* socket;
-  struct sockaddr_in address;
-//  struct socket* socket_send;
-//  struct sockaddr_in address_send;
+//  struct socket* socket;
+//  struct sockaddr_in address;
+  struct socket* socket_send;
+  struct sockaddr_in address_send;
   int running;
+  int ringbufferpos;
 };
 
 // function declarations

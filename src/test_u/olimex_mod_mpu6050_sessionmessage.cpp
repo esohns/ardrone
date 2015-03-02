@@ -26,7 +26,8 @@
 #include "olimex_mod_mpu6050_macros.h"
 
 Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType_t messageType_in,
-                                                                      Olimex_Mod_MPU6050_StreamSessionData_t*& configuration_inout)
+                                                                      Net_StreamSessionData_t*& configuration_inout)
+                                                                      //Olimex_Mod_MPU6050_StreamSessionData_t*& configuration_inout)
  : inherited (messageType_in,
               configuration_inout)
 {

@@ -36,6 +36,9 @@
     <ClCompile Include="..\..\src\test_u\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h">
@@ -71,5 +74,13 @@
     <ClInclude Include="..\..\src\test_u\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\test_u\olimex_mod_mpu6050.glade">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

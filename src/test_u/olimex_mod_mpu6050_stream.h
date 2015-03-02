@@ -18,12 +18,22 @@
 #ifndef OLIMEX_MOD_MPU6050_STREAM_H
 #define OLIMEX_MOD_MPU6050_STREAM_H
 
+#include "stream_common.h"
 #include "stream_messageallocatorheap_base.h"
+#include "stream_session_data_base.h"
 
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_sessionmessage.h"
 
 typedef Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
                                           Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_MessageAllocator_t;
+
+
+//struct Olimex_Mod_MPU6050_SessionData_t
+//{
+//  Stream_State_t streamState;
+//};
+//
+//typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_STREAM_H

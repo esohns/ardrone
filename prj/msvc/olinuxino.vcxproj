@@ -61,7 +61,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL;NET_HAS_DLL;STREAM_HAS_DLL;COMMON_UI_HAS_DLL;COMMON_HAS_DLL;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>false</BrowseInformation>
       <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -70,6 +70,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -80,7 +81,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL;NET_HAS_DLL;STREAM_HAS_DLL;COMMON_UI_HAS_DLL;COMMON_HAS_DLL;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>false</BrowseInformation>
       <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -91,10 +92,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp" />
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.cpp" />
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.cpp" />
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_message.cpp" />
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_module_eventhandler.cpp" />
@@ -103,6 +106,7 @@
     <ClCompile Include="..\..\src\test_u\stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_macros.h" />
@@ -119,6 +123,9 @@
     <ProjectReference Include="..\..\modules\libACENetwork\prj\msvc\libACENetwork.vcxproj">
       <Project>{751d54c5-12bd-4771-9453-b9d3948ed025}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\modules\libACENetwork\prj\msvc\libACENetwork_Client.vcxproj">
+      <Project>{125bbe44-7481-4edf-8f17-8d373e044976}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\modules\libACEStream\prj\msvc\libACEStream.vcxproj">
       <Project>{c7a3ee44-14f9-413a-b311-5a77ba5a4edd}</Project>
     </ProjectReference>
@@ -128,6 +135,9 @@
     <ProjectReference Include="..\..\modules\libCommon\prj\msvc\libCommon_UI.vcxproj">
       <Project>{06296185-3e70-472e-8b65-6f552ab1e283}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\test_u\olimex_mod_mpu6050.glade" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

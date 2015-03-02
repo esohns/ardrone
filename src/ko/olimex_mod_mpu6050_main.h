@@ -60,6 +60,10 @@ extern int noirq;
 extern int nofifo;
 extern int nonetlink;
 extern int noserver;
+extern char* peer; // "xxx.yyy.zzz.aaa"
+extern short int port;
+// default parameters
+extern const char* default_peer;
 
 int i2c_mpu6050_init(void);
 void i2c_mpu6050_exit(void);

@@ -45,7 +45,7 @@
 #define DEFAULT_NETWORK_INTERFACE                   "eth0"
 #endif
 
-#define DEFAULT_PORT                                32767
+#define DEFAULT_PORT                                10001
 
 // default event dispatcher (default: use asynch I/O (proactor))
 #define DEFAULT_CONNECTION_HANDLER_THREAD_NAME      "connection dispatch"

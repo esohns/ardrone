@@ -56,7 +56,7 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
 
   bool stop_event_dispatching = false;
   bool connect = false;
-  bool abort = false;
+//  bool abort = false;
   switch (signal_in)
   {
     case SIGINT:
@@ -92,8 +92,8 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
 #endif
     case SIGTERM:
     {
-      // (try to) abort a connection...
-      abort = true;
+//      // (try to) abort a connection...
+//      abort = true;
 
       break;
     }
@@ -107,12 +107,12 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     }
   } // end SWITCH
 
-  // ...abort ?
-  if (abort)
-  {
-    // release an existing connection...
-    CONNECTIONMANAGER_SINGLETON::instance ()->abortOldestConnection ();
-  } // end IF
+//  // ...abort ?
+//  if (abort)
+//  {
+//    // close any connections...
+//    CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
+//  } // end IF
 
   // ...connect ?
   if (connect &&

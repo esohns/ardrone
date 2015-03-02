@@ -31,9 +31,6 @@
 
 #include "common_ui_types.h"
 
-#include "stream_common.h"
-#include "stream_session_data_base.h"
-
 #include "net_configuration.h"
 
 #include "olimex_mod_mpu6050_message.h"
@@ -80,23 +77,6 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
 
  GladeXML*                          xml;
  guint                              opengl_refresh_timer_id;
-};
-
-struct Olimex_Mod_MPU6050_SessionData_t
-{
-
-};
-
-typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
-
-struct Olimex_Mod_MPU6050_Configuration_t
-{
-  // **************************** socket data **********************************
-  Net_SocketConfiguration_t socketConfiguration;
-  // **************************** stream data **********************************
-  Stream_Configuration_t    streamConfiguration;
-  //Net_UserData_t            userData;
-  // *************************** protocol data *********************************
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

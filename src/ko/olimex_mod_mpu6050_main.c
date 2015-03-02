@@ -19,6 +19,7 @@
 
 #include <linux/err.h>
 #include <linux/gpio.h>
+#include <linux/inet.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -563,6 +564,14 @@ MODULE_PARM_DESC(nonetlink, "do not forward sensor data over a netlink socket");
 int noserver=0;
 module_param(noserver, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(noserver, "do not forward sensor data over a UDP socket");
+char* peer="";
+module_param(peer, charp, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(peer, "peer address (IPv4)");
+short int port=SERVER_DEFAULT_PORT;
+module_param(port, short, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(port, "peer port (IPv4)");
+
+const char* default_peer = SERVER_DEFAULT_PEER;
 
 int
 __init i2c_mpu6050_init(void)
@@ -570,6 +579,17 @@ __init i2c_mpu6050_init(void)
   int err;
 
   pr_debug("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (noserver == 0) {
+    if (strlen (peer) == 0) peer = (char*)default_peer;
+    if ((in_aton (peer) == 0) ||
+        (port < 0)) {
+      pr_err("%s: invalid peer address/port: \"%s\":%d\n", __FUNCTION__,
+             peer, port);
+      return -EINVAL;
+    }
+  }
 
 //  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(GPIO_INT_PIN);
 //  if (unlikely(i2c_mpu6050_board_infos[0].irq < 0)) {

@@ -23,9 +23,10 @@
 
 #include <sstream>
 
-#include "ace/Reactor.h"
 #include "ace/Dirent_Selector.h"
 #include "ace/Log_Msg.h"
+#include "ace/OS.h"
+#include "ace/Reactor.h"
 
 #include "GL/gl.h"
 
@@ -349,6 +350,14 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to SDL_PushEvent(): \"%s\", continuing\n"),
 //                ACE_TEXT (SDL_GetError ())));
+
+  pid_t pid = ACE_OS::getpid ();
+  int result = -1;
+  result = ACE_OS::kill (pid, SIGINT);
+  if (result == -1)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to kill(%d, SIGINT): \"%m\", continuing\n"),
+                pid));
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("leaving GTK...\n")));
@@ -1048,7 +1057,7 @@ initialize_UI_client (int argc_in,
     return false;
   } // end IF
 
-  const gdouble opengl_refresh_rate = UI_WIDGET_GL_REFRESH_INTERVAL;
+  guint opengl_refresh_rate = static_cast<guint> (UI_WIDGET_GL_REFRESH_INTERVAL);
   GtkCBData_in.opengl_refresh_timer_id = g_timeout_add (opengl_refresh_rate,
                                                         idle_cb,
                                                         drawing_area);

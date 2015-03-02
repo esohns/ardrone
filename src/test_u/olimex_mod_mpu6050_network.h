@@ -26,7 +26,8 @@
 
 #include "net_configuration.h"
 #include "net_connection_manager.h"
-#include "net_transportlayer_udp.h"
+#include "net_itransportlayer.h"
+#include "net_stream_common.h"
 #include "net_udpconnection.h"
 
 #include "net_client_asynchconnector.h"
@@ -36,22 +37,22 @@
 #include "olimex_mod_mpu6050_types.h"
 
 typedef Net_Client_IConnector_T<ACE_INET_Addr,
-                                Olimex_Mod_MPU6050_Configuration_t> Olimex_Mod_MPU6050_IConnector_t;
+                                Net_Configuration_t> Olimex_Mod_MPU6050_IConnector_t;
 
 typedef Net_Client_Connector_T<ACE_INET_Addr,
-                               Olimex_Mod_MPU6050_Configuration_t,
-                               Olimex_Mod_MPU6050_StreamSessionData_t,
-                               Net_TransportLayer_UDP,
-                               Net_UDPConnection> Olimex_Mod_MPU6050_Connector_t;
+                               Net_Configuration_t,
+                               Net_StreamSessionData_t,
+                               Net_IInetTransportLayer_t,
+                               Net_UDPConnection_T<Net_StreamSessionData_t> > Olimex_Mod_MPU6050_Connector_t;
 typedef Net_Client_AsynchConnector_T<ACE_INET_Addr,
-                                     Olimex_Mod_MPU6050_Configuration_t,
-                                     Olimex_Mod_MPU6050_StreamSessionData_t,
-                                     Net_TransportLayer_UDP,
-                                     Net_AsynchUDPConnection> Olimex_Mod_MPU6050_AsynchConnector_t;
+                                     Net_Configuration_t,
+                                     Net_StreamSessionData_t,
+                                     Net_IInetTransportLayer_t,
+                                     Net_AsynchUDPConnection_T<Net_StreamSessionData_t> > Olimex_Mod_MPU6050_AsynchConnector_t;
 
-typedef Net_Connection_Manager_T<Olimex_Mod_MPU6050_Configuration_t,
-                                 Olimex_Mod_MPU6050_StreamSessionData_t,
-                                 Net_TransportLayer_UDP,
+typedef Net_Connection_Manager_T<Net_Configuration_t,
+                                 Net_StreamSessionData_t,
+                                 Net_IInetTransportLayer_t,
                                  Stream_Statistic_t> Olimex_Mod_MPU6050_ConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_Recursive_Thread_Mutex> CONNECTIONMANAGER_SINGLETON;

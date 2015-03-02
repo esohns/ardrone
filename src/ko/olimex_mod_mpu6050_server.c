@@ -18,6 +18,7 @@
 #include "olimex_mod_mpu6050_server.h"
 
 #include <linux/delay.h>
+#include <linux/inet.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/net.h>
@@ -28,15 +29,14 @@
 #include <linux/uaccess.h>
 
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_main.h"
 #include "olimex_mod_mpu6050_types.h"
 
 int
 i2c_mpu6050_server_run (void* data_in)
 {
   struct i2c_mpu6050_client_data_t* client_data_p;
-  int size, err;
-  int bufsize = 10;
-  unsigned char buf[bufsize+1];
+  int bytes_sent, err, i;
 
   pr_debug ("%s called.\n", __FUNCTION__);
 
@@ -67,84 +67,98 @@ i2c_mpu6050_server_run (void* data_in)
 //  unlock_kernel ();
 
   // create a socket
-  err = sock_create (AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                     &client_data_p->server->socket);
-  if (unlikely (err < 0)) {
-    pr_err ("%s: sock_create() failed: %d\n", __FUNCTION__,
-            err);
-    return -EIO;
-  }
 //  err = sock_create (AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-//                     &client_data_p->server->socket_send);
+//                     &client_data_p->server->socket);
 //  if (unlikely (err < 0)) {
 //    pr_err ("%s: sock_create() failed: %d\n", __FUNCTION__,
 //            err);
-//    goto error1;
+//    return -EIO;
 //  }
-
-  memset (&client_data_p->server->address, 0, sizeof (struct sockaddr));
-//  memset (&client_data_p->server->address_send, 0, sizeof (struct sockaddr));
-  client_data_p->server->address.sin_family      = AF_INET;
-//  client_data_p->server->address_send.sin_family = AF_INET;
-
-  client_data_p->server->address.sin_addr.s_addr      = htonl (INADDR_ANY);
-//  client_data_p->server->address_send.sin_addr.s_addr = htonl (INADDR_SEND);
-
-  client_data_p->server->address.sin_port      = htons (SERVER_DEFAULT_PORT);
-//  client_data_p->server->address_send.sin_port = htons (CONNECT_PORT);
-
-  err = client_data_p->server->socket->ops->bind (client_data_p->server->socket,
-                                                  (struct sockaddr*)&client_data_p->server->address,
-                                                  sizeof (struct sockaddr));
+  err = sock_create (AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+                     &client_data_p->server->socket_send);
   if (unlikely (err < 0)) {
-    pr_err ("%s: bind() failed: %d\n", __FUNCTION__,
+    pr_err ("%s: sock_create() failed: %d\n", __FUNCTION__,
             err);
-    goto error2;
+    goto error1;
   }
-  pr_info ("%s: listening on port: %d\n", __FUNCTION__,
-           SERVER_DEFAULT_PORT);
 
-//  err = client_data_p->server.socket_send->ops->connect (client_data_p->server->socket_send,
-//                                                         (struct sockaddr*)&client_data_p->server->address_send,
-//                                                         sizeof (struct sockaddr),
-//                                                         0);
+//  memset (&client_data_p->server->address, 0, sizeof (struct sockaddr));
+  memset (&client_data_p->server->address_send, 0, sizeof (struct sockaddr));
+//  client_data_p->server->address.sin_family      = AF_INET;
+  client_data_p->server->address_send.sin_family = AF_INET;
+
+//  client_data_p->server->address.sin_addr.s_addr      = htonl (INADDR_ANY);
+  client_data_p->server->address_send.sin_addr.s_addr = in_aton (peer);
+
+//  client_data_p->server->address.sin_port      = htons (SERVER_DEFAULT_PORT);
+  client_data_p->server->address_send.sin_port = htons (SERVER_DEFAULT_PORT);
+
+//  err = client_data_p->server->socket->ops->bind (client_data_p->server->socket,
+//                                                  (struct sockaddr*)&client_data_p->server->address,
+//                                                  sizeof (struct sockaddr));
 //  if (unlikely (err < 0)) {
-//    pr_err ("%s: connect() failed: %d\n", __FUNCTION__,
+//    pr_err ("%s: bind() failed: %d\n", __FUNCTION__,
 //            err);
 //    goto error2;
 //  }
+//  pr_info ("%s: listening on port: %d\n", __FUNCTION__,
+//           SERVER_DEFAULT_PORT);
+
+  err = client_data_p->server->socket_send->ops->connect (client_data_p->server->socket_send,
+                                                          (struct sockaddr*)&client_data_p->server->address_send,
+                                                          sizeof (struct sockaddr),
+                                                          0);
+  if (unlikely (err < 0)) {
+    pr_err ("%s: connect() failed: %d\n", __FUNCTION__,
+            err);
+    goto error2;
+  }
 
   for (;;)
   {
-    memset (&buf, 0, bufsize + 1);
-    size = i2c_mpu6050_server_receive (client_data_p->server->socket,
-                                       &client_data_p->server->address,
-                                       buf, bufsize);
-
     if (signal_pending (current))
       break;
 
-    if (size < 0)
+//    bytes_sent = i2c_mpu6050_server_receive (client_data_p->server->socket,
+//                                             &client_data_p->server->address,
+//                                             buf, bufsize);
+//    if (bytes_sent < 0)
+//    {
+//      pr_err ("%s: receive() failed: %d\n", __FUNCTION__,
+//              bytes_sent);
+//      continue;
+//    } // end IF
+//    pr_debug ("%s: received %d bytes: \"%s\"\n", __FUNCTION__,
+//              bytes_sent, buf);
+
+    i = client_data_p->server->ringbufferpos;
+    mutex_lock (&client_data_p->sync_lock);
+    while (i != client_data_p->ringbufferpos)
     {
-      pr_err ("%s: receive() failed: %d\n", __FUNCTION__,
-              size);
-      continue;
-    } // end IF
+      if (client_data_p->ringbuffer[i].used == 0) goto done;
 
-    pr_debug ("%s: received %d bytes: \"%s\"\n", __FUNCTION__,
-              size, buf);
+      bytes_sent = i2c_mpu6050_server_send (client_data_p->server->socket_send,
+                                            &client_data_p->server->address_send,
+                                            client_data_p->ringbuffer[i].data, client_data_p->ringbuffer[i].size);
+      if (bytes_sent != client_data_p->ringbuffer[i].size) {
+        pr_err ("%s: send() failed: %d/%d\n", __FUNCTION__,
+                bytes_sent, client_data_p->ringbuffer[i].size);
+      }
+//      pr_debug ("%s: #%d: sent %d bytes\n", __FUNCTION__,
+//                i, bytes_sent);
 
-//    memset (&buf, 0, bufsize + 1);
-//    strcat (buf, "testing...");
-//    i2c_mpu6050_server_send (client_data_p->server->socket_send,
-//                             &client_data_p->server->address_send,
-//                             buf, strlen (buf));
+done:
+      i++;
+      if (i == RINGBUFFER_SIZE) i = 0;
+    }
+    mutex_unlock(&client_data_p->sync_lock);
+    client_data_p->server->ringbufferpos = i;
   }
 
 error2:
-  sock_release (client_data_p->server->socket);
-//error1:
-  //  sock_release (client_data_p->server->socket_send);
+//  sock_release (client_data_p->server->socket);
+error1:
+  sock_release (client_data_p->server->socket_send);
 
   client_data_p->server->thread = NULL;
   client_data_p->server->running = 0;
