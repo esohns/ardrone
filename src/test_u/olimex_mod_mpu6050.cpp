@@ -60,7 +60,7 @@
 #include "olimex_mod_mpu6050_module_eventhandler.h"
 #include "olimex_mod_mpu6050_network.h"
 #include "olimex_mod_mpu6050_signalhandler.h"
-#include "olimex_mod_mpu6050_stream.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
 
 void
@@ -116,7 +116,7 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT ("]")
             << std::endl;
   std::cout << ACE_TEXT ("-r           : use reactor [")
-            << DEFAULT_USE_REACTOR
+            << OLIMEX_MOD_MPU6050_USE_REACTOR
             << ACE_TEXT ("]")
             << std::endl;
   std::cout << ACE_TEXT ("-s           : server address[:port] (IPv4)")
@@ -147,9 +147,9 @@ do_processArguments (int argc_in,
 
   // init results
   logToFile_out               = false;
-  useReactor_out              = DEFAULT_USE_REACTOR;
+  useReactor_out              = OLIMEX_MOD_MPU6050_USE_REACTOR;
   traceInformation_out        = false;
-  interfaceDefinitionFile_out = ACE_TEXT_ALWAYS_CHAR (DEFAULT_UI_DEFINITION_FILE);
+  interfaceDefinitionFile_out = ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
   printVersionAndExit_out     = false;
 
   ACE_Get_Opt argumentParser (argc_in,
@@ -183,7 +183,10 @@ do_processArguments (int argc_in,
         if (address.find (':') != std::string::npos)
           result = peerAddress_out.set (address.c_str (), 0);
         else
-          result = peerAddress_out.set (DEFAULT_PORT, address.c_str (), 1, 0);
+          result = peerAddress_out.set (OLIMEX_MOD_MPU6050_DEFAULT_PORT,
+                                        address.c_str (),
+                                        1,
+                                        0);
         if (result == -1)
         {
           ACE_DEBUG ((LM_ERROR,
@@ -306,8 +309,8 @@ do_work (int argc_in,
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
 
   // step1: init stream
-  Olimex_Mod_MPU6050_GtkCBData_t cb_data;
-  Olimex_Mod_MPU6050_EventHandler event_handler (&cb_data);
+  Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
+  Olimex_Mod_MPU6050_EventHandler event_handler (&gtk_cb_data);
   Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (std::string ("EventHandler"),
                                                                       NULL);
   Olimex_Mod_MPU6050_Module_EventHandler* event_handler_impl = NULL;
@@ -319,11 +322,11 @@ do_work (int argc_in,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler> failed, returning\n")));
     return;
   } // end IF
-  event_handler_impl->initialize (&cb_data.subscribers,
-                                  &cb_data.lock);
+  event_handler_impl->initialize (&gtk_cb_data.subscribers,
+                                  &gtk_cb_data.lock);
   event_handler_impl->subscribe (&event_handler);
   Stream_AllocatorHeap heap_allocator;
-  Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+  Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                            &heap_allocator);
   //Olimex_Mod_MPU6050_SessionData_t session_data;
   Net_SessionData_t session_data;
@@ -339,10 +342,12 @@ do_work (int argc_in,
   Net_Configuration_t configuration;
   ACE_OS::memset (&configuration, 0, sizeof (configuration));
   // ******************* socket configuration data ****************************
-  configuration.socketConfiguration.bufferSize = DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE;
+  configuration.socketConfiguration.bufferSize = OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
+  configuration.socketConfiguration.peerAddress = peerAddress_in;
+//  configuration.socketConfiguration.useLoopbackDevice = false;
   // ******************** stream configuration data ***************************
   configuration.streamConfiguration.messageAllocator = &message_allocator;
-  configuration.streamConfiguration.bufferSize = DEFAULT_STREAM_BUFFER_SIZE;
+  configuration.streamConfiguration.bufferSize = OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
   configuration.streamConfiguration.useThreadPerConnection = false;
   //configuration.streamConfiguration.serializeOutput = false;
   configuration.streamConfiguration.notificationStrategy = NULL;
@@ -428,7 +433,6 @@ do_work (int argc_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step6a: start GTK event loop
-  Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
   Olimex_Mod_MPU6050_GTKUIDefinition interface_definition (argc_in,
                                                            argv_in,
                                                            &gtk_cb_data);
@@ -437,7 +441,7 @@ do_work (int argc_in,
                                                             interfaceDefinitionFile_in,
                                                             &interface_definition);
   COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
-  ACE_OS::sleep (ACE_Time_Value (0, UI_INITIALIZATION_DELAY));
+  ACE_OS::sleep (ACE_Time_Value (0, OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY));
   if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
   {
     ACE_DEBUG ((LM_ERROR,
@@ -559,12 +563,12 @@ ACE_TMAIN (int argc_in,
 
   // step1: process commandline options (if any)
   bool log_to_file            = false;
-  bool use_asynch_connector   = DEFAULT_USE_ASYNCH_CONNECTOR;
-  bool use_reactor            = DEFAULT_USE_REACTOR;
+  bool use_asynch_connector   = OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR;
+  bool use_reactor            = OLIMEX_MOD_MPU6050_USE_REACTOR;
   ACE_INET_Addr peer_address;
   bool trace_information      = false;
   std::string interface_definition_file =
-      ACE_TEXT_ALWAYS_CHAR (DEFAULT_UI_DEFINITION_FILE);
+      ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
   bool print_version_and_exit = false;
   if (!do_processArguments (argc_in,
                             argv_in,
@@ -627,7 +631,7 @@ ACE_TMAIN (int argc_in,
   } // end IF
   std::string log_file = buffer;
   log_file += ACE_DIRECTORY_SEPARATOR_STR;
-  log_file += ACE_TEXT_ALWAYS_CHAR (DEFAULT_LOG_FILE);
+  log_file += ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_LOG_FILE_NAME);
   if (!log_to_file) log_file.clear ();
   if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0]),
                                         log_file,

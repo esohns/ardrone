@@ -34,8 +34,7 @@ Olimex_Mod_MPU6050_Message::Olimex_Mod_MPU6050_Message (const Olimex_Mod_MPU6050
 Olimex_Mod_MPU6050_Message::Olimex_Mod_MPU6050_Message (ACE_Data_Block* dataBlock_in,
                                                         ACE_Allocator* messageAllocator_in)
  : inherited (dataBlock_in,        // use (don't own !) this data block
-              messageAllocator_in, // use this when destruction is imminent...
-              true)                // increment message counter
+              messageAllocator_in) // use this when destruction is imminent...
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Message::Olimex_Mod_MPU6050_Message"));
 
@@ -46,6 +45,38 @@ Olimex_Mod_MPU6050_Message::~Olimex_Mod_MPU6050_Message ()
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Message::~Olimex_Mod_MPU6050_Message"));
 
   // *NOTE*: called just BEFORE 'this' is passed back to the allocator
+}
+
+Olimex_Mod_MPU6050_MessageType_t
+Olimex_Mod_MPU6050_Message::getCommand () const
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Message::getCommand"));
+
+  return OLIMEX_MOD_MPU6050_MESSAGE_SENSOR_DATA;
+}
+
+std::string
+Olimex_Mod_MPU6050_Message::CommandType2String (Olimex_Mod_MPU6050_MessageType_t messageType_in)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Message::CommandType2String"));
+
+  std::string result = ACE_TEXT ("INVALID");
+
+  switch (messageType_in)
+  {
+    case OLIMEX_MOD_MPU6050_MESSAGE_SENSOR_DATA:
+      result = ACE_TEXT ("SENSOR_DATA"); break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid message type (was %d), aborting\n"),
+                  messageType_in));
+
+      break;
+    }
+  } // end SWITCH
+
+  return result;
 }
 
 ACE_Message_Block*

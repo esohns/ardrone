@@ -140,12 +140,18 @@ i2c_mpu6050_server_run (void* data_in)
       bytes_sent = i2c_mpu6050_server_send (client_data_p->server->socket_send,
                                             &client_data_p->server->address_send,
                                             client_data_p->ringbuffer[i].data, client_data_p->ringbuffer[i].size);
-      if (bytes_sent != client_data_p->ringbuffer[i].size) {
-        pr_err ("%s: send() failed: %d/%d\n", __FUNCTION__,
-                bytes_sent, client_data_p->ringbuffer[i].size);
+      if (bytes_sent >= 0) {
+        if (bytes_sent != client_data_p->ringbuffer[i].size) {
+          pr_err ("%s: send() failed: %d/%d bytes transmitted\n", __FUNCTION__,
+                  bytes_sent, client_data_p->ringbuffer[i].size);
+        }
+//        else
+//          pr_debug ("%s: #%d: sent %d bytes\n", __FUNCTION__,
+//                    i, bytes_sent);
       }
-//      pr_debug ("%s: #%d: sent %d bytes\n", __FUNCTION__,
-//                i, bytes_sent);
+//      else
+//        pr_err ("%s: send() failed: %d\n", __FUNCTION__,
+//                bytes_sent);
 
 done:
       i++;

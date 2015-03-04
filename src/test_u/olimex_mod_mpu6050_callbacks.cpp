@@ -21,12 +21,12 @@
 
 #include "olimex_mod_mpu6050_callbacks.h"
 
-#include <sstream>
+//#include <sstream>
 
-#include "ace/Dirent_Selector.h"
+//#include "ace/Dirent_Selector.h"
 #include "ace/Log_Msg.h"
-#include "ace/OS.h"
-#include "ace/Reactor.h"
+//#include "ace/OS.h"
+//#include "ace/Reactor.h"
 
 #include "GL/gl.h"
 
@@ -34,16 +34,18 @@
 
 #include "gtk/gtkgl.h"
 
-#include "common_macros.h"
 #include "common_file_tools.h"
 
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_macros.h"
+#include "olimex_mod_mpu6050_message.h"
+#include "olimex_mod_mpu6050_types.h"
 
 //unsigned int
-//load_files(const RPG_Client_Repository& repository_in,
+//load_files(const Client_Repository& repository_in,
 //           GtkListStore* listStore_in)
 //{
-//  RPG_TRACE(ACE_TEXT("::load_files"));
+//  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::load_files"));
 
 //  unsigned int return_value = 0;
 
@@ -186,7 +188,7 @@
 //											 GtkTreeIter*  iterator2_in,
 //											 gpointer      userData_in)
 //{
-//	RPG_TRACE(ACE_TEXT("::combobox_sort_function"));
+//	OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::combobox_sort_function"));
 
 //	gint sort_column = GPOINTER_TO_INT(userData_in);
 //	gint result = 0; // -1: row1 < row2, 0: equal, 1: row1 > row2
@@ -235,16 +237,16 @@ extern "C"
 {
 #endif /* __cplusplus */
 G_MODULE_EXPORT gboolean
-idle_initialize_UI_cb (gpointer act_in)
+idle_initialize_UI_cb (gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::idle_initialize_UI_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_initialize_UI_cb"));
 
-  Olimex_Mod_MPU6050_GtkCBData_t* data =
-      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (act_in);
-  ACE_ASSERT (data);
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+  ACE_ASSERT (cb_data_p);
 
   // sanity check(s)
-  ACE_ASSERT (data->xml);
+  ACE_ASSERT (cb_data_p->XML);
 
 //	// activate first repository entry (if any)
 //	GtkComboBox* combobox =
@@ -265,16 +267,16 @@ idle_initialize_UI_cb (gpointer act_in)
 }
 
 G_MODULE_EXPORT gboolean
-idle_finalize_UI_cb (gpointer act_in)
+idle_finalize_UI_cb (gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::idle_finalize_UI_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_finalize_UI_cb"));
 
-  Olimex_Mod_MPU6050_GtkCBData_t* data =
-      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (act_in);
-  ACE_ASSERT (data);
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+  ACE_ASSERT (cb_data_p);
 
   // sanity check(s)
-  ACE_ASSERT (data->xml);
+  ACE_ASSERT (cb_data_p->XML);
 
 //  GtkWidget* widget =
 //      glade_xml_get_widget(data->XML,
@@ -287,8 +289,8 @@ idle_finalize_UI_cb (gpointer act_in)
 //  // emit a signal...
 //  gtk_button_clicked(GTK_BUTTON(widget));
 
-  if (data->opengl_refresh_timer_id)
-    g_source_remove (data->opengl_refresh_timer_id);
+  if (cb_data_p->openGLRefreshTimerId)
+    g_source_remove (cb_data_p->openGLRefreshTimerId);
 
   gtk_main_quit ();
 
@@ -300,26 +302,26 @@ G_MODULE_EXPORT gint
 about_clicked_GTK_cb (GtkWidget* widget_in,
                       gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::about_clicked_GTK_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::about_clicked_GTK_cb"));
 
   ACE_UNUSED_ARG (widget_in);
-  Olimex_Mod_MPU6050_GtkCBData_t* data =
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
-  ACE_ASSERT (data);
+  ACE_ASSERT (cb_data_p);
 
   // sanity check(s)
-  ACE_ASSERT (data->xml);
+  ACE_ASSERT (cb_data_p->XML);
 
   // retrieve about dialog handle
   GtkWidget* about_dialog =
-      GTK_WIDGET (glade_xml_get_widget (data->xml,
-                                        ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_DIALOG_ABOUT)));
+      GTK_WIDGET (glade_xml_get_widget (cb_data_p->XML,
+                                        ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
   ACE_ASSERT (about_dialog);
   if (!about_dialog)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to glade_xml_get_widget(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_DIALOG_ABOUT)));
+                ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
 
     return TRUE; // propagate
   } // end IF
@@ -335,13 +337,13 @@ G_MODULE_EXPORT gint
 quit_clicked_GTK_cb (GtkWidget* widget_in,
                      gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::quit_clicked_GTK_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::quit_clicked_GTK_cb"));
 
   ACE_UNUSED_ARG (widget_in);
-//   ACE_UNUSED_ARG(userData_in);
-  Olimex_Mod_MPU6050_GtkCBData_t* data =
-      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
-  ACE_ASSERT (data);
+  ACE_UNUSED_ARG (userData_in);
+//  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+//      static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+//  ACE_ASSERT (cb_data_p);
 
 //  // interrupt SDL event loop
 //  SDL_Event sdl_event;
@@ -371,10 +373,10 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
 //character_repository_combobox_changed_GTK_cb(GtkWidget* widget_in,
 //                                             gpointer userData_in)
 //{
-//  RPG_TRACE(ACE_TEXT("::character_repository_combobox_changed_GTK_cb"));
+//  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::character_repository_combobox_changed_GTK_cb"));
 
-//  RPG_Client_GTK_CBData_t* data =
-//      static_cast<RPG_Client_GTK_CBData_t*>(userData_in);
+//  Client_GTK_CBData_t* data =
+//      static_cast<Client_GTK_CBData_t*>(userData_in);
 //  ACE_ASSERT(data);
 
 //  // sanity check(s)
@@ -497,7 +499,7 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
 //character_repository_button_clicked_GTK_cb(GtkWidget* widget_in,
 //                                           gpointer userData_in)
 //{
-//  RPG_TRACE(ACE_TEXT("::character_repository_button_clicked_GTK_cb"));
+//  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::character_repository_button_clicked_GTK_cb"));
 
 //  ACE_UNUSED_ARG(widget_in);
 //  RPG_Client_GTK_CBData_t* data =
@@ -557,14 +559,14 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
 // G_MODULE_EXPORT gint
 // do_SDLEventLoop_GTK_cb(gpointer userData_in)
 // {
-//   RPG_TRACE(ACE_TEXT("::do_SDLEventLoop_GTK_cb"));
+//   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_SDLEventLoop_GTK_cb"));
 //
-//   RPG_Client_GTK_CBData_t* data = static_cast<RPG_Client_GTK_CBData_t*> (userData_in);
+//   Client_GTK_CBData_t* data = static_cast<Client_GTK_CBData_t*> (userData_in);
 //   ACE_ASSERT(data);
 //
 //   SDL_Event event;
-//   RPG_Graphics_Position_t mouse_position = std::make_pair(0, 0);
-//   RPG_Graphics_IWindow* window = NULL;
+//   Graphics_Position_t mouse_position = std::make_pair(0, 0);
+//   Graphics_IWindow* window = NULL;
 //   bool need_redraw = false;
 //   bool done = false;
 // //   while (SDL_WaitEvent(&event) > 0)
@@ -785,9 +787,9 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
 // G_MODULE_EXPORT gboolean
 // gtk_quit_handler_cb(gpointer userData_in)
 // {
-//   RPG_TRACE(ACE_TEXT("::gtk_quit_handler_cb"));
+//   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::gtk_quit_handler_cb"));
 //
-//   RPG_Client_GTK_CBData_t* data = static_cast<RPG_Client_GTK_CBData_t*>(userData_in);
+//   Client_GTK_CBData_t* data = static_cast<Client_GTK_CBData_t*>(userData_in);
 //   ACE_ASSERT(data);
 //
 //   // synch access
@@ -811,7 +813,11 @@ delete_event_cb (GtkWidget* widget_in,
                  GdkEvent* event_in,
                  gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::delete_event_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::delete_event_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  ACE_UNUSED_ARG (event_in);
+  ACE_UNUSED_ARG (userData_in);
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("received delete event...\n")));
@@ -824,16 +830,18 @@ expose_cb (GtkWidget* widget_in,
            GdkEventExpose* event_in,
            gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::expose_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::expose_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  ACE_UNUSED_ARG (event_in);
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+      reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (widget_in);
+  ACE_ASSERT (cb_data_p);
 
-  GdkGLContext* opengl_context = gtk_widget_get_gl_context (widget_in);
-  GdkGLDrawable* opengl_drawable = gtk_widget_get_gl_drawable (widget_in);
-
-  if (!gdk_gl_drawable_gl_begin (opengl_drawable,
-                                 opengl_context))
+  if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
+                                 cb_data_p->openGLContext))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_gl_drawable_gl_begin(), aborting\n")));
@@ -847,13 +855,13 @@ expose_cb (GtkWidget* widget_in,
            GL_DEPTH_BUFFER_BIT);
   glColor3f (1.0, 1.0, 1.0); /* set colour to white */
 
-  const gboolean SOLID = FALSE; /* toggle if you don't want wireframe */
-  const gdouble SCALE = 0.5;
+  const static gboolean SOLID = FALSE; /* wireframe */
+  const static gdouble SCALE = 0.5;
   gdk_gl_draw_teapot (SOLID, SCALE);
 
-  /* swap buffer if we're using double-buffering */
-  if (gdk_gl_drawable_is_double_buffered (opengl_drawable))
-    gdk_gl_drawable_swap_buffers (opengl_drawable);
+  /* swap buffer if using double-buffering */
+  if (gdk_gl_drawable_is_double_buffered (cb_data_p->openGLDrawable))
+    gdk_gl_drawable_swap_buffers (cb_data_p->openGLDrawable);
   else
   {
     /* all programs should call glFlush whenever they count on having all of
@@ -861,7 +869,7 @@ expose_cb (GtkWidget* widget_in,
     glFlush ();
   } // end ELSE
 
-  gdk_gl_drawable_gl_end (opengl_drawable);
+  gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
 
   return TRUE;
 }
@@ -869,21 +877,146 @@ expose_cb (GtkWidget* widget_in,
 gboolean
 idle_cb (gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::idle_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_cb"));
+
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+      reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (userData_in);
+  ACE_ASSERT (cb_data_p);
 
-  /* update control data/params  in this function if needed */
+  // step0: process event queue
+  Olimex_Mod_MPU6050_Event_t event = OLIMEX_MOD_MPU6050_EVENT_INVALID;
+  Olimex_Mod_MPU6050_Message* message_p = NULL;
+  {
+    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
+    if (cb_data_p->eventQueue.empty ())
+      return TRUE; // done
+    event = cb_data_p->eventQueue.front ();
+    cb_data_p->eventQueue.pop_front ();
+    switch (event)
+    {
+      case OLIMEX_MOD_MPU6050_EVENT_CONNECT:
+      {
+        GtkStatusbar* status_bar = GTK_STATUSBAR (glade_xml_get_widget(cb_data_p->XML,
+                                                                       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
+        ACE_ASSERT (status_bar);
+        gtk_statusbar_push (status_bar,
+                            cb_data_p->contextId,
+                            ACE_TEXT_ALWAYS_CHAR ("CONNECT"));
 
-  /* invalidate drawing area, marking it "dirty" and to be redrawn when main
-   *  loop signals expose-events, which it does as needed when it returns */
-  GtkWidget* drawing_area = GTK_WIDGET (userData_in);
-  GtkAllocation allocation;
-  gtk_widget_get_allocation (drawing_area, &allocation);
-  gdk_window_invalidate_rect (gtk_widget_get_root_window (drawing_area),
-                              &allocation,
+        return TRUE;
+      }
+      case OLIMEX_MOD_MPU6050_EVENT_DISCONNECT:
+      {
+        GtkStatusbar* status_bar = GTK_STATUSBAR (glade_xml_get_widget(cb_data_p->XML,
+                                                                       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
+        ACE_ASSERT (status_bar);
+        gtk_statusbar_push (status_bar,
+                            cb_data_p->contextId,
+                            ACE_TEXT_ALWAYS_CHAR ("DISCONNECT"));
+
+        return TRUE;
+      }
+      case OLIMEX_MOD_MPU6050_EVENT_MESSAGE:
+      {
+        message_p = cb_data_p->messageQueue.front ();
+        cb_data_p->messageQueue.pop_front ();
+
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid event (was: %d), aborting\n"),
+                    event));
+
+        return FALSE;
+      }
+    } // end SWITCH
+  } // end lock scope
+  ACE_ASSERT (message_p);
+
+  ACE_ASSERT (message_p->size () == OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE);
+  unsigned short* data_p =
+      reinterpret_cast<unsigned short*> (message_p->rd_ptr ());
+  short a_x, a_y, a_z;
+  short g_x, g_y, g_z;
+  short t;
+  // *NOTE*: i2c uses a big-endian transfer syntax
+  a_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  // convert two's complement
+  a_x = ((*(short*)data_p < 0) ? -((~a_x) + 1)
+                               : a_x);
+  data_p++;
+  a_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  a_y = ((*(short*)data_p < 0) ? -((~a_y) + 1)
+                               : a_y);
+  data_p++;
+  a_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  a_z = ((*(short*)data_p < 0) ? -((~a_z) + 1)
+                               : a_z);
+  data_p++;
+  t = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                             : *data_p);
+  data_p++;
+  g_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  g_x = ((*(short*)data_p < 0) ? -((~g_x) + 1)
+                               : g_x);
+  data_p++;
+  g_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  g_y = ((*(short*)data_p < 0) ? -((~g_y) + 1)
+                               : g_y);
+  data_p++;
+  g_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+                                               : *data_p);
+  g_z = ((*(short*)data_p < 0) ? -((~g_z) + 1)
+                               : g_z);
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("%d,%d,%d,%d,%d,%d,%d\n"),
+              a_x, a_y, a_z,
+              t,
+              g_x, g_y, g_z));
+
+  // *TODO*: translate quantities into a angles
+  GLfloat angle_x, angle_y, angle_z;
+  angle_x = 0.0F;
+  angle_y = 0.0F;
+  angle_z = 0.0F;
+
+  // clean up
+  message_p->release ();
+
+  // step1: update control data/params
+  if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
+                                 cb_data_p->openGLContext))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_gl_drawable_gl_begin(), aborting\n")));
+
+    return FALSE;
+  } // end IF
+
+  glRotatef (angle_x, 1.0F, 0.0F, 0.0F);
+  glRotatef (angle_y, 0.0F, 1.0F, 0.0F);
+  glRotatef (angle_z, 0.0F, 0.0F, 1.0F);
+
+  gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
+
+  // step2: invalidate drawing area, marking it "dirty" and to be redrawn when
+  // main loop signals expose-events, which it does as needed when it returns
+//  GtkAllocation allocation;
+//  gtk_widget_get_allocation (drawing_area, &allocation);
+  gdk_window_invalidate_rect (//gtk_widget_get_root_window (drawing_area),
+                              cb_data_p->drawingArea->window,
+                              &cb_data_p->drawingArea->allocation,
                               FALSE);
+  gdk_window_process_updates (cb_data_p->drawingArea->window, FALSE);
 
   return TRUE;
 }
@@ -893,18 +1026,22 @@ configure_cb (GtkWidget* widget_in,
               GdkEventConfigure* event_in,
               gpointer userData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::configure_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::configure_cb"));
+
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+      reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (widget_in);
+  ACE_ASSERT (cb_data_p);
 
-  GdkGLContext* opengl_context = gtk_widget_get_gl_context (widget_in);
-  ACE_ASSERT (opengl_context);
-  GdkGLDrawable* opengl_drawable = gtk_widget_get_gl_drawable (widget_in);
-  ACE_ASSERT (opengl_drawable);
+  cb_data_p->openGLContext = gtk_widget_get_gl_context (widget_in);
+  ACE_ASSERT (cb_data_p->openGLContext);
+  cb_data_p->openGLDrawable = gtk_widget_get_gl_drawable (widget_in);
+  ACE_ASSERT (cb_data_p->openGLDrawable);
 
-  if (!gdk_gl_drawable_gl_begin (opengl_drawable,
-                                 opengl_context))
+  if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
+                                 cb_data_p->openGLContext))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_gl_drawable_gl_begin(), aborting\n")));
@@ -923,7 +1060,7 @@ configure_cb (GtkWidget* widget_in,
   glEnable (GL_LIGHTING);
   glEnable (GL_LIGHT0);
 
-  gdk_gl_drawable_gl_end (opengl_drawable);
+  gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
 
   return TRUE;
 }
@@ -934,7 +1071,7 @@ initialize_UI_client (int argc_in,
                       const std::string& UIFile_in,
                       Olimex_Mod_MPU6050_GtkCBData_t& GtkCBData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::initialize_UI_client"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::initialize_UI_client"));
 
   // sanity check(s)
   if (!Common_File_Tools::isReadable (UIFile_in.c_str ()))
@@ -947,11 +1084,11 @@ initialize_UI_client (int argc_in,
   } // end IF
 
   // step1: load widget tree
-  ACE_ASSERT (GtkCBData_in.xml == NULL);
-  GtkCBData_in.xml = glade_xml_new (UIFile_in.c_str (), // definition file
+  ACE_ASSERT (GtkCBData_in.XML == NULL);
+  GtkCBData_in.XML = glade_xml_new (UIFile_in.c_str (), // definition file
                                     NULL,               // root widget --> construct all
                                     NULL);              // domain
-  if (!GtkCBData_in.xml)
+  if (!GtkCBData_in.XML)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to glade_xml_new(\"%s\"): \"%m\", aborting\n"),
@@ -960,27 +1097,41 @@ initialize_UI_client (int argc_in,
     return false;
   } // end IF
 
-  GtkWindow* main_window = GTK_WINDOW (glade_xml_get_widget (GtkCBData_in.xml,
-                                                             ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_WINDOW_MAIN)));
+  GtkWindow* main_window =
+      GTK_WINDOW (glade_xml_get_widget (GtkCBData_in.XML,
+                                        ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN)));
   ACE_ASSERT (main_window);
 
-  GtkDialog* about_dialog = GTK_DIALOG (glade_xml_get_widget (GtkCBData_in.xml,
-                                                              ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_DIALOG_ABOUT)));
+  GtkDialog* about_dialog =
+      GTK_DIALOG (glade_xml_get_widget (GtkCBData_in.XML,
+                                        ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
   ACE_ASSERT (about_dialog);
 
-  GtkWidget* opengl_container = GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.xml,
-                                                                  ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_OPENGL_CONTAINER)));
+  GtkWidget* opengl_container =
+      GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.XML,
+                                        ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_OPENGL_CONTAINER)));
   ACE_ASSERT (opengl_container);
 
   gtk_window_set_default_size (main_window,
-                               DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH,
-                               DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT);
+                               OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH,
+                               OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT);
 
-  GtkWidget* drawing_area = gtk_drawing_area_new ();
-  ACE_ASSERT (drawing_area);
-  gtk_widget_set_events (drawing_area,
+  GtkCBData_in.drawingArea = gtk_drawing_area_new ();
+  ACE_ASSERT (GtkCBData_in.drawingArea);
+  gtk_widget_set_name (GtkCBData_in.drawingArea,
+                       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA));
+  gtk_widget_set_events (GtkCBData_in.drawingArea,
                          GDK_EXPOSURE_MASK);
-  gtk_container_add (GTK_CONTAINER (opengl_container), drawing_area);
+  gtk_container_add (GTK_CONTAINER (opengl_container),
+                     GtkCBData_in.drawingArea);
+
+  GtkStatusbar* status_bar =
+      GTK_STATUSBAR (glade_xml_get_widget (GtkCBData_in.XML,
+                                           ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
+  ACE_ASSERT (status_bar);
+  GtkCBData_in.contextId =
+      gtk_statusbar_get_context_id (status_bar,
+                                    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT));
 
   // step2: (auto-)connect signals/slots
   // *NOTE*: glade_xml_signal_autoconnect doesn't work reliably
@@ -1001,16 +1152,16 @@ initialize_UI_client (int argc_in,
                     ACE_TEXT_ALWAYS_CHAR ("delete-event"),
                     G_CALLBACK (delete_event_cb),
                     NULL);
-  GtkWidget* widget = GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.xml,
-                                                        ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_MENU_FILE_QUIT)));
+  GtkWidget* widget = GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.XML,
+                                                        ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_FILE_QUIT)));
   ACE_ASSERT (widget);
   g_signal_connect (G_OBJECT (widget),
                     ACE_TEXT_ALWAYS_CHAR ("activate"),
                     G_CALLBACK (quit_clicked_GTK_cb),
                     &GtkCBData_in);
 
-  widget = GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.xml,
-                                             ACE_TEXT_ALWAYS_CHAR (UI_WIDGET_NAME_MENU_HELP_ABOUT)));
+  widget = GTK_WIDGET (glade_xml_get_widget (GtkCBData_in.XML,
+                                             ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_HELP_ABOUT)));
   ACE_ASSERT (widget);
   g_signal_connect (G_OBJECT (widget),
                     ACE_TEXT_ALWAYS_CHAR ("activate"),
@@ -1042,11 +1193,11 @@ initialize_UI_client (int argc_in,
     return false;
   } // end IF
 
-  if (!gtk_widget_set_gl_capability (drawing_area,      // (container) widget
-                                     configuration,     // GdkGLConfig: configuration
-                                     NULL,              // GdkGLContext: share list
-                                     TRUE,              // direct rendering ?
-                                     GDK_GL_RGBA_TYPE)) // render_type
+  if (!gtk_widget_set_gl_capability (GtkCBData_in.drawingArea, // (container) widget
+                                     configuration,            // GdkGLConfig: configuration
+                                     NULL,                     // GdkGLContext: share list
+                                     TRUE,                     // direct rendering ?
+                                     GDK_GL_RGBA_TYPE))        // render_type
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gtk_widget_set_gl_capability(): \"%m\", aborting\n")));
@@ -1057,11 +1208,12 @@ initialize_UI_client (int argc_in,
     return false;
   } // end IF
 
-  guint opengl_refresh_rate = static_cast<guint> (UI_WIDGET_GL_REFRESH_INTERVAL);
-  GtkCBData_in.opengl_refresh_timer_id = g_timeout_add (opengl_refresh_rate,
-                                                        idle_cb,
-                                                        drawing_area);
-  if (!GtkCBData_in.opengl_refresh_timer_id)
+  guint opengl_refresh_rate =
+      static_cast<guint> (OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL);
+  GtkCBData_in.openGLRefreshTimerId = g_timeout_add (opengl_refresh_rate,
+                                                     idle_cb,
+                                                     &GtkCBData_in);
+  if (!GtkCBData_in.openGLRefreshTimerId)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gtk_widget_set_gl_capability(): \"%m\", aborting\n")));
@@ -1075,7 +1227,7 @@ initialize_UI_client (int argc_in,
   //   // step4: connect custom signals
   //  GtkButton* button = NULL;
   //  button = GTK_BUTTON(glade_xml_get_widget(userData_in.XML,
-  //                                           ACE_TEXT_ALWAYS_CHAR(RPG_CLIENT_GTK_BUTTON_CREATE_NAME)));
+  //                                           ACE_TEXT_ALWAYS_CHAR(CLIENT_GTK_BUTTON_CREATE_NAME)));
   //  ACE_ASSERT(button);
   //  g_signal_connect(button,
   //                   ACE_TEXT_ALWAYS_CHAR("clicked"),
@@ -1084,20 +1236,20 @@ initialize_UI_client (int argc_in,
 
   //  combobox =
   //      GTK_COMBO_BOX(glade_xml_get_widget(userData_in.XML,
-  //                                         ACE_TEXT_ALWAYS_CHAR(RPG_CLIENT_GTK_COMBOBOX_CHARACTER_NAME)));
+  //                                         ACE_TEXT_ALWAYS_CHAR(CLIENT_GTK_COMBOBOX_CHARACTER_NAME)));
   //  ACE_ASSERT(combobox);
   //  g_signal_connect(combobox,
   //                   ACE_TEXT_ALWAYS_CHAR("changed"),
   //                   G_CALLBACK(character_repository_combobox_changed_GTK_cb),
   //                   userData_p);
-  g_signal_connect (drawing_area,
+  g_signal_connect (GtkCBData_in.drawingArea,
                     ACE_TEXT_ALWAYS_CHAR ("configure-event"),
                     G_CALLBACK (configure_cb),
-                    NULL);
-  g_signal_connect (drawing_area,
+                    &GtkCBData_in);
+  g_signal_connect (GtkCBData_in.drawingArea,
                     ACE_TEXT_ALWAYS_CHAR ("expose-event"),
                     G_CALLBACK (expose_cb),
-                    NULL);
+                    &GtkCBData_in);
 
   // step5: use correct screen
 //   if (parentWidget_in)
@@ -1117,7 +1269,7 @@ initialize_UI_client (int argc_in,
 
     return false;
   } // end IF
-  GtkCBData_in.event_source_ids.push_back (event_source_id);
+  GtkCBData_in.eventSourceIds.push_back (event_source_id);
 
   return true;
 }
@@ -1125,7 +1277,7 @@ initialize_UI_client (int argc_in,
 void
 finalize_UI_client (const Olimex_Mod_MPU6050_GtkCBData_t& GtkCBData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("::finalize_UI_client"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::finalize_UI_client"));
 
   // schedule UI finalization
   gpointer userData_p =
@@ -1144,21 +1296,21 @@ Olimex_Mod_MPU6050_GTKUIDefinition::Olimex_Mod_MPU6050_GTKUIDefinition (int argc
  , argv_ (argv_in)
  , GTKCBData_ (GTKCBData_in)
 {
-  COMMON_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::Olimex_Mod_MPU6050_GTKUIDefinition"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::Olimex_Mod_MPU6050_GTKUIDefinition"));
 
   ACE_ASSERT (GTKCBData_);
 }
 
 Olimex_Mod_MPU6050_GTKUIDefinition::~Olimex_Mod_MPU6050_GTKUIDefinition ()
 {
-  COMMON_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::~Olimex_Mod_MPU6050_GTKUIDefinition"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::~Olimex_Mod_MPU6050_GTKUIDefinition"));
 
 }
 
 bool
 Olimex_Mod_MPU6050_GTKUIDefinition::initialize (const std::string& filename_in)
 {
-  COMMON_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::initialize"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::initialize"));
 
   return initialize_UI_client (argc_,
                                argv_,
@@ -1169,7 +1321,7 @@ Olimex_Mod_MPU6050_GTKUIDefinition::initialize (const std::string& filename_in)
 void
 Olimex_Mod_MPU6050_GTKUIDefinition::finalize ()
 {
-  COMMON_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::finalize"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::finalize"));
 
   finalize_UI_client (*GTKCBData_);
 }

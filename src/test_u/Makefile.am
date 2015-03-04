@@ -41,6 +41,8 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_sessionmessage.h \
   olimex_mod_mpu6050_signalhandler.cpp \
   olimex_mod_mpu6050_signalhandler.h \
+  olimex_mod_mpu6050_stream_common.h \
+  olimex_mod_mpu6050_stream.cpp \
   olimex_mod_mpu6050_stream.h \
   olimex_mod_mpu6050_types.h \
   stdafx.cpp \

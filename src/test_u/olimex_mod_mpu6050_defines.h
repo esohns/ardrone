@@ -18,54 +18,60 @@
 #ifndef OLIMEX_MOD_MPU6050_DEFINES_H
 #define OLIMEX_MOD_MPU6050_DEFINES_H
 
-#include "ace/Default_Constants.h"
+//#include "ace/Default_Constants.h"
 
-#define DEFAULT_USE_REACTOR                         true
-#define DEFAULT_USE_ASYNCH_CONNECTOR                false
-#define DEFAULT_LOG_FILE                            "olimex_mod_mpu6050.log"
+#include "net_defines.h"
+
+#define OLIMEX_MOD_MPU6050_USE_REACTOR                               true
+#define OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR                      false
+#define OLIMEX_MOD_MPU6050_LOG_FILE_NAME                             "olimex_mod_mpu6050.log"
 
 // *** glade UI-related ***
-#define DEFAULT_UI_DEFINITION_FILE                  "olimex_mod_mpu6050.glade"
-#define DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH    800
-#define DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT   600
-#define UI_INITIALIZATION_DELAY                     100 // ms
-#define UI_WIDGET_NAME_WINDOW_MAIN                  "main_window"
-#define UI_WIDGET_NAME_DIALOG_ABOUT                 "about_dialog"
-#define UI_WIDGET_NAME_OPENGL_CONTAINER             "opengl_container"
-#define UI_WIDGET_GL_REFRESH_INTERVAL               1000 / 60 // ms
-#define UI_WIDGET_NAME_MENU_FILE_QUIT               "quit"
-#define UI_WIDGET_NAME_MENU_HELP_ABOUT              "about"
+#define OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME                   "olimex_mod_mpu6050.glade"
+#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH  800
+#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT 600
+#define OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY                   100 // ms
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000 / 60 // Hz
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT               "about_dialog"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA               "drawing_area"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_FILE_QUIT             "quit"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_HELP_ABOUT            "about"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_OPENGL_CONTAINER           "opengl_container"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR                 "status_bar"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN                "main_window"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT              "info"
 
 // *** network-related ***
-// *PORTABILITY*: interface names are not portable, so we let the
-// user choose the interface from a list on Windows (see select_Interface())...
+// *PORTABILITY*: interface names are not portable, so let the user choose the
+//                interface from a list on Windows (see select_interface())...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#define DEFAULT_NETWORK_INTERFACE                   ""
+#define OLIMEX_MOD_MPU6050_DEFAULT_NETWORK_INTERFACE                 ""
 #else
-#define DEFAULT_NETWORK_INTERFACE                   "eth0"
+#define OLIMEX_MOD_MPU6050_DEFAULT_NETWORK_INTERFACE                 NET_DEFAULT_NETWORK_INTERFACE
 #endif
 
-#define DEFAULT_PORT                                10001
+#define OLIMEX_MOD_MPU6050_DEFAULT_PORT                              NET_DEFAULT_PORT
 
 // default event dispatcher (default: use asynch I/O (proactor))
-#define DEFAULT_CONNECTION_HANDLER_THREAD_NAME      "connection dispatch"
-#define DEFAULT_CONNECTION_HANDLER_THREAD_GROUP_ID  1
+#define OLIMEX_MOD_MPU6050_CONNECTION_HANDLER_THREAD_NAME            NET_CONNECTION_HANDLER_THREAD_NAME
+#define OLIMEX_MOD_MPU6050_CONNECTION_HANDLER_THREAD_GROUP_ID        1
 
-#define DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE          ACE_DEFAULT_MAX_SOCKET_BUFSIZ
-#define DEFAULT_TCP_NODELAY                         true
-#define DEFAULT_TCP_KEEPALIVE                       false
-#define DEFAULT_TCP_LINGER                          10 // seconds {0 --> off}
+//#define SOCKET_RECEIVE_BUFFER_SIZE                    ACE_DEFAULT_MAX_SOCKET_BUFSIZ
+#define OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE                NET_DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE
+//#define DEFAULT_SOCKET_TCP_NODELAY                  true
+//#define DEFAULT_SOCKET_TCP_KEEPALIVE                false
+//#define DEFAULT_SOCKET_LINGER                       10 // seconds {0 --> off}
 
-#define DEFAULT_STREAM_BUFFER_SIZE                  1024 // 1 kB
+#define OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE                        14
 
 // *** pro/reactor-related ***
-#define DEFAULT_TASK_GROUP_ID                       11
+#define OLIMEX_MOD_MPU6050_TASK_GROUP_ID                             11
 // *** stream-related ***
 // *IMPORTANT NOTE*: any of these COULD seriously affect performance
-#define DEFAULT_MAXIMUM_QUEUE_SLOTS                 1000
-#define DEFAULT_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES 100
+#define OLIMEX_MOD_MPU6050_MAXIMUM_QUEUE_SLOTS                       1000
+#define OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       100
 
-#define DEFAULT_STATISTICS_COLLECTION_INTERVAL      60 // seconds [0 --> OFF]
-#define DEFAULT_STATISTICS_REPORTING_INTERVAL       0  // seconds [0 --> OFF]
+#define OLIMEX_MOD_MPU6050_STATISTICS_COLLECTION_INTERVAL            60 // seconds [0 --> OFF]
+#define OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL             0  // seconds [0 --> OFF]
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

@@ -113,7 +113,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage"));
 
-  // don't care (implies yes per default, if we're part of a stream)
+  // don't care (implies yes per default, if part of a stream)
   ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)

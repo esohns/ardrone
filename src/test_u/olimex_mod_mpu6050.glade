@@ -932,7 +932,7 @@ Public License instead of this License.  But first, please read
           </packing>
         </child>
         <child>
-          <widget class="GtkStatusbar" id="statusbar">
+          <widget class="GtkStatusbar" id="status_bar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">2</property>

@@ -47,15 +47,13 @@ Olimex_Mod_MPU6050_EventHandler::start ()
 
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
-  GtkCBData_->event_queue.push_back (OLIMEX_MOD_MPU6050_EVENT_CONNECT);
+  GtkCBData_->eventQueue.push_back (OLIMEX_MOD_MPU6050_EVENT_CONNECT);
 }
 
 void
 Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& message_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_EventHandler::notify"));
-
-  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
   Olimex_Mod_MPU6050_Message* message_p =
       dynamic_cast<Olimex_Mod_MPU6050_Message*> (message_in.duplicate ());
@@ -65,8 +63,13 @@ Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& messa
                 ACE_TEXT ("Olimex_Mod_MPU6050_Message::duplicate() failed, returning\n")));
     return;
   } // end IF
-  GtkCBData_->event_queue.push_back (OLIMEX_MOD_MPU6050_EVENT_MESSAGE);
-  GtkCBData_->message_queue.push_back (message_p);
+
+  {
+    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
+
+    GtkCBData_->eventQueue.push_back (OLIMEX_MOD_MPU6050_EVENT_MESSAGE);
+    GtkCBData_->messageQueue.push_back (message_p);
+  } // end lock scope
 }
 
 void
@@ -76,5 +79,5 @@ Olimex_Mod_MPU6050_EventHandler::end ()
 
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
-  GtkCBData_->event_queue.push_back (OLIMEX_MOD_MPU6050_EVENT_DISCONNECT);
+  GtkCBData_->eventQueue.push_back (OLIMEX_MOD_MPU6050_EVENT_DISCONNECT);
 }

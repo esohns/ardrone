@@ -24,6 +24,7 @@
 #include "ace/Synch.h"
 
 #include "gtk/gtk.h"
+#include "gtk/gtkgl.h"
 #include "glade/glade.h"
 
 #include "common.h"
@@ -33,11 +34,20 @@
 
 #include "net_configuration.h"
 
-#include "olimex_mod_mpu6050_message.h"
+// forward declarations
+class Olimex_Mod_MPU6050_Message;
+
+enum Olimex_Mod_MPU6050_MessageType_t
+{
+  OLIMEX_MOD_MPU6050_MESSAGE_INVALID = -1,
+  OLIMEX_MOD_MPU6050_MESSAGE_SENSOR_DATA,
+  ///////////////////////////////////////
+  OLIMEX_MOD_MPU6050_MESSAGE_MAX
+};
 
 enum Olimex_Mod_MPU6050_Event_t
 {
-  OLIMEX_MOD_MPU6050_EVENT_INVALID = 1,
+  OLIMEX_MOD_MPU6050_EVENT_INVALID = -1,
   OLIMEX_MOD_MPU6050_EVENT_CONNECT,
   OLIMEX_MOD_MPU6050_EVENT_DISCONNECT,
   OLIMEX_MOD_MPU6050_EVENT_MESSAGE,
@@ -58,25 +68,34 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
   : lock (NULL, NULL)
-//  , event_queue ()
-//  , message_queue ()
+//  , eventQueue ()
+//  , messageQueue ()
 //  , subscribers ()
-//  , event_source_ids ()
-//  , timeout_handler (NULL)
-//  , timer_id (-1)
-  , xml (NULL)
+//  , eventSourceIds ()
+//  , timeoutHandler (NULL)
+//  , timerId (-1)
+  , XML (NULL)
+  , openGLContext (NULL)
+  , openGLDrawable (NULL)
+  , openGLRefreshTimerId (0)
+  , drawingArea (NULL)
+  , contextId (0)
  { };
 
  mutable ACE_Recursive_Thread_Mutex lock;
- Olimex_Mod_MPU6050_Events_t        event_queue;
- Olimex_Mod_MPU6050_Messages_t      message_queue;
+ Olimex_Mod_MPU6050_Events_t        eventQueue;
+ Olimex_Mod_MPU6050_Messages_t      messageQueue;
  Olimex_Mod_MPU6050_Subscribers_t   subscribers;
- Common_UI_GTK_EventSourceIDs_t     event_source_ids;
-// Net_Client_TimeoutHandler*         timeout_handler; // *NOTE*: client only !
-// long                               timer_id;        // *NOTE*: client only !
+ Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
+// Net_Client_TimeoutHandler*         timeoutHandler; // *NOTE*: client only !
+// long                               timerId;        // *NOTE*: client only !
 
- GladeXML*                          xml;
- guint                              opengl_refresh_timer_id;
+ GladeXML*                          XML;
+ GdkGLContext*                      openGLContext;
+ GdkGLDrawable*                     openGLDrawable;
+ guint                              openGLRefreshTimerId;
+ GtkWidget*                         drawingArea;
+ guint                              contextId; // status bar context
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H
