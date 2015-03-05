@@ -178,10 +178,12 @@ dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Fou
 PKG_CHECK_MODULES([PKGLIB], [libglade-2.0 gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0])
 
 # checks for other libraries (non-pkg-config)
-# FIXME: Replace `main' with a function in `-lACE':
-AC_CHECK_LIB([ACE], [main])
 # FIXME: Replace `main' with a function in `-lpthread':
 AC_CHECK_LIB([pthread], [main])
+# FIXME: Replace `main' with a function in `-lACE':
+AC_CHECK_LIB([ACE], [main])
+# FIXME: Replace `main' with a function in `-lglut':
+AC_CHECK_LIB([glut], [main])
 # FIXME: Replace `main' with a function in `-lxerces-c':
 #AC_CHECK_LIB([xerces-c], [main])
 AM_GNU_GETTEXT_VERSION([0.18])

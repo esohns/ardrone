@@ -1,4 +1,4 @@
-﻿/*  I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module
+/*  I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module
     (see https://www.olimex.com/Products/Modules/Sensors/MOD-MPU6050/open-source-hardware,
          http://www.invensense.com/mems/gyro/mpu6050.html)
 
@@ -21,7 +21,11 @@
 #include <deque>
 #include <list>
 
+#include "GL/gl.h"
+
+#include "ace/Global_Macros.h"
 #include "ace/Synch.h"
+#include "ace/Time_Value.h"
 
 #include "gtk/gtk.h"
 #include "gtk/gtkgl.h"
@@ -32,7 +36,7 @@
 
 #include "common_ui_types.h"
 
-#include "net_configuration.h"
+#include "olimex_mod_mpu6050_defines.h"
 
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
@@ -67,35 +71,40 @@ typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_Subscriber
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
-  : lock (NULL, NULL)
+ : argc (0)
+ , argv (NULL)
+ , contextId (0)
 //  , eventQueue ()
-//  , messageQueue ()
-//  , subscribers ()
 //  , eventSourceIds ()
-//  , timeoutHandler (NULL)
-//  , timerId (-1)
-  , XML (NULL)
-  , openGLContext (NULL)
-  , openGLDrawable (NULL)
-  , openGLRefreshTimerId (0)
-  , drawingArea (NULL)
-  , contextId (0)
+ , frameCounter (0)
+ , lock (NULL, NULL)
+//  , messageQueue ()
+ , openGLAxesListId (0)
+ , openGLContext (NULL)
+ , openGLDrawable (NULL)
+ , openGLRefreshTimerId (0)
+ , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
+//  , subscribers ()
+  , timestamp (ACE_Time_Value::zero)
+ , XML (NULL)
  { };
 
- mutable ACE_Recursive_Thread_Mutex lock;
- Olimex_Mod_MPU6050_Events_t        eventQueue;
- Olimex_Mod_MPU6050_Messages_t      messageQueue;
- Olimex_Mod_MPU6050_Subscribers_t   subscribers;
- Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
-// Net_Client_TimeoutHandler*         timeoutHandler; // *NOTE*: client only !
-// long                               timerId;        // *NOTE*: client only !
-
- GladeXML*                          XML;
- GdkGLContext*                      openGLContext;
- GdkGLDrawable*                     openGLDrawable;
- guint                              openGLRefreshTimerId;
- GtkWidget*                         drawingArea;
- guint                              contextId; // status bar context
+ int                                 argc;
+ ACE_TCHAR**                         argv;
+ guint                               contextId; // status bar context
+ Olimex_Mod_MPU6050_Events_t         eventQueue;
+ Common_UI_GTK_EventSourceIDs_t      eventSourceIds;
+ unsigned int                        frameCounter;
+ mutable ACE_Recursive_Thread_Mutex  lock;
+ Olimex_Mod_MPU6050_Messages_t       messageQueue;
+ GLuint                              openGLAxesListId;
+ GdkGLContext*                       openGLContext;
+ GdkGLDrawable*                      openGLDrawable;
+ guint                               openGLRefreshTimerId;
+ bool                                openGLDoubleBuffered;
+ Olimex_Mod_MPU6050_Subscribers_t    subscribers;
+ ACE_Time_Value                      timestamp;
+ GladeXML*                           XML;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

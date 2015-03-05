@@ -35,6 +35,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="VS_ProjectPropertySheet_ACEd.props" />
+    <Import Project="VS_ProjectPropertySheet_OpenGL.props" />
     <Import Project="..\..\modules\libCommon\prj\msvc\VS_libCommon.props" />
     <Import Project="..\..\modules\libACEStream\prj\msvc\VS_libACEStream.props" />
     <Import Project="..\..\modules\libACENetwork\prj\msvc\VS_libACENetwork.props" />
@@ -42,6 +43,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="VS_ProjectPropertySheet_OpenGL.props" />
     <Import Project="VS_ProjectPropertySheet_ACE.props" />
     <Import Project="..\..\modules\libCommon\prj\msvc\VS_libCommon.props" />
     <Import Project="..\..\modules\libACEStream\prj\msvc\VS_libACEStream.props" />
@@ -61,7 +63,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>false</BrowseInformation>
       <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -70,7 +72,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
-      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,7 +83,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <BrowseInformation>false</BrowseInformation>
       <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -92,18 +94,54 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
-      <AdditionalDependencies>OpenGL32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_message.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_module_eventhandler.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_sessionmessage.cpp" />
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_signalhandler.cpp" />
-    <ClCompile Include="..\..\src\test_u\stdafx.cpp" />
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_message.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_module_eventhandler.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_sessionmessage.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_signalhandler.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_stream.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h" />
@@ -113,10 +151,12 @@
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_message.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_module_eventhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_network.h" />
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_sessionmessage.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_signalhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_stream.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_types.h" />
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.h" />
     <ClInclude Include="..\..\src\test_u\stdafx.h" />
   </ItemGroup>
   <ItemGroup>

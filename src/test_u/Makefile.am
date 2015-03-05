@@ -37,6 +37,8 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_module_eventhandler.cpp \
   olimex_mod_mpu6050_module_eventhandler.h \
   olimex_mod_mpu6050_network.h \
+  olimex_mod_mpu6050_opengl.cpp \
+  olimex_mod_mpu6050_opengl.h \
   olimex_mod_mpu6050_sessionmessage.cpp \
   olimex_mod_mpu6050_sessionmessage.h \
   olimex_mod_mpu6050_signalhandler.cpp \
@@ -45,6 +47,8 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_stream.cpp \
   olimex_mod_mpu6050_stream.h \
   olimex_mod_mpu6050_types.h \
+  olimex_mod_mpu6050_uidefinition.cpp \
+  olimex_mod_mpu6050_uidefinition.h \
   stdafx.cpp \
   stdafx.h
 

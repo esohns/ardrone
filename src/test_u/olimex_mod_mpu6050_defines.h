@@ -20,28 +20,32 @@
 
 //#include "ace/Default_Constants.h"
 
+#include "GL/glut.h"
+
 #include "net_defines.h"
 
-#define OLIMEX_MOD_MPU6050_USE_REACTOR                               true
-#define OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR                      false
-#define OLIMEX_MOD_MPU6050_LOG_FILE_NAME                             "olimex_mod_mpu6050.log"
+// *** OpenGL-related
+#define OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED                    true
+#define OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
+#define OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS                           GLUT_BITMAP_HELVETICA_12
+#define OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG                        0.0174533
 
 // *** glade UI-related ***
 #define OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME                   "olimex_mod_mpu6050.glade"
-#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH  800
-#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT 600
+#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH  640
+#define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT 480
 #define OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY                   100 // ms
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000 / 60 // Hz
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT               "about_dialog"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA               "drawing_area"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_FILE_QUIT             "quit"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_HELP_ABOUT            "about"
-#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_OPENGL_CONTAINER           "opengl_container"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR                 "status_bar"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN                "main_window"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT              "info"
 
 // *** network-related ***
+#define OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR                      false
 // *PORTABILITY*: interface names are not portable, so let the user choose the
 //                interface from a list on Windows (see select_interface())...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -62,16 +66,25 @@
 //#define DEFAULT_SOCKET_TCP_KEEPALIVE                false
 //#define DEFAULT_SOCKET_LINGER                       10 // seconds {0 --> off}
 
-#define OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE                        14
-
 // *** pro/reactor-related ***
+#define OLIMEX_MOD_MPU6050_USE_REACTOR                               true
 #define OLIMEX_MOD_MPU6050_TASK_GROUP_ID                             11
+
 // *** stream-related ***
+#define OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE                        14
 // *IMPORTANT NOTE*: any of these COULD seriously affect performance
 #define OLIMEX_MOD_MPU6050_MAXIMUM_QUEUE_SLOTS                       1000
-#define OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       100
+#define OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       1000
 
 #define OLIMEX_MOD_MPU6050_STATISTICS_COLLECTION_INTERVAL            60 // seconds [0 --> OFF]
 #define OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL             0  // seconds [0 --> OFF]
+
+// *** device-related ***
+#define OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2                16384 // LSB/g
+#define OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR                    340
+#define OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET                        36.53F
+#define OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250                  131 // LSB/°/s
+
+#define OLIMEX_MOD_MPU6050_LOG_FILE_NAME                             "olimex_mod_mpu6050.log"
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

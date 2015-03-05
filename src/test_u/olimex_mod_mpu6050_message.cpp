@@ -84,7 +84,7 @@ Olimex_Mod_MPU6050_Message::duplicate (void) const
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Message::duplicate"));
 
-  Olimex_Mod_MPU6050_Message* new_message = NULL;
+  Olimex_Mod_MPU6050_Message* message_p = NULL;
 
   // create a new Olimex_Mod_MPU6050_Message that contains unique copies of
   // the message block fields, but a (reference counted) "shallow" duplicate of
@@ -92,35 +92,43 @@ Olimex_Mod_MPU6050_Message::duplicate (void) const
 
   // if there is no allocator, use the standard new and delete calls.
   if (!inherited::message_block_allocator_)
-    ACE_NEW_RETURN (new_message,
+    ACE_NEW_RETURN (message_p,
                     Olimex_Mod_MPU6050_Message (*this),
                     NULL);
   else // otherwise, use the existing message_block_allocator
   {
     // *NOTE*: the argument to malloc SHOULDN'T really matter, as this will be
     // a "shallow" copy referencing the same datablock...
-    // *TODO*: (depending on the allocator) a datablock is allocated anyway,
-    // only to be immediately released again...
-    ACE_NEW_MALLOC_RETURN (new_message,
-                           static_cast<Olimex_Mod_MPU6050_Message*> (inherited::message_block_allocator_->malloc (inherited::capacity ())),
+    ACE_NEW_MALLOC_RETURN (message_p,
+                           static_cast<Olimex_Mod_MPU6050_Message*> (inherited::message_block_allocator_->calloc (inherited::capacity ())),
                            Olimex_Mod_MPU6050_Message (*this),
                            NULL);
   } // end ELSE
+  if (!message_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate Olimex_Mod_MPU6050_Message: \"%m\", aborting\n")));
+
+    return NULL;
+  } // end IF
 
   // increment the reference counts of any continuation messages
   if (inherited::cont_)
   {
-    new_message->cont_ = cont_->duplicate ();
-
-    // when things go wrong, release all resources and return
-    if (!new_message->cont_)
+    message_p->cont_ = cont_->duplicate ();
+    if (!message_p->cont_)
     {
-      new_message->release ();
-      new_message = NULL;
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Olimex_Mod_MPU6050_Message::duplicate(): \"%m\", aborting\n")));
+
+      // clean up
+      message_p->release ();
+
+      return NULL;
     } // end IF
   } // end IF
 
   // *NOTE*: if "this" is initialized, so is the "clone" (and vice-versa)...
 
-  return new_message;
+  return message_p;
 }

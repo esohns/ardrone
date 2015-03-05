@@ -39,6 +39,15 @@
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h">
@@ -75,6 +84,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

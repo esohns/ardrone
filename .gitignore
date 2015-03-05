@@ -57,3 +57,5 @@ po/
 m4/
 Debug
 ipch
+/prj/msvc/*.opensdf
+/prj/msvc/Release/*.cache

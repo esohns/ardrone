@@ -29,7 +29,7 @@
 #define KO_OLIMEX_MOD_MPU6050_WQ_NAME     "olimex_mod_mpu6050_wq"
 
 // macros
-#define ARRAY_AND_SIZE(x)	                (x), ARRAY_SIZE(x)
+#define ARRAY_AND_SIZE (x)                (x), ARRAY_SIZE (x)
 
 // gpio
 #define GPIO_FEX_SECTION_HEADER           "gpio_para"

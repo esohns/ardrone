@@ -15,14 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#if defined(_MSC_VER)
 #include "stdafx.h"
-#endif
 
 #include <iostream>
 #include <sstream>
 
-#if defined(ENABLE_NLS)
+#if defined (ENABLE_NLS)
 #include <locale.h>
 #include <libintl.h>
 #endif
@@ -53,7 +51,7 @@
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
-#include "olimex_mod_mpu6050_callbacks.h"
+//#include "olimex_mod_mpu6050_callbacks.h"
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_eventhandler.h"
 #include "olimex_mod_mpu6050_macros.h"
@@ -62,6 +60,7 @@
 #include "olimex_mod_mpu6050_signalhandler.h"
 #include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
+#include "olimex_mod_mpu6050_uidefinition.h"
 
 void
 do_printVersion (const std::string& programName_in)
@@ -310,6 +309,9 @@ do_work (int argc_in,
 
   // step1: init stream
   Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
+  gtk_cb_data.argc = argc_in;
+  gtk_cb_data.argv = argv_in;
+  gtk_cb_data.openGLDoubleBuffered = OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED;
   Olimex_Mod_MPU6050_EventHandler event_handler (&gtk_cb_data);
   Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (std::string ("EventHandler"),
                                                                       NULL);
