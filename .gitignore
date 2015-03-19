@@ -59,3 +59,4 @@ Debug
 ipch
 /prj/msvc/*.opensdf
 /prj/msvc/Release/*.cache
+Release

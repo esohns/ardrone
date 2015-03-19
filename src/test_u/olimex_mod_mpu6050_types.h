@@ -22,6 +22,7 @@
 #include <list>
 
 #include "GL/gl.h"
+#include "glm/glm.hpp"
 
 #include "ace/Global_Macros.h"
 #include "ace/Synch.h"
@@ -68,6 +69,21 @@ typedef Common_INotify_T<Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notifica
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
 typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
 
+struct camera_t
+{
+  //GLfloat angle;
+  //int last_position_y;
+
+  //glm::vec3 position;
+  //glm::vec3 looking_at;
+  //glm::vec3 up;
+
+  float zoom = 15.0f;
+  glm::vec2 rotation;
+  glm::vec2 translation;
+  int last[2];
+};
+
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
@@ -79,7 +95,9 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  , frameCounter (0)
  , lock (NULL, NULL)
 //  , messageQueue ()
+//, openGLAllocation ()
  , openGLAxesListId (0)
+//  , openGLCamera ()
  , openGLContext (NULL)
  , openGLDrawable (NULL)
  , openGLRefreshTimerId (0)
@@ -97,7 +115,9 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  unsigned int                        frameCounter;
  mutable ACE_Recursive_Thread_Mutex  lock;
  Olimex_Mod_MPU6050_Messages_t       messageQueue;
+ //GtkAllocation                       openGLAllocation; // window/viewport size
  GLuint                              openGLAxesListId;
+ camera_t                            openGLCamera;
  GdkGLContext*                       openGLContext;
  GdkGLDrawable*                      openGLDrawable;
  guint                               openGLRefreshTimerId;

@@ -36,65 +36,61 @@
 #include "olimex_mod_mpu6050_macros.h"
 
 //void
-//arrow (GLfloat x1_in,
-//       GLfloat y1_in,
-//       GLfloat z1_in,
-//       GLfloat x2_in,
-//       GLfloat y2_in,
-//       GLfloat z2_in,
-//       GLfloat D_in)
+//arrow (GLfloat x1_in, GLfloat y1_in, GLfloat z1_in,
+//       GLfloat x2_in, GLfloat y2_in, GLfloat z2_in,
+//       GLfloat d_in)
 //{
 //  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::arrow"));
-
+//
 //  float x = x2_in - x1_in;
 //  float y = y2_in - y1_in;
 //  float z = z2_in - z1_in;
-//  float L = ::sqrt (x * x + y * y + z * z);
-
+//  float L = ::sqrt ((x * x) + (y * y) + (z * z));
+//
 ////  GLUquadricObj* quad_obj_p;
 //  GLUquadric* cy1_p = gluNewQuadric ();
 //  GLUquadric* cy2_p = gluNewQuadric ();
 ////  GLUquadric* cy3_p = gluNewQuadric ();
 //  ACE_ASSERT (cy1_p && cy2_p);// && cy3_p);
-
+//
 //  glPushMatrix ();
-
+//
 //  glTranslatef (x1_in, y1_in, z1_in);
 //  if (x || y)
 //  {
 //    glRotatef (::atan2 (y, x) / OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG,
 //               0.0F, 0.0F, 1.0F);
-//    glRotatef (::atan2 (::sqrt (x * x + y * y), z) / OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG,
+//    glRotatef (::atan2 (::sqrt ((x * x) + (y * y)), z) / OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG,
 //               0.0F, 1.0F, 0.0F);
 //  } // end IF
 //  else if (z < 0)
 //    glRotatef (180.0F,
 //               1.0F, 0.0F, 0.0F);
-
-//  glTranslatef (0.0F, 0.0F, L - (4.0F * D_in));
+//
+//  glTranslatef (0.0F, 0.0F, L - (4.0F * d_in));
 //  gluQuadricDrawStyle (cy1_p, GLU_FILL);
 //  gluQuadricNormals (cy1_p, GLU_SMOOTH);
 //  glTranslatef (0.0F, 0.0F, 4.0F);
 //  glColor3f (1.0F, 0.0F, 0.0F);
 //  gluCylinder (cy1_p, 0.04, 0.0, 1.0, 12, 1);
 //  gluDeleteQuadric (cy1_p);
-
-//  glTranslatef (0.0F, 0.0F, -L + (4.0F * D_in));
+//
+//  glTranslatef (0.0F, 0.0F, -L + (4.0F * d_in));
 //  gluQuadricDrawStyle (cy2_p, GLU_FILL);
 //  gluQuadricNormals (cy2_p, GLU_SMOOTH);
 //  glTranslatef (0.0F, 4.0F, 0.0F);
 //  glColor3f (0.0F, 1.0F, 0.0F);
 //  gluCylinder (cy2_p, 0.4, 0.4, L - 1.6, 12, 1);
 //  gluDeleteQuadric (cy2_p);
-
-////  glTranslatef (0.0F, 0.0F, -L + (4.0F * D_in));
+//
+////  glTranslatef (0.0F, 0.0F, -L + (4.0F * d_in));
 ////  gluQuadricDrawStyle (cy3_p, GLU_FILL);
 ////  gluQuadricNormals (cy3_p, GLU_SMOOTH);
 ////  glTranslatef (4.0F, 0.0F, 0.0F);
 ////  glColor3f (1.0F, 1.0F, 1.0F);
 ////  gluCylinder (cy3_p, 0.4, 0.4, L - 1.6, 12, 1);
 ////  gluDeleteQuadric (cy3_p);
-
+//
 //  glPopMatrix ();
 //}
 
@@ -102,17 +98,17 @@
 //axes (GLfloat length_in)
 //{
 //  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::axes"));
-
+//
 //  glPushMatrix ();
 //  glTranslatef (-length_in, 0.0F, 0.0F);
 //  ::arrow (0.0F, 0.0F, 0.0F, 2.0F * length_in, 0.0F, 0.0F, 0.2F);
 //  glPopMatrix ();
-
+//
 //  glPushMatrix ();
 //  glTranslatef (0.0F, -length_in, 0.0F);
 //  ::arrow (0.0F, 0.0F, 0.0F, 0.0F, 2.0F * length_in, 0.0F, 0.2F);
 //  glPopMatrix ();
-
+//
 //  glPushMatrix ();
 //  glTranslatef (0.0F, 0.0F, -length_in);
 //  ::arrow (0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 2.0F * length_in, 0.2F);
@@ -129,9 +125,15 @@ axes ()
 
   glNewList (axes_list, GL_COMPILE);
 
-  glColor4ub (0, 0, 255, 255);
+  //glDisable (GL_LIGHTING);
+
+  glPushMatrix ();
+  //glScalef (1.0F, 1.0F, 0.0F);
+
   glBegin (GL_LINE_STRIP);
+  glColor3f (0.0F, 0.0F, 0.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
+  glColor3f (1.0F, 0.0F, 0.0F);
   glVertex3f (1.0f, 0.0f, 0.0f);
   glVertex3f (0.75f, 0.25f, 0.0f);
   glVertex3f (0.75f, -0.25f, 0.0f);
@@ -142,7 +144,9 @@ axes ()
   glEnd ();
 
   glBegin (GL_LINE_STRIP);
+  glColor3f (0.0F, 0.0F, 0.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
+  glColor3f (0.0F, 1.0F, 0.0F);
   glVertex3f (0.0f, 1.0f, 0.0f);
   glVertex3f (0.0f, 0.75f, 0.25f);
   glVertex3f (0.0f, 0.75f, -0.25f);
@@ -153,7 +157,9 @@ axes ()
   glEnd ();
 
   glBegin (GL_LINE_STRIP);
+  glColor3f (0.0F, 0.0F, 0.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
+  glColor3f (0.0F, 0.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 1.0f);
   glVertex3f (0.25f, 0.0f, 0.75f);
   glVertex3f (-0.25f, 0.0f, 0.75f);
@@ -163,15 +169,28 @@ axes ()
   glVertex3f (0.0f, 0.0f, 1.0f);
   glEnd ();
 
-  glColor4ub (255, 0, 0, 255);
-  glRasterPos3f (1.1f, 0.0f, 0.0f);
-  glutBitmapCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'x');
-  glRasterPos3f (0.0f, 1.1f, 0.0f);
-  glColor4ub (0, 255, 0, 255);
-  glutBitmapCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'y');
-  glColor4ub (0, 0, 255, 255);
-  glRasterPos3f (0.0f, 0.0f, 1.1f);
-  glutBitmapCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'z');
+  glPopMatrix ();
+
+  glPushMatrix ();
+  // *NOTE*: GLUT_STROKE_ROMAN font size is around 152 units
+  glScalef (0.005F, 0.005F, 0.005F);
+
+  glTranslatef (220.0F, -30.0F, 0.0F);
+  glColor3f (1.0F, 0.0F, 0.0F);
+  glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'x');
+
+  glTranslatef (-380.0F, 300.0F, 0.0F);
+  glColor3f (0.0F, 1.0F, 0.0F);
+  glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'y');
+
+  glTranslatef (-105.0F, -305.0F, 250.0F);
+  glColor3f (0.0F, 0.0F, 1.0F);
+  glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'z');
+
+  glPopMatrix ();
+
+  //glDisable (GL_COLOR_MATERIAL);
+  //glEnable (GL_LIGHTING);
 
   glEndList ();
 
@@ -179,7 +198,7 @@ axes ()
 }
 
 void
-frames_per_second (const float framesPerSecond_in)
+frames_per_second (unsigned int framesPerSecond_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::frames_per_second"));
 
@@ -187,7 +206,7 @@ frames_per_second (const float framesPerSecond_in)
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   int result = -1;
   result = ACE_OS::sprintf (buffer,
-                            ACE_TEXT_ALWAYS_CHAR ("%.2f"),
+                            ACE_TEXT_ALWAYS_CHAR ("%d"),
                             framesPerSecond_in);
   if (result < 0)
   {
@@ -196,8 +215,12 @@ frames_per_second (const float framesPerSecond_in)
     return;
   } // end IF
 
-  glColor4ub (255, 255, 255, 255);
-  glRasterPos2f (6.0f, glutBitmapHeight (OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS) / 2.0F);
+  //glDisable (GL_LIGHTING);
+
+  //glColor3f (1.0F, 1.0F, 1.0F);
+  glRasterPos2f (5.0F, glutBitmapHeight (OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS) / 2.0F);
   glutBitmapString (OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS,
                     reinterpret_cast<unsigned char*> (buffer));
+
+  //glEnable (GL_LIGHTING);
 }

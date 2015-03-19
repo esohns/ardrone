@@ -26,9 +26,24 @@
 
 // *** OpenGL-related
 #define OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED                    true
-#define OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
+#define OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG                        0.0174533F
+#define OLIMEX_MOD_MPU6050_OPENGL_AXES_SIZE                          0.2 // percentage --> 10%
+// fonts
+//#define OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
+#define OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES                          GLUT_STROKE_MONO_ROMAN
 #define OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS                           GLUT_BITMAP_HELVETICA_12
-#define OLIMEX_MOD_MPU6050_OPENGL_RAD_PER_DEG                        0.0174533
+// camera calibration
+#define OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR             0.8F
+#define OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR          0.01F
+#define OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ZOOM_FACTOR                 0.03F
+// defaults
+#define OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM                5.0F
+// perspective(s)
+#define OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY                   60.0
+#define OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR                  1.0
+#define OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZFAR                   100.0
+#define OLIMEX_MOD_MPU6050_OPENGL_ORTHO_ZNEAR                        -1.0
+#define OLIMEX_MOD_MPU6050_OPENGL_ORTHO_ZFAR                         1.0
 
 // *** glade UI-related ***
 #define OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME                   "olimex_mod_mpu6050.glade"

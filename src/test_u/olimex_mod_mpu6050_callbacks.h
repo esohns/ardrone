@@ -36,6 +36,7 @@ G_MODULE_EXPORT gboolean configure_cb (GtkWidget*, GdkEventConfigure*, gpointer)
 G_MODULE_EXPORT gboolean expose_cb (GtkWidget*, GdkEventExpose*, gpointer);
 G_MODULE_EXPORT gboolean process_cb (gpointer);
 G_MODULE_EXPORT gboolean key_cb (GtkWidget*, GdkEventKey*, gpointer);
+G_MODULE_EXPORT gboolean motion_cb (GtkWidget*, GdkEventMotion*, gpointer);
 //------------------------------------------------------------------------------
 G_MODULE_EXPORT gint about_clicked_GTK_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gint quit_clicked_GTK_cb (GtkWidget*, gpointer);

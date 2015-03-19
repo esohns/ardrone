@@ -1,6 +1,12 @@
 - native compilation
 	[- install kernel source packages]
-	- install platform-specific kernel headers
-	- verify make process
+	[- install platform-specific kernel headers]
+	- verify/improve the automated make process to support different (linux) platforms
 
-- verify module loading procedure
+- find a way to automate the installation of the kernel module, verify module loading procedure
+
+- Win32/64: the OpenGL property sheet is not being recognized by VS
+            (specifically, the include section). Find a way to repair this;
+			(*NOTE*: the include path(s) have been added to the png/gtk/glade properties until
+			further notice).
+

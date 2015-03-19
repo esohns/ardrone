@@ -25,7 +25,8 @@
 
 #include "GL/gl.h"
 #include "GL/glu.h"
-#include "GL/glut.h"
+//#include "GL/glut.h"
+#include "glm/glm.hpp"
 
 #include "gmodule.h"
 
@@ -187,6 +188,10 @@ idle_initialize_UI_cb (gpointer userData_in)
                     ACE_TEXT_ALWAYS_CHAR ("key-press-event"),
                     G_CALLBACK (key_cb),
                     cb_data_p);
+  g_signal_connect (drawing_area_p,
+                    ACE_TEXT_ALWAYS_CHAR ("motion-notify-event"),
+                    G_CALLBACK (motion_cb),
+                    cb_data_p);
 
 //  // step5: use correct screen
 //  if (parentWidget_in)
@@ -275,6 +280,8 @@ configure_cb (GtkWidget* widget_in,
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::configure_cb"));
 
+  static bool is_first_invokation = true;
+
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
 
@@ -294,6 +301,7 @@ configure_cb (GtkWidget* widget_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_gl_drawable_gl_begin(), aborting\n")));
+    is_first_invokation = false;
     return FALSE; // propagate
   } // end IF
 
@@ -306,6 +314,7 @@ configure_cb (GtkWidget* widget_in,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ::axes (): \"%m\", aborting\n")));
+      is_first_invokation = false;
       return FALSE; // G_SOURCE_REMOVE
     } // end IF
   } // end lock scope
@@ -313,29 +322,46 @@ configure_cb (GtkWidget* widget_in,
   glMatrixMode (GL_PROJECTION);
   glLoadIdentity ();
 
-  /* specify the lower left corner, as well as width/height of the viewport */
-  GtkAllocation allocation;
-  gtk_widget_get_allocation (widget_in, &allocation);
-  glViewport (0, 0, allocation.width, allocation.height);
+  // specify the lower left corner, as well as width/height of the viewport
+  //gtk_widget_get_allocation (widget_in, &cb_data_p->openGLAllocation);
+  glViewport (0, 0,
+              widget_in->allocation.width,
+              widget_in->allocation.height);
 
-  gluPerspective (60.0,
-                  (allocation.width / allocation.height),
-                  1.0,
-                  100.0); // setup a perspective projection
-
-  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  gluPerspective (OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY,
+                  (widget_in->allocation.width / widget_in->allocation.height),
+                  OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR,
+                  OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZFAR); // setup a perspective projection
+  //glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
   glMatrixMode (GL_MODELVIEW);
   glLoadIdentity ();
 
-  // set up the camera
+  // set up the camera ?
+  if (is_first_invokation)
+  {
+    cb_data_p->openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
+    cb_data_p->openGLCamera.rotation[0] = 0.0F;
+    cb_data_p->openGLCamera.rotation[1] = 0.0F;
+    cb_data_p->openGLCamera.translation[0] = 0.0F;
+    cb_data_p->openGLCamera.translation[1] = 0.0F;
+    cb_data_p->openGLCamera.last[0] = 0;
+    cb_data_p->openGLCamera.last[1] = 0;
+  } // end IF
+
   // *NOTE*: standard "right-hand" coordinate system (RHCS) is:
   //         x (thumb): right, y (index): up, z (middle finger): towards you
 //  // top-down (RHCS: x --> up [y --> towards you, z --> right]
-  gluLookAt (0.0, 10.0, 0.0, // eye position (*NOTE*: relative to )
-             0.0, 0.0, 0.0,  // looking-at position (RHCS notation)
-             1.0, 0.0, 0.0); // up direction (RHCS notation, relative to eye
-                             // position and looking-at direction)
+  //cb_data_p->openGLCamera.position[0] = 0.0F;  // eye position (*NOTE*: relative to standard
+  //cb_data_p->openGLCamera.position[1] = 10.0F; //                       "right-hand" coordinate
+  //cb_data_p->openGLCamera.position[2] = 0.0F;  //                       system [RHCS])
+  //cb_data_p->openGLCamera.looking_at[0] = 0.0F; // looking-at position (RHCS notation)
+  //cb_data_p->openGLCamera.looking_at[1] = 0.0F;
+  //cb_data_p->openGLCamera.looking_at[2] = 0.0F;
+  //cb_data_p->openGLCamera.up[0] = 1.0F; // up direction (RHCS notation, relative to "eye"
+  //cb_data_p->openGLCamera.up[1] = 0.0F; // position and looking-at direction)
+  //cb_data_p->openGLCamera.up[2] = 0.0F;
+
   // behind (RHCS: -z --> up [y --> right,
 //  gluLookAt (-10.0, 0.0, 0.0, // eye position (*NOTE*: relative to standard
 //                              //                       "right-hand" coordinate
@@ -346,32 +372,58 @@ configure_cb (GtkWidget* widget_in,
   // *NOTE*: in order for this to work with the device, the modelview CS needs
   //         to be switched to "left-hand" coordinate system as well
 //  glScalef (1.0F, 1.0F, -1.0F);
+  // *TODO*: do this without glu, i.e. render the complete scene using only
+  //         translations, rotations and scaling
+  //gluLookAt (cb_data_p->openGLCamera.position[0],
+  //           cb_data_p->openGLCamera.position[1],
+  //           cb_data_p->openGLCamera.position[2],
+  //           cb_data_p->openGLCamera.looking_at[0],
+  //           cb_data_p->openGLCamera.looking_at[1],
+  //           cb_data_p->openGLCamera.looking_at[2],
+  //           cb_data_p->openGLCamera.up[0],
+  //           cb_data_p->openGLCamera.up[1],
+  //           cb_data_p->openGLCamera.up[2]);
 
-  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
-//  GLfloat light_diffuse[] = {1.0F, 1.0F, 1.0F, 1.0F};
-  GLfloat light0_position[] = {5.0F, 5.0F, 5.0F, 0.0F};
-  glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-//  glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-  glEnable (GL_LIGHTING);
-  glEnable (GL_LIGHT0);
+  // set up lighting ?
+  if (is_first_invokation)
+  {
+    glEnable (GL_LIGHTING);
+    //GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
+    //glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+    GLfloat light_diffuse[] = {1.0F, 1.0F, 1.0F, 1.0F};
+    GLfloat light1_position[] = {150.0F, 150.0F, 150.0F, 0.0F};
+    glLightfv (GL_LIGHT1, GL_POSITION, light1_position);
+    glLightfv (GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+    //glEnable (GL_LIGHT0);
+    glEnable (GL_LIGHT1);
+  } // end IF
 
-  glEnable (GL_DEPTH_TEST);
-//  glDepthFunc (GL_LEQUAL);
-  //  glEnable (GL_COLOR_MATERIAL);
+  // set up features ?
+  if (is_first_invokation)
+  {
+    glEnable (GL_DEPTH_TEST);
+    //glDepthFunc (GL_LEQUAL);
 
-//  glShadeModel (GL_FLAT); // flat shading
-  glShadeModel (GL_SMOOTH); // smooth shading
+    //glShadeModel (GL_FLAT); // flat shading
+    glShadeModel (GL_SMOOTH); // smooth shading
+    //glShadeModel (GL_FLAT); // flat shading
+    //glEnable (GL_COLOR_MATERIAL);
+    //glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    //glEnable (GL_LINE_SMOOTH);
 
-  glClearColor (0.0F, 0.0F, 0.0F, 0.0F); // background color
-  glClearDepth (1.0); // background depth value
-//  glColor3f (1.0F, 1.0F, 1.0F); // white
+    //glClearColor (0.0F, 0.0F, 0.0F, 0.0F); // background color
+    glClearDepth (1.0); // background depth value
+    //glColor3f (1.0F, 1.0F, 1.0F); // white
+
+    //glLineWidth (1.0F);
+  } // end IF
 
   gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
 
+  is_first_invokation = false;
+
   return TRUE; // done (do not propagate further)
 }
-
 
 //G_MODULE_EXPORT gboolean
 //delete_event_cb (GtkWidget* widget_in,
@@ -406,7 +458,6 @@ expose_cb (GtkWidget* widget_in,
   ACE_ASSERT (cb_data_p);
 
 //  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
-  cb_data_p->frameCounter++;
 
   ACE_Time_Value elapsed;
   const static ACE_Time_Value one_second (1, 0);
@@ -418,44 +469,87 @@ expose_cb (GtkWidget* widget_in,
     return FALSE; // propagate
   } // end IF
 
-  // step1: draw object(s)
-//  glClearColor (0.0F, 0.0F, 0.0F, 0.0F);
+  // step1: clear screen
   glClear (GL_COLOR_BUFFER_BIT |
            GL_DEPTH_BUFFER_BIT);
-//  glColor3f (1.0F, 1.0F, 1.0F); // white
 
+  // step2: set camera
+  glPushMatrix ();
+  glTranslatef (0.0F, 0.0F, -cb_data_p->openGLCamera.zoom);
+  glTranslatef (cb_data_p->openGLCamera.translation[0],
+                cb_data_p->openGLCamera.translation[1],
+                0.0F);
+  glRotatef (cb_data_p->openGLCamera.rotation[0], 1.0F, 0.0F, 0.0F);
+  glRotatef (cb_data_p->openGLCamera.rotation[1], 0.0F, 1.0F, 0.0F);
+
+  // step3: draw object(s)
+  // step3a: draw model
   const static gboolean solid = FALSE; // wireframe
   const static gdouble scale = 1.0;
   gdk_gl_draw_teapot (solid, scale);
 
-  // step2: draw axes
-  //  ::axes (1.0F);
+  // step3b: draw axes
+  // restrict viewport to upper left corner
+  static GLsizei axes_height;
+  axes_height =
+    static_cast<GLsizei> (widget_in->allocation.height * OLIMEX_MOD_MPU6050_OPENGL_AXES_SIZE);
+  glViewport (0, widget_in->allocation.height - axes_height,
+              static_cast<GLsizei> (widget_in->allocation.width * OLIMEX_MOD_MPU6050_OPENGL_AXES_SIZE),
+              axes_height);
+  //glScissor (0, allocation.height - axes_height,
+  //           static_cast<GLsizei> (allocation.width * OLIMEX_MOD_MPU6050_OPENGL_AXES_SIZE),
+  //           axes_height);
+  //glEnable (GL_SCISSOR_TEST);
+  //static GLfloat clear_color[4];
+  //glGetFloatv (GL_COLOR_CLEAR_VALUE, clear_color);
+  //glClearColor (1.0F, 1.0F, 1.0F, 1.0F);
+  //glClear (GL_COLOR_BUFFER_BIT |
+  //         GL_DEPTH_BUFFER_BIT);
+
+  //::axes (1.0F);
+  static GLfloat color[4];
+  glGetFloatv (GL_CURRENT_COLOR, color);
+  glEnable (GL_COLOR_MATERIAL);
+
   glCallList (cb_data_p->openGLAxesListId);
 
-  // step3: draw fps
+  glColor3f (color[0], color[1], color[2]);
+  glDisable (GL_COLOR_MATERIAL);
+
+  glPopMatrix ();
+
+  // restore viewport
+  //glClearColor (clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+  //glDisable (GL_SCISSOR_TEST);
+  glViewport (0, 0,
+              widget_in->allocation.width,
+              widget_in->allocation.height);
+
+  // step3c: draw fps
+  // switch to 2D-projection (i.e. "HUD"-mode)
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  glLoadIdentity ();
+  glOrtho (0.0, widget_in->allocation.width,
+           0.0, widget_in->allocation.height,
+           OLIMEX_MOD_MPU6050_OPENGL_ORTHO_ZNEAR,
+           OLIMEX_MOD_MPU6050_OPENGL_ORTHO_ZFAR);
+  glMatrixMode (GL_MODELVIEW);
+  glPushMatrix ();
+  glLoadIdentity ();
+
+  cb_data_p->frameCounter++;
+  ::frames_per_second (cb_data_p->frameCounter);
+
+  // return to 3D-projection
+  glPopMatrix ();
+  glMatrixMode (GL_PROJECTION);
+  glPopMatrix ();
+  glMatrixMode (GL_MODELVIEW);
+
   elapsed = COMMON_TIME_POLICY () - cb_data_p->timestamp;
   if (elapsed >= one_second)
   {
-    // switch to 2D-projection (HUD-mode)
-    glMatrixMode (GL_PROJECTION);
-    glPushMatrix ();
-    glLoadIdentity ();
-    glOrtho (0.0, widget_in->allocation.width,
-             0.0, widget_in->allocation.height,
-             -1.0, 10.0);
-    glMatrixMode (GL_MODELVIEW);
-    glPushMatrix ();
-    glLoadIdentity ();
-
-//    glClear (GL_DEPTH_BUFFER_BIT);
-    ::frames_per_second (static_cast<float> (cb_data_p->frameCounter));
-
-    // return to 3D-projection (3D-mode)
-    glPopMatrix ();
-    glMatrixMode (GL_PROJECTION);
-    glPopMatrix ();
-    glMatrixMode (GL_MODELVIEW);
-
     cb_data_p->frameCounter = 0;
     cb_data_p->timestamp += one_second;
   } // end IF
@@ -494,7 +588,10 @@ process_cb (gpointer userData_in)
   {
     ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
-      goto expose;
+    {
+      return TRUE; // --> continue processing timer
+      //goto expose;
+    } // end IF
     event = cb_data_p->eventQueue.front ();
     cb_data_p->eventQueue.pop_front ();
     switch (event)
@@ -619,9 +716,9 @@ process_cb (gpointer userData_in)
 //  glRotatef (angle_z, 0.0F, 0.0F, 1.0F);
   glPopMatrix ();
 
-expose:
   gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
 
+//expose:
   // step2: invalidate drawing area, marking it "dirty" and to be redrawn when
   // main loop signals expose-events (which it would do anyway (as needed), when
   // this returns and the main loop idles -- trigger immediate processing
@@ -657,26 +754,133 @@ key_cb (GtkWidget* widget_in,
 
   switch (event_in->keyval)
   {
-//    case GDK_KEY_Left:
-//      break;
-//    case GDK_KEY_Right:
-//      break;
-    case GDK_KEY_Up:
+    case GDK_KEY_Left:
+    {
+      // *NOTE*: the camera moves on a circle in a plane perpendicular to the
+      //         plane between the "view" and "up" directions. Therefore, the
+      //         distance to the "target" remains constant
+      // *NOTE*: camera positions are (discrete) positions on the circle
+      //         perimeter
+
+      //// compute movement plane
+      //glm::vec3 unit_vector = glm::cross (cb_data_p->openGLCamera.looking_at,
+      //                                    cb_data_p->openGLCamera.up);
+      ////unit_vector = glm::normalize (unit_vector);
+
+      //// compute distance factor
+      //glm::vec3 direction =
+      // cb_data_p->openGLCamera.looking_at - cb_data_p->openGLCamera.position;
+      //GLfloat factor = glm::length (direction);
+
+      //// compute position on circle perimeter
+      //cb_data_p->openGLCamera.angle -= OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_STEP;
+      //GLfloat angle = cb_data_p->openGLCamera.angle * 360.0F;
+
+      //// compute camera position
+      //glm::vec3 p, q, r;
+      //p = cb_data_p->openGLCamera.position;
+      //r = unit_vector;
+      //r[0] = ::cos (angle);
+      //r[1] = ::sin (angle);
+      //r[2] = 0.0F;
+      //r = glm::normalize (cb_data_p->openGLCamera.looking_at + r);
+      //q = (r - p) * factor;
+      //cb_data_p->openGLCamera.position = q;
+
+      //gluLookAt (cb_data_p->openGLCamera.position[0],
+      //           cb_data_p->openGLCamera.position[1],
+      //           cb_data_p->openGLCamera.position[2],
+      //           cb_data_p->openGLCamera.looking_at[0],
+      //           cb_data_p->openGLCamera.looking_at[1],
+      //           cb_data_p->openGLCamera.looking_at[2],
+      //           cb_data_p->openGLCamera.up[0],
+      //           cb_data_p->openGLCamera.up[1],
+      //           cb_data_p->openGLCamera.up[2]);
+
       break;
-    case GDK_KEY_Down:
+    }
+    case GDK_KEY_Right:
       break;
-    case GDK_KEY_c:
-    case GDK_KEY_C:
-      break;
-    case GDK_KEY_d:
-    case GDK_KEY_D:
-      break;
+    //case GDK_KEY_Up:
+    //  break;
+    //case GDK_KEY_Down:
+    //  break;
+    //case GDK_KEY_c:
+    //case GDK_KEY_C:
+    //  break;
+    //case GDK_KEY_d:
+    //case GDK_KEY_D:
+    //  break;
     case GDK_KEY_r:
     case GDK_KEY_R:
+    {
+      cb_data_p->openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
+      cb_data_p->openGLCamera.rotation[0] = 0.0F;
+      cb_data_p->openGLCamera.rotation[1] = 0.0F;
+      cb_data_p->openGLCamera.translation[0] = 0.0F;
+      cb_data_p->openGLCamera.translation[1] = 0.0F;
+      cb_data_p->openGLCamera.last[0] = 0;
+      cb_data_p->openGLCamera.last[1] = 0;
+
+      gtk_widget_queue_draw (widget_in);
+
       break;
+    }
     default:
       return FALSE; // propagate
   } // end SWITCH
+
+  return TRUE; // done (do not propagate further)
+}
+
+G_MODULE_EXPORT gboolean
+motion_cb (GtkWidget* widget_in,
+           GdkEventMotion* event_in,
+           gpointer userData_in)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::motion_cb"));
+
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+    reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (event_in);
+  ACE_ASSERT (cb_data_p);
+  if (event_in->is_hint) return FALSE; // propagate
+
+  int diff_x =
+   static_cast<int> (event_in->x) - cb_data_p->openGLCamera.last[0];
+  int diff_y =
+   static_cast<int> (event_in->y) - cb_data_p->openGLCamera.last[1];
+  cb_data_p->openGLCamera.last[0] = static_cast<int> (event_in->x);
+  cb_data_p->openGLCamera.last[1] = static_cast<int> (event_in->y);
+
+  bool is_dirty = false;
+  if (event_in->state & GDK_BUTTON1_MASK)
+  {
+    cb_data_p->openGLCamera.rotation[0] +=
+      OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_y;
+    cb_data_p->openGLCamera.rotation[1] +=
+      OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_x;
+    is_dirty = true;
+  } // end IF
+  if (event_in->state & GDK_BUTTON2_MASK)
+  {
+    cb_data_p->openGLCamera.translation[0] +=
+      OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_x;
+    cb_data_p->openGLCamera.translation[1] -=
+      OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
+    is_dirty = true;
+  } // end IF
+  if (event_in->state & GDK_BUTTON3_MASK)
+  {
+    cb_data_p->openGLCamera.zoom -=
+      OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ZOOM_FACTOR * diff_x;
+    is_dirty = true;
+  } // end IF
+
+  if (is_dirty)
+    gtk_widget_queue_draw (widget_in);
 
   return TRUE; // done (do not propagate further)
 }
@@ -706,7 +910,7 @@ about_clicked_GTK_cb (GtkWidget* widget_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to glade_xml_get_widget(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
+                ACE_TEXT (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
     return FALSE; // propagate
   } // end IF
 
@@ -730,11 +934,18 @@ quit_clicked_GTK_cb (GtkWidget* widget_in,
   // --> destroy the main dialog widget
   pid_t pid = ACE_OS::getpid ();
   int result = -1;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  result = ACE_OS::raise (SIGINT);
+  if (result == -1)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to raise(SIGINT): \"%m\", continuing\n")));
+#else
   result = ACE_OS::kill (pid, SIGINT);
   if (result == -1)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to kill(%d, SIGINT): \"%m\", continuing\n"),
                 pid));
+#endif
 
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("leaving GTK...\n")));
