@@ -25,6 +25,7 @@
 #include "glm/glm.hpp"
 
 #include "ace/Global_Macros.h"
+#include "ace/OS.h"
 #include "ace/Synch.h"
 #include "ace/Time_Value.h"
 
@@ -71,16 +72,13 @@ typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_Subscriber
 
 struct camera_t
 {
-  //GLfloat angle;
-  //int last_position_y;
-
   //glm::vec3 position;
   //glm::vec3 looking_at;
   //glm::vec3 up;
 
-  float zoom = 15.0f;
-  glm::vec2 rotation;
-  glm::vec2 translation;
+  float zoom;
+  glm::vec3 rotation;
+  glm::vec3 translation;
   int last[2];
 };
 
@@ -95,7 +93,6 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  , frameCounter (0)
  , lock (NULL, NULL)
 //  , messageQueue ()
-//, openGLAllocation ()
  , openGLAxesListId (0)
 //  , openGLCamera ()
  , openGLContext (NULL)
@@ -103,28 +100,35 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  , openGLRefreshTimerId (0)
  , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
 //  , subscribers ()
-  , timestamp (ACE_Time_Value::zero)
+ , timestamp (ACE_Time_Value::zero)
  , XML (NULL)
- { };
+ {
+   resetCamera ();
+ };
 
- int                                 argc;
- ACE_TCHAR**                         argv;
- guint                               contextId; // status bar context
- Olimex_Mod_MPU6050_Events_t         eventQueue;
- Common_UI_GTK_EventSourceIDs_t      eventSourceIds;
- unsigned int                        frameCounter;
- mutable ACE_Recursive_Thread_Mutex  lock;
- Olimex_Mod_MPU6050_Messages_t       messageQueue;
- //GtkAllocation                       openGLAllocation; // window/viewport size
- GLuint                              openGLAxesListId;
- camera_t                            openGLCamera;
- GdkGLContext*                       openGLContext;
- GdkGLDrawable*                      openGLDrawable;
- guint                               openGLRefreshTimerId;
- bool                                openGLDoubleBuffered;
- Olimex_Mod_MPU6050_Subscribers_t    subscribers;
- ACE_Time_Value                      timestamp;
- GladeXML*                           XML;
+ inline void resetCamera ()
+ {
+   ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
+   openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
+ };
+
+ int                                argc;
+ ACE_TCHAR**                        argv;
+ guint                              contextId; // status bar context
+ Olimex_Mod_MPU6050_Events_t        eventQueue;
+ Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
+ unsigned int                       frameCounter;
+ mutable ACE_Recursive_Thread_Mutex lock;
+ Olimex_Mod_MPU6050_Messages_t      messageQueue;
+ GLuint                             openGLAxesListId;
+ camera_t                           openGLCamera;
+ GdkGLContext*                      openGLContext;
+ GdkGLDrawable*                     openGLDrawable;
+ guint                              openGLRefreshTimerId;
+ bool                               openGLDoubleBuffered;
+ Olimex_Mod_MPU6050_Subscribers_t   subscribers;
+ ACE_Time_Value                     timestamp;
+ GladeXML*                          XML;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

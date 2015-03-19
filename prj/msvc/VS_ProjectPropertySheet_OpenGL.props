@@ -10,6 +10,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>D:\projects\glm;D:\projects\freeglut\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />

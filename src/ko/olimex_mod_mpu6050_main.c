@@ -583,12 +583,6 @@ __init i2c_mpu6050_init(void)
   // sanity check(s)
   if (noserver == 0) {
     if (strlen (peer) == 0) peer = (char*)default_peer;
-    if ((in_aton (peer) == 0) ||
-        (port < 0)) {
-      pr_err("%s: invalid peer address/port: \"%s\":%d\n", __FUNCTION__,
-             peer, port);
-      return -EINVAL;
-    }
   }
 
 //  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(GPIO_INT_PIN);

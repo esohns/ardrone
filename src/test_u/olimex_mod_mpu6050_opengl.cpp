@@ -125,13 +125,8 @@ axes ()
 
   glNewList (axes_list, GL_COMPILE);
 
-  //glDisable (GL_LIGHTING);
-
-  glPushMatrix ();
-  //glScalef (1.0F, 1.0F, 0.0F);
-
   glBegin (GL_LINE_STRIP);
-  glColor3f (0.0F, 0.0F, 0.0F);
+  glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
   glColor3f (1.0F, 0.0F, 0.0F);
   glVertex3f (1.0f, 0.0f, 0.0f);
@@ -144,7 +139,7 @@ axes ()
   glEnd ();
 
   glBegin (GL_LINE_STRIP);
-  glColor3f (0.0F, 0.0F, 0.0F);
+  glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
   glColor3f (0.0F, 1.0F, 0.0F);
   glVertex3f (0.0f, 1.0f, 0.0f);
@@ -157,7 +152,7 @@ axes ()
   glEnd ();
 
   glBegin (GL_LINE_STRIP);
-  glColor3f (0.0F, 0.0F, 0.0F);
+  glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
   glColor3f (0.0F, 0.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 1.0f);
@@ -169,9 +164,6 @@ axes ()
   glVertex3f (0.0f, 0.0f, 1.0f);
   glEnd ();
 
-  glPopMatrix ();
-
-  glPushMatrix ();
   // *NOTE*: GLUT_STROKE_ROMAN font size is around 152 units
   glScalef (0.005F, 0.005F, 0.005F);
 
@@ -186,11 +178,6 @@ axes ()
   glTranslatef (-105.0F, -305.0F, 250.0F);
   glColor3f (0.0F, 0.0F, 1.0F);
   glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'z');
-
-  glPopMatrix ();
-
-  //glDisable (GL_COLOR_MATERIAL);
-  //glEnable (GL_LIGHTING);
 
   glEndList ();
 
@@ -215,12 +202,7 @@ frames_per_second (unsigned int framesPerSecond_in)
     return;
   } // end IF
 
-  //glDisable (GL_LIGHTING);
-
-  //glColor3f (1.0F, 1.0F, 1.0F);
   glRasterPos2f (5.0F, glutBitmapHeight (OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS) / 2.0F);
   glutBitmapString (OLIMEX_MOD_MPU6050_OPENGL_FONT_FPS,
                     reinterpret_cast<unsigned char*> (buffer));
-
-  //glEnable (GL_LIGHTING);
 }

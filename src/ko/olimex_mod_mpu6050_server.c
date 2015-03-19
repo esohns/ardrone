@@ -91,7 +91,7 @@ i2c_mpu6050_server_run (void* data_in)
   client_data_p->server->address_send.sin_addr.s_addr = in_aton (peer);
 
 //  client_data_p->server->address.sin_port      = htons (SERVER_DEFAULT_PORT);
-  client_data_p->server->address_send.sin_port = htons (SERVER_DEFAULT_PORT);
+  client_data_p->server->address_send.sin_port = htons (port);
 
 //  err = client_data_p->server->socket->ops->bind (client_data_p->server->socket,
 //                                                  (struct sockaddr*)&client_data_p->server->address,
@@ -102,17 +102,21 @@ i2c_mpu6050_server_run (void* data_in)
 //    goto error2;
 //  }
 //  pr_info ("%s: listening on port: %d\n", __FUNCTION__,
-//           SERVER_DEFAULT_PORT);
+//           port);
 
-  err = client_data_p->server->socket_send->ops->connect (client_data_p->server->socket_send,
-                                                          (struct sockaddr*)&client_data_p->server->address_send,
-                                                          sizeof (struct sockaddr),
-                                                          0);
+  err =
+      client_data_p->server->socket_send->ops->connect (client_data_p->server->socket_send,
+                                                        (struct sockaddr*)&client_data_p->server->address_send,
+                                                        sizeof (struct sockaddr),
+                                                        0);
   if (unlikely (err < 0)) {
-    pr_err ("%s: connect() failed: %d\n", __FUNCTION__,
+    pr_err ("%s: connect(%s:%d) failed: %d\n", __FUNCTION__,
+            peer, port,
             err);
     goto error2;
   }
+  pr_info ("%s: opened server socket: %s:%d\n", __FUNCTION__,
+           peer, port);
 
   for (;;)
   {
@@ -246,6 +250,12 @@ i2c_mpu6050_server_init (struct i2c_mpu6050_client_data_t* clientData_in)
   // sanity check(s)
   if (unlikely (!clientData_in)) {
     pr_err ("%s: invalid argument\n", __FUNCTION__);
+    return -EINVAL;
+  }
+  if ((in_aton (peer) == 0) ||
+      (port < 0)) {
+    pr_err ("%s: invalid peer address/port: \"%s\":%d\n", __FUNCTION__,
+            peer, port);
     return -EINVAL;
   }
   if (unlikely (clientData_in->server)) {

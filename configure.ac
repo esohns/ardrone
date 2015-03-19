@@ -175,7 +175,7 @@ dnl if test ! -x "$MAKE" ; then MAKE=`which make 2>/dev/null` ; fi
 dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Foundation"` = "0"])
 
 # checks for libraries
-PKG_CHECK_MODULES([PKGLIB], [libglade-2.0 gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0])
+PKG_CHECK_MODULES([PKGLIB], [gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0 libglade-2.0])
 
 # checks for other libraries (non-pkg-config)
 # FIXME: Replace `main' with a function in `-lpthread':
@@ -184,8 +184,6 @@ AC_CHECK_LIB([pthread], [main])
 AC_CHECK_LIB([ACE], [main])
 # FIXME: Replace `main' with a function in `-lglut':
 AC_CHECK_LIB([glut], [main])
-# FIXME: Replace `main' with a function in `-lxerces-c':
-#AC_CHECK_LIB([xerces-c], [main])
 AM_GNU_GETTEXT_VERSION([0.18])
 AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 #AM_GNU_GETTEXT_INTL_SUBDIR
@@ -200,6 +198,7 @@ AC_FUNC_MALLOC
 AC_FUNC_ERROR_AT_LINE
 
 # checks for headers
+AC_CHECK_HEADERS([glm.h])
 AC_CHECK_HEADERS([libintl.h])
 AC_CHECK_HEADERS([locale.h])
 AC_CHECK_HEADER_STDBOOL
