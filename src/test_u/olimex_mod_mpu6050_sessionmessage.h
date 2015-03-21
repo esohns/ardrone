@@ -34,7 +34,8 @@ class ACE_Allocator;
 class ACE_Data_Block;
 
 class Olimex_Mod_MPU6050_SessionMessage
- : public Stream_SessionMessageBase_T<Net_StreamSessionData_t>
+ : public Stream_SessionMessageBase_T<Stream_State_t,
+                                      Net_StreamSessionData_t>
  //: public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t>
 {
   //// enable access to private ctor(s)...
@@ -43,6 +44,7 @@ class Olimex_Mod_MPU6050_SessionMessage
  public:
   // *NOTE*: assume lifetime responsibility for the third argument !
   Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType_t, // session message type
+                                     Stream_State_t*,             // stream state handle
                                      Net_StreamSessionData_t*&);  // session data handle
                                      //Olimex_Mod_MPU6050_StreamSessionData_t*&); // session data handle
   // *NOTE*: to be used by message allocators...
@@ -56,8 +58,8 @@ class Olimex_Mod_MPU6050_SessionMessage
   virtual ACE_Message_Block* duplicate (void) const;
 
  private:
-  //typedef Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t> inherited;
-  typedef Stream_SessionMessageBase_T<Net_StreamSessionData_t> inherited;
+  typedef Stream_SessionMessageBase_T<Stream_State_t,
+                                      Net_StreamSessionData_t> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ());
   // copy ctor (to be used by duplicate())

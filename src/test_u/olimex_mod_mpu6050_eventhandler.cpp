@@ -23,10 +23,14 @@
 
 #include "ace/Synch.h"
 
+#include "stream_common.h"
+
 #include "olimex_mod_mpu6050_macros.h"
+#include "olimex_mod_mpu6050_types.h"
 
 Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_in)
  : GtkCBData_ (GtkCBData_in)
+ , streamState_ (NULL)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler"));
 
@@ -41,9 +45,11 @@ Olimex_Mod_MPU6050_EventHandler::~Olimex_Mod_MPU6050_EventHandler ()
 }
 
 void
-Olimex_Mod_MPU6050_EventHandler::start ()
+Olimex_Mod_MPU6050_EventHandler::start (const Stream_State_t& streamState_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_EventHandler::start"));
+
+  streamState_ = &const_cast<Stream_State_t&> (streamState_in);
 
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
@@ -59,8 +65,12 @@ Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& messa
       dynamic_cast<Olimex_Mod_MPU6050_Message*> (message_in.duplicate ());
   if (!message_p)
   {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("Olimex_Mod_MPU6050_Message::duplicate() failed, returning\n")));
+    // no message buffer available --> discard message
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("Olimex_Mod_MPU6050_Message::duplicate() failed, continuing\n")));
+    if (streamState_)
+      streamState_->currentStatistics.numDroppedMessages++;
+
     return;
   } // end IF
 
@@ -68,7 +78,7 @@ Olimex_Mod_MPU6050_EventHandler::notify (const Olimex_Mod_MPU6050_Message& messa
     ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
     GtkCBData_->eventQueue.push_back (OLIMEX_MOD_MPU6050_EVENT_MESSAGE);
-    GtkCBData_->messageQueue.push_back (message_p);
+    GtkCBData_->messageQueue.push_front (message_p);
   } // end lock scope
 }
 
@@ -80,4 +90,12 @@ Olimex_Mod_MPU6050_EventHandler::end ()
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
 
   GtkCBData_->eventQueue.push_back (OLIMEX_MOD_MPU6050_EVENT_DISCONNECT);
+}
+
+void
+Olimex_Mod_MPU6050_EventHandler::initialize (Stream_State_t* streamState_in)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_EventHandler::initialize"));
+
+  streamState_ = streamState_in;
 }

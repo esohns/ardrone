@@ -47,8 +47,8 @@
 #define GPIO_LED_PIN_LABEL                GPIO_LED_PH02_LABEL
 
 // timer
-//#define TIMER_DELAY_MS                    10L // ms
-#define TIMER_DELAY_MS                    500L // ms
+// *NOTE*: this (roughly) sets the device polling frequency (noint=1)
+#define TIMER_DELAY_MS                    10L // ms
 
 // device
 #define RESET_DELAY_MS                    100 // ms

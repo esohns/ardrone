@@ -33,6 +33,6 @@
 //void axes (GLfloat); // length
 
 GLuint axes ();
-void frames_per_second (unsigned int); // fps
+void frames_per_second (float); // fps
 
 #endif

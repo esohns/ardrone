@@ -22,6 +22,7 @@
 #define OLIMEX_MOD_MPU6050_MODULE_EVENTHANDLER_H
 
 #include "ace/Global_Macros.h"
+#include "ace/Synch.h"
 
 #include "common.h"
 #include "common_isubscribe.h"
@@ -35,7 +36,6 @@
 // forward declaration(s)
 class Olimex_Mod_MPU6050_SessionMessage;
 class Olimex_Mod_MPU6050_Message;
-class ACE_Recursive_Thread_Mutex;
 
 class Olimex_Mod_MPU6050_Module_EventHandler
  : public Stream_TaskBaseSynch_T<Common_TimePolicy_t,
@@ -48,8 +48,8 @@ class Olimex_Mod_MPU6050_Module_EventHandler
   Olimex_Mod_MPU6050_Module_EventHandler ();
   virtual ~Olimex_Mod_MPU6050_Module_EventHandler ();
 
-  void initialize (Olimex_Mod_MPU6050_Subscribers_t*, // subscribers (handle)
-                   ACE_Recursive_Thread_Mutex*);      // subscribers lock
+  void initialize (Olimex_Mod_MPU6050_Subscribers_t* = NULL, // subscribers (handle)
+                   ACE_Recursive_Thread_Mutex* = NULL);      // subscribers lock
 
   // implement (part of) Stream_ITaskBase_T
   virtual void handleDataMessage (Olimex_Mod_MPU6050_Message*&, // data message handle
@@ -72,6 +72,7 @@ class Olimex_Mod_MPU6050_Module_EventHandler
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler (const Olimex_Mod_MPU6050_Module_EventHandler&));
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler& operator= (const Olimex_Mod_MPU6050_Module_EventHandler&));
 
+  bool                              delete_;
   // *NOTE*: recursive so that users may unsubscribe from within the
   // notification callbacks...
   ACE_Recursive_Thread_Mutex*       lock_;

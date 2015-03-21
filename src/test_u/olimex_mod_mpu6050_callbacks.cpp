@@ -47,9 +47,9 @@ extern "C"
 {
 #endif /* __cplusplus */
 G_MODULE_EXPORT gboolean
-idle_initialize_UI_cb (gpointer userData_in)
+idle_initialize_ui_cb (gpointer userData_in)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_initialize_UI_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_initialize_ui_cb"));
 
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
@@ -103,7 +103,7 @@ idle_initialize_UI_cb (gpointer userData_in)
 //                            NULL);
   g_signal_connect (G_OBJECT (main_window_p),
                     ACE_TEXT_ALWAYS_CHAR ("destroy"),
-                    G_CALLBACK (quit_clicked_GTK_cb),
+                    G_CALLBACK (quit_clicked_gtk_cb),
                     cb_data_p);
 //                   G_CALLBACK(gtk_widget_destroyed),
 //                   &main_dialog_p,
@@ -117,7 +117,16 @@ idle_initialize_UI_cb (gpointer userData_in)
   ACE_ASSERT (widget_p);
   g_signal_connect (G_OBJECT (widget_p),
                     ACE_TEXT_ALWAYS_CHAR ("activate"),
-                    G_CALLBACK (quit_clicked_GTK_cb),
+                    G_CALLBACK (quit_clicked_gtk_cb),
+                    cb_data_p);
+
+  widget_p =
+    GTK_WIDGET (glade_xml_get_widget (cb_data_p->XML,
+                                      ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_VIEW_CALIBRATE)));
+  ACE_ASSERT (widget_p);
+  g_signal_connect (G_OBJECT (widget_p),
+                    ACE_TEXT_ALWAYS_CHAR ("activate"),
+                    G_CALLBACK (calibrate_clicked_gtk_cb),
                     cb_data_p);
 
   widget_p =
@@ -126,7 +135,7 @@ idle_initialize_UI_cb (gpointer userData_in)
   ACE_ASSERT (widget_p);
   g_signal_connect (G_OBJECT (widget_p),
                     ACE_TEXT_ALWAYS_CHAR ("activate"),
-                    G_CALLBACK (about_clicked_GTK_cb),
+                    G_CALLBACK (about_clicked_gtk_cb),
                     cb_data_p);
   g_signal_connect_swapped (G_OBJECT (about_dialog_p),
                             ACE_TEXT_ALWAYS_CHAR ("response"),
@@ -225,9 +234,9 @@ idle_initialize_UI_cb (gpointer userData_in)
 }
 
 G_MODULE_EXPORT gboolean
-idle_finalize_UI_cb (gpointer userData_in)
+idle_finalize_ui_cb (gpointer userData_in)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_finalize_UI_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::idle_finalize_ui_cb"));
 
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
@@ -460,8 +469,6 @@ expose_cb (GtkWidget* widget_in,
 
 //  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
 
-  ACE_Time_Value elapsed;
-  const static ACE_Time_Value one_second (1, 0);
   if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
                                  cb_data_p->openGLContext))
   {
@@ -558,7 +565,14 @@ expose_cb (GtkWidget* widget_in,
   glLoadIdentity ();
 
   cb_data_p->frameCounter++;
-  ::frames_per_second (cb_data_p->frameCounter);
+  const static ACE_Time_Value one_second (1, 0);
+  ACE_Time_Value elapsed = COMMON_TIME_POLICY () - cb_data_p->timestamp;
+  ACE_UINT64 elapsed_usec;
+  elapsed.to_usec (elapsed_usec);
+  if (elapsed > one_second)
+    elapsed_usec -= 1000000;
+  ::frames_per_second (static_cast<float> (cb_data_p->frameCounter) *
+                       (1000000.0F / static_cast<float> (elapsed_usec)));
 
   // return to 3D-projection
   glPopMatrix ();
@@ -566,7 +580,6 @@ expose_cb (GtkWidget* widget_in,
   glPopMatrix ();
   glMatrixMode (GL_MODELVIEW);
 
-  elapsed = COMMON_TIME_POLICY () - cb_data_p->timestamp;
   if (elapsed >= one_second)
   {
     cb_data_p->frameCounter = 0;
@@ -591,19 +604,16 @@ process_cb (gpointer userData_in)
 
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       reinterpret_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
-  int result = -1;
-  unsigned short* data_p = NULL;
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
   // step0: process event queue
-  Olimex_Mod_MPU6050_Event_t event = OLIMEX_MOD_MPU6050_EVENT_INVALID;
-  Olimex_Mod_MPU6050_Message* message_p = NULL;
   GtkStatusbar* status_bar_p =
       GTK_STATUSBAR (glade_xml_get_widget (cb_data_p->XML,
                                            ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
   ACE_ASSERT (status_bar_p);
+  Olimex_Mod_MPU6050_Message* message_p = NULL;
   {
     ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
@@ -611,12 +621,11 @@ process_cb (gpointer userData_in)
       return TRUE; // --> continue processing timer
       //goto expose;
     } // end IF
-    event = cb_data_p->eventQueue.front ();
-    cb_data_p->eventQueue.pop_front ();
-    switch (event)
+    switch (cb_data_p->eventQueue.front ())
     {
       case OLIMEX_MOD_MPU6050_EVENT_CONNECT:
       {
+        cb_data_p->eventQueue.pop_front ();
         gtk_statusbar_push (status_bar_p,
                             cb_data_p->contextId,
                             ACE_TEXT_ALWAYS_CHAR ("connected"));
@@ -624,6 +633,7 @@ process_cb (gpointer userData_in)
       }
       case OLIMEX_MOD_MPU6050_EVENT_DISCONNECT:
       {
+        cb_data_p->eventQueue.pop_front ();
         gtk_statusbar_push (status_bar_p,
                             cb_data_p->contextId,
                             ACE_TEXT_ALWAYS_CHAR ("disconnected"));
@@ -631,6 +641,7 @@ process_cb (gpointer userData_in)
       }
       case OLIMEX_MOD_MPU6050_EVENT_MESSAGE:
       {
+        cb_data_p->eventQueue.pop_front ();
         message_p = cb_data_p->messageQueue.front ();
         cb_data_p->messageQueue.pop_front ();
         break;
@@ -639,18 +650,20 @@ process_cb (gpointer userData_in)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("invalid event (was: %d), aborting\n"),
-                    event));
+                    cb_data_p->eventQueue.front ()));
+        cb_data_p->eventQueue.pop_front ();
         return FALSE; // --> stop processing timer
       }
     } // end SWITCH
   } // end lock scope
   ACE_ASSERT (message_p);
-
   ACE_ASSERT (message_p->size () == OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE);
-  data_p = reinterpret_cast<unsigned short*> (message_p->rd_ptr ());
+
+  unsigned short* data_p =
+   reinterpret_cast<unsigned short*> (message_p->rd_ptr ());
   unsigned short a_x, a_y, a_z;
   unsigned short g_x, g_y, g_z;
-  short t;
+  short int t;
   // *NOTE*: i2c uses a big-endian transfer syntax
   a_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
                                                : *data_p);
@@ -685,7 +698,7 @@ process_cb (gpointer userData_in)
   ay = a_y / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2);
   az = a_z / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2);
   tp = (t / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR)) +
-       OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET;
+    OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET;
   gx = g_x / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
   gy = g_y / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
   gz = g_z / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
@@ -696,16 +709,19 @@ process_cb (gpointer userData_in)
 //              gx, gy, gz));
   gchar buffer[BUFSIZ];
   ACE_OS::memset (buffer, 0, sizeof (buffer));
-  result = ACE_OS::sprintf (buffer,
-                            ACE_TEXT_ALWAYS_CHAR ("#%u: [accelerometer (g): %.3f,%.3f,%.3f], [gyrometer (°): %.3f,%.3f,%.3f], [temperature (°C): %.2f]"),
-                            message_p->getID (),
-                            ax, ay, az,
-                            gx, gy, gz,
-                            tp);
+  int result = ACE_OS::sprintf (buffer,
+                                ACE_TEXT_ALWAYS_CHAR ("[accelerometer (g/s): %.3f,%.3f,%.3f], [gyrometer (°/s): %.3f,%.3f,%.3f], [temperature (°C): %.2f]"),
+                                ax, ay, az,
+                                gx, gy, gz,
+                                tp);
   if (result < 0)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to sprintf(): \"%m\", aborting\n")));
+
+    // clean up
+    message_p->release ();
+
     return FALSE; // --> stop processing timer
   } // end IF
   gtk_statusbar_push (status_bar_p,
@@ -716,41 +732,43 @@ process_cb (gpointer userData_in)
 //  angle_x = gx;
 //  angle_y = gy;
 //  angle_z = gz;
-
-  // clean up
-  message_p->release ();
-
-  //// step1: update control data/params
-  //if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
-  //                               cb_data_p->openGLContext))
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to gdk_gl_drawable_gl_begin(), aborting\n")));
-  //  return FALSE; // --> stop processing timer
-  //} // end IF
-
-  //glPushMatrix ();
-  //cb_data_p->resetCamera ();
-
-  //glPopMatrix ();
-
-  //gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
+  ////cb_data_p->openGLCamera.translation[0] +=
+  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_x;
+  ////cb_data_p->openGLCamera.translation[1] -=
+  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
+  ////cb_data_p->openGLCamera.translation[2] -=
+  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
+  //cb_data_p->openGLCamera.rotation[0] +=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_y;
+  //cb_data_p->openGLCamera.rotation[1] +=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_x;
+  //cb_data_p->openGLCamera.rotation[2] +=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_x;
 
 //expose:
-  // step2: invalidate drawing area, marking it "dirty" and to be redrawn when
-  // main loop signals expose-events (which it would do anyway (as needed), when
-  // this returns and the main loop idles -- trigger immediate processing
-  // instead, see below)
+  // invalidate drawing area
+  // *NOTE*: the drawing area is not refreshed automatically unless the window
+  //         is resized
   GtkWidget* drawing_area_p =
       glade_xml_get_widget (cb_data_p->XML,
                             ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA));
   ACE_ASSERT (drawing_area_p);
-  //gtk_widget_queue_draw (drawing_area_p);
+  gtk_widget_queue_draw (drawing_area_p);
   //gdk_window_invalidate_rect (//gtk_widget_get_root_window (drawing_area),
   //                            drawing_area_p->window,
   //                            &drawing_area_p->allocation,
   //                            FALSE);
   //gdk_window_process_updates (drawing_area_p->window, FALSE);
+
+  // clean up
+  message_p->release ();
+  //ACE_DEBUG ((LM_DEBUG,
+  //            ACE_TEXT ("buffer pool: %d/%d [%.0f%%] --> %u byte(s)\n"),
+  //            cb_data_p->allocator->cache_size (),
+  //            OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+  //            ((static_cast<float> (cb_data_p->allocator->cache_size ()) /
+  //              static_cast<float> (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES)) * 100.0F),
+  //            cb_data_p->allocator->cache_depth ()));
 
   return TRUE; // --> continue processing timer
 }
@@ -890,6 +908,9 @@ motion_cb (GtkWidget* widget_in,
     is_dirty = true;
   } // end IF
 
+  // invalidate drawing area
+  // *NOTE*: the drawing area is not refreshed automatically unless the window
+  //         is resized
   if (is_dirty)
     gtk_widget_queue_draw (widget_in);
 
@@ -899,10 +920,10 @@ motion_cb (GtkWidget* widget_in,
 /////////////////////////////////////////
 
 G_MODULE_EXPORT gint
-about_clicked_GTK_cb (GtkWidget* widget_in,
+about_clicked_gtk_cb (GtkWidget* widget_in,
                       gpointer userData_in)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::about_clicked_GTK_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::about_clicked_gtk_cb"));
 
   ACE_UNUSED_ARG (widget_in);
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
@@ -933,10 +954,24 @@ about_clicked_GTK_cb (GtkWidget* widget_in,
 }
 
 G_MODULE_EXPORT gint
-quit_clicked_GTK_cb (GtkWidget* widget_in,
+calibrate_clicked_gtk_cb (GtkWidget* widget_in,
+                          gpointer userData_in)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::calibrate_clicked_gtk_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
+    static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+  ACE_ASSERT (cb_data_p);
+
+  return TRUE; // done (do not propagate further)
+}
+
+G_MODULE_EXPORT gint
+quit_clicked_gtk_cb (GtkWidget* widget_in,
                      gpointer userData_in)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::quit_clicked_GTK_cb"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::quit_clicked_gtk_cb"));
 
   ACE_UNUSED_ARG (widget_in);
   ACE_UNUSED_ARG (userData_in);

@@ -27,8 +27,8 @@
 extern "C"
 {
 #endif /* __cplusplus */
-G_MODULE_EXPORT gboolean idle_initialize_UI_cb (gpointer);
-G_MODULE_EXPORT gboolean idle_finalize_UI_cb (gpointer);
+G_MODULE_EXPORT gboolean idle_initialize_ui_cb (gpointer);
+G_MODULE_EXPORT gboolean idle_finalize_ui_cb (gpointer);
 // -----------------------------------------------------------------------------
 G_MODULE_EXPORT gboolean button_cb (GtkWidget*, GdkEventButton*, gpointer);
 G_MODULE_EXPORT gboolean configure_cb (GtkWidget*, GdkEventConfigure*, gpointer);
@@ -38,8 +38,9 @@ G_MODULE_EXPORT gboolean process_cb (gpointer);
 G_MODULE_EXPORT gboolean key_cb (GtkWidget*, GdkEventKey*, gpointer);
 G_MODULE_EXPORT gboolean motion_cb (GtkWidget*, GdkEventMotion*, gpointer);
 //------------------------------------------------------------------------------
-G_MODULE_EXPORT gint about_clicked_GTK_cb (GtkWidget*, gpointer);
-G_MODULE_EXPORT gint quit_clicked_GTK_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint about_clicked_gtk_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint calibrate_clicked_gtk_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint quit_clicked_gtk_cb (GtkWidget*, gpointer);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

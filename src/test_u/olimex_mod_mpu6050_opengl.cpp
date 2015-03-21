@@ -185,7 +185,7 @@ axes ()
 }
 
 void
-frames_per_second (unsigned int framesPerSecond_in)
+frames_per_second (float framesPerSecond_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::frames_per_second"));
 
@@ -193,7 +193,7 @@ frames_per_second (unsigned int framesPerSecond_in)
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   int result = -1;
   result = ACE_OS::sprintf (buffer,
-                            ACE_TEXT_ALWAYS_CHAR ("%d"),
+                            ACE_TEXT_ALWAYS_CHAR ("%.2f"),
                             framesPerSecond_in);
   if (result < 0)
   {

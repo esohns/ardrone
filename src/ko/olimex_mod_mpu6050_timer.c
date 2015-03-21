@@ -52,10 +52,9 @@ i2c_mpu6050_hr_timer_handler(struct hrtimer* timer_in)
 
   err = queue_work(client_data_p->workqueue,
                    &client_data_p->work_read.work);
-  if (unlikely(err == 0)) {
-    pr_err("%s: queue_work() failed\n", __FUNCTION__);
-    return HRTIMER_NORESTART;
-  }
+//  if (unlikely(err == 0)) {
+//    pr_warn("%s: queue_work() failed\n", __FUNCTION__);
+//  }
 
   // now = hrtimer_cb_get_time(timeri);
 //  now = ktime_get();

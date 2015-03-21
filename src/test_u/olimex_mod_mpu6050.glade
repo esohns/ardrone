@@ -789,7 +789,7 @@ Public License instead of this License.  But first, please read
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="quit_clicked_GTK_cb"/>
+                        <signal name="activate" handler="quit_clicked_gtk_cb"/>
                       </widget>
                     </child>
                   </widget>
@@ -805,7 +805,7 @@ Public License instead of this License.  But first, please read
                   <widget class="GtkMenu" id="menu2">
                     <property name="visible">True</property>
                     <child>
-                      <widget class="GtkImageMenuItem" id="imagemenuitem6">
+                      <widget class="GtkImageMenuItem" id="imagemenuitem5">
                         <property name="label">gtk-cut</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
@@ -813,7 +813,7 @@ Public License instead of this License.  But first, please read
                       </widget>
                     </child>
                     <child>
-                      <widget class="GtkImageMenuItem" id="imagemenuitem7">
+                      <widget class="GtkImageMenuItem" id="imagemenuitem6">
                         <property name="label">gtk-copy</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
@@ -821,7 +821,7 @@ Public License instead of this License.  But first, please read
                       </widget>
                     </child>
                     <child>
-                      <widget class="GtkImageMenuItem" id="imagemenuitem8">
+                      <widget class="GtkImageMenuItem" id="imagemenuitem7">
                         <property name="label">gtk-paste</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
@@ -829,7 +829,7 @@ Public License instead of this License.  But first, please read
                       </widget>
                     </child>
                     <child>
-                      <widget class="GtkImageMenuItem" id="imagemenuitem9">
+                      <widget class="GtkImageMenuItem" id="imagemenuitem8">
                         <property name="label">gtk-delete</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
@@ -845,6 +845,26 @@ Public License instead of this License.  But first, please read
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">_View</property>
                 <property name="use_underline">True</property>
+                <child>
+                  <widget class="GtkMenu" id="menu3">
+                    <property name="visible">True</property>
+                    <child>
+                      <widget class="GtkImageMenuItem" id="calibrate">
+                        <property name="label" translatable="yes">_Calibrate</property>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="calibrate_clicked_gtk_cb"/>
+                        <child internal-child="image">
+                          <widget class="GtkImage" id="image1">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-refresh</property>
+                          </widget>
+                        </child>
+                      </widget>
+                    </child>
+                  </widget>
+                </child>
               </widget>
             </child>
             <child>
@@ -853,7 +873,7 @@ Public License instead of this License.  But first, please read
                 <property name="label" translatable="yes">_Help</property>
                 <property name="use_underline">True</property>
                 <child>
-                  <widget class="GtkMenu" id="menu3">
+                  <widget class="GtkMenu" id="menu4">
                     <property name="visible">True</property>
                     <child>
                       <widget class="GtkImageMenuItem" id="about">
@@ -861,7 +881,7 @@ Public License instead of this License.  But first, please read
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="about_clicked_GTK_cb"/>
+                        <signal name="activate" handler="about_clicked_gtk_cb"/>
                       </widget>
                     </child>
                   </widget>
@@ -913,16 +933,32 @@ Public License instead of this License.  But first, please read
           </packing>
         </child>
         <child>
-          <widget class="GtkStatusbar" id="status_bar">
+          <widget class="GtkCurve" id="curve">
             <property name="visible">True</property>
-            <property name="spacing">2</property>
+            <property name="sensitive">False</property>
+            <property name="max_x">100</property>
+            <property name="min_y">-40</property>
+            <property name="max_y">85</property>
           </widget>
           <packing>
             <property name="expand">False</property>
             <property name="position">2</property>
           </packing>
         </child>
+        <child>
+          <widget class="GtkStatusbar" id="status_bar">
+            <property name="visible">True</property>
+            <property name="spacing">2</property>
+          </widget>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
       </widget>
     </child>
+  </widget>
+  <widget class="GtkMenu" id="menu1">
+    <property name="visible">True</property>
   </widget>
 </glade-interface>

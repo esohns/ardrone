@@ -24,6 +24,9 @@
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_types.h"
 
+// forward declarations
+struct Olimex_Mod_MPU6050_GtkCBData_t;
+
 class Olimex_Mod_MPU6050_EventHandler
  : public Olimex_Mod_MPU6050_Notification_t
 {
@@ -32,9 +35,11 @@ class Olimex_Mod_MPU6050_EventHandler
   virtual ~Olimex_Mod_MPU6050_EventHandler ();
 
   // implement Common_INotify_T
-  virtual void start ();
+  virtual void start (const Stream_State_t&);
   virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
   virtual void end ();
+
+  void initialize (Stream_State_t*); // stream state
 
  private:
   typedef Olimex_Mod_MPU6050_Notification_t inherited;
@@ -44,6 +49,7 @@ class Olimex_Mod_MPU6050_EventHandler
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&));
 
   Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_;
+  Stream_State_t*                 streamState_;
 };
 
 #endif

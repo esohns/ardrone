@@ -99,7 +99,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("no head module found, aborting\n")));
-
       return false;
     } // end IF
     inherited::TASK_T* task = module->reader ();
@@ -107,7 +106,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("no head module reader task found, aborting\n")));
-
       return false;
     } // end IF
     task->msg_queue ()->notification_strategy (configuration_in.notificationStrategy);
@@ -121,7 +119,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
                   ACE_TEXT (configuration_in.module->name ())));
-
       return false;
     } // end IF
 
@@ -135,7 +132,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
 //  {
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, aborting\n")));
-
 //    return false;
 //  } // end IF
 //  if (!protocolHandler_impl->initialize (configuration_in.messageAllocator,
@@ -146,7 +142,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
 //                ACE_TEXT (protocolHandler_.name ())));
-
 //    return false;
 //  } // end IF
 
@@ -156,7 +151,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
 //                ACE_TEXT (protocolHandler_.name ())));
-
 //    return false;
 //  } // end IF
 
@@ -168,7 +162,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic> failed, aborting\n")));
-
     return false;
   } // end IF
   if (!runtimeStatistic_impl->init (configuration_in.statisticsReportingInterval, // reporting interval (seconds)
@@ -178,7 +171,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
                 ACE_TEXT (runtimeStatistic_.name ())));
-
     return false;
   } // end IF
 
@@ -188,7 +180,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
                 ACE_TEXT (runtimeStatistic_.name ())));
-
     return false;
   } // end IF
 
@@ -200,10 +191,9 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_SocketHandler> failed, aborting\n")));
-
     return false;
   } // end IF
-  if (!socketHandler_impl->initialize (state_,
+  if (!socketHandler_impl->initialize (&state_,
                                        configuration_in.messageAllocator,
                                        configuration_in.useThreadPerConnection,
                                        NET_STATISTICS_COLLECTION_INTERVAL))
@@ -211,7 +201,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
                 ACE_TEXT (socketHandler_.name ())));
-
     return false;
   } // end IF
 
@@ -224,7 +213,6 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
                 ACE_TEXT (socketHandler_.name ())));
-
     return false;
   } // end IF
 
@@ -266,43 +254,39 @@ Olimex_Mod_MPU6050_Stream::ping ()
 #endif
 }
 
-//unsigned int
-//Olimex_Mod_MPU6050_Stream::getSessionID () const
-//{
-//  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::getSessionID"));
-
-//  Stream_Module_t* module = &const_cast<Net_Module_SocketHandler_Module&> (socketHandler_);
-//  Net_Module_SocketHandler* socketHandler_impl = NULL;
-//  socketHandler_impl = dynamic_cast<Net_Module_SocketHandler*> (module->writer ());
-//  if (!socketHandler_impl)
-//  {
-//    ACE_DEBUG((LM_ERROR,
-//               ACE_TEXT ("dynamic_cast<Net_Module_SocketHandler> failed, aborting\n")));
-
-//    return 0;
-//  } // end IF
-
-//  return socketHandler_impl->getSessionID ();
-//}
-
 bool
-Olimex_Mod_MPU6050_Stream::collect (Stream_Statistic_t& data_out) const
+Olimex_Mod_MPU6050_Stream::collect (Stream_Statistic_t& data_out)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::collect"));
 
-  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl = NULL;
+  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl =
+   NULL;
   runtimeStatistic_impl =
       dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t*> (const_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module&> (runtimeStatistic_).writer ());
   if (!runtimeStatistic_impl)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t> failed, aborting\n")));
-
     return false;
   } // end IF
 
-  // delegate to this module...
-  return runtimeStatistic_impl->collect (data_out);
+  // *NOTE*: the statistics module knows nothing about dropped messages
+  //         --> retain this data, as it could be overwritten
+  data_out = inherited::state_.currentStatistics;
+  // delegate to statistics module...
+  if (!runtimeStatistic_impl->collect (inherited::state_.currentStatistics))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t::collect(), aborting\n")));
+    return false;
+  } // end IF
+  inherited::state_.lastCollectionTimestamp = ACE_OS::gettimeofday ();
+  inherited::state_.currentStatistics.numDroppedMessages =
+   data_out.numDroppedMessages;
+
+  data_out = inherited::state_.currentStatistics;
+
+  return true;
 }
 
 void
@@ -310,21 +294,11 @@ Olimex_Mod_MPU6050_Stream::report () const
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::report"));
 
-//   Net_Module_Statistic_WriterTask_t* runtimeStatistic_impl = NULL;
-//   runtimeStatistic_impl = dynamic_cast<Net_Module_Statistic_WriterTask_t*> (//runtimeStatistic_.writer ());
-//   if (!runtimeStatistic_impl)
-//   {
-//     ACE_DEBUG ((LM_ERROR,
-//                 ACE_TEXT ("dynamic_cast<Net_Module_Statistic_WriterTask_t> failed, returning\n")));
-//
-//     return;
-//   } // end IF
-//
-//   // delegate to this module...
-//   return (runtimeStatistic_impl->report ());
-
-  // just a dummy
-  ACE_ASSERT (false);
-
-  ACE_NOTREACHED (return;)
+  ACE_DEBUG ((LM_INFO,
+              ACE_TEXT ("*** [session: %u] RUNTIME STATISTICS ***\n--> Stream Statistics @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
+              inherited::state_.sessionID,
+              &inherited::state_.lastCollectionTimestamp,
+              inherited::state_.currentStatistics.numDataMessages,
+              inherited::state_.currentStatistics.numDroppedMessages,
+              inherited::state_.currentStatistics.numBytes));
 }

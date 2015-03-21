@@ -45,7 +45,7 @@ typedef Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
 //typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData_t> Olimex_Mod_MPU6050_StreamSessionData_t;
 
 typedef Net_Module_UDPSocketHandler_T<Stream_State_t,
-                                      Net_SessionData_t,
+                                      Net_UserData_t,
                                       Net_StreamSessionData_t,
                                       Olimex_Mod_MPU6050_SessionMessage,
                                       Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Module_SocketHandler;

@@ -30,8 +30,9 @@
 #include "olimex_mod_mpu6050_sessionmessage.h"
 
 Olimex_Mod_MPU6050_Module_EventHandler::Olimex_Mod_MPU6050_Module_EventHandler ()
- : //inherited (),
-   lock_ (NULL)
+ : inherited ()
+ , delete_ (false)
+ , lock_ (NULL)
  , subscribers_ (NULL)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::Olimex_Mod_MPU6050_Module_EventHandler"));
@@ -42,6 +43,12 @@ Olimex_Mod_MPU6050_Module_EventHandler::~Olimex_Mod_MPU6050_Module_EventHandler 
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::~Olimex_Mod_MPU6050_Module_EventHandler"));
 
+  // clean up
+  if (delete_)
+  {
+    delete lock_;
+    delete subscribers_;
+  } // end IF
 }
 
 void
@@ -51,11 +58,55 @@ Olimex_Mod_MPU6050_Module_EventHandler::initialize (Olimex_Mod_MPU6050_Subscribe
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::initialize"));
 
   // sanity check(s)
-  ACE_ASSERT (subscribers_in);
-  ACE_ASSERT (lock_in);
+  ACE_ASSERT ((subscribers_in && lock_in) ||
+              (!subscribers_in && !lock_in));
 
-  lock_ = lock_in;
-  subscribers_ = subscribers_in;
+  // clean up ?
+  if (delete_)
+  {
+    delete_ = false;
+    delete lock_;
+    lock_ = NULL;
+    delete subscribers_;
+    subscribers_ = NULL;
+  } // end IF
+
+  delete_ = (!lock_in && !subscribers_in);
+  if (lock_in)
+    lock_ = lock_in;
+  else
+  {
+    ACE_NEW_NORETURN (lock_,
+                      ACE_Recursive_Thread_Mutex (NULL, NULL));
+    if (!lock_)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to allocate ACE_Recursive_Thread_Mutex: \"%m\", returning\n")));
+
+      // clean up
+      delete_ = false;
+
+      return;
+    } // end IF
+  } // end IF
+  if (subscribers_in)
+    subscribers_ = subscribers_in;
+  else
+  {
+    ACE_NEW_NORETURN (subscribers_,
+                      Olimex_Mod_MPU6050_Subscribers_t ());
+    if (!subscribers_)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to allocate Olimex_Mod_MPU6050_Subscribers_t: \"%m\", returning\n")));
+
+      // clean up
+      delete_ = false;
+      delete lock_;
+
+      return;
+    } // end IF
+  } // end IF
 }
 
 void
@@ -68,6 +119,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleDataMessage (Olimex_Mod_MPU6050_Me
   ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)
+  ACE_ASSERT (lock_ && subscribers_);
   ACE_ASSERT (message_inout);
 
 //   try
@@ -92,7 +144,8 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleDataMessage (Olimex_Mod_MPU6050_Me
     // callback (*NOTE*: works for MOST containers...)
     // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
     for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
-         iterator != subscribers_->end ();)
+         iterator != subscribers_->end ();
+         )
     {
       try
       {
@@ -100,8 +153,8 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleDataMessage (Olimex_Mod_MPU6050_Me
       }
       catch (...)
       {
-        ACE_DEBUG((LM_ERROR,
-                   ACE_TEXT ("caught exception in Common_INotify::notify (), continuing\n")));
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in Common_INotify::notify (), continuing\n")));
       }
     } // end FOR
   } // end lock scope
@@ -117,6 +170,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
   ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)
+  ACE_ASSERT (lock_ && subscribers_);
   ACE_ASSERT (message_inout);
 
   switch (message_inout->getType ())
@@ -135,11 +189,12 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
         // callback (*NOTE*: works for MOST containers...)
         // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
         for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
-             iterator != subscribers_->end ();)
+             iterator != subscribers_->end ();
+             )
         {
           try
           {
-            (*iterator++)->start ();
+            (*iterator++)->start (*message_inout->getState ());
           }
           catch (...)
           {
@@ -165,7 +220,8 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
         // callback (*NOTE*: works for MOST containers...)
         // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
         for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
-             iterator != subscribers_->end ();)
+             iterator != subscribers_->end ();
+             )
         {
           try
           {
@@ -192,7 +248,15 @@ Olimex_Mod_MPU6050_Module_EventHandler::subscribe (Olimex_Mod_MPU6050_Notificati
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::subscribe"));
 
   // sanity check(s)
+  ACE_ASSERT (lock_ && subscribers_);
   ACE_ASSERT (interfaceHandle_in);
+  //if (!interfaceHandle_in)
+  //{
+  //  ACE_DEBUG ((LM_ERROR,
+  //              ACE_TEXT ("invalid argument (was: %@), returning\n"),
+  //              interfaceHandle_in));
+  //  return;
+  //} // end IF
 
   // synch access to subscribers
   ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
@@ -206,6 +270,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::unsubscribe (Olimex_Mod_MPU6050_Notifica
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Module_EventHandler::unsubscribe"));
 
   // sanity check(s)
+  ACE_ASSERT (lock_ && subscribers_);
   ACE_ASSERT (interfaceHandle_in);
 
   // synch access to subscribers
@@ -222,7 +287,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::unsubscribe (Olimex_Mod_MPU6050_Notifica
     subscribers_->erase (iterator);
   else
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("invalid argument (was: %@), aborting\n"),
+                ACE_TEXT ("invalid argument (was: %@), continuing\n"),
                 interfaceHandle_in));
 }
 
@@ -244,7 +309,8 @@ Olimex_Mod_MPU6050_Module_EventHandler:: clone ()
   else
   {
     Olimex_Mod_MPU6050_Module_EventHandler* eventHandler_impl = NULL;
-    eventHandler_impl = dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler*> (result->writer ());
+    eventHandler_impl =
+     dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler*> (result->writer ());
     if (!eventHandler_impl)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -255,8 +321,8 @@ Olimex_Mod_MPU6050_Module_EventHandler:: clone ()
 
       return NULL;
     } // end IF
-    eventHandler_impl->initialize (subscribers_,
-                                   lock_);
+    eventHandler_impl->initialize (delete_ ? subscribers_ : NULL,
+                                   delete_ ? lock_ : NULL);
   } // end ELSE
 
   return result;

@@ -38,10 +38,13 @@
 
 #include "common_ui_types.h"
 
+#include "stream_common.h"
+
 #include "olimex_mod_mpu6050_defines.h"
 
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
+class Stream_IAllocator;
 
 enum Olimex_Mod_MPU6050_MessageType_t
 {
@@ -66,7 +69,8 @@ typedef Olimex_Mod_MPU6050_Events_t::const_iterator Olimex_Mod_MPU6050_EventsIte
 typedef std::deque<Olimex_Mod_MPU6050_Message*> Olimex_Mod_MPU6050_Messages_t;
 typedef Olimex_Mod_MPU6050_Messages_t::const_iterator Olimex_Mod_MPU6050_MessagesIterator_t;
 
-typedef Common_INotify_T<Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
+typedef Common_INotify_T<Stream_State_t,
+                         Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
 typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
 
@@ -85,7 +89,8 @@ struct camera_t
 struct Olimex_Mod_MPU6050_GtkCBData_t
 {
  inline Olimex_Mod_MPU6050_GtkCBData_t ()
- : argc (0)
+ : allocator (NULL)
+ , argc (0)
  , argv (NULL)
  , contextId (0)
 //  , eventQueue ()
@@ -99,7 +104,6 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  , openGLDrawable (NULL)
  , openGLRefreshTimerId (0)
  , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
-//  , subscribers ()
  , timestamp (ACE_Time_Value::zero)
  , XML (NULL)
  {
@@ -112,6 +116,7 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
    openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
  };
 
+ Stream_IAllocator*                 allocator;
  int                                argc;
  ACE_TCHAR**                        argv;
  guint                              contextId; // status bar context
@@ -126,7 +131,6 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  GdkGLDrawable*                     openGLDrawable;
  guint                              openGLRefreshTimerId;
  bool                               openGLDoubleBuffered;
- Olimex_Mod_MPU6050_Subscribers_t   subscribers;
  ACE_Time_Value                     timestamp;
  GladeXML*                          XML;
 };

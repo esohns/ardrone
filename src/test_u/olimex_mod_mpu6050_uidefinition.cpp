@@ -81,7 +81,7 @@ Olimex_Mod_MPU6050_GTKUIDefinition::initialize (const std::string& filename_in)
   } // end IF
 
   // step2: schedule UI initialization
-  guint event_source_id = g_idle_add (idle_initialize_UI_cb,
+  guint event_source_id = g_idle_add (idle_initialize_ui_cb,
                                       GtkCBData_);
   if (event_source_id == 0)
   {
@@ -103,7 +103,7 @@ Olimex_Mod_MPU6050_GTKUIDefinition::finalize ()
   // schedule UI finalization
   gpointer userData_p =
       const_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (GtkCBData_);
-  guint event_source_id = g_idle_add (idle_finalize_UI_cb,
+  guint event_source_id = g_idle_add (idle_finalize_ui_cb,
                                       userData_p);
   if (event_source_id == 0)
     ACE_DEBUG ((LM_ERROR,

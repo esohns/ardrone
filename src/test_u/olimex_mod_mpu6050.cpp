@@ -51,7 +51,6 @@
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
-//#include "olimex_mod_mpu6050_callbacks.h"
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_eventhandler.h"
 #include "olimex_mod_mpu6050_macros.h"
@@ -307,13 +306,15 @@ do_work (int argc_in,
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
 
-  // step1: init stream
+  // step1: initialize stream
   Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
   gtk_cb_data.argc = argc_in;
   gtk_cb_data.argv = argv_in;
   gtk_cb_data.openGLDoubleBuffered = OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED;
+
   Olimex_Mod_MPU6050_EventHandler event_handler (&gtk_cb_data);
-  Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (std::string ("EventHandler"),
+  std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
+  Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (module_name,
                                                                       NULL);
   Olimex_Mod_MPU6050_Module_EventHandler* event_handler_impl = NULL;
   event_handler_impl =
@@ -324,49 +325,36 @@ do_work (int argc_in,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler> failed, returning\n")));
     return;
   } // end IF
-  event_handler_impl->initialize (&gtk_cb_data.subscribers,
-                                  &gtk_cb_data.lock);
+  event_handler_impl->initialize ();
   event_handler_impl->subscribe (&event_handler);
+
   Stream_AllocatorHeap heap_allocator;
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                           &heap_allocator);
-  //Olimex_Mod_MPU6050_SessionData_t session_data;
-  Net_SessionData_t session_data;
+                                                           &heap_allocator,
+                                                           false); // do not block
+  gtk_cb_data.allocator = &message_allocator;
+  Net_UserData_t session_data;
   ACE_OS::memset (&session_data, 0, sizeof (session_data));
-  Stream_State_t stream_state;
-  ACE_OS::memset (&stream_state, 0, sizeof (stream_state));
-  //Olimex_Mod_MPU6050_StreamSessionData_t stream_session_data (&session_data,
   Net_StreamSessionData_t stream_session_data (&session_data,
-                                               false,
-                                               &stream_state,
-                                               ACE_Time_Value::zero,
                                                false);
   Net_Configuration_t configuration;
   ACE_OS::memset (&configuration, 0, sizeof (configuration));
   // ******************* socket configuration data ****************************
-  configuration.socketConfiguration.bufferSize = OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
+  configuration.socketConfiguration.bufferSize =
+   OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
   configuration.socketConfiguration.peerAddress = peerAddress_in;
 //  configuration.socketConfiguration.useLoopbackDevice = false;
   // ******************** stream configuration data ***************************
   configuration.streamConfiguration.messageAllocator = &message_allocator;
-  configuration.streamConfiguration.bufferSize = OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
+  configuration.streamConfiguration.bufferSize =
+   OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
   configuration.streamConfiguration.useThreadPerConnection = false;
   //configuration.streamConfiguration.serializeOutput = false;
   configuration.streamConfiguration.notificationStrategy = NULL;
   configuration.streamConfiguration.module = &event_handler_module;
   configuration.streamConfiguration.deleteModule = false;
-  // *WARNING*: set at runtime, by the appropriate connection handler
-  configuration.streamConfiguration.statisticsReportingInterval = 0; // == off
+  configuration.streamConfiguration.statisticsReportingInterval = 0;
   configuration.streamConfiguration.printFinalReport = false;
-//  // ******************** protocol configuration data ***********************
-//  configuration.protocolConfiguration.peerPingInterval = 0; // don't ping the server
-//  configuration.protocolConfiguration.pingAutoAnswer = false;
-//  configuration.protocolConfiguration.printPongMessages = false;
-
-  //// *************************** runtime data **********************************
-  //configuration.sessionID = 0; // (== socket handle !)
-  ////  configuration.currentStatistics = {};
-  //configuration.lastCollectionTimestamp = ACE_Time_Value::zero;
 
   // step2: init event dispatch
   bool serialize_output;
@@ -385,13 +373,15 @@ do_work (int argc_in,
   if (useAsynchConnector_in)
   {
     ACE_NEW_NORETURN (connector,
-                      Olimex_Mod_MPU6050_AsynchConnector_t (CONNECTIONMANAGER_SINGLETON::instance (),
-                                                            &configuration));
+                      Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
+                                                            CONNECTIONMANAGER_SINGLETON::instance (),
+                                                            OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
   } // end IF
   else
     ACE_NEW_NORETURN (connector,
-                      Olimex_Mod_MPU6050_Connector_t (CONNECTIONMANAGER_SINGLETON::instance (),
-                                                      &configuration));
+                      Olimex_Mod_MPU6050_Connector_t (&configuration,
+                                                      CONNECTIONMANAGER_SINGLETON::instance (),
+                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
   if (!connector)
   {
     ACE_DEBUG ((LM_CRITICAL,

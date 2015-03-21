@@ -21,6 +21,10 @@
 
 #include "olimex_mod_mpu6050_message.h"
 
+#include "ace/Malloc_Base.h"
+
+#include "stream_iallocator.h"
+
 #include "olimex_mod_mpu6050_macros.h"
 
 // *NOTE*: this is implicitly invoked by duplicate()...
@@ -92,23 +96,25 @@ Olimex_Mod_MPU6050_Message::duplicate (void) const
 
   // if there is no allocator, use the standard new and delete calls.
   if (!inherited::message_block_allocator_)
-    ACE_NEW_RETURN (message_p,
-                    Olimex_Mod_MPU6050_Message (*this),
-                    NULL);
+    ACE_NEW_NORETURN (message_p,
+                      Olimex_Mod_MPU6050_Message (*this));
   else // otherwise, use the existing message_block_allocator
   {
     // *NOTE*: the argument to malloc SHOULDN'T really matter, as this will be
     // a "shallow" copy referencing the same datablock...
-    ACE_NEW_MALLOC_RETURN (message_p,
-                           static_cast<Olimex_Mod_MPU6050_Message*> (inherited::message_block_allocator_->calloc (inherited::capacity ())),
-                           Olimex_Mod_MPU6050_Message (*this),
-                           NULL);
+    ACE_NEW_MALLOC_NORETURN (message_p,
+                             static_cast<Olimex_Mod_MPU6050_Message*> (inherited::message_block_allocator_->calloc (inherited::capacity (),
+                                                                                                                    '\0')),
+                             Olimex_Mod_MPU6050_Message (*this));
   } // end ELSE
   if (!message_p)
   {
-    ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("failed to allocate Olimex_Mod_MPU6050_Message: \"%m\", aborting\n")));
-
+    Stream_IAllocator* allocator_p =
+     dynamic_cast<Stream_IAllocator*> (inherited::message_block_allocator_);
+    ACE_ASSERT (allocator_p);
+    if (allocator_p->block ())
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to allocate Olimex_Mod_MPU6050_Message: \"%m\", aborting\n")));
     return NULL;
   } // end IF
 

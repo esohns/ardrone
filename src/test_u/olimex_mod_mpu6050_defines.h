@@ -55,6 +55,7 @@
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA               "drawing_area"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_FILE_QUIT             "quit"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_HELP_ABOUT            "about"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_VIEW_CALIBRATE        "calibrate"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR                 "status_bar"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN                "main_window"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT              "info"
@@ -91,8 +92,7 @@
 #define OLIMEX_MOD_MPU6050_MAXIMUM_QUEUE_SLOTS                       1000
 #define OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       1000
 
-#define OLIMEX_MOD_MPU6050_STATISTICS_COLLECTION_INTERVAL            60 // seconds [0 --> OFF]
-#define OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL             0  // seconds [0 --> OFF]
+#define OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL             0 // seconds [0 --> OFF]
 
 // *** device-related ***
 #define OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2                16384 // LSB/g
