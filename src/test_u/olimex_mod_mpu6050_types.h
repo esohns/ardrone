@@ -92,8 +92,9 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  : allocator (NULL)
  , argc (0)
  , argv (NULL)
- , contextId (0)
-//  , eventQueue ()
+ , contextIdConnectivity (0)
+ , contextIdData (0)
+ //  , eventQueue ()
 //  , eventSourceIds ()
  , frameCounter (0)
  , lock (NULL, NULL)
@@ -119,7 +120,8 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  Stream_IAllocator*                 allocator;
  int                                argc;
  ACE_TCHAR**                        argv;
- guint                              contextId; // status bar context
+ guint                              contextIdConnectivity; // status bar context
+ guint                              contextIdData; // status bar context
  Olimex_Mod_MPU6050_Events_t        eventQueue;
  Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
  unsigned int                       frameCounter;

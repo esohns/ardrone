@@ -58,7 +58,8 @@
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_VIEW_CALIBRATE        "calibrate"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR                 "status_bar"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN                "main_window"
-#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT              "info"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_CONNECTIVITY "connectivity"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_DATA         "data"
 
 // *** network-related ***
 #define OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR                      false

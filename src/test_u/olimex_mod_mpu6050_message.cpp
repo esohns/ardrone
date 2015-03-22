@@ -121,7 +121,7 @@ Olimex_Mod_MPU6050_Message::duplicate (void) const
   // increment the reference counts of any continuation messages
   if (inherited::cont_)
   {
-    message_p->cont_ = cont_->duplicate ();
+    message_p->cont_ = inherited::cont_->duplicate ();
     if (!message_p->cont_)
     {
       ACE_DEBUG ((LM_ERROR,

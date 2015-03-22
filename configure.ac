@@ -24,11 +24,7 @@ m4_ifset([M4_OLINUXINO_VERSION_DEVEL],
 AC_SUBST([OLINUXINO_VERSION_API],[M4_OLINUXINO_VERSION_API])
 
 AC_PREREQ([2.69])
-AC_INIT([olinuxino],
-        [M4_OLINUXINO_VERSION],
-        [eriksohns@123mail.org],
-        [OLinuxIno],
-        [http://www.github.com/esohns/olinuxino])
+AC_INIT([olinuxino],[M4_OLINUXINO_VERSION],[eriksohns@123mail.org],[OLinuxIno],[http://www.github.com/esohns/olinuxino])
 AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
@@ -37,9 +33,9 @@ AC_CONFIG_SUBDIRS([modules/libCommon
                    modules/libACENetwork
                    modules/libACEStream])
 
-AC_USE_SYSTEM_EXTENSIONS
+#AC_USE_SYSTEM_EXTENSIONS
 
-# Checks for programs.
+# checks for programs
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LEX
@@ -57,24 +53,13 @@ AM_SANITY_CHECK
 m4_define([OLINUXINO_CONFIG_H], [olinuxino_config.h])
 AX_PREFIX_CONFIG_H([OLINUXINO_CONFIG_H], [olinuxino], [config.h])
 
-# Checks for libraries.
-
-# Checks for header files.
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_INLINE
-AC_TYPE_SIZE_T
-AC_TYPE_SSIZE_T
-
-# Checks for library functions.
-
 # set up kernel module support
 AC_ARG_VAR([KERNEL_SRC_DIR], [kernel src directory (overrides --with-kerneldir)])
 AM_CONDITIONAL([HAVE_KERNEL_SRC_DIR_ENV], [test x${KERNEL_SRC_DIR} != x])
 AC_PATH_KERNEL_SOURCE
 AM_CONDITIONAL([HAVE_KERNEL_SRC], [test x${no_kernel} != xyes])
 #AM_CONDITIONAL([HAVE_KERNEL_SRC], [test x${kerneldir} != x -a x${kerneldir} != $(shell pwd)])
-moduledir_default="/lib/modules/`uname -r`/misc"
+moduledir_default="/lib/modules/`uname -r`/extra"
 AC_ARG_WITH(moduledir,
             [AS_HELP_STRING([--with-moduledir=DIR], [kernel modules in DIR [default="${moduledir_default}"]])],
             [moduledir=${withval}],
@@ -119,10 +104,10 @@ AC_ARG_ENABLE([debug],
               [debug=$debug_default])
 AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 if test x$debug = xyes; then
-  CXXFLAGS="${CXXFLAGS} -g -O0 -Wall"
+  CXXFLAGS="-g -O0 -Wall -fno-inline -D_DEBUG"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS="${CXXFLAGS} -O3 -DACE_NDEBUG -Wall -Werror"
+  CXXFLAGS="-O3 -Wall -Werror -DACE_NDEBUG"
   AC_MSG_RESULT([no])
 fi
 
@@ -168,13 +153,36 @@ fi
 # export this (so pkgconfig substitutions can be made)
 AC_SUBST([CXXFLAGS])
 
-dnl # checks for tools
-dnl MAKE=`which gnumake 2>/dev/null`
-dnl if test ! -x "$MAKE" ; then MAKE=`which gmake 2>/dev/null` ; fi
-dnl if test ! -x "$MAKE" ; then MAKE=`which make 2>/dev/null` ; fi
-dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Foundation"` = "0"])
+# checks for typedefs, structures, and compiler characteristics
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_INT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
+
+# checks for header files
+AM_COND_IF([VALGRIND_SUPPORT],
+           [AC_CHECK_HEADER([valgrind/valgrind.h])])
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([glm/glm.hpp])
+AC_LANG_POP([C++])
+AC_CHECK_HEADERS([libintl.h])
+AC_CHECK_HEADERS([locale.h])
+AC_CHECK_HEADER_STDBOOL
+
+# checks for library functions
+AC_CHECK_FUNCS([getcwd])
+AC_CHECK_FUNCS([memset])
+AC_CHECK_FUNCS([setlocale])
+AC_CHECK_FUNCS([strerror])
+AC_FUNC_MALLOC
+AC_FUNC_ERROR_AT_LINE
 
 # checks for libraries
+AM_COND_IF([VALGRIND_SUPPORT],
+           [PKG_CHECK_MODULES([PKGVALGRIND], [valgrind])])
 PKG_CHECK_MODULES([PKGLIB], [gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0 libglade-2.0])
 
 # checks for other libraries (non-pkg-config)
@@ -184,30 +192,15 @@ AC_CHECK_LIB([pthread], [main])
 AC_CHECK_LIB([ACE], [main])
 # FIXME: Replace `main' with a function in `-lglut':
 AC_CHECK_LIB([glut], [main])
+
+# checks for tools
+dnl MAKE=`which gnumake 2>/dev/null`
+dnl if test ! -x "$MAKE" ; then MAKE=`which gmake 2>/dev/null` ; fi
+dnl if test ! -x "$MAKE" ; then MAKE=`which make 2>/dev/null` ; fi
+dnl AM_CONDITIONAL([HAVE_GNU_MAKE], [`$MAKE --version|grep -c "Free Software Foundation"` = "0"])
 AM_GNU_GETTEXT_VERSION([0.18])
 AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 #AM_GNU_GETTEXT_INTL_SUBDIR
-
-# checks for functions
-AC_CHECK_FUNCS([getcwd])
-AC_CHECK_FUNCS([memset])
-AC_CHECK_FUNCS([setlocale])
-#AC_CHECK_FUNCS([setenv])
-AC_CHECK_FUNCS([strerror])
-AC_FUNC_MALLOC
-AC_FUNC_ERROR_AT_LINE
-
-# checks for headers
-AC_CHECK_HEADERS([glm.h])
-AC_CHECK_HEADERS([libintl.h])
-AC_CHECK_HEADERS([locale.h])
-AC_CHECK_HEADER_STDBOOL
-
-# checks for types
-AC_TYPE_INT8_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
 
 AC_CONFIG_FILES([Makefile
                  m4/Makefile

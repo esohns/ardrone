@@ -88,9 +88,12 @@ idle_initialize_ui_cb (gpointer userData_in)
       GTK_STATUSBAR (glade_xml_get_widget (cb_data_p->XML,
                                            ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
   ACE_ASSERT (status_bar_p);
-  cb_data_p->contextId =
+  cb_data_p->contextIdConnectivity =
       gtk_statusbar_get_context_id (status_bar_p,
-                                    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT));
+                                    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_CONNECTIVITY));
+  cb_data_p->contextIdData =
+      gtk_statusbar_get_context_id (status_bar_p,
+                                    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_DATA));
 
   // step2: (auto-)connect signals/slots
   // *NOTE*: glade_xml_signal_autoconnect doesn't work reliably
@@ -243,6 +246,22 @@ idle_finalize_ui_cb (gpointer userData_in)
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+
+  // synch access
+  {
+    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
+
+    unsigned int num_messages = cb_data_p->messageQueue.size ();
+    while (!cb_data_p->messageQueue.empty ())
+    {
+      cb_data_p->messageQueue.front ()->release ();
+      cb_data_p->messageQueue.pop_front ();
+    } // end WHILE
+    if (num_messages)
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("flushed %u messages\n"),
+                  num_messages));
+  } // end lock scope
 
   if (cb_data_p->openGLRefreshTimerId)
   {
@@ -626,16 +645,20 @@ process_cb (gpointer userData_in)
       case OLIMEX_MOD_MPU6050_EVENT_CONNECT:
       {
         cb_data_p->eventQueue.pop_front ();
+        gtk_statusbar_pop (status_bar_p,
+                           cb_data_p->contextIdConnectivity);
         gtk_statusbar_push (status_bar_p,
-                            cb_data_p->contextId,
+                            cb_data_p->contextIdConnectivity,
                             ACE_TEXT_ALWAYS_CHAR ("connected"));
         return TRUE; // done (do not propagate further)
       }
       case OLIMEX_MOD_MPU6050_EVENT_DISCONNECT:
       {
         cb_data_p->eventQueue.pop_front ();
+        gtk_statusbar_pop (status_bar_p,
+                           cb_data_p->contextIdConnectivity);
         gtk_statusbar_push (status_bar_p,
-                            cb_data_p->contextId,
+                            cb_data_p->contextIdConnectivity,
                             ACE_TEXT_ALWAYS_CHAR ("disconnected"));
         return TRUE; // done (do not propagate further)
       }
@@ -724,8 +747,10 @@ process_cb (gpointer userData_in)
 
     return FALSE; // --> stop processing timer
   } // end IF
+  gtk_statusbar_pop (status_bar_p,
+                     cb_data_p->contextIdData);
   gtk_statusbar_push (status_bar_p,
-                      cb_data_p->contextId,
+                      cb_data_p->contextIdData,
                       buffer);
 
   static GLfloat angle_x, angle_y, angle_z;

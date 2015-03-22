@@ -184,10 +184,10 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
         ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (*lock_);
 
         // *WARNING* if users unsubscribe() within the callback Bad Things (TM)
-        // would happen, as the current iter would be invalidated
-        // --> use a slightly modified for-loop (advance first and THEN invoke the
-        // callback (*NOTE*: works for MOST containers...)
-        // *NOTE*: this works due to the ACE_RECURSIVE_Thread_Mutex used as a lock...
+        // would happen, as the current iterator would be invalidated
+        // --> use a slightly modified for-loop (advance first and THEN invoke
+        //     the callback (*NOTE*: works for MOST containers...)
+        // *NOTE*: this works because the lock is recursive
         for (Olimex_Mod_MPU6050_SubscribersIterator_t iterator = subscribers_->begin ();
              iterator != subscribers_->end ();
              )

@@ -28,7 +28,27 @@
 *.app
 
 # MSVC project files
+*.opensdf
 *.sdf
+*.suo
+ipch/
+Debug/
+Release/
+
+# automake files
+*.log
+aclocal.m4
+config.h.in
+config.status
+configure
+stamp-h1
+Makefile.in
+po/
+m4/
+aux_config/
+autom4te.cache/
+.deps/
+build/
 
 # kernel module files
 *.cmd
@@ -37,28 +57,6 @@ modules.order
 *.ko
 *.mod.c
 
-aux_config/
 *~
-Makefile.in
-aclocal.m4
-autom4te.cache/
-config.h.in
-configure
-Makefile.in
-build/
-Makefile.automake
-.deps/
-Makefile
-config.h
-config.log
-config.status
-stamp-h1
-po/
-m4/
-Debug
-ipch
-/prj/msvc/*.opensdf
-/prj/msvc/Release/*.cache
-Release
-*.suo
 *.user
+

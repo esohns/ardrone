@@ -26,6 +26,10 @@
 #endif
 #include "gettext.h"
 
+#if defined (OLINUXINO_ENABLE_VALGRIND_SUPPORT)
+#include "valgrind/memcheck.h"
+#endif
+
 #include "ace/ACE.h"
 #include "ace/Get_Opt.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -36,9 +40,7 @@
 #include "ace/OS_main.h"
 #include "ace/Time_Value.h"
 
-#ifdef HAVE_CONFIG_H
 #include "olinuxino_config.h"
-#endif
 
 #include "common_tools.h"
 
@@ -286,8 +288,8 @@ do_initSignals (ACE_Sig_Set& signals_inout)
   // *NOTE* don't care about SIGPIPE
   signals_inout.sig_del (SIGPIPE);        // 12      /* Broken pipe: write to pipe with no readers */
 
-  // *TODO*
-#ifdef ENABLE_VALGRIND_SUPPORT
+  // *TODO*: improve valgrind support
+#ifdef OLINUXINO_ENABLE_VALGRIND_SUPPORT
   // *NOTE*: valgrind uses SIGRT32 (--> SIGRTMAX ?) and apparently will not work
   // if the application installs its own handler (see documentation)
   if (RUNNING_ON_VALGRIND)
@@ -333,10 +335,6 @@ do_work (int argc_in,
                                                            &heap_allocator,
                                                            false); // do not block
   gtk_cb_data.allocator = &message_allocator;
-  Net_UserData_t session_data;
-  ACE_OS::memset (&session_data, 0, sizeof (session_data));
-  Net_StreamSessionData_t stream_session_data (&session_data,
-                                               false);
   Net_Configuration_t configuration;
   ACE_OS::memset (&configuration, 0, sizeof (configuration));
   // ******************* socket configuration data ****************************
@@ -369,20 +367,20 @@ do_work (int argc_in,
 
   // step3: init client connector
 //  Net_IUDPConnectionManager_t* connection_manager_p = ;
-  Olimex_Mod_MPU6050_IConnector_t* connector = NULL;
+  Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
   if (useAsynchConnector_in)
   {
-    ACE_NEW_NORETURN (connector,
+    ACE_NEW_NORETURN (connector_p,
                       Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
                                                             CONNECTIONMANAGER_SINGLETON::instance (),
                                                             OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
   } // end IF
   else
-    ACE_NEW_NORETURN (connector,
+    ACE_NEW_NORETURN (connector_p,
                       Olimex_Mod_MPU6050_Connector_t (&configuration,
                                                       CONNECTIONMANAGER_SINGLETON::instance (),
                                                       OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
-  if (!connector)
+  if (!connector_p)
   {
     ACE_DEBUG ((LM_CRITICAL,
                 ACE_TEXT ("failed to allocate memory, aborting\n")));
@@ -391,12 +389,14 @@ do_work (int argc_in,
 
   // step4: init connection manager
   CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+  Net_UserData_t session_data;
+  ACE_OS::memset (&session_data, 0, sizeof (session_data));
   CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                 stream_session_data); // will be passed to all handlers
+                                                 &session_data); // will be passed to all handlers
 
   // step5: init signal handling
   Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in, // peer address
-                                                   connector,      // connector
+                                                   connector_p,    // connector
                                                    useReactor_in); // use reactor ?
   ACE_Sig_Set signal_set (0);
   do_initSignals (signal_set);
@@ -407,7 +407,10 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
-    delete connector;
+
+    // clean up
+    delete connector_p;
+
     return;
   } // end IF
   if (!Common_Tools::initializeSignals (signal_set,
@@ -416,7 +419,10 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize signal handling, aborting\n")));
-    delete connector;
+
+    // clean up
+    delete connector_p;
+
     return;
   } // end IF
 
@@ -441,7 +447,10 @@ do_work (int argc_in,
     Common_Tools::finalizeSignals (signal_set,
                                    useReactor_in,
                                    previous_signal_actions);
-    delete connector;
+
+    // clean up
+    delete connector_p;
+
     return;
   } // end IF
 
@@ -465,7 +474,10 @@ do_work (int argc_in,
     Common_Tools::finalizeSignals (signal_set,
                                    useReactor_in,
                                    previous_signal_actions);
-    delete connector;
+
+    // clean up
+    delete connector_p;
+
     return;
   } // end IF
 
@@ -473,7 +485,7 @@ do_work (int argc_in,
               ACE_TEXT ("started event dispatch...\n")));
 
   // step7: connect
-  if (!connector->connect (peerAddress_in))
+  if (!connector_p->connect (peerAddress_in))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to connect, aborting\n")));
@@ -492,7 +504,10 @@ do_work (int argc_in,
     Common_Tools::finalizeSignals (signal_set,
                                    useReactor_in,
                                    previous_signal_actions);
-    delete connector;
+
+    // clean up
+    delete connector_p;
+
     return;
   }
   // *WARNING*: from this point on, clean up any remote connections !
@@ -531,7 +546,7 @@ do_work (int argc_in,
 //			g_source_remove (*iterator);
 //	} // end lock scope
 //  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
-  delete connector;
+  delete connector_p;
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -548,9 +563,14 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
-
     return EXIT_FAILURE;
   } // end IF
+#endif
+
+#if defined (OLINUXINO_ENABLE_VALGRIND_SUPPORT)
+  if (RUNNING_ON_VALGRIND)
+    ACE_DEBUG ((LM_INFO,
+                ACE_TEXT ("running on valgrind...\n")));
 #endif
 
   // step1: process commandline options (if any)
