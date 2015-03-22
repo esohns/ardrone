@@ -135,6 +135,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\include\olinuxino_config.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.h" />
