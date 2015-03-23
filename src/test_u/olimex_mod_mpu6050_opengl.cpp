@@ -21,10 +21,7 @@
 
 #include "olimex_mod_mpu6050_opengl.h"
 
-//#include <math.h>
-
 #include "GL/gl.h"
-//#include "GL/glu.h"
 #include "GL/glut.h"
 #include "GL/freeglut_ext.h"
 
@@ -125,10 +122,12 @@ axes ()
 
   glNewList (axes_list, GL_COMPILE);
 
+  // x --> y
   glBegin (GL_LINE_STRIP);
   glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
-  glColor3f (1.0F, 0.0F, 0.0F);
+  //glColor3f (1.0F, 0.0F, 0.0F);
+  glColor3f (0.0F, 1.0F, 0.0F);
   glVertex3f (1.0f, 0.0f, 0.0f);
   glVertex3f (0.75f, 0.25f, 0.0f);
   glVertex3f (0.75f, -0.25f, 0.0f);
@@ -138,10 +137,12 @@ axes ()
   glVertex3f (1.0f, 0.0f, 0.0f);
   glEnd ();
 
+  // y --> z
   glBegin (GL_LINE_STRIP);
   glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
-  glColor3f (0.0F, 1.0F, 0.0F);
+  //glColor3f (0.0F, 1.0F, 0.0F);
+  glColor3f (0.0F, 0.0F, 1.0F);
   glVertex3f (0.0f, 1.0f, 0.0f);
   glVertex3f (0.0f, 0.75f, 0.25f);
   glVertex3f (0.0f, 0.75f, -0.25f);
@@ -151,10 +152,12 @@ axes ()
   glVertex3f (0.0f, 1.0f, 0.0f);
   glEnd ();
 
+  // z --> x
   glBegin (GL_LINE_STRIP);
   glColor3f (1.0F, 1.0F, 1.0F);
   glVertex3f (0.0f, 0.0f, 0.0f);
-  glColor3f (0.0F, 0.0F, 1.0F);
+  //glColor3f (0.0F, 0.0F, 1.0F);
+  glColor3f (1.0F, 0.0F, 0.0F);
   glVertex3f (0.0f, 0.0f, 1.0f);
   glVertex3f (0.25f, 0.0f, 0.75f);
   glVertex3f (-0.25f, 0.0f, 0.75f);
@@ -168,16 +171,22 @@ axes ()
   glScalef (0.005F, 0.005F, 0.005F);
 
   glTranslatef (220.0F, -30.0F, 0.0F);
-  glColor3f (1.0F, 0.0F, 0.0F);
-  glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'x');
-
-  glTranslatef (-380.0F, 300.0F, 0.0F);
+  //glColor3f (1.0F, 0.0F, 0.0F);
   glColor3f (0.0F, 1.0F, 0.0F);
+  //glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'x');
   glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'y');
 
-  glTranslatef (-105.0F, -305.0F, 250.0F);
+  glTranslatef (-380.0F, 300.0F, 0.0F);
+  //glColor3f (0.0F, 1.0F, 0.0F);
   glColor3f (0.0F, 0.0F, 1.0F);
+  //glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'y');
   glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'z');
+
+  glTranslatef (-105.0F, -305.0F, 250.0F);
+  //glColor3f (0.0F, 0.0F, 1.0F);
+  glColor3f (1.0F, 0.0F, 0.0F);
+  //glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'z');
+  glutStrokeCharacter (OLIMEX_MOD_MPU6050_OPENGL_FONT_AXES, 'x');
 
   glEndList ();
 

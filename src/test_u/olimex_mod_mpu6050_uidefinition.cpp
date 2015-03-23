@@ -101,10 +101,10 @@ Olimex_Mod_MPU6050_GTKUIDefinition::finalize ()
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_GTKUIDefinition::finalize"));
 
   // schedule UI finalization
-  gpointer userData_p =
+  gpointer user_data_p =
       const_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (GtkCBData_);
   guint event_source_id = g_idle_add (idle_finalize_ui_cb,
-                                      userData_p);
+                                      user_data_p);
   if (event_source_id == 0)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to g_idle_add(): \"%m\", continuing\n")));

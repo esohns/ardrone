@@ -74,6 +74,16 @@ typedef Common_INotify_T<Stream_State_t,
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
 typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
 
+struct sensorBias_t
+{
+  gfloat ax_bias;
+  gfloat ay_bias;
+  gfloat az_bias;
+  gfloat gx_bias;
+  gfloat gy_bias;
+  gfloat gz_bias;
+};
+
 struct camera_t
 {
   //glm::vec3 position;
@@ -92,8 +102,9 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  : allocator (NULL)
  , argc (0)
  , argv (NULL)
- , contextIdConnectivity (0)
+ , clientMode (false)
  , contextIdData (0)
+ , contextIdInformation (0)
  //  , eventQueue ()
 //  , eventSourceIds ()
  , frameCounter (0)
@@ -103,8 +114,10 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
 //  , openGLCamera ()
  , openGLContext (NULL)
  , openGLDrawable (NULL)
- , openGLRefreshTimerId (0)
+ , openGLRefreshId (0)
  , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
+ //, temperature ()
+ , temperatureIndex (-1)
  , timestamp (ACE_Time_Value::zero)
  , XML (NULL)
  {
@@ -120,8 +133,12 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  Stream_IAllocator*                 allocator;
  int                                argc;
  ACE_TCHAR**                        argv;
- guint                              contextIdConnectivity; // status bar context
+ bool                               clientMode;
+ // *NOTE*: on the host ("server"), use the device bias registers instead !
+ // *TODO*: implement a client->server protocol to do this
+ sensorBias_t                       clientSensorBias; // client side ONLY (!)
  guint                              contextIdData; // status bar context
+ guint                              contextIdInformation; // status bar context
  Olimex_Mod_MPU6050_Events_t        eventQueue;
  Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
  unsigned int                       frameCounter;
@@ -131,8 +148,10 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  camera_t                           openGLCamera;
  GdkGLContext*                      openGLContext;
  GdkGLDrawable*                     openGLDrawable;
- guint                              openGLRefreshTimerId;
+ guint                              openGLRefreshId;
  bool                               openGLDoubleBuffered;
+ gfloat                             temperature[OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE * 2];
+ int                                temperatureIndex;
  ACE_Time_Value                     timestamp;
  GladeXML*                          XML;
 };

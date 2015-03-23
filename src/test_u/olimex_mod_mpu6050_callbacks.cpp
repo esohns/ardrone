@@ -42,6 +42,62 @@
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_opengl.h"
 
+void
+extract_data (const char* data_in,
+              float& ax_out, float& ay_out, float& az_out,
+              float& t_out,
+              float& gx_out, float& gy_out, float& gz_out)
+{
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::extract_data"));
+
+  const short int* data_p = reinterpret_cast<const short int*> (data_in);
+  short int a_x, a_y, a_z;
+  short int g_x, g_y, g_z;
+  short int t;
+  // *NOTE*: i2c uses a big-endian transfer syntax
+  a_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  // invert two's complement representation
+  a_x = (a_x & 0x8000) ? ((a_x & 0x7FFF) - 0x8000) : a_x;
+  data_p++;
+  a_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  a_y = (a_y & 0x8000) ? ((a_y & 0x7FFF) - 0x8000) : a_y;
+  data_p++;
+  a_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  a_z = (a_z & 0x8000) ? ((a_z & 0x7FFF) - 0x8000) : a_z;
+  data_p++;
+  t = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+       : *data_p);
+  data_p++;
+  g_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  g_x = (g_x & 0x8000) ? ((g_x & 0x7FFF) - 0x8000) : g_x;
+  data_p++;
+  g_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  g_y = (g_y & 0x8000) ? ((g_y & 0x7FFF) - 0x8000) : g_y;
+  data_p++;
+  g_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+         : *data_p);
+  g_z = (g_z & 0x8000) ? ((g_z & 0x7FFF) - 0x8000) : g_z;
+  // translate quantities into absolute values
+  ax_out = a_x / OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2;
+  ay_out = a_y / OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2;
+  az_out = a_z / OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2;
+  t_out = (t / OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR) +
+    OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET;
+  gx_out = g_x / OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250;
+  gy_out = g_y / OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250;
+  gz_out = g_z / OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250;
+  //  ACE_DEBUG ((LM_DEBUG,
+  //              ACE_TEXT ("%6.3f,%6.3f,%6.3f,%6.2f,%8.3f,%8.3f,%8.3f\n"),
+  //              ax_out, ay_out, az_out,
+  //              t_out,
+  //              gx_out, gy_out, gz_out));
+}
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -70,30 +126,46 @@ idle_initialize_ui_cb (gpointer userData_in)
                                         ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT)));
   ACE_ASSERT (about_dialog_p);
 
+  //if (cb_data_p->clientMode)
+  //{
+  //  GtkImageMenuItem* menu_item_p =
+  //    GTK_IMAGE_MENU_ITEM (glade_xml_get_widget (cb_data_p->XML,
+  //                                               ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_VIEW_CALIBRATE)));
+  //  ACE_ASSERT (menu_item_p);
+  //  gtk_widget_set_sensitive (GTK_WIDGET (menu_item_p), FALSE);
+  //} // end IF
+
   GtkWidget* drawing_area_p =
       glade_xml_get_widget (cb_data_p->XML,
                             ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA));
   ACE_ASSERT (drawing_area_p);
 
-////  GtkCBData_->drawingArea = gtk_drawing_area_new ();
-////  ACE_ASSERT (GtkCBData_->drawingArea);
-////  gtk_widget_set_name (GtkCBData_->drawingArea,
-////                       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA));
-//  gtk_widget_set_events (GtkCBData_->drawingArea,
-//                         GDK_EXPOSURE_MASK);
-//  gtk_container_add (GTK_CONTAINER (opengl_container),
-//                     GtkCBData_->drawingArea);
+  GtkCurve* curve_p =
+    GTK_CURVE (glade_xml_get_widget (cb_data_p->XML,
+                                     ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_CURVE)));
+  ACE_ASSERT (curve_p);
+  // *WARNING*: glade/gtk crashes when declaring the curve type to be anything
+  //            other than GTK_CURVE_TYPE_SPLINE (default)
+  //gtk_curve_set_curve_type (curve_p, GTK_CURVE_TYPE_FREE);
+  gtk_curve_set_range (curve_p,
+                       0.0F,
+                       static_cast <gfloat> (OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE - 1),
+                       0.0F,
+                       100.0F);
+  gtk_curve_set_vector (curve_p,
+                        OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE,
+                        cb_data_p->temperature);
 
   GtkStatusbar* status_bar_p =
       GTK_STATUSBAR (glade_xml_get_widget (cb_data_p->XML,
                                            ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
   ACE_ASSERT (status_bar_p);
-  cb_data_p->contextIdConnectivity =
-      gtk_statusbar_get_context_id (status_bar_p,
-                                    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_CONNECTIVITY));
   cb_data_p->contextIdData =
       gtk_statusbar_get_context_id (status_bar_p,
                                     ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_DATA));
+  cb_data_p->contextIdInformation =
+    gtk_statusbar_get_context_id (status_bar_p,
+                                  ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_INFORMATION));
 
   // step2: (auto-)connect signals/slots
   // *NOTE*: glade_xml_signal_autoconnect doesn't work reliably
@@ -219,18 +291,27 @@ idle_initialize_ui_cb (gpointer userData_in)
   cb_data_p->timestamp = COMMON_TIME_POLICY ();
   guint opengl_refresh_rate =
       static_cast<guint> (OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL);
-
-  {
-    cb_data_p->openGLRefreshTimerId = g_timeout_add (opengl_refresh_rate,
-                                                     process_cb,
-                                                     cb_data_p);
-  } // end lock scope
-  if (!cb_data_p->openGLRefreshTimerId)
+  cb_data_p->openGLRefreshId = g_timeout_add (opengl_refresh_rate,
+                                              process_cb,
+                                              cb_data_p);
+  if (!cb_data_p->openGLRefreshId)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gtk_widget_set_gl_capability(): \"%m\", aborting\n")));
+                ACE_TEXT ("failed to g_timeout_add(): \"%m\", aborting\n")));
     return FALSE; // G_SOURCE_REMOVE
   } // end IF
+  //cb_data_p->openGLRefreshId = g_idle_add_full (10000,
+  //                                              process_cb,
+  //                                              cb_data_p,
+  //                                              NULL);
+  //if (cb_data_p->openGLRefreshId == 0)
+  //{
+  //  ACE_DEBUG ((LM_ERROR,
+  //              ACE_TEXT ("failed to g_idle_add_full(): \"%m\", aborting\n")));
+  //  return FALSE; // G_SOURCE_REMOVE
+  //} // end IF
+  else
+    cb_data_p->eventSourceIds.push_back (cb_data_p->openGLRefreshId);
 
   // one-shot action
   return FALSE; // G_SOURCE_REMOVE
@@ -263,11 +344,12 @@ idle_finalize_ui_cb (gpointer userData_in)
                   num_messages));
   } // end lock scope
 
-  if (cb_data_p->openGLRefreshTimerId)
+  if (cb_data_p->openGLRefreshId)
   {
-    g_source_remove (cb_data_p->openGLRefreshTimerId);
-    cb_data_p->openGLRefreshTimerId = 0;
+    g_source_remove (cb_data_p->openGLRefreshId);
+    cb_data_p->openGLRefreshId = 0;
   } // end iF
+  cb_data_p->eventSourceIds.clear ();
 
   if (glIsList (cb_data_p->openGLAxesListId))
   {
@@ -356,21 +438,21 @@ configure_cb (GtkWidget* widget_in,
               widget_in->allocation.height);
 
   // setup a perspective projection
+  // *NOTE*: initially, the "camera" points down the negative z-axis (y is up)
   glLoadIdentity ();
   //gluPerspective (OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY,
   //                (widget_in->allocation.width / widget_in->allocation.height),
   //                OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR,
   //                OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZFAR); // setup a perspective projection
   GLdouble fW, fH;
-  //fH = tan( (OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY / 2) / 180 * pi ) * OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR;
   fH =
-   ::tan (OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY / 360.0 * M_PI) * OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR;
+   ::tan (OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_FOVY / 360.0 * M_PI) *
+   OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR;
   fW = fH * (widget_in->allocation.width / widget_in->allocation.height);
   glFrustum (-fW, fW,
              -fH, fH,
              OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZNEAR,
              OLIMEX_MOD_MPU6050_OPENGL_PERSPECTIVE_ZFAR);
-  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
   glMatrixMode (GL_MODELVIEW);
 
@@ -379,7 +461,7 @@ configure_cb (GtkWidget* widget_in,
     cb_data_p->resetCamera ();
 
   // *NOTE*: standard "right-hand" coordinate system (RHCS) is:
-  //         x (thumb): right, y (index): up, z (middle finger): towards you
+  //         x (thumb): right, y (index): up, z (middle): out of the screen
 //  // top-down (RHCS: x --> up [y --> towards you, z --> right]
   //cb_data_p->openGLCamera.position[0] = 0.0F;  // eye position (*NOTE*: relative to standard
   //cb_data_p->openGLCamera.position[1] = 10.0F; //                       "right-hand" coordinate
@@ -413,38 +495,57 @@ configure_cb (GtkWidget* widget_in,
   //           cb_data_p->openGLCamera.up[1],
   //           cb_data_p->openGLCamera.up[2]);
 
-  // set up lighting ?
-  if (is_first_invokation)
-  {
-    //GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
-    //glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-    //GLfloat light_diffuse[] = {1.0F, 1.0F, 1.0F, 1.0F};
-    GLfloat light0_position[] = {150.0F, 150.0F, 150.0F, 0.0F};
-    glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-    //glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-    //GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
-    //glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-    glEnable (GL_LIGHT0);
-    glEnable (GL_LIGHTING);
-  } // end IF
-
   // set up features ?
   if (is_first_invokation)
   {
-    glDepthFunc (GL_LEQUAL);
+    glShadeModel (GL_SMOOTH); // shading mathod: GL_SMOOTH or GL_FLAT
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 4); // 4-byte pixel alignment
+
+    // enable/disable features
     glEnable (GL_DEPTH_TEST);
+    glEnable (GL_LIGHTING);
+    glEnable (GL_TEXTURE_2D);
+    glEnable (GL_CULL_FACE);
 
-    //glShadeModel (GL_FLAT); // flat shading
-    glShadeModel (GL_SMOOTH); // smooth shading
+    glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable (GL_BLEND);
+    glEnable (GL_LINE_SMOOTH);
+    //glEnable (GL_SCISSOR_TEST);
 
-    //glLineWidth (1.0F);
-    //glEnable (GL_LINE_SMOOTH);
-
+    // track material ambient and diffuse from surface color, call it before
+    // glEnable(GL_COLOR_MATERIAL)
+    glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     //glEnable (GL_COLOR_MATERIAL);
-    //glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
     //glClearColor (0.0F, 0.0F, 0.0F, 0.0F); // background color
-    glClearDepth (1.0); // background depth value
+    glClearStencil (0); // clear stencil buffer
+    glClearDepth (1.0F); // 0 is near, 1 is far
+    glDepthFunc (GL_LEQUAL);
     //glColor3f (1.0F, 1.0F, 1.0F); // white
+  } // end IF
+
+  // set up lighting ?
+  if (is_first_invokation)
+  {
+    // set up light colors (ambient, diffuse, specular)
+    GLfloat light_ambient[] = {0.0F, 0.0F, 0.0F, 1.0F};
+    glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+    GLfloat light_diffuse[] = {0.9F, 0.9F, 0.9F, 1.0F};
+    glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
+    glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
+
+    // position the light in eye space
+    GLfloat light0_position[] = {0.0F,
+                                 OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM * 2,
+                                 OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM * 2,
+                                 0.0F}; // --> directional light
+    glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
+
+    glEnable (GL_LIGHT0);
   } // end IF
 
   gdk_gl_drawable_gl_end (cb_data_p->openGLDrawable);
@@ -502,17 +603,26 @@ expose_cb (GtkWidget* widget_in,
 
   // step2: set camera
   glPushMatrix ();
+
+  // step2a: apply model transformation(s)
+  //glTranslatef (cb_data_p->openGLCamera.translation[0],
+  //              cb_data_p->openGLCamera.translation[1],
+  //              cb_data_p->openGLCamera.translation[2]);
   glTranslatef (0.0F, 0.0F, -cb_data_p->openGLCamera.zoom);
-  glTranslatef (cb_data_p->openGLCamera.translation[0],
-                cb_data_p->openGLCamera.translation[1],
-                cb_data_p->openGLCamera.translation[2]);
   glRotatef (cb_data_p->openGLCamera.rotation[0], 1.0F, 0.0F, 0.0F);
   glRotatef (cb_data_p->openGLCamera.rotation[1], 0.0F, 1.0F, 0.0F);
   glRotatef (cb_data_p->openGLCamera.rotation[2], 0.0F, 0.0F, 1.0F);
 
+  // step2b: apply view transformation(s)
+  // *NOTE*: corrections so the teapot orients the same as the chip
+  // *NOTE*: OpenGL uses RHCS, positive rotation is counter-clockwise (CCW)
+  //         (that is, CCW looking TOWARDS the origin)
+  glRotatef (90.0F, 0.0F, 0.0F, 1.0F);
+  glRotatef (90.0F, 1.0F, 0.0F, 0.0F);
+
   // step3: draw object(s)
   // step3a: draw model
-  const static gboolean solid = FALSE; // wireframe
+  const static gboolean solid = TRUE; // wireframe
   const static gdouble scale = 1.0;
   gdk_gl_draw_teapot (solid, scale);
 
@@ -540,7 +650,7 @@ expose_cb (GtkWidget* widget_in,
   glEnable (GL_COLOR_MATERIAL);
   glDisable (GL_LIGHTING);
 
-  // axes don't translate/zoom
+  // step1: axes don't translate/zoom
   static GLfloat modelview_matrix[16];
   glGetFloatv (GL_MODELVIEW_MATRIX, modelview_matrix);
   glPushMatrix ();
@@ -637,7 +747,7 @@ process_cb (gpointer userData_in)
     ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
     {
-      return TRUE; // --> continue processing timer
+      return TRUE; // --> continue processing
       //goto expose;
     } // end IF
     switch (cb_data_p->eventQueue.front ())
@@ -645,22 +755,18 @@ process_cb (gpointer userData_in)
       case OLIMEX_MOD_MPU6050_EVENT_CONNECT:
       {
         cb_data_p->eventQueue.pop_front ();
-        gtk_statusbar_pop (status_bar_p,
-                           cb_data_p->contextIdConnectivity);
         gtk_statusbar_push (status_bar_p,
-                            cb_data_p->contextIdConnectivity,
+                            cb_data_p->contextIdInformation,
                             ACE_TEXT_ALWAYS_CHAR ("connected"));
-        return TRUE; // done (do not propagate further)
+        return TRUE; // continue processing
       }
       case OLIMEX_MOD_MPU6050_EVENT_DISCONNECT:
       {
         cb_data_p->eventQueue.pop_front ();
-        gtk_statusbar_pop (status_bar_p,
-                           cb_data_p->contextIdConnectivity);
         gtk_statusbar_push (status_bar_p,
-                            cb_data_p->contextIdConnectivity,
+                            cb_data_p->contextIdInformation,
                             ACE_TEXT_ALWAYS_CHAR ("disconnected"));
-        return TRUE; // done (do not propagate further)
+        return TRUE; // continue processing
       }
       case OLIMEX_MOD_MPU6050_EVENT_MESSAGE:
       {
@@ -675,68 +781,39 @@ process_cb (gpointer userData_in)
                     ACE_TEXT ("invalid event (was: %d), aborting\n"),
                     cb_data_p->eventQueue.front ()));
         cb_data_p->eventQueue.pop_front ();
-        return FALSE; // --> stop processing timer
+        return FALSE; // --> stop processing
       }
     } // end SWITCH
   } // end lock scope
   ACE_ASSERT (message_p);
   ACE_ASSERT (message_p->size () == OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE);
 
-  unsigned short* data_p =
-   reinterpret_cast<unsigned short*> (message_p->rd_ptr ());
-  unsigned short a_x, a_y, a_z;
-  unsigned short g_x, g_y, g_z;
-  short int t;
-  // *NOTE*: i2c uses a big-endian transfer syntax
-  a_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  // invert two's complement representation
-  a_x = (a_x < 0) ? -(~(a_x - 1)) : ~(a_x - 1);
-  data_p++;
-  a_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  a_y = (a_y < 0) ? -(~(a_y - 1)) : ~(a_y - 1);
-  data_p++;
-  a_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  a_z = (a_z < 0) ? -(~(a_z - 1)) : ~(a_z - 1);
-  data_p++;
-  t = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                             : *data_p);
-  data_p++;
-  g_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  g_x = (g_x < 0) ? -(~(g_x - 1)) : ~(g_x - 1);
-  data_p++;
-  g_y = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  g_y = (g_y < 0) ? -(~(g_y - 1)) : ~(g_y - 1);
-  data_p++;
-  g_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-                                               : *data_p);
-  g_z = (g_z < 0) ? -(~(g_z - 1)) : ~(g_z - 1);
-  // translate quantities into absolute values
-  GLfloat ax, ay, az, tp, gx, gy, gz;
-  ax = a_x / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2);
-  ay = a_y / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2);
-  az = a_z / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2);
-  tp = (t / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR)) +
-    OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET;
-  gx = g_x / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
-  gy = g_y / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
-  gz = g_z / static_cast<GLfloat> (OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250);
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("%.3f,%.3f,%.3f,%.2f,%.3f,%.3f,%.3f\n"),
-//              ax, ay, az,
-//              tp,
-//              gx, gy, gz));
+  // step1a: extract sensor data
+  float ax, ay, az, t, gx, gy, gz;
+  extract_data (message_p->rd_ptr (),
+                ax, ay, az,
+                t,
+                gx, gy, gz);
+
+  // step1b: correct data with bias information
+  if (cb_data_p->clientMode)
+  {
+    ax -= cb_data_p->clientSensorBias.ax_bias;
+    ay -= cb_data_p->clientSensorBias.ay_bias;
+    az -= cb_data_p->clientSensorBias.az_bias;
+    gx -= cb_data_p->clientSensorBias.gx_bias;
+    gy -= cb_data_p->clientSensorBias.gy_bias;
+    gz -= cb_data_p->clientSensorBias.gz_bias;
+  } // end IF
+
+  // step1c: update status bar
   gchar buffer[BUFSIZ];
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   int result = ACE_OS::sprintf (buffer,
-                                ACE_TEXT_ALWAYS_CHAR ("[accelerometer (g/s): %.3f,%.3f,%.3f], [gyrometer (°/s): %.3f,%.3f,%.3f], [temperature (°C): %.2f]"),
+                                ACE_TEXT_ALWAYS_CHAR ("[accelerometer (g/s): %6.3f,%6.3f,%6.3f], [gyrometer (°/s): %8.3f,%8.3f,%8.3f], [temperature (°C): %6.2f]"),
                                 ax, ay, az,
                                 gx, gy, gz,
-                                tp);
+                                t);
   if (result < 0)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -745,7 +822,7 @@ process_cb (gpointer userData_in)
     // clean up
     message_p->release ();
 
-    return FALSE; // --> stop processing timer
+    return FALSE; // --> stop processing
   } // end IF
   gtk_statusbar_pop (status_bar_p,
                      cb_data_p->contextIdData);
@@ -753,22 +830,48 @@ process_cb (gpointer userData_in)
                       cb_data_p->contextIdData,
                       buffer);
 
-  static GLfloat angle_x, angle_y, angle_z;
-//  angle_x = gx;
-//  angle_y = gy;
-//  angle_z = gz;
-  ////cb_data_p->openGLCamera.translation[0] +=
-  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_x;
-  ////cb_data_p->openGLCamera.translation[1] -=
-  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
-  ////cb_data_p->openGLCamera.translation[2] -=
-  ////  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
-  //cb_data_p->openGLCamera.rotation[0] +=
-  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_y;
-  //cb_data_p->openGLCamera.rotation[1] +=
-  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_x;
-  //cb_data_p->openGLCamera.rotation[2] +=
-  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_ROTATION_FACTOR * diff_x;
+  // step2: process sensor data
+  // step2a: acceleration / rotation
+  //cb_data_p->openGLCamera.translation[0] +=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_x;
+  //cb_data_p->openGLCamera.translation[1] -=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
+  //cb_data_p->openGLCamera.translation[2] -=
+  //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
+  // *TODO*: x,y rotation directions seem inverted for some reason...
+  cb_data_p->openGLCamera.rotation[0] = -gx;
+  cb_data_p->openGLCamera.rotation[1] = -gy;
+  cb_data_p->openGLCamera.rotation[2] = gz;
+
+  // step2b: temperature
+  GtkCurve* curve_p =
+    GTK_CURVE (glade_xml_get_widget (cb_data_p->XML,
+    ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_CURVE)));
+  ACE_ASSERT (curve_p);
+  cb_data_p->temperatureIndex++;
+  if (cb_data_p->temperatureIndex == OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE)
+  {
+    cb_data_p->temperatureIndex = 0;
+    //ACE_OS::memset (cb_data_p->temperature,
+    //                0,
+    //                sizeof (cb_data_p->temperature));
+    gtk_curve_reset (curve_p);
+  } // end IF
+  cb_data_p->temperature[cb_data_p->temperatureIndex * 2] =
+    static_cast<gfloat> (cb_data_p->temperatureIndex);
+  cb_data_p->temperature[(cb_data_p->temperatureIndex * 2) + 1] =
+    ((t + OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET) /
+    OLIMEX_MOD_MPU6050_THERMOMETER_RANGE) *
+    OLIMEX_MOD_MPU6050_UI_WIDGET_CURVE_MAXIMUM_Y;
+  //gtk_curve_set_range (curve_p, 
+  //                     0.0F,
+  //                     static_cast<gfloat> (cb_data_p->temperatureIndex),
+  //                     0.0F,
+  //                     100.0F);
+  gtk_curve_set_vector (curve_p,
+                        OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE,
+                        //cb_data_p->temperatureIndex + 1,
+                        cb_data_p->temperature);
 
 //expose:
   // invalidate drawing area
@@ -779,6 +882,7 @@ process_cb (gpointer userData_in)
                             ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA));
   ACE_ASSERT (drawing_area_p);
   gtk_widget_queue_draw (drawing_area_p);
+  //gtk_widget_queue_draw (GTK_WIDGET (curve_p));
   //gdk_window_invalidate_rect (//gtk_widget_get_root_window (drawing_area),
   //                            drawing_area_p->window,
   //                            &drawing_area_p->allocation,
@@ -795,7 +899,7 @@ process_cb (gpointer userData_in)
   //              static_cast<float> (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES)) * 100.0F),
   //            cb_data_p->allocator->cache_depth ()));
 
-  return TRUE; // --> continue processing timer
+  return TRUE; // --> continue processing
 }
 
 G_MODULE_EXPORT gboolean
@@ -953,9 +1057,9 @@ about_clicked_gtk_cb (GtkWidget* widget_in,
   ACE_UNUSED_ARG (widget_in);
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
       static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
-  ACE_ASSERT (cb_data_p);
 
   // sanity check(s)
+  ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->XML);
 
   // retrieve about dialog handle
@@ -987,7 +1091,68 @@ calibrate_clicked_gtk_cb (GtkWidget* widget_in,
   ACE_UNUSED_ARG (widget_in);
   Olimex_Mod_MPU6050_GtkCBData_t* cb_data_p =
     static_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (userData_in);
+
+  // sanity check(s)
   ACE_ASSERT (cb_data_p);
+
+  if (cb_data_p->clientMode)
+  {
+    ACE_OS::memset (&cb_data_p->clientSensorBias,
+                    0,
+                    sizeof (cb_data_p->clientSensorBias));
+
+    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (cb_data_p->lock);
+    if (cb_data_p->eventQueue.empty ())
+    {
+      ACE_DEBUG ((LM_WARNING,
+                  ACE_TEXT ("no data, returning\n")));
+      return FALSE; // propagate
+    } // end IF
+    Olimex_Mod_MPU6050_Message* message_p = NULL;
+    message_p = cb_data_p->messageQueue.front ();
+    ACE_ASSERT (message_p);
+    float dummy;
+    extract_data (message_p->rd_ptr (),
+                  cb_data_p->clientSensorBias.ax_bias,
+                  cb_data_p->clientSensorBias.ay_bias,
+                  cb_data_p->clientSensorBias.az_bias,
+                  dummy,
+                  cb_data_p->clientSensorBias.gx_bias,
+                  cb_data_p->clientSensorBias.gy_bias,
+                  cb_data_p->clientSensorBias.gz_bias);
+    cb_data_p->clientSensorBias.az_bias += 1.0F;
+
+    // update status bar
+    gchar buffer[BUFSIZ];
+    ACE_OS::memset (buffer, 0, sizeof (buffer));
+    int result = ACE_OS::sprintf (buffer,
+                                  ACE_TEXT_ALWAYS_CHAR ("updated bias data: [accelerometer (g/s): %6.3f,%6.3f,%6.3f], [gyrometer (°/s): %8.3f,%8.3f,%8.3f]"),
+                                  cb_data_p->clientSensorBias.ax_bias,
+                                  cb_data_p->clientSensorBias.ay_bias,
+                                  cb_data_p->clientSensorBias.az_bias,
+                                  cb_data_p->clientSensorBias.gx_bias,
+                                  cb_data_p->clientSensorBias.gy_bias,
+                                  cb_data_p->clientSensorBias.gz_bias);
+    if (result < 0)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to sprintf(): \"%m\", continuing\n")));
+      return FALSE; // propagate
+    } // end IF
+    GtkStatusbar* status_bar_p =
+      GTK_STATUSBAR (glade_xml_get_widget (cb_data_p->XML,
+                                           ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR)));
+    ACE_ASSERT (status_bar_p);
+    gtk_statusbar_push (status_bar_p,
+                        cb_data_p->contextIdInformation,
+                        buffer);
+  } // end IF
+  else
+  {
+    // *TODO*: implement a client->server protocol to do this
+    ACE_ASSERT (false);
+    ACE_NOTSUP_RETURN (TRUE);
+  } // end IF
 
   return TRUE; // done (do not propagate further)
 }

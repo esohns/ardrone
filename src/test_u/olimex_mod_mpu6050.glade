@@ -936,9 +936,8 @@ Public License instead of this License.  But first, please read
           <widget class="GtkCurve" id="curve">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
-            <property name="max_x">100</property>
-            <property name="min_y">-40</property>
-            <property name="max_y">85</property>
+            <property name="max_x">1000</property>
+            <property name="max_y">100</property>
           </widget>
           <packing>
             <property name="expand">False</property>

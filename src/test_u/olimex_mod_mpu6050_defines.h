@@ -50,7 +50,10 @@
 #define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_WIDTH  640
 #define OLIMEX_MOD_MPU6050_DEFAULT_UI_WIDGET_WINDOW_MAIN_SIZE_HEIGHT 480
 #define OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY                   100 // ms
-#define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000 / 60 // Hz
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
+// *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000 / 30 // Hz
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_CURVE                      "curve"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT               "about_dialog"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA               "drawing_area"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_FILE_QUIT             "quit"
@@ -58,8 +61,8 @@
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_MENU_VIEW_CALIBRATE        "calibrate"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_STATUS_BAR                 "status_bar"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_WINDOW_MAIN                "main_window"
-#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_CONNECTIVITY "connectivity"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_DATA         "data"
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_STATUS_BAR_CONTEXT_INFORMATION  "information"
 
 // *** network-related ***
 #define OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR                      false
@@ -84,11 +87,11 @@
 //#define DEFAULT_SOCKET_LINGER                       10 // seconds {0 --> off}
 
 // *** pro/reactor-related ***
-#define OLIMEX_MOD_MPU6050_USE_REACTOR                               true
+#define OLIMEX_MOD_MPU6050_USE_REACTOR                               false
 #define OLIMEX_MOD_MPU6050_TASK_GROUP_ID                             11
 
 // *** stream-related ***
-#define OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE                        14
+#define OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE                        14 // bytes
 // *IMPORTANT NOTE*: any of these COULD seriously affect performance
 #define OLIMEX_MOD_MPU6050_MAXIMUM_QUEUE_SLOTS                       1000
 #define OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       1000
@@ -96,11 +99,14 @@
 #define OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL             0 // seconds [0 --> OFF]
 
 // *** device-related ***
-#define OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2                16384 // LSB/g
-#define OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR                    340
+#define OLIMEX_MOD_MPU6050_ACCELEROMETER_LSB_FACTOR_2                16384.0F // LSB/g
+#define OLIMEX_MOD_MPU6050_THERMOMETER_LSB_FACTOR                    340.0F
 #define OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET                        36.53F
-#define OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250                  131 // LSB/°/s
+#define OLIMEX_MOD_MPU6050_THERMOMETER_RANGE                         125.0F // -40°C - 85°C
+#define OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250                  131.0F // LSB/(°/s)
 
+// *** application-related ***
+#define OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE                   1000
 #define OLIMEX_MOD_MPU6050_LOG_FILE_NAME                             "olimex_mod_mpu6050.log"
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

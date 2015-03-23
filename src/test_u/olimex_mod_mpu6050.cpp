@@ -111,6 +111,10 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
   std::cout << ACE_TEXT ("currently available options:")
             << std::endl;
+  std::cout << ACE_TEXT ("-c           : client mode [")
+            << false
+            << ACE_TEXT ("]")
+            << std::endl;
   std::cout << ACE_TEXT ("-l           : log to a file [")
             << false
             << ACE_TEXT ("]")
@@ -136,6 +140,7 @@ do_printUsage (const std::string& programName_in)
 bool
 do_processArguments (int argc_in,
                      ACE_TCHAR** argv_in, // cannot be const...
+                     bool& clientMode_out,
                      bool& logToFile_out,
                      bool& useReactor_out,
                      ACE_INET_Addr& peerAddress_out,
@@ -146,6 +151,7 @@ do_processArguments (int argc_in,
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_processArguments"));
 
   // init results
+  clientMode_out              = false;
   logToFile_out               = false;
   useReactor_out              = OLIMEX_MOD_MPU6050_USE_REACTOR;
   traceInformation_out        = false;
@@ -154,7 +160,7 @@ do_processArguments (int argc_in,
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
-                              ACE_TEXT ("lrs:tu:v"),
+                              ACE_TEXT ("clrs:tu:v"),
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -166,6 +172,11 @@ do_processArguments (int argc_in,
   {
     switch (option)
     {
+      case 'c':
+      {
+        clientMode_out = true;
+        break;
+      }
       case 'l':
       {
         logToFile_out = true;
@@ -301,6 +312,7 @@ do_initSignals (ACE_Sig_Set& signals_inout)
 void
 do_work (int argc_in,
          ACE_TCHAR** argv_in,
+         bool clientMode_in,
          const ACE_INET_Addr& peerAddress_in,
          bool useAsynchConnector_in,
          bool useReactor_in,
@@ -308,12 +320,20 @@ do_work (int argc_in,
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
 
-  // step1: initialize stream
+  // step1: initialize gtk cb data
   Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
   gtk_cb_data.argc = argc_in;
   gtk_cb_data.argv = argv_in;
+  gtk_cb_data.clientMode = clientMode_in;
+  ACE_OS::memset (&gtk_cb_data.clientSensorBias,
+                  0,
+                  sizeof (gtk_cb_data.clientSensorBias));
   gtk_cb_data.openGLDoubleBuffered = OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED;
+  ACE_OS::memset (gtk_cb_data.temperature,
+                  0,
+                  sizeof (gtk_cb_data.temperature));
 
+  // step2: initialize stream
   Olimex_Mod_MPU6050_EventHandler event_handler (&gtk_cb_data);
   std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
   Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (module_name,
@@ -354,7 +374,7 @@ do_work (int argc_in,
   configuration.streamConfiguration.statisticsReportingInterval = 0;
   configuration.streamConfiguration.printFinalReport = false;
 
-  // step2: init event dispatch
+  // step3: init event dispatch
   bool serialize_output;
   if (!Common_Tools::initializeEventDispatch (useReactor_in,
                                               1,
@@ -365,7 +385,7 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // step3: init client connector
+  // step4: init client connector
 //  Net_IUDPConnectionManager_t* connection_manager_p = ;
   Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
   if (useAsynchConnector_in)
@@ -387,14 +407,14 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // step4: init connection manager
+  // step5: init connection manager
   CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
   Net_UserData_t session_data;
   ACE_OS::memset (&session_data, 0, sizeof (session_data));
   CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
                                                  &session_data); // will be passed to all handlers
 
-  // step5: init signal handling
+  // step6: init signal handling
   Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in, // peer address
                                                    connector_p,    // connector
                                                    useReactor_in); // use reactor ?
@@ -426,11 +446,11 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // event loop(s):
+  // step7: start event loop(s):
   // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
   // [- signal timer expiration to perform server queries] (see above)
 
-  // step6a: start GTK event loop
+  // step7a: start GTK event loop
   Olimex_Mod_MPU6050_GTKUIDefinition interface_definition (argc_in,
                                                            argv_in,
                                                            &gtk_cb_data);
@@ -454,7 +474,7 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // step6b: init worker(s)
+  // step7b: init worker(s)
   int group_id = -1;
   if (!Common_Tools::startEventDispatch (useReactor_in,
                                          1,
@@ -484,7 +504,7 @@ do_work (int argc_in,
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("started event dispatch...\n")));
 
-  // step7: connect
+  // step8: connect
   if (!connector_p->connect (peerAddress_in))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -512,7 +532,7 @@ do_work (int argc_in,
   }
   // *WARNING*: from this point on, clean up any remote connections !
 
-  // step8: dispatch events
+  // step9: dispatch events
   // *NOTE*: when using a thread pool, handle things differently...
   if (useReactor_in)
   {
@@ -531,7 +551,7 @@ do_work (int argc_in,
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished event dispatch...\n")));
 
-  // step9: clean up
+  // step10: clean up
   // *NOTE*: any action timer has been cancelled, connections have been
   // aborted and any GTK event dispatcher has returned by now...
   Common_Tools::finalizeSignals (signal_set,
@@ -574,8 +594,8 @@ ACE_TMAIN (int argc_in,
 #endif
 
   // step1: process commandline options (if any)
+  bool client_mode            = false;
   bool log_to_file            = false;
-  bool use_asynch_connector   = OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR;
   bool use_reactor            = OLIMEX_MOD_MPU6050_USE_REACTOR;
   ACE_INET_Addr peer_address;
   bool trace_information      = false;
@@ -584,6 +604,7 @@ ACE_TMAIN (int argc_in,
   bool print_version_and_exit = false;
   if (!do_processArguments (argc_in,
                             argv_in,
+                            client_mode,
                             log_to_file,
                             use_reactor,
                             peer_address,
@@ -607,11 +628,14 @@ ACE_TMAIN (int argc_in,
   } // end IF
 
   // step2: validate configuration
-  if (peer_address.is_any () ||
+  bool use_asynch_connector =
+   (!use_reactor ? true 
+                 : OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR);
+  if ((client_mode && peer_address.is_any ()) ||
       (use_reactor && use_asynch_connector))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to validate configuration, aborting\n")));
+                ACE_TEXT ("invalid configuration, aborting\n")));
 
     do_printUsage (ACE::basename (argv_in[0]));
 
@@ -681,6 +705,7 @@ ACE_TMAIN (int argc_in,
   else
     do_work (argc_in,
              argv_in,
+             client_mode,
              peer_address,
              use_asynch_connector,
              use_reactor,
