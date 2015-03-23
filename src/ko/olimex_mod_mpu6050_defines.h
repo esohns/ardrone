@@ -48,7 +48,7 @@
 
 // timer
 // *NOTE*: this (roughly) sets the device polling frequency (noint=1)
-#define TIMER_DELAY_MS                    10L // ms
+#define TIMER_DELAY_MS                    10 // ms
 
 // device
 #define RESET_DELAY_MS                    100 // ms

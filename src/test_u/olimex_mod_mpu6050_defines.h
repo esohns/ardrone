@@ -52,7 +52,7 @@
 #define OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY                   100 // ms
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
 // *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
-#define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000 / 30 // Hz
+#define OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL             1000.0F / 30.0F // Hz
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_CURVE                      "curve"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DIALOG_ABOUT               "about_dialog"
 #define OLIMEX_MOD_MPU6050_UI_WIDGET_NAME_DRAWING_AREA               "drawing_area"
@@ -104,6 +104,9 @@
 #define OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET                        36.53F
 #define OLIMEX_MOD_MPU6050_THERMOMETER_RANGE                         125.0F // -40°C - 85°C
 #define OLIMEX_MOD_MPU6050_GYROSCOPE_LSB_FACTOR_250                  131.0F // LSB/(°/s)
+// *IMPORTANT NOTE*: currently (!) this value must correspond to the actual
+//                   device driver setting i.e. TIMER_DELAY_MS (for noint=1)
+#define OLIMEX_MOD_MPU6050_DATA_RATE                                 100 // messages/s
 
 // *** application-related ***
 #define OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE                   1000

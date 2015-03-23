@@ -499,31 +499,35 @@ configure_cb (GtkWidget* widget_in,
   if (is_first_invokation)
   {
     glShadeModel (GL_SMOOTH); // shading mathod: GL_SMOOTH or GL_FLAT
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 4); // 4-byte pixel alignment
+    //glPixelStorei (GL_UNPACK_ALIGNMENT, 4); // 4-byte pixel alignment
 
     // enable/disable features
     glEnable (GL_DEPTH_TEST);
     glEnable (GL_LIGHTING);
-    glEnable (GL_TEXTURE_2D);
-    glEnable (GL_CULL_FACE);
+    //glEnable (GL_TEXTURE_2D);
+    //glEnable (GL_CULL_FACE);
 
     glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_BLEND);
-    glEnable (GL_LINE_SMOOTH);
+
+    //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable (GL_BLEND);
+
     //glEnable (GL_SCISSOR_TEST);
 
     // track material ambient and diffuse from surface color, call it before
     // glEnable(GL_COLOR_MATERIAL)
     glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    //glEnable (GL_COLOR_MATERIAL);
+    glEnable (GL_COLOR_MATERIAL);
+
+    //glLineWidth (1.0F);
+    //glEnable (GL_LINE_SMOOTH);
 
     //glClearColor (0.0F, 0.0F, 0.0F, 0.0F); // background color
-    glClearStencil (0); // clear stencil buffer
+    //glClearStencil (0); // clear stencil buffer
     glClearDepth (1.0F); // 0 is near, 1 is far
-    glDepthFunc (GL_LEQUAL);
+    //glDepthFunc (GL_LEQUAL);
     //glColor3f (1.0F, 1.0F, 1.0F); // white
   } // end IF
 
@@ -647,7 +651,7 @@ expose_cb (GtkWidget* widget_in,
   // set specific features
   static GLfloat color[4];
   glGetFloatv (GL_CURRENT_COLOR, color);
-  glEnable (GL_COLOR_MATERIAL);
+  //glEnable (GL_COLOR_MATERIAL);
   glDisable (GL_LIGHTING);
 
   // step1: axes don't translate/zoom
@@ -667,7 +671,7 @@ expose_cb (GtkWidget* widget_in,
 
   // reset specific features
   glColor3f (color[0], color[1], color[2]);
-  glDisable (GL_COLOR_MATERIAL);
+  //glDisable (GL_COLOR_MATERIAL);
   glEnable (GL_LIGHTING);
 
   // restore viewport
@@ -831,6 +835,7 @@ process_cb (gpointer userData_in)
                       buffer);
 
   // step2: process sensor data
+  static float angle_x, angle_y, angle_z;
   // step2a: acceleration / rotation
   //cb_data_p->openGLCamera.translation[0] +=
   //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_x;
@@ -839,9 +844,12 @@ process_cb (gpointer userData_in)
   //cb_data_p->openGLCamera.translation[2] -=
   //  OLIMEX_MOD_MPU6050_OPENGL_CAMERA_TRANSLATION_FACTOR * diff_y;
   // *TODO*: x,y rotation directions seem inverted for some reason...
-  cb_data_p->openGLCamera.rotation[0] = -gx;
-  cb_data_p->openGLCamera.rotation[1] = -gy;
-  cb_data_p->openGLCamera.rotation[2] = gz;
+  angle_x = -gx * (1.0F / static_cast<float> (OLIMEX_MOD_MPU6050_DATA_RATE));
+  angle_y = -gy * (1.0F / static_cast<float> (OLIMEX_MOD_MPU6050_DATA_RATE));
+  angle_z =  gz * (1.0F / static_cast<float> (OLIMEX_MOD_MPU6050_DATA_RATE));
+  cb_data_p->openGLCamera.rotation[0] += angle_x;
+  cb_data_p->openGLCamera.rotation[1] += angle_y;
+  cb_data_p->openGLCamera.rotation[2] += angle_z;
 
   // step2b: temperature
   GtkCurve* curve_p =
