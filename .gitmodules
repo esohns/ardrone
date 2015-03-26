@@ -1,9 +1,9 @@
-[submodule "modules/libCommon"]
+[submodule "libCommon"]
 	path = modules/libCommon
 	url = https://github.com/esohns/libCommon.git
-[submodule "modules/libACEStream"]
+[submodule "libACEStream"]
 	path = modules/libACEStream
 	url = https://github.com/esohns/libACEStream.git
-[submodule "modules/libACENetwork"]
+[submodule "libACENetwork"]
 	path = modules/libACENetwork
 	url = https://github.com/esohns/libACENetwork.git
