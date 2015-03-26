@@ -21,6 +21,12 @@
 // forward declarations
 struct i2c_mpu6050_client_data_t;
 
+// helper functions
+void i2c_mpu6050_device_extract_data(char*,             // data
+                                     int*, int*, int*,  // return value: accelerometer
+                                     int*,              // return value: temperature
+                                     int*, int*, int*); // return value: gyroscope
+
 // function declarations
 int i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*);
 int i2c_mpu6050_device_fifo_count(struct i2c_mpu6050_client_data_t*);

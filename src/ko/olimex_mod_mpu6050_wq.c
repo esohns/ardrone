@@ -35,7 +35,7 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 {
   struct read_work_t* work_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
-  s32 bytes_to_read, bytes_read = 0;
+  s32 bytes_to_read = 0;
   int err;
 
 //  pr_debug("%s called.\n", __FUNCTION__);
@@ -46,7 +46,8 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
+  client_data_p =
+   (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(work_p->client);
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
@@ -54,9 +55,15 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
   }
 
   mutex_lock(&client_data_p->sync_lock);
+
+  client_data_p->ringbufferpos++;
+  if (client_data_p->ringbufferpos == KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE)
+    client_data_p->ringbufferpos = 0;
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 1;
+  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = 0;
   // *TODO*: move this to the IRQ handler...
-  client_data_p->ringbuffer[client_data_p->ringbufferpos].timestamp = ktime_to_ns(ktime_get_real());
+  client_data_p->ringbuffer[client_data_p->ringbufferpos].timestamp =
+   ktime_to_ns(ktime_get_real());
 
   if (likely(nofifo == 0)) {
     // *TODO*: use a single transaction for efficiency...
@@ -89,8 +96,8 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
       goto clean_up;
     }
 do_loop:
-    while (bytes_read < bytes_to_read) {
-      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+    while (client_data_p->ringbuffer[client_data_p->ringbufferpos].size < bytes_to_read) {
+      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
 //      err = i2c_smbus_read_block_data(client_data_p->client,
 //                                      MPU6050_RA_FIFO_R_W,
 //                                      client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
@@ -98,29 +105,31 @@ do_loop:
                                           MPU6050_RA_FIFO_R_W,
                                           bytes_to_read,
                                           client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
-      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(err < 0)) {
         pr_err("%s: i2c_smbus_read_i2c_block_data(0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_FIFO_R_W,
                err);
         goto clean_up;
       }
-      bytes_read += err;
+      client_data_p->ringbuffer[client_data_p->ringbufferpos].size += err;
       goto do_dispatch;
     }
   }
   else {
     // *NOTE*: read one complete set of data only...
-    bytes_to_read = BLOCK_LENGTH;
-    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
-    bytes_read = i2c_smbus_read_i2c_block_data(client_data_p->client,
-                                               MPU6050_RA_ACCEL_XOUT_H, bytes_to_read,
-                                               client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
-    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
-    if (unlikely(bytes_read != bytes_to_read))
+    bytes_to_read = KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH;
+    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
+    client_data_p->ringbuffer[client_data_p->ringbufferpos].size =
+     i2c_smbus_read_i2c_block_data(client_data_p->client,
+                                   MPU6050_RA_ACCEL_XOUT_H, bytes_to_read,
+                                   client_data_p->ringbuffer[client_data_p->ringbufferpos].data);
+    gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
+    if (unlikely(client_data_p->ringbuffer[client_data_p->ringbufferpos].size != bytes_to_read))
       pr_warn("%s: i2c_smbus_read_i2c_block_data(0x%x) failed: %d (expected: %d)\n", __FUNCTION__,
               MPU6050_RA_ACCEL_XOUT_H,
-              bytes_read, bytes_to_read);
+              client_data_p->ringbuffer[client_data_p->ringbufferpos].size,
+              bytes_to_read);
   }
 
 do_dispatch:
@@ -128,30 +137,27 @@ do_dispatch:
 //           bytes_read,
 //           client_data_p->ringbufferpos);
 
-  client_data_p->ringbuffer[client_data_p->ringbufferpos].size = bytes_read;
   if (likely(nonetlink == 0))
     i2c_mpu6050_netlink_forward(client_data_p, client_data_p->ringbufferpos);
 //  else
 //    i2c_mpu6050_wq_dump(client_data_p, client_data_p->ringbufferpos, 0);
-  client_data_p->ringbufferpos++;
-  if (unlikely(client_data_p->ringbufferpos == RINGBUFFER_SIZE))
-    client_data_p->ringbufferpos = 0;
   if (likely((nofifo == 0) &&
-             (bytes_read < bytes_to_read))) goto do_loop;
+             (client_data_p->ringbuffer[client_data_p->ringbufferpos].size < bytes_to_read))) goto do_loop;
+
   mutex_unlock(&client_data_p->sync_lock);
 
   return;
 
 clean_up:
   client_data_p->ringbuffer[client_data_p->ringbufferpos].used = 0;
+
   mutex_unlock(&client_data_p->sync_lock);
 }
 
 void
 i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in, int lock_in)
 {
-  u8* reg_p;
-  int value_x, value_y, value_z;
+  int accel_x, accel_y, accel_z, temp, gyro_x, gyro_y, gyro_z;
   struct timeval time;
   struct tm tm;
 
@@ -164,10 +170,10 @@ i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in
   if (unlikely(clientData_in->ringbuffer[slot_in].used == 0))
     pr_warn("%s slot %d not in use.\n", __FUNCTION__,
             slot_in);
-  if (unlikely(clientData_in->ringbuffer[slot_in].size < BLOCK_LENGTH))
+  if (unlikely(clientData_in->ringbuffer[slot_in].size < KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH))
     pr_warn("%s slot %d dataset incomplete (%d/%d byte(s)).\n", __FUNCTION__,
             slot_in,
-            clientData_in->ringbuffer[slot_in].size, BLOCK_LENGTH);
+            clientData_in->ringbuffer[slot_in].size, KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH);
   if (unlikely(clientData_in->ringbuffer[slot_in].timestamp == 0))
     pr_warn("%s slot %d missing timestamp.\n", __FUNCTION__,
             slot_in);
@@ -175,56 +181,25 @@ i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in
   time = ns_to_timeval(clientData_in->ringbuffer[slot_in].timestamp);
   time_to_tm(time.tv_sec, 0, &tm);
 
-  reg_p = clientData_in->ringbuffer[slot_in].data;
-  // *NOTE*: i2c uses a big-endian transfer syntax
-  be16_to_cpus((__be16*)reg_p);
-  // convert two's complement
-  value_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-//  pr_info("#%d: acceleration (x,y,z): %.5f,%.5f,%.5f g\n", slot_in,
-//          (float)value_x / (float)ACCEL_SENSITIVITY,
-//          (float)value_y / (float)ACCEL_SENSITIVITY,
-//          (float)value_z / (float)ACCEL_SENSITIVITY);
-  pr_debug("%d:%d:%d.%ld: #%d: acceleration (x,y,z): %d,%d,%d\n",
-           tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
-           slot_in,
-           value_x, value_y, value_z);
-  reg_p += 2;
-  value_x = *(s16*)reg_p;
-//  pr_info("#%d: temperature: %.5f °C\n", slot_in,
-//          ((float)value_x / (float)THERMO_SENSITIVITY) + THERMO_OFFSET);
-  pr_debug("%d:%d:%d.%ld: #%d: temperature: %d\n",
-           tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
-           slot_in,
-           value_x);
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                : *(s16*)reg_p);
-//  pr_info("#%d: rotation (x,y,z): %.5f,%.5f,%.5f °/s\n", slot_in,
-//          (float)value_x / (float)GYRO_SENSITIVITY,
-//          (float)value_y / (float)GYRO_SENSITIVITY,
-//          (float)value_z / (float)GYRO_SENSITIVITY);
-  pr_debug("%d:%d:%d.%ld: #%d: rotation (x,y,z): %d,%d,%d\n",
-           tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
-           slot_in,
-           value_x, value_y, value_z);
+  i2c_mpu6050_device_extract_data(clientData_in->ringbuffer[slot_in].data,
+                                  &accel_x, &accel_y, &accel_z,
+                                  &temp,
+                                  &gyro_x, &gyro_y, &gyro_z);
+
+  //  pr_info("#%d: acceleration (x,y,z): %.5f,%.5f,%.5f g\n", slot_in,
+  //          (float)value_x / (float)ACCEL_SENSITIVITY,
+  //          (float)value_y / (float)ACCEL_SENSITIVITY,
+  //          (float)value_z / (float)ACCEL_SENSITIVITY);
+  //          ((float)value_x / (float)THERMO_SENSITIVITY) + THERMO_OFFSET);
+  //          (float)value_x / (float)GYRO_SENSITIVITY,
+  //          (float)value_y / (float)GYRO_SENSITIVITY,
+  //          (float)value_z / (float)GYRO_SENSITIVITY);
+  pr_debug("%d:%d:%d.%ld: #%d: acceleration: %d,%d,%d, temperature: %d, angular velocity: %d,%d,%d\n",
+             tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
+             slot_in,
+             accel_x, accel_y, accel_z,
+             temp,
+             gyro_x, gyro_y, gyro_z);
 
   if (likely(lock_in))
     mutex_unlock(&clientData_in->sync_lock);
@@ -247,10 +222,11 @@ i2c_mpu6050_wq_init(struct i2c_mpu6050_client_data_t* clientData_in)
 
 //  memset(clientData_in->ringbuffer, 0, sizeof(clientData_in->ringbuffer));
 
-  clientData_in->workqueue = create_singlethread_workqueue(KO_OLIMEX_MOD_MPU6050_WQ_NAME);
+  clientData_in->workqueue =
+      create_singlethread_workqueue(KO_OLIMEX_MOD_MPU6050_DRIVER_WQ_NAME);
   if (unlikely(IS_ERR(clientData_in->workqueue))) {
     pr_err("%s: create_singlethread_workqueue(%s) failed: %ld\n", __FUNCTION__,
-           KO_OLIMEX_MOD_MPU6050_WQ_NAME,
+           KO_OLIMEX_MOD_MPU6050_DRIVER_WQ_NAME,
            PTR_ERR(clientData_in->workqueue));
     return PTR_ERR(clientData_in->workqueue);
   }

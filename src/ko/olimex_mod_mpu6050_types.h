@@ -34,7 +34,7 @@ struct server_t;
 
 struct ringbufferentry_t {
   int used;
-  uint8_t data[RINGBUFFER_DATA_SIZE];
+  uint8_t data[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE];
   int size;
   u64 timestamp;
 };
@@ -56,7 +56,7 @@ struct i2c_mpu6050_client_data_t {
 //  struct kobject* sysfs_object;
   struct workqueue_struct* workqueue;
   struct read_work_t work_read;
-  struct ringbufferentry_t ringbuffer[RINGBUFFER_SIZE];
+  struct ringbufferentry_t ringbuffer[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE];
   int ringbufferpos;
   struct mutex sync_lock;
 //  struct sock* netlink_socket;

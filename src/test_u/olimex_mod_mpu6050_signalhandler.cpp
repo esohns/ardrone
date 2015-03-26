@@ -138,7 +138,7 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     // - leave reactor event loop handling signals, sockets, (maintenance) timers...
     // --> (try to) terminate in a well-behaved manner
 
-    // step1: close open connection(s)
+    // step1: close open connection attempt(s)
     if (interfaceHandle_)
     {
       try

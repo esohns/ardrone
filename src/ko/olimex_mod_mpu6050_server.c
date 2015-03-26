@@ -135,15 +135,25 @@ i2c_mpu6050_server_run (void* data_in)
 //    pr_debug ("%s: received %d bytes: \"%s\"\n", __FUNCTION__,
 //              bytes_sent, buf);
 
-    i = client_data_p->server->ringbufferpos;
     mutex_lock (&client_data_p->sync_lock);
-    while (i != client_data_p->ringbufferpos)
-    {
+
+    // sanity check(s)
+    if ((client_data_p->ringbufferpos == -1) ||
+        (client_data_p->ringbuffer[client_data_p->ringbufferpos].used == 0)) {
+      pr_debug ("%s: no data\n", __FUNCTION__);
+      continue;
+    }
+
+//    i = client_data_p->server->ringbufferpos;
+    i = client_data_p->ringbufferpos;
+    //while (i != client_data_p->ringbufferpos)
+    //{
       if (client_data_p->ringbuffer[i].used == 0) goto done;
 
-      bytes_sent = i2c_mpu6050_server_send (client_data_p->server->socket_send,
-                                            &client_data_p->server->address_send,
-                                            client_data_p->ringbuffer[i].data, client_data_p->ringbuffer[i].size);
+      bytes_sent =
+       i2c_mpu6050_server_send (client_data_p->server->socket_send,
+                                &client_data_p->server->address_send,
+                                client_data_p->ringbuffer[i].data, client_data_p->ringbuffer[i].size);
       if (bytes_sent >= 0) {
         if (bytes_sent != client_data_p->ringbuffer[i].size) {
           pr_err ("%s: send() failed: %d/%d bytes transmitted\n", __FUNCTION__,
@@ -158,12 +168,15 @@ i2c_mpu6050_server_run (void* data_in)
 //                bytes_sent);
 
 done:
-      i++;
-      if (i == RINGBUFFER_SIZE) i = 0;
-    }
-    mutex_unlock(&client_data_p->sync_lock);
-    client_data_p->server->ringbufferpos = i;
+    //  i++;
+    //  if (i == RINGBUFFER_SIZE) i = 0;
+    //}
+    mutex_unlock (&client_data_p->sync_lock);
+    //client_data_p->server->ringbufferpos = i;
+
+    msleep (KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS);
   }
+  pr_debug ("%s: left server loop\n", __FUNCTION__);
 
 error2:
 //  sock_release (client_data_p->server->socket);

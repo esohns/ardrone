@@ -15,62 +15,69 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef OLIMEX_MOD_MPU6050_DEFINES_H
-#define OLIMEX_MOD_MPU6050_DEFINES_H
+#ifndef KO_OLIMEX_MOD_MPU6050_DEFINES_H
+#define KO_OLIMEX_MOD_MPU6050_DEFINES_H
+
+#include <linux/kernel.h>
+
+// *NOTE*: taken from i2cdevlib (see also: http://www.i2cdevlib.com/devices/mpu6050#source)
+#include "MPU6050.h"
 
 // module
-#define KO_OLIMEX_MOD_MPU6050_LICENSE     "GPL"
-#define KO_OLIMEX_MOD_MPU6050_AUTHOR      "Erik Sohns"
-#define KO_OLIMEX_MOD_MPU6050_VERSION     "0.1"
-#define KO_OLIMEX_MOD_MPU6050_DESCRIPTION "I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module"
+#define KO_OLIMEX_MOD_MPU6050_MODULE_LICENSE                  "GPL"
+#define KO_OLIMEX_MOD_MPU6050_MODULE_AUTHOR                   "Erik Sohns"
+#define KO_OLIMEX_MOD_MPU6050_MODULE_VERSION                  "0.1"
+#define KO_OLIMEX_MOD_MPU6050_MODULE_DESCRIPTION              "I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module"
 
 // driver
-#define KO_OLIMEX_MOD_MPU6050_DRIVER_NAME "olimex_mod_mpu6050"
-#define KO_OLIMEX_MOD_MPU6050_WQ_NAME     "olimex_mod_mpu6050_wq"
+#define KO_OLIMEX_MOD_MPU6050_DRIVER_NAME                     "olimex_mod_mpu6050"
+#define KO_OLIMEX_MOD_MPU6050_DRIVER_WQ_NAME                  "olimex_mod_mpu6050_wq"
 
 // macros
-#define ARRAY_AND_SIZE (x)                (x), ARRAY_SIZE (x)
+#define KO_OLIMEX_MOD_MPU6050_ARRAY_AND_SIZE (x)              (x), ARRAY_SIZE (x)
 
 // gpio
-#define GPIO_FEX_SECTION_HEADER           "gpio_para"
+#define KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER         "gpio_para"
 // *NOTE*: check the .fex file (bin2fex of script.bin) in the device boot partition
 // *TODO*: these should be defined elsewhere... (check linux-sunxi development)
-#define GPIO_UEXT4_PG11_PIN               10 // *NOTE*: connect UEXT to GPIO-1 port
-#define GPIO_UEXT4_PG11_LABEL             "gpio_pin_10"
-//#define GPIO_UEXT4_PH17_PIN               30 // *NOTE*: connect UEXT to GPIO-3 port
-//#define GPIO_UEXT4_PH17_LABEL             "gpio_pin_30"
-#define GPIO_LED_PH02_PIN                 20
-#define GPIO_LED_PH02_LABEL               "gpio_pin_20"
-#define GPIO_INT_PIN                      GPIO_UEXT4_PG11_PIN
-#define GPIO_INT_PIN_LABEL                GPIO_UEXT4_PG11_LABEL
-#define GPIO_LED_PIN                      GPIO_LED_PH02_PIN
-#define GPIO_LED_PIN_LABEL                GPIO_LED_PH02_LABEL
+#define KO_OLIMEX_MOD_MPU6050_GPIO_UEXT4_PG11_PIN             10 // *NOTE*: connect UEXT to GPIO-1 port
+#define KO_OLIMEX_MOD_MPU6050_GPIO_UEXT4_PG11_LABEL           "gpio_pin_10"
+//#define KO_GPIO_UEXT4_PH17_PIN               30 // *NOTE*: connect UEXT to GPIO-3 port
+//#define KO_GPIO_UEXT4_PH17_LABEL             "gpio_pin_30"
+#define KO_OLIMEX_MOD_MPU6050_GPIO_LED_PH02_PIN               20
+#define KO_OLIMEX_MOD_MPU6050_GPIO_LED_PH02_LABEL             "gpio_pin_20"
+#define KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN                    KO_OLIMEX_MOD_MPU6050_GPIO_UEXT4_PG11_PIN
+#define KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL              KO_OLIMEX_MOD_MPU6050_GPIO_UEXT4_PG11_LABEL
+#define KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN                    KO_OLIMEX_MOD_MPU6050_GPIO_LED_PH02_PIN
+#define KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL              KO_OLIMEX_MOD_MPU6050_GPIO_LED_PH02_LABEL
 
 // timer
 // *NOTE*: this (roughly) sets the device polling frequency (noint=1)
-#define TIMER_DELAY_MS                    10 // ms
+#define KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS                  10 // ms
 
 // device
-#define RESET_DELAY_MS                    100 // ms
-#define REG_SET_DELAY_MS                  5 // ms
-#define BLOCK_LENGTH                      14 // bytes
-#define ACCEL_SENSITIVITY                 16384 // LSB/g
-#define THERMO_SENSITIVITY                340
-#define THERMO_OFFSET                     36.53F
-#define GYRO_SENSITIVITY                  131 // LSB/(°/s)
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_RESET_DELAY_MS           100 // ms
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_REG_SET_DELAY_MS         5 // ms
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH             14 // bytes
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_ACCEL_SENSITIVITY        MPU6050_ACCEL_FS_16
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_ACCEL_SENSITIVITY_FACTOR 16384 // LSB/g
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_THERMO_SENSITIVITY       340
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_THERMO_OFFSET            36.53F
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_GYRO_SENSITIVITY         MPU6050_GYRO_FS_2000 // +- 2000 °/s
+#define KO_OLIMEX_MOD_MPU6050_DEVICE_GYRO_SENSITIVITY_FACTOR  131 // LSB/(°/s)
 
 // ringbuffer
-#define RINGBUFFER_SIZE                   64
-#define RINGBUFFER_DATA_SIZE              BLOCK_LENGTH
+#define KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE                 64
+#define KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE            KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH
 
 // network
 // *WARNING*: check <linux/netlink.h> for available identifiers !
 //#define NETLINK_PROTOCOL_TYPE             NETLINK_GENERIC
-#define NETLINK_PROTOCOL_FAMILY_NAME      "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
-#define NETLINK_PROTOCOL_VERSION          1
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_FAMILY_NAME    "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_VERSION        1
 
-#define SERVER_DEFAULT_PEER               "127.0.0.1"
-#define SERVER_DEFAULT_PORT               10001
+#define KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PEER             "127.0.0.1"
+#define KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PORT             10001
 //#define SERVER_INADDR_SEND                ((unsigned long int)0x7f000001) /* 127.0.0.1: INADDR_LOOPBACK */
 //#define SERVER_INADDR_SEND                INADDR_LOOPBACK
 

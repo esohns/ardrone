@@ -373,6 +373,9 @@ do_work (int argc_in,
   configuration.streamConfiguration.deleteModule = false;
   configuration.streamConfiguration.statisticsReportingInterval = 0;
   configuration.streamConfiguration.printFinalReport = false;
+  // ******************* protocol configuration data ***************************
+  configuration.protocolConfiguration.bufferSize =
+      OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
 
   // step3: init event dispatch
   bool serialize_output;
@@ -388,6 +391,10 @@ do_work (int argc_in,
   // step4: init client connector
 //  Net_IUDPConnectionManager_t* connection_manager_p = ;
   Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
+//  Net_SocketHandlerConfiguration_t socket_handler_configuration;
+//  socket_handler_configuration.messageAllocator = &message_allocator;
+//  socket_handler_configuration.socketConfiguration =
+//      configuration.socketConfiguration;
   if (useAsynchConnector_in)
   {
     ACE_NEW_NORETURN (connector_p,

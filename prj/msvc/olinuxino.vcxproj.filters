@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Kernel Module">
+      <UniqueIdentifier>{d4d352de-5c7e-4480-8750-f9a4ea6747d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp">
@@ -47,6 +50,33 @@
     </ClCompile>
     <ClCompile Include="..\..\src\test_u\stdafx.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_device.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_irq.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_main.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_netlink.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_pm.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_server.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_timer.c">
+      <Filter>Kernel Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_wq.c">
+      <Filter>Kernel Module</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -94,6 +124,39 @@
     </ClInclude>
     <ClInclude Include="..\..\src\include\olinuxino_config.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_defines.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_device.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_irq.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_main.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_netlink.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_pm.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_server.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_timer.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_types.h">
+      <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_wq.h">
+      <Filter>Kernel Module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

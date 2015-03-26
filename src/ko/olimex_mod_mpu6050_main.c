@@ -246,9 +246,9 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     pr_err("%s: required i2c functionality is not supported on this adapter\n", __FUNCTION__);
     return -EIO;
   }
-  if (unlikely(!gpio_is_valid(GPIO_LED_PIN))) {
+  if (unlikely(!gpio_is_valid(KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN))) {
     pr_err("%s: gpio_is_valid(%d) failed\n", __FUNCTION__,
-           GPIO_LED_PIN);
+           KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN);
     return -ENOSYS;
   }
 
@@ -268,6 +268,7 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   //    return -ENODEV;
   //  }
   client_data_p->client = client_in;
+  client_data_p->ringbufferpos = -1;
   mutex_init(&client_data_p->sync_lock);
   i2c_set_clientdata(client_in, client_data_p);
 
@@ -280,40 +281,41 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
 //           GPIO_FEX_SECTION_HEADER);
 //    goto error2;
 //  }
-  err = script_parser_fetch(GPIO_FEX_SECTION_HEADER,
-                            GPIO_LED_PIN_LABEL,
+  err = script_parser_fetch(KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
+                            KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL,
                             (int*)&client_data_p->gpio_led_data,
                             sizeof(script_gpio_set_t));
   if (unlikely(err != SCRIPT_PARSER_OK)) {
     pr_err("%s: script_parser_fetch(\"%s\",\"%s\") failed: %d\n", __FUNCTION__,
-           GPIO_FEX_SECTION_HEADER,
-           GPIO_LED_PIN_LABEL,
+           KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
+           KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL,
            err);
     goto error2;
   }
-  client_data_p->gpio_led_handle = gpio_request_ex(GPIO_FEX_SECTION_HEADER,
-                                                   GPIO_LED_PIN_LABEL);
+  client_data_p->gpio_led_handle =
+      gpio_request_ex(KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
+                      KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   if (unlikely(!client_data_p->gpio_led_handle)) {
     pr_err("%s: gpio_request_ex(\"%s\") failed\n", __FUNCTION__,
-           GPIO_LED_PIN_LABEL);
+           KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     err = -ENOSYS;
     goto error2;
   }
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
 
-//  err = gpio_request(GPIO_LED_PIN,
-//                     GPIO_LED_PIN_LABEL);
+//  err = gpio_request(KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN,
+//                     KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
 //  if (unlikely(err)) {
 //    pr_err("%s: gpio_request(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_LED_PIN,
+//           KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN,
 //           err);
 //    goto error3;
 //  }
-//  err = gpio_export(GPIO_LED_PIN,
+//  err = gpio_export(KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN,
 //                    false);
 //  if (unlikely(err)) {
 //    pr_err("%s: gpio_export(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_LED_PIN,
+//           KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN,
 //           err);
 //    goto error4;
 //  }
@@ -392,9 +394,9 @@ error7:
 error6:
   i2c_mpu6050_sysfs_fini(client_data_p);
 error5:
-//  gpio_unexport(GPIO_LED_PIN);
+//  gpio_unexport(OLIMEX_MOD_MPU6050_GPIO_LED_PIN);
 //error4:
-//  gpio_free(GPIO_LED_PIN);
+//  gpio_free(OLIMEX_MOD_MPU6050_GPIO_LED_PIN);
 //error3:
   gpio_release(client_data_p->gpio_led_handle, 1);
 error2:
@@ -419,7 +421,8 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -EINVAL;
   }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_in);
+  client_data_p =
+   (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_in);
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
@@ -567,11 +570,11 @@ MODULE_PARM_DESC(noserver, "do not forward sensor data over a UDP socket");
 char* peer="";
 module_param(peer, charp, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(peer, "peer address (IPv4)");
-short int port=SERVER_DEFAULT_PORT;
+short int port=KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PORT;
 module_param(port, short, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(port, "peer port (IPv4)");
 
-const char* default_peer = SERVER_DEFAULT_PEER;
+const char* default_peer = KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PEER;
 
 int
 __init i2c_mpu6050_init(void)
@@ -585,15 +588,15 @@ __init i2c_mpu6050_init(void)
     if (strlen (peer) == 0) peer = (char*)default_peer;
   }
 
-//  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(GPIO_INT_PIN);
+//  i2c_mpu6050_board_infos[0].irq = gpio_to_irq(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //  if (unlikely(i2c_mpu6050_board_infos[0].irq < 0)) {
 //    pr_err("%s: gpio_to_irq(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_INT_PIN,
+//           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN,
 //           err);
 //    goto init_error1;
 //  }
 //  err = i2c_register_board_info(0,
-//                                ARRAY_AND_SIZE(i2c_mpu6050_board_infos));
+//                                KO_OLIMEX_MOD_MPU6050_ARRAY_AND_SIZE(i2c_mpu6050_board_infos));
 //  if (unlikely(err < 0)) {
 //    pr_err("%s: i2c_register_board_info() failed: %d\n", __FUNCTION__,
 //           err);
@@ -636,7 +639,7 @@ __exit i2c_mpu6050_exit(void)
 module_init(i2c_mpu6050_init);
 module_exit(i2c_mpu6050_exit);
 
-MODULE_LICENSE(KO_OLIMEX_MOD_MPU6050_LICENSE);
-MODULE_AUTHOR(KO_OLIMEX_MOD_MPU6050_AUTHOR);
-MODULE_VERSION(KO_OLIMEX_MOD_MPU6050_VERSION);
-MODULE_DESCRIPTION(KO_OLIMEX_MOD_MPU6050_DESCRIPTION);
+MODULE_LICENSE(KO_OLIMEX_MOD_MPU6050_MODULE_LICENSE);
+MODULE_AUTHOR(KO_OLIMEX_MOD_MPU6050_MODULE_AUTHOR);
+MODULE_VERSION(KO_OLIMEX_MOD_MPU6050_MODULE_VERSION);
+MODULE_DESCRIPTION(KO_OLIMEX_MOD_MPU6050_MODULE_DESCRIPTION);

@@ -89,6 +89,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_device.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_irq.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_main.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_netlink.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_pm.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_server.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_timer.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_wq.c" />
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -136,6 +145,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\include\olinuxino_config.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_defines.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_device.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_irq.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_main.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_netlink.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_pm.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_server.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_timer.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_types.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_wq.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.h" />

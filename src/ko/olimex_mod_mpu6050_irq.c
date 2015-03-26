@@ -106,9 +106,9 @@ i2c_mpu6050_irq_init(struct i2c_mpu6050_client_data_t* clientData_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -ENOSYS;
   }
-  if (unlikely(!gpio_is_valid(GPIO_INT_PIN))) {
+  if (unlikely(!gpio_is_valid(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN))) {
     pr_err("%s: gpio_is_valid(%d) failed\n", __FUNCTION__,
-           GPIO_INT_PIN);
+           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
     return -EINVAL;
   }
 
@@ -157,18 +157,19 @@ i2c_mpu6050_irq_init(struct i2c_mpu6050_client_data_t* clientData_in)
     goto error1;
   }
 
-  clientData_in->gpio_int_handle = gpio_request_ex(GPIO_FEX_SECTION_HEADER,
-                                                   GPIO_INT_PIN_LABEL);
+  clientData_in->gpio_int_handle =
+      gpio_request_ex(KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
+                      KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL);
   if (unlikely(!clientData_in->gpio_int_handle)) {
     pr_err("%s: gpio_request_ex(\"%s\") failed\n", __FUNCTION__,
-           GPIO_INT_PIN_LABEL);
+           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL);
     err = -ENOSYS;
     goto error1;
   }
 
-//  err = gpio_request_one(GPIO_INT_PIN,
+//  err = gpio_request_one(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN,
 //                         GPIOF_DIR_IN,
-//                         GPIO_INT_PIN_LABEL);
+//                         KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL);
 //  if (unlikely(err)) {
 //    pr_err("%s: gpio_request_one(%d) failed: %d\n", __FUNCTION__,
 //           GPIO_INT_PIN,
@@ -193,37 +194,38 @@ i2c_mpu6050_irq_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //    goto error4;
 //  }
 
-  clientData_in->client->irq = gpio_to_irq(GPIO_INT_PIN);
+  clientData_in->client->irq =
+      gpio_to_irq(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
   if (unlikely(clientData_in->client->irq < 0)) {
     pr_err("%s: gpio_to_irq(%d) failed: %d\n", __FUNCTION__,
-           GPIO_INT_PIN,
+           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN,
            clientData_in->client->irq);
     err = clientData_in->client->irq;
     goto error4;
   }
   else
     pr_info("%s: GPIO %s --> PIN %d --> IRQ %d\n", __FUNCTION__,
-            GPIO_INT_PIN_LABEL,
-            GPIO_INT_PIN,
+            KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL,
+            KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN,
             clientData_in->client->irq);
-//  gpio_chip_p = gpio_to_chip(GPIO_INT_PIN);
+//  gpio_chip_p = gpio_to_chip(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //  if (unlikely(IS_ERR(gpio_chip_p))) {
 //    pr_err("%s: gpio_to_chip(%d) failed: %d\n", __FUNCTION__,
-//           GPIO_INT_PIN,
+//           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN,
 //           PTR_ERR(gpio_chip_p));
 //    goto error4;
 //  }
 //  err = gpio_lock_as_irq(gpio_chip_p,
-//                         GPIO_INT_PIN);
+//                         KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //  if (unlikely(err)) {
 //    pr_err("%s: gpio_lock_as_irq(%d) failed\n", __FUNCTION__,
-//           GPIO_INT_PIN);
+//           KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //    goto error4;
 //  }
   err = request_irq(clientData_in->client->irq,
                     i2c_mpu6050_interrupt_handler,
                     (IRQF_TRIGGER_RISING|IRQF_NO_SUSPEND|IRQF_SHARED),
-                    GPIO_INT_PIN_LABEL,
+                    KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL,
                     &clientData_in->client->dev);
   if (unlikely(err)) {
     pr_err("%s: request_irq(%d) failed: %d\n", __FUNCTION__,
@@ -236,13 +238,13 @@ i2c_mpu6050_irq_init(struct i2c_mpu6050_client_data_t* clientData_in)
 
 error5:
 //  gpio_unlock_as_irq(gpio_chip_p,
-//                     GPIO_INT_PIN);
+//                     KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 error4:
-  gpio_unexport(GPIO_INT_PIN);
+  gpio_unexport(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //error3:
 ////  devm_gpio_free(&clientData_in->client->dev,
-////                 GPIO_INT_PIN);
-  gpio_free(GPIO_INT_PIN);
+////                 KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
+  gpio_free(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 //error2:
   gpio_release(clientData_in->gpio_int_handle, 1);
 error1:
@@ -266,10 +268,10 @@ i2c_mpu6050_irq_fini(struct i2c_mpu6050_client_data_t* clientData_in)
 //  gpiochip_unlock_as_irq(gpio_chip_p,
 //                         GPIO_INT_PIN);
   free_irq(clientData_in->client->irq, NULL);
-  gpio_unexport(GPIO_INT_PIN);
+  gpio_unexport(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
 ////  devm_gpio_free(&clientData_in->client->dev,
-////                 GPIO_INT_PIN);
-  gpio_free(GPIO_INT_PIN);
+////                 KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
+  gpio_free(KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN);
   gpio_release(clientData_in->gpio_int_handle, 1);
 ////  devm_pinctrl_put(clientData_in->pin_ctrl);
   pinctrl_put(clientData_in->pin_ctrl);

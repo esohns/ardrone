@@ -35,7 +35,8 @@ struct bin_attribute dev_attr_buffer = {
     .name = __stringify(buffer),
     .mode = 0666,
   },
-  .size = (RINGBUFFER_DATA_SIZE * RINGBUFFER_SIZE),
+  .size = (KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE *
+           KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE),
   .private = NULL,
   .read = i2c_mpu6050_ringbuffer_read,
   .write = i2c_mpu6050_ringbuffer_write,
@@ -117,9 +118,9 @@ i2c_mpu6050_reg_store(struct device* dev_in,
     return err;
   }
 
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   bytes_written = i2c_smbus_write_byte_data(client_data_p->client, reg, value);
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   if (unlikely(bytes_written != 1)) {
     pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
            reg, value,
@@ -168,9 +169,9 @@ i2c_mpu6050_reg_show(struct device* dev_in,
   }
 
   memset(buf_in, 0, PAGE_SIZE);
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 1, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = i2c_smbus_read_byte_data(client_data_p->client, reg);
-  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   // *TODO*: how can this work ?
   if (unlikely(value < 0)) {
     pr_err("%s: i2c_smbus_read_byte_data(0x%x) failed: %d\n", __FUNCTION__,
@@ -203,7 +204,7 @@ i2c_mpu6050_ringbuffer_clear(void* data_in)
   }
 
   mutex_lock(&client_data_p->sync_lock);
-  for (i = 0; i < RINGBUFFER_SIZE; i++)
+  for (i = 0; i < KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE; i++)
     client_data_p->ringbuffer[i].used = 0;
   mutex_unlock(&client_data_p->sync_lock);
 }
@@ -218,14 +219,11 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
 {
   struct i2c_client* client_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
-  int i;
-  u8* reg_p;
-  int a_x, a_y, a_z;
-  int g_x, g_y, g_z;
-  int t;
+//  int i;
+  int a_x, a_y, a_z, t, g_x, g_y, g_z;
   int err;
   ssize_t bytes_written = 0;
-  unsigned int remaining = PAGE_SIZE;
+  int remaining = PAGE_SIZE;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
@@ -240,7 +238,8 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
            PTR_ERR(client_p));
     return PTR_ERR(client_p);
   }
-  client_data_p = (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
+  client_data_p =
+      (struct i2c_mpu6050_client_data_t*)i2c_get_clientdata(client_p);
   if (unlikely(IS_ERR(client_data_p))) {
     pr_err("%s: i2c_get_clientdata() failed: %ld\n", __FUNCTION__,
            PTR_ERR(client_data_p));
@@ -248,42 +247,23 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
   }
 
   memset(buf_in, 0, remaining);
-  mutex_lock(&client_data_p->sync_lock);
-  i = ((client_data_p->ringbufferpos == (RINGBUFFER_SIZE - 1)) ? 0
-                                                               : (client_data_p->ringbufferpos + 1));
-  do {
-    if (client_data_p->ringbuffer[i].used == 0)
-      goto done; // unused slot --> continue
 
-    reg_p = client_data_p->ringbuffer[i].data;
-    // *NOTE*: i2c uses a big-endian transfer syntax
-    be16_to_cpus((__be16*)reg_p);
-    // convert two's complement
-    a_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    a_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    a_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    t = *(s16*)reg_p;
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    g_x = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    g_y = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
-    reg_p += 2;
-    be16_to_cpus((__be16*)reg_p);
-    g_z = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                              : *(s16*)reg_p);
+  mutex_lock(&client_data_p->sync_lock);
+
+//  i =
+//      ((client_data_p->ringbufferpos == (KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE - 1)) ? 0
+//                                                                                     : (client_data_p->ringbufferpos + 1));
+//  do {
+    if (client_data_p->ringbuffer[client_data_p->ringbufferpos].used == 0) {
+      pr_debug ("%s: no data\n", __FUNCTION__);
+      goto done; // unused slot --> continue
+    }
+
+//    i2c_mpu6050_device_extract_data(client_data_p->ringbuffer[i].data,
+    i2c_mpu6050_device_extract_data(client_data_p->ringbuffer[client_data_p->ringbufferpos].data,
+                                    &a_x, &a_y, &a_z,
+                                    &t,
+                                    &g_x, &g_y, &g_z);
     err = scnprintf(buf_in + bytes_written, remaining,
                     "%d,%d,%d,%d,%d,%d,%d\n",
                     a_x, a_y, a_z, t, g_x, g_y, g_z);
@@ -291,16 +271,22 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
       pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,
              err);
       bytes_written = err;
-      break;
+      // break;
+      goto done;
     }
     bytes_written += err;
     remaining -= err;
-    if (remaining == 0) break;
+    if (remaining < 0) {
+      pr_err("%s: not enough buffer space --> check implementation\n", __FUNCTION__);
+      // break;
+      goto done;
+    }
 
 done:
-    i++;
-    if (i == RINGBUFFER_SIZE) i = 0;
-  } while (i != client_data_p->ringbufferpos);
+//    i++;
+//    if (i == KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE) i = 0;
+//  } while (i != client_data_p->ringbufferpos);
+
   mutex_unlock(&client_data_p->sync_lock);
 
   return bytes_written;
@@ -379,7 +365,7 @@ i2c_mpu6050_intstate_show(struct device* dev_in,
   }
 
   value = gpio_read_one_pin_value(client_data_p->gpio_int_handle,
-                                  GPIO_INT_PIN_LABEL);
+                                  KO_OLIMEX_MOD_MPU6050_GPIO_INT_PIN_LABEL);
   err = scnprintf(buf_in, PAGE_SIZE, "%d\n", value);
   if (unlikely(err < 0)) {
     pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,
@@ -414,7 +400,7 @@ i2c_mpu6050_ledstate_show(struct device* dev_in,
   }
 
   value = gpio_read_one_pin_value(client_data_p->gpio_led_handle,
-                                  GPIO_LED_PIN_LABEL);
+                                  KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   err = scnprintf(buf_in, PAGE_SIZE, "%d\n", value);
   if (unlikely(err < 0)) {
     pr_err("%s: scnprintf() failed: %d\n", __FUNCTION__,

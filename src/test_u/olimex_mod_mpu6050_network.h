@@ -59,10 +59,11 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_Configuration_t,
                                         Net_AsynchUDPSocketHandler> Olimex_Mod_MPU6050_AsynchUDPHandler_t;
 
 typedef Net_Client_IConnector_T<ACE_INET_Addr,
-                                Net_Configuration_t> Olimex_Mod_MPU6050_IConnector_t;
+                                Net_SocketHandlerConfiguration_t> Olimex_Mod_MPU6050_IConnector_t;
 
 typedef Net_Client_Connector_T<ACE_INET_Addr,
                                Net_Configuration_t,
+                               Net_SocketHandlerConfiguration_t,
                                Net_UserData_t,
                                Net_StreamSessionData_t,
                                Net_IInetTransportLayer_t,
@@ -71,6 +72,7 @@ typedef Net_Client_Connector_T<ACE_INET_Addr,
                                                    Olimex_Mod_MPU6050_UDPHandler_t> > Olimex_Mod_MPU6050_Connector_t;
 typedef Net_Client_AsynchConnector_T<ACE_INET_Addr,
                                      Net_Configuration_t,
+                                     Net_SocketHandlerConfiguration_t,
                                      Net_UserData_t,
                                      Net_StreamSessionData_t,
                                      Net_IInetTransportLayer_t,

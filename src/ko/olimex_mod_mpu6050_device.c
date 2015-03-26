@@ -26,6 +26,45 @@
 #include "olimex_mod_mpu6050_main.h"
 #include "olimex_mod_mpu6050_types.h"
 
+void
+i2c_mpu6050_device_extract_data(char* data_in,
+                                int* accel_x, int* accel_y, int* accel_z,
+                                int* temp,
+                                int* gyro_x, int* gyro_y, int* gyro_z)
+{
+  char* reg_p = data_in;
+
+  // *NOTE*: i2c uses a big-endian transfer syntax
+  be16_to_cpus((__be16*)reg_p);
+  // invert two's complement representation
+  *accel_x = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                     : *(s16*)reg_p;
+  reg_p += 2;
+  be16_to_cpus((__be16*)reg_p);
+  *accel_y = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                     : *(s16*)reg_p;
+  reg_p += 2;
+  be16_to_cpus((__be16*)reg_p);
+  *accel_z = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                     : *(s16*)reg_p;
+
+  reg_p += 2;
+  *temp = *(s16*)reg_p;
+
+  reg_p += 2;
+  be16_to_cpus((__be16*)reg_p);
+  *gyro_x = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                    : *(s16*)reg_p;
+  reg_p += 2;
+  be16_to_cpus((__be16*)reg_p);
+  *gyro_y = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                    : *(s16*)reg_p;
+  reg_p += 2;
+  be16_to_cpus((__be16*)reg_p);
+  *gyro_z = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
+                                    : *(s16*)reg_p;
+}
+
 int
 i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*  clientData_in)
 {
@@ -45,9 +84,9 @@ i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*  clientData_in)
     * @see MPU6050_WHO_AM_I_BIT
     * @see MPU6050_ADDRESS_AD0_LOW
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_WHO_AM_I);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg & ~(0xFF << (MPU6050_WHO_AM_I_BIT + 1))) & (0xFF << 1));
 
   return ((value == MPU6050_ADDRESS_AD0_LOW) ? 0 : -ENODEV);
@@ -72,14 +111,14 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     /** @see MPU6050_RA_PWR_MGMT_1
       * @see MPU6050_PWR1_DEVICE_RESET_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg |= (0x01 << MPU6050_PWR1_DEVICE_RESET_BIT); // --> reset device
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -89,13 +128,13 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
 
     if (likely(wait_in))
     {
-      msleep(RESET_DELAY_MS);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      msleep(KO_OLIMEX_MOD_MPU6050_DEVICE_RESET_DELAY_MS);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(reg & MPU6050_PWR1_DEVICE_RESET_BIT))
-        pr_warn("%s: device reset not complete after %dms\n", __FUNCTION__,
-                RESET_DELAY_MS);
+        pr_warn("%s: device reset not complete after %dms --> check implementation\n", __FUNCTION__,
+                KO_OLIMEX_MOD_MPU6050_DEVICE_RESET_DELAY_MS);
     }
     pr_debug("%s: device has been reset...\n", __FUNCTION__);
   }
@@ -129,14 +168,14 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     /** @see MPU6050_RA_USER_CTRL
     * @see MPU6050_USERCTRL_SIG_COND_RESET_BIT
     */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg |= (0x01 << MPU6050_USERCTRL_SIG_COND_RESET_BIT); // --> reset signal paths & registers
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_USER_CTRL, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_USER_CTRL, (int)reg,
@@ -146,7 +185,7 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
     pr_debug("%s: reset signal paths and registers...\n", __FUNCTION__);
 
     if (wait_in)
-      msleep(RESET_DELAY_MS);
+      msleep(KO_OLIMEX_MOD_MPU6050_DEVICE_RESET_DELAY_MS);
 
     if (nofifo == 0) {
       // step3: reset FIFO (#106, see page 38)
@@ -154,15 +193,15 @@ i2c_mpu6050_device_reset(struct i2c_mpu6050_client_data_t* clientData_in, int da
         * @see MPU6050_USERCTRL_FIFO_EN_BIT
         * @see MPU6050_USERCTRL_FIFO_RESET_BIT
         */
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       reg &= ~(0x01 << MPU6050_USERCTRL_FIFO_EN_BIT);   // --> disable FIFO
       reg |= (0x01 << MPU6050_USERCTRL_FIFO_RESET_BIT); // --> reset FIFO
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_USER_CTRL, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_USER_CTRL, reg,
@@ -193,9 +232,9 @@ i2c_mpu6050_device_fifo_count(struct i2c_mpu6050_client_data_t* clientData_in)
   /** @see MPU6050_RA_FIFO_COUNTH
     * @see MPU6050_RA_FIFO_COUNTL
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   bytes_read = i2c_smbus_read_word_data(clientData_in->client, MPU6050_RA_FIFO_COUNTH);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   // *NOTE*: i2c uses a big-endian transfer syntax
   be16_to_cpus(((__be16*)&bytes_read) + 1);
 
@@ -231,16 +270,16 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
     * @see MPU6050_PWR2_LP_WAKE_CTRL_LENGTH
     * @see MPU6050_WAKE_FREQ_1P25
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_2);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg >> (MPU6050_PWR2_LP_WAKE_CTRL_BIT - 1));
   if (unlikely(value != MPU6050_WAKE_FREQ_1P25)) {
     reg |= (MPU6050_WAKE_FREQ_1P25 << (MPU6050_PWR2_LP_WAKE_CTRL_BIT - 1));
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_2, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_2, (int)reg,
@@ -255,16 +294,16 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_TEMP_DIS_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg & ~(0x01 << MPU6050_PWR1_TEMP_DIS_BIT)) >> MPU6050_PWR1_TEMP_DIS_BIT);
   if (likely(value == 0)) {
     reg |= (0x01 << MPU6050_PWR1_TEMP_DIS_BIT); // --> disable
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -279,9 +318,9 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
     * @see MPU6050_PWR2_STBY_YG_BIT
     * @see MPU6050_PWR2_STBY_ZG_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_2);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg & (0x01 << MPU6050_PWR2_STBY_XG_BIT) >> MPU6050_PWR2_STBY_XG_BIT);
   if (likely(value == 0))
     reg |= (0x01 << MPU6050_PWR2_STBY_XG_BIT);
@@ -291,10 +330,10 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
   value = (reg & (0x01 << MPU6050_PWR2_STBY_ZG_BIT) >> MPU6050_PWR2_STBY_ZG_BIT);
   if (likely(value == 0))
     reg |= (0x01 << MPU6050_PWR2_STBY_ZG_BIT);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                             MPU6050_RA_PWR_MGMT_2, reg);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   if (unlikely(bytes_written)) {
     pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
            MPU6050_RA_PWR_MGMT_2, (int)reg,
@@ -307,16 +346,16 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_CYCLE_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg &= (0x01 << MPU6050_PWR1_CYCLE_BIT)) >> MPU6050_PWR1_CYCLE_BIT);
   if (likely(value == 0)) {
     reg |= (0x01 << MPU6050_PWR1_CYCLE_BIT);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -330,16 +369,16 @@ i2c_mpu6050_device_low_power_mode(struct i2c_mpu6050_client_data_t* clientData_i
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_SLEEP_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg &= (0x01 << MPU6050_PWR1_SLEEP_BIT)) >> MPU6050_PWR1_SLEEP_BIT);
   if (unlikely(value)) {
     reg |= (0x01 << MPU6050_PWR1_SLEEP_BIT);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -374,16 +413,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_SLEEP_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg &= (0x01 << MPU6050_PWR1_SLEEP_BIT)) >> MPU6050_PWR1_SLEEP_BIT);
   if (likely(value)) {
     reg &= ~(0x01 << MPU6050_PWR1_SLEEP_BIT);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -409,17 +448,17 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     * @see MPU6050_PWR1_CLKSEL_BIT
     * @see MPU6050_PWR1_CLKSEL_LENGTH
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg & ~(0xFF << MPU6050_PWR1_CLKSEL_LENGTH));
   if (likely(value != MPU6050_CLOCK_PLL_XGYRO)) {
     reg &= (0xFF << MPU6050_PWR1_CLKSEL_LENGTH);
     reg |= MPU6050_CLOCK_PLL_XGYRO;
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -448,17 +487,17 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     * @see MPU6050_CFG_DLPF_CFG_LENGTH
     * @see MPU6050_DLPF_BW_256
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_CONFIG);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg & ~(0xFF << MPU6050_CFG_DLPF_CFG_LENGTH));
   if (unlikely(value != MPU6050_DLPF_BW_256)) {
     reg &= (0xFF << MPU6050_CFG_DLPF_CFG_LENGTH);
     reg |= MPU6050_DLPF_BW_256; // --> highest bandwidth
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_CONFIG, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_CONFIG, (int)reg,
@@ -472,16 +511,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
   // step2b: set sample rate divider (#25, see page 11)
   /** @see MPU6050_RA_SMPLRT_DIV
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_SMPLRT_DIV);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = reg;
   if (unlikely(value != 0)) {
     reg = 0; // --> no divider (highest sample rate [== gyroscope output rate])
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_SMPLRT_DIV, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_SMPLRT_DIV, (int)reg,
@@ -497,16 +536,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
   /** @see MPU6050_RA_PWR_MGMT_1
     * @see MPU6050_PWR1_TEMP_DIS_BIT
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_PWR_MGMT_1);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = ((reg & ~(0x01 << MPU6050_PWR1_TEMP_DIS_BIT)) >> MPU6050_PWR1_TEMP_DIS_BIT);
   if (unlikely(value == 1)) {
     reg &= ~(0x01 << MPU6050_PWR1_TEMP_DIS_BIT); // --> enable
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_PWR_MGMT_1, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_PWR_MGMT_1, (int)reg,
@@ -528,17 +567,19 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     * @see MPU6050_GCONFIG_FS_SEL_LENGTH
     * @see MPU6050_GYRO_FS_250
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
-  reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_GYRO_CONFIG);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
+  reg =
+   i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_GYRO_CONFIG);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg >> (MPU6050_GCONFIG_FS_SEL_BIT - 1)) &
           ~(0xFF << MPU6050_GCONFIG_FS_SEL_LENGTH);
-  if (unlikely(value != MPU6050_GYRO_FS_250)) {
-    reg |= (MPU6050_GYRO_FS_250 << MPU6050_GCONFIG_FS_SEL_BIT);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  if (unlikely (value != KO_OLIMEX_MOD_MPU6050_DEVICE_GYRO_SENSITIVITY))
+  {
+    reg |= (KO_OLIMEX_MOD_MPU6050_DEVICE_GYRO_SENSITIVITY << MPU6050_GCONFIG_FS_SEL_BIT);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_GYRO_CONFIG, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(%x,%d) failed: %d\n", __FUNCTION__,
              MPU6050_RA_GYRO_CONFIG, (int)reg,
@@ -546,7 +587,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       return bytes_written;
     }
     pr_debug("%s: set gyroscope range: %d (was: %d)...\n", __FUNCTION__,
-             MPU6050_GYRO_FS_250,
+             KO_OLIMEX_MOD_MPU6050_DEVICE_GYRO_SENSITIVITY,
              value);
   }
   // step3c: set accelerometer range (#28, see page 15)
@@ -562,17 +603,19 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     * @see MPU6050_ACONFIG_AFS_SEL_LENGTH
     * @see MPU6050_ACCEL_FS_2
     */
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_ACCEL_CONFIG);
-  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+  gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
   value = (reg >> (MPU6050_ACONFIG_AFS_SEL_BIT - 1)) &
           ~(0xFF << MPU6050_ACONFIG_AFS_SEL_LENGTH);
-  if (unlikely(value != MPU6050_ACCEL_FS_2)) {
-    reg |= (MPU6050_ACCEL_FS_2 << MPU6050_ACONFIG_AFS_SEL_BIT);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+  if (unlikely (value != KO_OLIMEX_MOD_MPU6050_DEVICE_ACCEL_SENSITIVITY))
+  {
+    reg |=
+     (KO_OLIMEX_MOD_MPU6050_DEVICE_ACCEL_SENSITIVITY << MPU6050_ACONFIG_AFS_SEL_BIT);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_ACCEL_CONFIG, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_ACCEL_CONFIG, (int)reg,
@@ -580,7 +623,7 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       return bytes_written;
     }
     pr_debug("%s: set accelerometer range: %d (was: %d)...\n", __FUNCTION__,
-             MPU6050_ACCEL_FS_2,
+             KO_OLIMEX_MOD_MPU6050_DEVICE_ACCEL_SENSITIVITY,
              value);
   }
 
@@ -594,9 +637,9 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       * @see MPU6050_ZG_FIFO_EN_BIT
       * @see MPU6050_ACCEL_FIFO_EN_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_FIFO_EN);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg & (0x01 << MPU6050_TEMP_FIFO_EN_BIT)) >> MPU6050_TEMP_FIFO_EN_BIT);
     value &= ((reg & (0x01 << MPU6050_XG_FIFO_EN_BIT)) >> MPU6050_XG_FIFO_EN_BIT);
     value &= ((reg & (0x01 << MPU6050_YG_FIFO_EN_BIT)) >> MPU6050_YG_FIFO_EN_BIT);
@@ -608,10 +651,10 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
               (0x01 << MPU6050_YG_FIFO_EN_BIT)   |  // --> gyroscope (y-axis)
               (0x01 << MPU6050_ZG_FIFO_EN_BIT)   |  // --> gyroscope (z-axis)
               (0x01 << MPU6050_ACCEL_FIFO_EN_BIT)); // --> accelerometer
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_FIFO_EN, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_FIFO_EN, (int)reg,
@@ -625,16 +668,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     /** @see MPU6050_RA_INT_ENABLE
       * @see MPU6050_INTERRUPT_FIFO_OFLOW_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_INT_ENABLE);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg &= (0x01 << MPU6050_INTERRUPT_FIFO_OFLOW_BIT)) >> MPU6050_INTERRUPT_FIFO_OFLOW_BIT);
     if (unlikely(value)) {
       reg &= ~(0x01 << MPU6050_INTERRUPT_FIFO_OFLOW_BIT);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_INT_ENABLE, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_INT_ENABLE, (int)reg,
@@ -648,16 +691,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     /** @see MPU6050_RA_USER_CTRL
       * @see MPU6050_USERCTRL_FIFO_EN_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_USER_CTRL);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg & (0x01 << MPU6050_USERCTRL_FIFO_EN_BIT)) >> MPU6050_USERCTRL_FIFO_EN_BIT);
     if (likely(value == 0)) {
       reg |= (0x01 << MPU6050_USERCTRL_FIFO_EN_BIT); // --> enable
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_USER_CTRL, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_USER_CTRL, (int)reg,
@@ -679,9 +722,9 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
       * @see [MPU6050_INTCFG_FSYNC_INT_LEVEL_BIT]
       * @see [MPU6050_INTCFG_FSYNC_INT_EN_BIT]
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_INT_PIN_CFG);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg &= (0x01 << MPU6050_INTCFG_INT_LEVEL_BIT)) >> MPU6050_INTCFG_INT_LEVEL_BIT);
     if (unlikely(value))
       reg &= ~(0x01 << MPU6050_INTCFG_INT_LEVEL_BIT);       // 0 --> active-high
@@ -701,10 +744,10 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //    value = ((reg &= (0x01 << MPU6050_INTCFG_FSYNC_INT_EN_BIT)) >> MPU6050_INTCFG_FSYNC_INT_EN_BIT);
 //    if (unlikely(value))
 //      reg &= ~(0x01 << MPU6050_INTCFG_FSYNC_INT_EN_BIT);    // 0 --> FSYNC INT disabled
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                               MPU6050_RA_INT_PIN_CFG, reg);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     if (unlikely(bytes_written)) {
       pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
              MPU6050_RA_INT_PIN_CFG, (int)reg,
@@ -718,16 +761,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     /** @see MPU6050_RA_I2C_MST_CTRL
       * @see MPU6050_WAIT_FOR_ES_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_I2C_MST_CTRL);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg &= (0x01 << MPU6050_WAIT_FOR_ES_BIT)) >> MPU6050_WAIT_FOR_ES_BIT);
     if (unlikely(value)) {
       reg &= ~(0x01 << MPU6050_WAIT_FOR_ES_BIT);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_I2C_MST_CTRL, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_I2C_MST_CTRL, (int)reg,
@@ -741,16 +784,16 @@ i2c_mpu6050_device_init(struct i2c_mpu6050_client_data_t* clientData_in)
     /** @see MPU6050_RA_INT_ENABLE
       * @see MPU6050_INTERRUPT_DATA_RDY_BIT
       */
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     reg = i2c_smbus_read_byte_data(clientData_in->client, MPU6050_RA_INT_ENABLE);
-    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+    gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
     value = ((reg &= (0x01 << MPU6050_INTERRUPT_DATA_RDY_BIT)) >> MPU6050_INTERRUPT_DATA_RDY_BIT);
     if (likely(value == 0)) {
       reg |= (0x01 << MPU6050_INTERRUPT_DATA_RDY_BIT);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 255, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       bytes_written = i2c_smbus_write_byte_data(clientData_in->client,
                                                 MPU6050_RA_INT_ENABLE, reg);
-      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, GPIO_LED_PIN_LABEL);
+      gpio_write_one_pin_value(clientData_in->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
       if (unlikely(bytes_written)) {
         pr_err("%s: i2c_smbus_write_byte_data(0x%x,0x%x) failed: %d\n", __FUNCTION__,
                MPU6050_RA_INT_ENABLE, (int)reg,

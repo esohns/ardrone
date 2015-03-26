@@ -58,7 +58,7 @@ i2c_mpu6050_hr_timer_handler(struct hrtimer* timer_in)
 
   // now = hrtimer_cb_get_time(timeri);
 //  now = ktime_get();
-  delay = ktime_set(0, MS_TO_NS(TIMER_DELAY_MS));
+  delay = ktime_set(0, MS_TO_NS(KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS));
 //  hrtimer_forward(&i2c_mpu6050_hr_timer, now, delay);
   missed_intervals = hrtimer_forward_now(&client_data_p->hr_timer,
                                          delay);
@@ -85,7 +85,7 @@ i2c_mpu6050_timer_init(struct i2c_mpu6050_client_data_t* clientData_in)
                HRTIMER_MODE_REL);
   clientData_in->hr_timer.function = &i2c_mpu6050_hr_timer_handler;
 
-  delay = ktime_set(0, MS_TO_NS(TIMER_DELAY_MS));
+  delay = ktime_set(0, MS_TO_NS(KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS));
   err = hrtimer_start(&clientData_in->hr_timer,
                       delay,
                       HRTIMER_MODE_REL);
@@ -94,9 +94,8 @@ i2c_mpu6050_timer_init(struct i2c_mpu6050_client_data_t* clientData_in)
            err);
     return err;
   }
-
-  pr_debug("%s: started timer (interval: %ldms) @%ld\n", __FUNCTION__,
-           TIMER_DELAY_MS, jiffies);
+  pr_debug("%s: started timer (interval: %dms) @%ld\n", __FUNCTION__,
+           KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS, jiffies);
 
   return 0;
 }

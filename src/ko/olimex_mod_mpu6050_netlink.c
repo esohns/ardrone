@@ -36,8 +36,8 @@ struct nla_policy i2c_mpu6050_netlink_policy[NETLINK_ATTRIBUTE_MAX] = {
 struct genl_family i2c_mpu6050_netlink_family = {
   .id = GENL_ID_GENERATE,
   .hdrsize = 0,
-  .name = NETLINK_PROTOCOL_FAMILY_NAME,
-  .version = NETLINK_PROTOCOL_VERSION,
+  .name = KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_FAMILY_NAME,
+  .version = KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_VERSION,
   .maxattr = (NETLINK_ATTRIBUTE_MAX - 1),
 };
 

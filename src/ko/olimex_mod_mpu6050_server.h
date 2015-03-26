@@ -34,7 +34,7 @@ struct server_t
   struct socket* socket_send;
   struct sockaddr_in address_send;
   int running;
-  int ringbufferpos;
+  //int ringbufferpos;
 };
 
 // function declarations
