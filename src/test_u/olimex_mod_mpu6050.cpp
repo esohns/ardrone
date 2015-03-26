@@ -389,28 +389,39 @@ do_work (int argc_in,
   } // end IF
 
   // step4: init client connector
-//  Net_IUDPConnectionManager_t* connection_manager_p = ;
   Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
-//  Net_SocketHandlerConfiguration_t socket_handler_configuration;
-//  socket_handler_configuration.messageAllocator = &message_allocator;
-//  socket_handler_configuration.socketConfiguration =
-//      configuration.socketConfiguration;
+  Olimex_Mod_MPU6050_INetlinkConnector_t* netlink_connector_p = NULL;
   if (useAsynchConnector_in)
   {
-    ACE_NEW_NORETURN (connector_p,
-                      Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
-                                                            CONNECTIONMANAGER_SINGLETON::instance (),
-                                                            OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+    if (clientMode_in)
+      ACE_NEW_NORETURN (connector_p,
+                        Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
+                                                              CONNECTIONMANAGER_SINGLETON::instance (),
+                                                              OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+    else
+      ACE_NEW_NORETURN (netlink_connector_p,
+                        Olimex_Mod_MPU6050_AsynchNetlinkConnector_t (&configuration,
+                                                                     NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                                     OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
   } // end IF
   else
-    ACE_NEW_NORETURN (connector_p,
-                      Olimex_Mod_MPU6050_Connector_t (&configuration,
-                                                      CONNECTIONMANAGER_SINGLETON::instance (),
-                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
-  if (!connector_p)
+  {
+    if (clientMode_in)
+      ACE_NEW_NORETURN (connector_p,
+                        Olimex_Mod_MPU6050_Connector_t (&configuration,
+                                                        CONNECTIONMANAGER_SINGLETON::instance (),
+                                                        OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+    else
+      ACE_NEW_NORETURN (netlink_connector_p,
+                        Olimex_Mod_MPU6050_NetlinkConnector_t (&configuration,
+                                                               NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                               OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+  } // end ELSE
+  if (( clientMode_in && !connector_p) ||
+      (!clientMode_in && !netlink_connector_p))
   {
     ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("failed to allocate memory, aborting\n")));
+                ACE_TEXT ("failed to allocate memory, returning\n")));
     return;
   } // end IF
 
