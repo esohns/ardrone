@@ -1,8 +1,9 @@
 if DO_CROSS_COMPILE
   ARCH=arm
   CROSS_COMPILE=arm-linux-gnu-
-  export ARCH CROSS_COMPILE
+  export CROSS_COMPILE
 endif
+export ARCH
 
 if DEBUG
   DEBUG=1

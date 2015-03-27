@@ -1,19 +1,19 @@
 ifeq ($(KDIR),)
-  echo "KDIR not set, cannot proceed"
+#  echo "KDIR not set, cannot proceed"
   export KDIR="/lib/modules/$(shell uname -r)/build"
 endif
 ifeq ($(module_DATA),)
-  echo "module_DATA not set, cannot proceed"
+#  echo "module_DATA not set, cannot proceed"
 endif
 ifeq ($(AM_ABSSRCDIR),)
-  echo "AM_ABSSRCDIR not set, cannot proceed"
+#  echo "AM_ABSSRCDIR not set, cannot proceed"
 endif
 #ifeq ($(AM_CWDCDIR),)
 #  echo "AM_CWDCDIR not set, cannot proceed"
 #endif
 
 ifeq ($(ARCH),)
-  echo "ARCH not set, setting to default: x86"
+#  echo "ARCH not set, setting to default: x86"
   export ARCH=x86
   export CROSS_COMPILE=
 endif
@@ -36,7 +36,7 @@ else
   ccflags-y      += \
     -mfpu=neon \
     -mcpu=cortex-a8 \
-    -mtune=cortex-a8
+    -mtune=cortex-a8 \
     -funroll-loops \
     -ftree-vectorize \
     -fassociative-math \
