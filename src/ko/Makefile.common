@@ -1,7 +1,6 @@
 if DO_CROSS_COMPILE
   ARCH=arm
   CROSS_COMPILE=arm-linux-gnu-
-#CROSS_COMPILE=ppc_6xxx-
   export ARCH CROSS_COMPILE
 endif
 

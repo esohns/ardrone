@@ -84,6 +84,7 @@ AC_ARG_ENABLE([cross-compile],
               [cross_compile=$cross_compile_default])
 BUILD_PLATFORM=`uname -m | head -c3 -`
 AM_CONDITIONAL([DO_CROSS_COMPILE], [test x$cross_compile = xyes -a ${BUILD_PLATFORM} != arm])
+AC_SUBST([BUILD_PLATFORM])
 AM_COND_IF([DO_CROSS_COMPILE],
            [AC_MSG_RESULT(yes)],
            [AC_MSG_RESULT(no)])

@@ -6,11 +6,13 @@ if HAVE_KERNEL_SRC_DIR_ENV
 else !HAVE_KERNEL_SRC_DIR_ENV
   KDIR=@kerneldir@
 if !HAVE_KERNEL_SRC
-#    echo "kernel src dir not set, setting to default"
-    KDIR="/lib/modules/$(shell uname -r)/build"
+#dnl    echo "kernel src dir not set, setting to default"
+  KDIR="/lib/modules/$(shell uname -r)/build"
 endif !HAVE_KERNEL_SRC
 endif !HAVE_KERNEL_SRC_DIR_ENV
 #moduledir=@moduledir@
+
+ARCH=@BUILD_PLATFORM@
 
 AM_CPPFLAGS = \
   -I$(KDIR)arch/$(ARCH)/include \
