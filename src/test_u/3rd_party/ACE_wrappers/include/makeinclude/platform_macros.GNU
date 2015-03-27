@@ -1,6 +1,3 @@
-#include %ACE_ROOT%\include\makeinclude\platform_win32_msvc.GNU
-include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
-
 INSTALL_PREFIX=/usr/local
 
 #ace_for_tao=0
@@ -8,6 +5,8 @@ debug=1
 #dmalloc=0
 #fast=0
 inline=1
+# *NOTE*: enable this for ARM builds
+#no_hidden_visibility=1
 #minimum_corba=0
 #mtrace=0
 optimize=0
@@ -42,4 +41,7 @@ versioned_so=1
 #winregistry=1
 #winnt=1
 link_groups=1
+
+#include %ACE_ROOT%\include\makeinclude\platform_win32_msvc.GNU
+include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
 
