@@ -19,30 +19,21 @@
 #define OLIMEX_MOD_MPU6050_TYPES_H
 
 #include <linux/hrtimer.h>
-#include <linux/i2c.h>
 #include <linux/kobject.h>
 #include <linux/mutex.h>
 #include <linux/pinctrl/consumer.h>
-#include <linux/workqueue.h>
 
+// *TODO*: implement devicetree support
 #include <plat/sys_config.h>
 
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_wq.h"
 
 // forward declarations
-struct server_t;
-
-struct ringbufferentry_t {
-  int used;
-  uint8_t data[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE];
-  int size;
-  u64 timestamp;
-};
-
-struct read_work_t {
-  struct work_struct work;
-  struct i2c_client* client;
-};
+struct i2c_client;
+struct workqueue_struct;
+struct i2c_mpu6050_server_t;
+struct i2c_mpu6050_netlink_server_t;
 
 struct i2c_mpu6050_client_data_t {
   struct hrtimer hr_timer;
@@ -55,12 +46,12 @@ struct i2c_mpu6050_client_data_t {
   struct i2c_client* client;
 //  struct kobject* sysfs_object;
   struct workqueue_struct* workqueue;
-  struct read_work_t work_read;
-  struct ringbufferentry_t ringbuffer[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE];
+  struct i2c_mpu6050_wq_read_work_t work_read;
+  struct i2c_mpu6050_wq_ringbuffer_entry_t ringbuffer[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_SIZE];
   int ringbufferpos;
   struct mutex sync_lock;
-//  struct sock* netlink_socket;
-  struct server_t* server;
+  struct i2c_mpu6050_netlink_server_t* netlink_server;
+  struct i2c_mpu6050_server_t* server;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

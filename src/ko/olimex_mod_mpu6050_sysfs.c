@@ -20,6 +20,7 @@
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
+#include <linux/i2c.h>
 #include <linux/sysfs.h>
 
 #include "olimex_mod_mpu6050_types.h"
@@ -220,7 +221,7 @@ i2c_mpu6050_ringbuffer_read(struct file* file_in,
   struct i2c_client* client_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
 //  int i;
-  int a_x, a_y, a_z, t, g_x, g_y, g_z;
+  s16 a_x, a_y, a_z, t, g_x, g_y, g_z;
   int err;
   ssize_t bytes_written = 0;
   int remaining = PAGE_SIZE;

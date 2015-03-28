@@ -37,7 +37,8 @@ class Olimex_Mod_MPU6050_SignalHandler
   Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr&,             // peer address
                                     Olimex_Mod_MPU6050_IConnector_t*, // connector
                                     // -----------------------------------------
-                                    bool);                            // use reactor ?
+                                    bool,                             // use reactor ?
+                                    bool);                            // console mode ?
   virtual ~Olimex_Mod_MPU6050_SignalHandler ();
 
   // implement Common_ISignal
@@ -51,6 +52,7 @@ class Olimex_Mod_MPU6050_SignalHandler
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler& operator= (const Olimex_Mod_MPU6050_SignalHandler&));
 
   long                             actionTimerID_;
+  bool                             consoleMode_;
   Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_;
   ACE_INET_Addr                    peerAddress_;
   bool                             useReactor_;

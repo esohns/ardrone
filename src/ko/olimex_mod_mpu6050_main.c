@@ -272,6 +272,7 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   mutex_init(&client_data_p->sync_lock);
   i2c_set_clientdata(client_in, client_data_p);
 
+  // *TODO*: implement devicetree support
 //  err = script_parser_fetch(GPIO_FEX_SECTION_HEADER,
 //                            "gpio_used",
 //                            &gpio_used,
@@ -347,11 +348,25 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     goto error7;
   }
 
+  if (unlikely(noirq)) {
+    err = i2c_mpu6050_timer_init(client_data_p);
+    if (unlikely(err)) {
+      pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
+      goto error8;
+    }
+  } else {
+    err = i2c_mpu6050_irq_init(client_data_p);
+    if (unlikely(err)) {
+      pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
+      goto error8;
+    }
+  }
+
   if (likely(nonetlink == 0)) {
     err = i2c_mpu6050_netlink_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_netlink_init() failed\n", __FUNCTION__);
-      goto error8;
+      goto error9;
     }
   }
 
@@ -359,20 +374,6 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     err = i2c_mpu6050_server_init(client_data_p);
     if (unlikely(err)) {
       pr_err("%s: i2c_mpu6050_server_init() failed\n", __FUNCTION__);
-      goto error9;
-    }
-  }
-
-  if (unlikely(noirq)) {
-    err = i2c_mpu6050_timer_init(client_data_p);
-    if (unlikely(err)) {
-      pr_err("%s: i2c_mpu6050_timer_init() failed\n", __FUNCTION__);
-      goto error10;
-    }
-  } else {
-    err = i2c_mpu6050_irq_init(client_data_p);
-    if (unlikely(err)) {
-      pr_err("%s: i2c_mpu6050_irq_init() failed\n", __FUNCTION__);
       goto error10;
     }
   }
@@ -385,11 +386,13 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   return 0;
 
 error10:
-  if (likely(noserver == 0))
-    i2c_mpu6050_server_fini(client_data_p);
-error9:
   if (likely(nonetlink == 0))
     i2c_mpu6050_netlink_fini(client_data_p);
+error9:
+  if (unlikely(noirq))
+    i2c_mpu6050_timer_fini(client_data_p);
+  else
+    i2c_mpu6050_irq_fini(client_data_p);
 error8:
   i2c_mpu6050_wq_fini(client_data_p);
 error7:
@@ -439,15 +442,15 @@ i2c_mpu6050_remove(struct i2c_client* client_in)
 //    return PTR_ERR(gpio_chip_p);
 //  }
 
+  if (likely(noserver == 0))
+    i2c_mpu6050_server_fini(client_data_p);
+  if (likely(nonetlink == 0))
+    i2c_mpu6050_netlink_fini(client_data_p);
   if (unlikely(noirq)) {
     i2c_mpu6050_timer_fini(client_data_p);
   } else {
     i2c_mpu6050_irq_fini(client_data_p);
   }
-  if (likely(noserver == 0))
-    i2c_mpu6050_server_fini(client_data_p);
-  if (likely(nonetlink == 0))
-    i2c_mpu6050_netlink_fini(client_data_p);
   i2c_mpu6050_wq_fini(client_data_p);
   i2c_mpu6050_device_fini(client_data_p);
   i2c_mpu6050_sysfs_fini(client_data_p);

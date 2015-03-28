@@ -51,6 +51,7 @@ typedef Net_Module_UDPSocketHandler_T<Stream_State_t,
                                       Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Module_SocketHandler;
 DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                             // task synch type
                               Common_TimePolicy_t,                      // time policy type
+                              Stream_ModuleConfiguration_t,             // configuration type
                               Olimex_Mod_MPU6050_Module_SocketHandler); // writer type
 
 typedef Net_Module_Statistic_ReaderTask_T<ACE_MT_SYNCH,
@@ -67,6 +68,7 @@ typedef Net_Module_Statistic_WriterTask_T<ACE_MT_SYNCH,
                                           Stream_Statistic_t> Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t;
 DATASTREAM_MODULE_DUPLEX (ACE_MT_SYNCH,                                     // task synch type
                           Common_TimePolicy_t,                              // time policy type
+                          Stream_ModuleConfiguration_t,                     // configuration type
                           Olimex_Mod_MPU6050_Module_Statistic_ReaderTask_t, // reader type
                           Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t, // writer type
                           Olimex_Mod_MPU6050_Module_RuntimeStatistic);      // name

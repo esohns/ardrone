@@ -21,6 +21,7 @@
 #include <net/netlink.h>
 
 // forward declarations
+struct sock;
 struct genl_family;
 struct genl_ops;
 struct sk_buff;
@@ -28,7 +29,7 @@ struct genl_info;
 struct i2c_mpu6050_client_data_t;
 
 // types
-enum i2c_mpu6050_netlink_attributes {
+enum i2c_mpu6050_netlink_attributes_t {
   NETLINK_ATTRIBUTE_INVALID,
   NETLINK_ATTRIBUTE_ACCEL_X,
   NETLINK_ATTRIBUTE_ACCEL_Y,
@@ -40,26 +41,34 @@ enum i2c_mpu6050_netlink_attributes {
   ///////////////////////////////////////
   NETLINK_ATTRIBUTE_MAX,
 };
-extern struct nla_policy i2c_mpu6050_netlink_policy[];
-extern struct genl_family i2c_mpu6050_netlink_family;
 
-enum i2c_mpu6050_netlink_commands {
+enum i2c_mpu6050_netlink_commands_t {
   NETLINK_COMMAND_INVALID,
   NETLINK_COMMAND_RECORD,
   ///////////////////////////////////////
   NETLINK_COMMAND_MAX,
 };
-extern struct genl_ops i2c_mpu6050_netlink_operations_record;
+
+// types
+struct i2c_mpu6050_netlink_server_t
+{
+  struct task_struct* thread;
+  struct sock* socket;
+  int running;
+};
 
 // globals
 extern int i2c_mpu6050_netlink_sequence_number;
+extern struct nla_policy i2c_mpu6050_netlink_policy[];
+extern struct genl_family i2c_mpu6050_netlink_family;
+extern struct genl_ops i2c_mpu6050_netlink_operations_record;
 
 // function declarations
 int i2c_mpu6050_netlink_handler(struct sk_buff*, struct genl_info*);
 void i2c_mpu6050_netlink_input(struct sk_buff*);
-
-// *WARNING*: buffer lock must be held
-void i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t*, int);
+// *WARNING*: must be called with i2c_mpu6050_client_data_t.sync_lock held !
+int i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t*, // state
+                                int);                              // slot
 
 int i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t*);
 void i2c_mpu6050_netlink_fini(struct i2c_mpu6050_client_data_t*);

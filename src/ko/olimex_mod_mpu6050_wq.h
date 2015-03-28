@@ -18,9 +18,28 @@
 #ifndef OLIMEX_MOD_MPU6050_WQ_H
 #define OLIMEX_MOD_MPU6050_WQ_H
 
+#include <linux/types.h>
+#include <linux/workqueue.h>
+
+#include "olimex_mod_mpu6050_defines.h"
+
 // forward declarations
 struct work_struct;
+struct i2c_client;
 struct i2c_mpu6050_client_data_t;
+
+// types
+struct i2c_mpu6050_wq_read_work_t {
+  struct work_struct work;
+  struct i2c_client* client;
+};
+
+struct i2c_mpu6050_wq_ringbuffer_entry_t {
+  int used;
+  uint8_t data[KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE];
+  int size;
+  u64 timestamp;
+};
 
 // function declarations
 void i2c_mpu6050_wq_read_handler(struct work_struct*);

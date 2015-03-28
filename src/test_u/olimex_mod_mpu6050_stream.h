@@ -52,7 +52,8 @@ class Olimex_Mod_MPU6050_Stream
 
   // initialize stream
   bool initialize (unsigned int,                       // session ID
-                   const Stream_Configuration_t&,      // configuration
+                   // *NOTE*: will be modified
+                   Stream_Configuration_t&,            // configuration
                    const Net_ProtocolConfiguration_t&, // protocol configuration
                    const Net_UserData_t&);             // user data
 

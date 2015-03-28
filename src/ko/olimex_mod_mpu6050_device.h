@@ -18,14 +18,16 @@
 #ifndef OLIMEX_MOD_MPU6050_DEVICE_H
 #define OLIMEX_MOD_MPU6050_DEVICE_H
 
+#include "linux/types.h"
+
 // forward declarations
 struct i2c_mpu6050_client_data_t;
 
 // helper functions
 void i2c_mpu6050_device_extract_data(char*,             // data
-                                     int*, int*, int*,  // return value: accelerometer
-                                     int*,              // return value: temperature
-                                     int*, int*, int*); // return value: gyroscope
+                                     s16*, s16*, s16*,  // return value: accelerometer
+                                     s16*,              // return value: temperature
+                                     s16*, s16*, s16*); // return value: gyroscope
 
 // function declarations
 int i2c_mpu6050_device_ping(struct i2c_mpu6050_client_data_t*);

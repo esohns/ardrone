@@ -27,13 +27,12 @@
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_device.h"
 #include "olimex_mod_mpu6050_main.h"
-#include "olimex_mod_mpu6050_netlink.h"
 #include "olimex_mod_mpu6050_types.h"
 
 void
 i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 {
-  struct read_work_t* work_p;
+  struct i2c_mpu6050_wq_read_work_t* work_p;
   struct i2c_mpu6050_client_data_t* client_data_p;
   s32 bytes_to_read = 0;
   int err;
@@ -41,7 +40,7 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 //  pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  work_p = (struct read_work_t*)work_in;
+  work_p = (struct i2c_mpu6050_wq_read_work_t*)work_in;
   if (unlikely(!work_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
@@ -137,9 +136,6 @@ do_dispatch:
 //           bytes_read,
 //           client_data_p->ringbufferpos);
 
-  if (likely(nonetlink == 0))
-    i2c_mpu6050_netlink_forward(client_data_p, client_data_p->ringbufferpos);
-//  else
 //    i2c_mpu6050_wq_dump(client_data_p, client_data_p->ringbufferpos, 0);
   if (likely((nofifo == 0) &&
              (client_data_p->ringbuffer[client_data_p->ringbufferpos].size < bytes_to_read))) goto do_loop;
@@ -157,7 +153,7 @@ clean_up:
 void
 i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in, int lock_in)
 {
-  int accel_x, accel_y, accel_z, temp, gyro_x, gyro_y, gyro_z;
+  s16 accel_x, accel_y, accel_z, temp, gyro_x, gyro_y, gyro_z;
   struct timeval time;
   struct tm tm;
 
@@ -195,11 +191,11 @@ i2c_mpu6050_wq_dump(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in
   //          (float)value_y / (float)GYRO_SENSITIVITY,
   //          (float)value_z / (float)GYRO_SENSITIVITY);
   pr_debug("%d:%d:%d.%ld: #%d: acceleration: %d,%d,%d, temperature: %d, angular velocity: %d,%d,%d\n",
-             tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
-             slot_in,
-             accel_x, accel_y, accel_z,
-             temp,
-             gyro_x, gyro_y, gyro_z);
+           tm.tm_hour, tm.tm_min, tm.tm_sec, time.tv_usec,
+           slot_in,
+           accel_x, accel_y, accel_z,
+           temp,
+           gyro_x, gyro_y, gyro_z);
 
   if (likely(lock_in))
     mutex_unlock(&clientData_in->sync_lock);

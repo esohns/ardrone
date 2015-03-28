@@ -42,6 +42,7 @@
 
 #include "olinuxino_config.h"
 
+#include "common_file_tools.h"
 #include "common_tools.h"
 
 #include "common_ui_gtk_manager.h"
@@ -123,15 +124,19 @@ do_printUsage (const std::string& programName_in)
             << OLIMEX_MOD_MPU6050_USE_REACTOR
             << ACE_TEXT ("]")
             << std::endl;
-  std::cout << ACE_TEXT ("-s           : server address[:port] (IPv4)")
+  std::cout << ACE_TEXT ("-s [IPv4]    : server address[:port]")
             << std::endl;
   std::cout << ACE_TEXT ("-t           : trace information [")
             << false
             << ACE_TEXT ("]")
             << std::endl;
-  std::cout << ACE_TEXT ("-u           : interface definition file")
+  std::cout << ACE_TEXT ("-u [PATH]    : (libglade) interface definition file")
             << std::endl;
   std::cout << ACE_TEXT ("-v           : print version information and exit [")
+            << false
+            << ACE_TEXT ("]")
+            << std::endl;
+  std::cout << ACE_TEXT ("-x           : no gui [")
             << false
             << ACE_TEXT ("]")
             << std::endl;
@@ -144,14 +149,17 @@ do_processArguments (int argc_in,
                      bool& logToFile_out,
                      bool& useReactor_out,
                      ACE_INET_Addr& peerAddress_out,
+                     ACE_Netlink_Addr& peerNetlinkAddress_out,
                      bool& traceInformation_out,
                      std::string& interfaceDefinitionFile_out,
-                     bool& printVersionAndExit_out)
+                     bool& printVersionAndExit_out,
+                     bool& consoleMode_out)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_processArguments"));
 
   // init results
   clientMode_out              = false;
+  consoleMode_out             = false;
   logToFile_out               = false;
   useReactor_out              = OLIMEX_MOD_MPU6050_USE_REACTOR;
   traceInformation_out        = false;
@@ -160,7 +168,7 @@ do_processArguments (int argc_in,
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
-                              ACE_TEXT ("clrs:tu:v"),
+                              ACE_TEXT ("clrs:tu:vx"),
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -223,6 +231,11 @@ do_processArguments (int argc_in,
         printVersionAndExit_out = true;
         break;
       }
+      case 'x':
+      {
+        consoleMode_out = true;
+        break;
+      }
       // error handling
       case ':':
       {
@@ -253,6 +266,9 @@ do_processArguments (int argc_in,
       }
     } // end SWITCH
   } // end WHILE
+
+  if (!clientMode_out)
+    peerNetlinkAddress_out.set (ACE_OS::getpid (), 0);
 
   return true;
 }
@@ -314,11 +330,15 @@ do_work (int argc_in,
          ACE_TCHAR** argv_in,
          bool clientMode_in,
          const ACE_INET_Addr& peerAddress_in,
+         const ACE_Netlink_Addr& peerNetlinkAddress_in,
          bool useAsynchConnector_in,
          bool useReactor_in,
-         const std::string& interfaceDefinitionFile_in)
+         const std::string& interfaceDefinitionFile_in,
+         bool consoleMode_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
+
+  bool result = false;
 
   // step1: initialize gtk cb data
   Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
@@ -361,7 +381,10 @@ do_work (int argc_in,
   configuration.socketConfiguration.bufferSize =
    OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
   configuration.socketConfiguration.peerAddress = peerAddress_in;
-//  configuration.socketConfiguration.useLoopbackDevice = false;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
+  configuration.socketConfiguration.peerNetlinkAddress = peerNetlinkAddress_in;
+#endif
+  //  configuration.socketConfiguration.useLoopbackDevice = false;
   // ******************** stream configuration data ***************************
   configuration.streamConfiguration.messageAllocator = &message_allocator;
   configuration.streamConfiguration.bufferSize =
@@ -371,7 +394,9 @@ do_work (int argc_in,
   configuration.streamConfiguration.notificationStrategy = NULL;
   configuration.streamConfiguration.module = &event_handler_module;
   configuration.streamConfiguration.deleteModule = false;
-  configuration.streamConfiguration.statisticsReportingInterval = 0;
+//  configuration.streamConfiguration.moduleConfiguration.streamState = NULL;
+  configuration.streamConfiguration.moduleConfiguration.userData = &consoleMode_in;
+  configuration.streamConfiguration.statisticReportingInterval = 0;
   configuration.streamConfiguration.printFinalReport = false;
   // ******************* protocol configuration data ***************************
   configuration.protocolConfiguration.bufferSize =
@@ -424,18 +449,29 @@ do_work (int argc_in,
                 ACE_TEXT ("failed to allocate memory, returning\n")));
     return;
   } // end IF
+  ACE_ASSERT (connector_p || netlink_connector_p);
 
-  // step5: init connection manager
-  CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+  // step5: init connection manager (s)
   Net_UserData_t session_data;
   ACE_OS::memset (&session_data, 0, sizeof (session_data));
-  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                 &session_data); // will be passed to all handlers
+  if (clientMode_in)
+  {
+    CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+    CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                   &session_data); // will be passed to all handlers
+  } // end IF
+  else
+  {
+    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                           &session_data); // will be passed to all handlers
+  } // end ELSE
 
   // step6: init signal handling
-  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in, // peer address
-                                                   connector_p,    // connector
-                                                   useReactor_in); // use reactor ?
+  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,  // peer address
+                                                   connector_p,     // connector
+                                                   useReactor_in,   // use reactor ?
+                                                   consoleMode_in); // console mode ?
   ACE_Sig_Set signal_set (0);
   do_initSignals (signal_set);
   Common_SignalActions_t previous_signal_actions;
@@ -447,7 +483,10 @@ do_work (int argc_in,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
 
     // clean up
-    delete connector_p;
+    if (clientMode_in)
+      delete connector_p;
+    else
+      delete netlink_connector_p;
 
     return;
   } // end IF
@@ -459,7 +498,10 @@ do_work (int argc_in,
                 ACE_TEXT ("failed to initialize signal handling, aborting\n")));
 
     // clean up
-    delete connector_p;
+    if (clientMode_in)
+      delete connector_p;
+    else
+      delete netlink_connector_p;
 
     return;
   } // end IF
@@ -468,28 +510,34 @@ do_work (int argc_in,
   // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
   // [- signal timer expiration to perform server queries] (see above)
 
-  // step7a: start GTK event loop
+  // step7a: start GTK event loop ?
   Olimex_Mod_MPU6050_GTKUIDefinition interface_definition (argc_in,
                                                            argv_in,
                                                            &gtk_cb_data);
-  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
-                                                            argv_in,
-                                                            interfaceDefinitionFile_in,
-                                                            &interface_definition);
-  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
-  ACE_OS::sleep (ACE_Time_Value (0, OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY));
-  if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
+  if (!consoleMode_in)
   {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
-    Common_Tools::finalizeSignals (signal_set,
-                                   useReactor_in,
-                                   previous_signal_actions);
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
+                                                              argv_in,
+                                                              interfaceDefinitionFile_in,
+                                                              &interface_definition);
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
+    ACE_OS::sleep (ACE_Time_Value (0, OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY));
+    if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
+      Common_Tools::finalizeSignals (signal_set,
+                                     useReactor_in,
+                                     previous_signal_actions);
 
-    // clean up
-    delete connector_p;
+      // clean up
+      if (clientMode_in)
+        delete connector_p;
+      else
+        delete netlink_connector_p;
 
-    return;
+      return;
+    } // end IF
   } // end IF
 
   // step7b: init worker(s)
@@ -508,13 +556,17 @@ do_work (int argc_in,
 //					 iterator++)
 //				g_source_remove (*iterator);
 //		} // end lock scope
-    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    if (!consoleMode_in)
+      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
     Common_Tools::finalizeSignals (signal_set,
                                    useReactor_in,
                                    previous_signal_actions);
 
     // clean up
-    delete connector_p;
+    if (clientMode_in)
+      delete connector_p;
+    else
+      delete netlink_connector_p;
 
     return;
   } // end IF
@@ -523,7 +575,11 @@ do_work (int argc_in,
               ACE_TEXT ("started event dispatch...\n")));
 
   // step8: connect
-  if (!connector_p->connect (peerAddress_in))
+  if (clientMode_in)
+    result = connector_p->connect (peerAddress_in);
+  else
+    result = netlink_connector_p->connect (peerNetlinkAddress_in);
+  if (!result)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to connect, aborting\n")));
@@ -538,13 +594,17 @@ do_work (int argc_in,
     //					 iterator++)
     //				g_source_remove (*iterator);
     //		} // end lock scope
-    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    if (!consoleMode_in)
+      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
     Common_Tools::finalizeSignals (signal_set,
                                    useReactor_in,
                                    previous_signal_actions);
 
     // clean up
-    delete connector_p;
+    if (clientMode_in)
+      delete connector_p;
+    else
+      delete netlink_connector_p;
 
     return;
   }
@@ -584,7 +644,10 @@ do_work (int argc_in,
 //			g_source_remove (*iterator);
 //	} // end lock scope
 //  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
-  delete connector_p;
+  if (clientMode_in)
+    delete connector_p;
+  else
+    delete netlink_connector_p;
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -613,9 +676,11 @@ ACE_TMAIN (int argc_in,
 
   // step1: process commandline options (if any)
   bool client_mode            = false;
+  bool console_mode           = false;
   bool log_to_file            = false;
   bool use_reactor            = OLIMEX_MOD_MPU6050_USE_REACTOR;
   ACE_INET_Addr peer_address;
+  ACE_Netlink_Addr peer_netlink_address;
   bool trace_information      = false;
   std::string interface_definition_file =
       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
@@ -626,9 +691,11 @@ ACE_TMAIN (int argc_in,
                             log_to_file,
                             use_reactor,
                             peer_address,
+                            peer_netlink_address,
                             trace_information,
                             interface_definition_file,
-                            print_version_and_exit))
+                            print_version_and_exit,
+                            console_mode))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
@@ -650,7 +717,8 @@ ACE_TMAIN (int argc_in,
    (!use_reactor ? true 
                  : OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR);
   if ((client_mode && peer_address.is_any ()) ||
-      (use_reactor && use_asynch_connector))
+      (use_reactor && use_asynch_connector)   ||
+      (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid configuration, aborting\n")));
@@ -725,11 +793,13 @@ ACE_TMAIN (int argc_in,
              argv_in,
              client_mode,
              peer_address,
+             peer_netlink_address,
              use_asynch_connector,
              use_reactor,
-             interface_definition_file);
+             interface_definition_file,
+             console_mode);
 
-  // step6: clean up
+  // step6: clean u
   // *PORTABILITY*: on Windows, must fini ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (ACE::fini () == -1)

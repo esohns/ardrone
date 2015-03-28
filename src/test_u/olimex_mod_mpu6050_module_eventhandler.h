@@ -28,6 +28,7 @@
 #include "common_isubscribe.h"
 #include "common_iclone.h"
 
+#include "stream_common.h"
 #include "stream_task_base_synch.h"
 #include "stream_streammodule_base.h"
 
@@ -82,6 +83,7 @@ class Olimex_Mod_MPU6050_Module_EventHandler
 // declare module
 DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                            // task synch type
                               Common_TimePolicy_t,                     // time policy
+                              Stream_ModuleConfiguration_t,            // configuration type
                               Olimex_Mod_MPU6050_Module_EventHandler); // writer type
 
 #endif

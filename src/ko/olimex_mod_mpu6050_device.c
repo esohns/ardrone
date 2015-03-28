@@ -28,41 +28,48 @@
 
 void
 i2c_mpu6050_device_extract_data(char* data_in,
-                                int* accel_x, int* accel_y, int* accel_z,
-                                int* temp,
-                                int* gyro_x, int* gyro_y, int* gyro_z)
+                                s16* accel_x, s16* accel_y, s16* accel_z,
+                                s16* temp,
+                                s16* gyro_x, s16* gyro_y, s16* gyro_z)
 {
   char* reg_p = data_in;
 
   // *NOTE*: i2c uses a big-endian transfer syntax
-  be16_to_cpus((__be16*)reg_p);
+
+  *accel_x = *(s16*)reg_p;
+  be16_to_cpus((__be16*)accel_x);
   // invert two's complement representation
-  *accel_x = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                     : *(s16*)reg_p;
+  *accel_x = (*accel_x & 0x8000) ? ((*accel_x & 0x7FFF) - 0x8000)
+                                 : *accel_x;
   reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  *accel_y = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                     : *(s16*)reg_p;
+  *accel_y = *(s16*)reg_p;
+  be16_to_cpus((__be16*)accel_y);
+  *accel_y = (*accel_y & 0x8000) ? ((*accel_y & 0x7FFF) - 0x8000)
+                                 : *accel_y;
   reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  *accel_z = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                     : *(s16*)reg_p;
+  *accel_z = *(s16*)reg_p;
+  be16_to_cpus((__be16*)accel_z);
+  *accel_z = (*accel_z & 0x8000) ? ((*accel_z & 0x7FFF) - 0x8000)
+                                 : *accel_z;
 
   reg_p += 2;
   *temp = *(s16*)reg_p;
 
   reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  *gyro_x = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                    : *(s16*)reg_p;
+  *gyro_x = *(s16*)reg_p;
+  be16_to_cpus((__be16*)gyro_x);
+  *gyro_x = (*gyro_x & 0x8000) ? ((*gyro_x & 0x7FFF) - 0x8000)
+                               : *gyro_x;
   reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  *gyro_y = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                    : *(s16*)reg_p;
+  *gyro_y = *(s16*)reg_p;
+  be16_to_cpus((__be16*)gyro_y);
+  *gyro_y = (*gyro_y & 0x8000) ? ((*gyro_y & 0x7FFF) - 0x8000)
+                               : *gyro_y;
   reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  *gyro_z = (*(s16*)reg_p & 0x8000) ? ((*(s16*)reg_p & 0x7FFF) - 0x8000)
-                                    : *(s16*)reg_p;
+  *gyro_z = *(s16*)reg_p;
+  be16_to_cpus((__be16*)gyro_z);
+  *gyro_z = (*gyro_z & 0x8000) ? ((*gyro_z & 0x7FFF) - 0x8000)
+                               : *gyro_z;
 }
 
 int

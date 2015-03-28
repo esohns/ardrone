@@ -178,6 +178,13 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
     case SESSION_BEGIN:
     {
       // refer the data back to any subscriber(s)
+//      inherited::MODULE_T* module_p = inherited::module ();
+      Olimex_Mod_MPU6050_Module_EventHandler_Module* module_p =
+          dynamic_cast<Olimex_Mod_MPU6050_Module_EventHandler_Module*> (inherited::module ());
+      ACE_ASSERT (module_p);
+      Stream_ModuleConfiguration_t* configuration_p = NULL;
+      module_p->get (configuration_p);
+      ACE_ASSERT (configuration_p);
 
       // synch access
       {
@@ -194,7 +201,7 @@ Olimex_Mod_MPU6050_Module_EventHandler::handleSessionMessage (Olimex_Mod_MPU6050
         {
           try
           {
-            (*iterator++)->start (*message_inout->getState ());
+            (*iterator++)->start (*configuration_p);
           }
           catch (...)
           {

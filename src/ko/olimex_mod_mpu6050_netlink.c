@@ -18,10 +18,16 @@
 #include "olimex_mod_mpu6050_netlink.h"
 
 #include <stdarg.h>
+#include <linux/delay.h>
+#include <linux/inet.h>
+#include <linux/kthread.h>
 #include <linux/linkage.h>
 #include <linux/printk.h>
+#include <linux/sched.h>
 #include <net/genetlink.h>
 
+#include "olimex_mod_mpu6050_device.h"
+#include "olimex_mod_mpu6050_server.h"
 #include "olimex_mod_mpu6050_types.h"
 
 struct nla_policy i2c_mpu6050_netlink_policy[NETLINK_ATTRIBUTE_MAX] = {
@@ -85,112 +91,188 @@ i2c_mpu6050_netlink_input(struct sk_buff* buffer_in)
   kfree_skb(buffer_in);
 }
 
-void
-i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t* clientData_in, int slot_in)
+int
+i2c_mpu6050_netlink_run (void* data_in)
+{
+  struct i2c_mpu6050_client_data_t* client_data_p;
+//  int bytes_sent;
+  int err, i;
+
+  pr_debug ("%s called.\n", __FUNCTION__);
+
+  // sanity check(s)
+  if (unlikely (!data_in)) {
+    pr_err ("%s: invalid argument\n", __FUNCTION__);
+    return -EINVAL;
+  }
+  client_data_p = (struct i2c_mpu6050_client_data_t*)data_in;
+  if (unlikely (client_data_p->netlink_server->running)) {
+    pr_warn ("%s: netlink server thread already running\n", __FUNCTION__);
+    return -ENODEV;
+  }
+
+//  lock_kernel ();
+  client_data_p->netlink_server->running = 1;
+  current->flags |= PF_NOFREEZE;
+
+  // daemonize (*NOTE*: take care with signals - after daemonize(), they are
+  // disabled)
+  daemonize (KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
+  err = allow_signal (SIGKILL);
+  if (unlikely (err)) {
+    pr_err ("%s: allow_signal(%d) failed: %d\n", __FUNCTION__,
+            SIGKILL, err);
+    return -ENODEV;
+  }
+//  unlock_kernel ();
+
+  for (;;)
+  {
+    if (signal_pending (current))
+      break;
+
+//    bytes_sent = i2c_mpu6050_server_receive (client_data_p->server->socket,
+//                                             &client_data_p->server->address,
+//                                             buf, bufsize);
+//    if (bytes_sent < 0)
+//    {
+//      pr_err ("%s: receive() failed: %d\n", __FUNCTION__,
+//              bytes_sent);
+//      continue;
+//    } // end IF
+//    pr_debug ("%s: received %d bytes: \"%s\"\n", __FUNCTION__,
+//              bytes_sent, buf);
+
+    mutex_lock (&client_data_p->sync_lock);
+
+    // sanity check(s)
+    if ((client_data_p->ringbufferpos == -1) ||
+        (client_data_p->ringbuffer[client_data_p->ringbufferpos].used == 0)) {
+      pr_debug ("%s: no data\n", __FUNCTION__);
+      continue;
+    }
+
+//    i = client_data_p->server->ringbufferpos;
+    i = client_data_p->ringbufferpos;
+    //while (i != client_data_p->ringbufferpos)
+    //{
+      if (client_data_p->ringbuffer[i].used == 0) goto done;
+
+      err = i2c_mpu6050_netlink_forward(client_data_p, i);
+      if (unlikely(err)) {
+        pr_err ("%s: i2c_mpu6050_netlink_forward() failed: %d\n", __FUNCTION__,
+                err);
+      }
+
+done:
+    //  i++;
+    //  if (i == RINGBUFFER_SIZE) i = 0;
+    //}
+    mutex_unlock (&client_data_p->sync_lock);
+    //client_data_p->server->ringbufferpos = i;
+
+    msleep (KO_OLIMEX_MOD_MPU6050_TIMER_DELAY_MS);
+  }
+  pr_debug ("%s: left netlink server loop\n", __FUNCTION__);
+
+  client_data_p->netlink_server->running = 0;
+
+  return 0;
+}
+
+int
+i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t* clientData_in,
+                            int slot_in)
 {
   struct sk_buff* buffer_p;
   int err;
   void* header_p;
-  u8* reg_p;
-  u16 value_xyz;
-  s16 value_t;
+  s16 accel_x, accel_y, accel_z, t, gyro_x, gyro_y, gyro_z;
 
 //  pr_debug("%s called.\n", __FUNCTION__);
 
+  // sanity check(s)
+  if (unlikely(!clientData_in)) {
+    pr_err("%s: invalid argument\n", __FUNCTION__);
+    return -EINVAL;
+  }
+
 //  buffer_p = alloc_skb(RINGBUFFER_DATA_SIZE, GFP_KERNEL);
-//  buffer_p = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
   buffer_p = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
   if (unlikely(!buffer_p)) {
     pr_err("%s: genlmsg_new() failed\n", __FUNCTION__);
-    return;
+    return -ENOMEM;
   }
-  header_p = genlmsg_put(buffer_p, 0, ++i2c_mpu6050_netlink_sequence_number,
-                         &i2c_mpu6050_netlink_family, 0, NETLINK_COMMAND_RECORD);
+  header_p =
+      genlmsg_put(buffer_p, 0, ++i2c_mpu6050_netlink_sequence_number,
+                  &i2c_mpu6050_netlink_family, 0, NETLINK_COMMAND_RECORD);
   if (unlikely(!header_p)) {
     pr_err("%s: genlmsg_put() failed\n", __FUNCTION__);
+    err = -ENOSYS;
     goto error1;
   }
-  reg_p = clientData_in->ringbuffer[slot_in].data;
-  // *NOTE*: i2c uses a big-endian transfer syntax
-  be16_to_cpus((__be16*)reg_p);
-  // convert two's complement
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
+
+//  mutex_lock (&clientData_in->sync_lock);
+  i2c_mpu6050_device_extract_data(clientData_in->ringbuffer[slot_in].data,
+                                  &accel_x, &accel_y, &accel_z,
+                                  &t,
+                                  &gyro_x, &gyro_y, &gyro_z);
+//  mutex_unlock (&clientData_in->sync_lock);
+
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_ACCEL_X,
-                    value_xyz);
+                    accel_x);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_ACCEL_X, err);
     goto error1;
   }
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_ACCEL_Y,
-                    value_xyz);
+                    accel_y);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_ACCEL_Y, err);
     goto error1;
   }
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_ACCEL_Z,
-                    value_xyz);
+                    accel_z);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_ACCEL_Z, err);
     goto error1;
   }
-  reg_p += 2;
-  value_t = *(s16*)reg_p;
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_TEMP,
-                    (u16)value_t);
+                    t);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_TEMP, err);
     goto error1;
   }
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_GYRO_X,
-                    value_xyz);
+                    gyro_x);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_GYRO_X, err);
     goto error1;
   }
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_GYRO_Y,
-                    value_xyz);
+                    gyro_y);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_GYRO_Y, err);
     goto error1;
   }
-  reg_p += 2;
-  be16_to_cpus((__be16*)reg_p);
-  value_xyz = ((*(s16*)reg_p < 0) ? -((~*(u16*)reg_p) + 1)
-                                  : *(s16*)reg_p);
   err = nla_put_u16(buffer_p, NETLINK_ATTRIBUTE_GYRO_Z,
-                    value_xyz);
+                    gyro_z);
   if (unlikely(err)) {
     pr_err("%s: nla_put_u16(%d) failed: %d\n", __FUNCTION__,
            NETLINK_ATTRIBUTE_GYRO_Z, err);
     goto error1;
   }
-  value_t = genlmsg_end(buffer_p, header_p);
-  if (unlikely(value_t < 0)) {
+
+  err = genlmsg_end(buffer_p, header_p);
+  if (unlikely(err < 0)) {
     pr_err("%s: genlmsg_end() failed: %d\n", __FUNCTION__,
-           value_t);
+           err);
     goto error1;
   }
 
@@ -203,16 +285,18 @@ i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t* clientData_in, int
 //  pr_debug("sent netlink message (%d bytes)...\n",
 //           value_t);
 
-  return;
+  return 0;
 
 error1:
   nlmsg_free(buffer_p);
+
+  return err;
 }
 
 int
 i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t* clientData_in)
 {
-  int err;
+  int err, err_2;
 
   pr_debug("%s called.\n", __FUNCTION__);
 
@@ -221,16 +305,37 @@ i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t* clientData_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return -EINVAL;
   }
-//  if (unlikely(clientData_in->netlink_socket)) {
-//    pr_warn("%s: netlink socket already initialized\n", __FUNCTION__);
-//    return 0;
-//  }
+  if (unlikely (clientData_in->netlink_server)) {
+    pr_warn ("%s: netlink server already initialized\n", __FUNCTION__);
+    return 0;
+  }
+
+  clientData_in->netlink_server = kzalloc (sizeof (struct i2c_mpu6050_netlink_server_t), GFP_KERNEL);
+  if (unlikely (IS_ERR (clientData_in->netlink_server))) {
+    err = PTR_ERR (clientData_in->netlink_server);
+    pr_err ("%s: kzalloc() failed: %d\n", __FUNCTION__,
+            err);
+    return err;
+   }
+
+  clientData_in->netlink_server->socket =
+      netlink_kernel_create(&init_net,
+                            NETLINK_GENERIC, 0,
+                            i2c_mpu6050_netlink_input,
+                            NULL,
+                            THIS_MODULE);
+  if (unlikely(IS_ERR(clientData_in->netlink_server->socket))) {
+    err = PTR_ERR(clientData_in->netlink_server->socket);
+    pr_err("%s: netlink_kernel_create() failed: %d\n", __FUNCTION__,
+           err);
+    goto error1;
+  }
 
   err = genl_register_family(&i2c_mpu6050_netlink_family);
   if (unlikely(err)) {
     pr_err("%s: genl_register_family() failed: %d\n", __FUNCTION__,
            err);
-    return err;
+    goto error2;
   }
   pr_info("%s: registered netlink family \"%s\" version: %d --> id: %d\n", __FUNCTION__,
           i2c_mpu6050_netlink_family.name, i2c_mpu6050_netlink_family.version,
@@ -240,27 +345,38 @@ i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t* clientData_in)
   if (unlikely(err)) {
     pr_err("%s: genl_register_ops() failed: %d\n", __FUNCTION__,
            err);
-    goto error1;
+    goto error3;
   }
 
-//  clientData_in->netlink_socket = netlink_kernel_create(&init_net,
-//                                                        NETLINK_GENERIC, 0,
-//                                                        i2c_mpu6050_netlink_input,
-//                                                        NULL,
-//                                                        THIS_MODULE);
-//  if (unlikely(IS_ERR(clientData_in->netlink_socket))) {
-//    pr_err("%s: netlink_kernel_create() failed: %ld\n", __FUNCTION__,
-//           PTR_ERR(clientData_in->netlink_socket));
-//    return PTR_ERR(clientData_in->netlink_socket);
-//  }
+  clientData_in->netlink_server->thread =
+      kthread_run (i2c_mpu6050_netlink_run, clientData_in,
+                   KO_OLIMEX_MOD_MPU6050_NETLINK_SERVER_THREAD_NAME);
+  if (unlikely (IS_ERR (clientData_in->netlink_server->thread)))
+  {
+    err = PTR_ERR (clientData_in->netlink_server->thread);
+    pr_err ("%s: kthread_run() failed: %d\n", __FUNCTION__,
+            err);
+    goto error4;
+  }
 
   return 0;
 
-error1:
-  err = genl_unregister_family(&i2c_mpu6050_netlink_family);
-  if (unlikely(err))
+error4:
+  err_2 = genl_unregister_ops(&i2c_mpu6050_netlink_family,
+                              &i2c_mpu6050_netlink_operations_record);
+  if (unlikely(err_2))
+    pr_err("%s: genl_unregister_ops() failed: %d\n", __FUNCTION__,
+           err_2);
+error3:
+  err_2 = genl_unregister_family(&i2c_mpu6050_netlink_family);
+  if (unlikely(err_2))
     pr_err("%s: genl_unregister_family() failed: %d\n", __FUNCTION__,
-           err);
+           err_2);
+error2:
+  netlink_kernel_release(clientData_in->netlink_server->socket);
+error1:
+  kfree (clientData_in->netlink_server);
+  clientData_in->netlink_server = NULL;
 
   return err;
 }
@@ -277,11 +393,31 @@ i2c_mpu6050_netlink_fini(struct i2c_mpu6050_client_data_t* clientData_in)
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;
   }
-//  if (unlikely(!clientData_in->netlink_socket)) {
-//    pr_err("%s: invalid argument\n", __FUNCTION__);
-//    return;
-//  }
+  if (unlikely (!clientData_in->netlink_server)) {
+//    pr_debug ("%s: server not initialized\n", __FUNCTION__);
+    return;
+  }
+  if (unlikely (!clientData_in->netlink_server->thread)) {
+//    pr_debug ("%s: server not started\n", __FUNCTION__);
+    goto error1;
+  }
 
+  //  lock_kernel ();
+  //  err = kill_proc (clientData_in->server->thread->pid, SIGKILL, 1);
+  err = send_sig (SIGKILL, clientData_in->netlink_server->thread, 1);
+  //  unlock_kernel ();
+  if (unlikely (err < 0)) {
+    //    pr_err ("%s: kill_proc() failed: %d\n", __FUNCTION__,
+    pr_err ("%s: send_sig() failed: %d\n", __FUNCTION__,
+            err);
+    goto error1;
+  }
+  while (clientData_in->netlink_server->running == 1)
+    msleep (10);
+  pr_info ("%s: netlink server thread terminated\n", __FUNCTION__);
+
+  kfree (clientData_in->netlink_server->thread);
+error1:
   err = genl_unregister_ops(&i2c_mpu6050_netlink_family,
                             &i2c_mpu6050_netlink_operations_record);
   if (unlikely(err))
@@ -291,5 +427,7 @@ i2c_mpu6050_netlink_fini(struct i2c_mpu6050_client_data_t* clientData_in)
   if (unlikely(err))
     pr_err("%s: genl_unregister_family() failed: %d\n", __FUNCTION__,
            err);
-//  netlink_kernel_release(clientData_in->netlink_socket);
+  netlink_kernel_release(clientData_in->netlink_server->socket);
+  kfree (clientData_in->netlink_server);
+  clientData_in->netlink_server = NULL;
 }

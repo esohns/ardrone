@@ -98,7 +98,9 @@ typedef Net_Client_Connector_T<ACE_Netlink_Addr,
                                Net_UserData_t,
                                Net_StreamSessionData_t,
                                Net_INetlinkTransportLayer_t,
-                               Net_NetlinkConnection> Olimex_Mod_MPU6050_NetlinkConnector_t;
+                               Net_NetlinkConnection_T<Net_UserData_t,
+                                                       Net_StreamSessionData_t,
+                                                       Olimex_Mod_MPU6050_NetlinkHandler_t> > Olimex_Mod_MPU6050_NetlinkConnector_t;
 
 typedef Net_Client_AsynchConnector_T<ACE_INET_Addr,
                                      Net_Configuration_t,
@@ -115,7 +117,9 @@ typedef Net_Client_AsynchConnector_T<ACE_Netlink_Addr,
                                      Net_UserData_t,
                                      Net_StreamSessionData_t,
                                      Net_INetlinkTransportLayer_t,
-                                     Net_AsynchNetlinkConnection> Olimex_Mod_MPU6050_AsynchNetlinkConnector_t;
+                                     Net_AsynchNetlinkConnection_T<Net_UserData_t,
+                                                                   Net_StreamSessionData_t,
+                                                                   Olimex_Mod_MPU6050_AsynchNetlinkHandler_t> > Olimex_Mod_MPU6050_AsynchNetlinkConnector_t;
 
 typedef Net_Connection_Manager_T<Net_Configuration_t,
                                  Net_UserData_t,

@@ -32,6 +32,8 @@ ccflags-y         = \
 #  -mfloat-abi=softfp
 ifeq ($(DEBUG),1)
   ccflags-y      += \
+    -mfpu=neon \
+    -mcpu=cortex-a8 \
     -DDEBUG
 else
   ccflags-y      += \

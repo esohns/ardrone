@@ -32,9 +32,11 @@
 Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr& peerAddress_in,
                                                                     Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_in,
                                                                     // ---------
+                                                                    bool consoleMode_in,
                                                                     bool useReactor_in)
  : inherited (this,          // event handler handle
               useReactor_in) // use reactor ?
+ , consoleMode_ (consoleMode_in)
  , interfaceHandle_ (interfaceHandle_in)
  , peerAddress_ (peerAddress_in)
  , useReactor_ (useReactor_in)
@@ -102,7 +104,6 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("received invalid/unknown signal: \"%S\", aborting\n"),
                   signal_in));
-
       return false;
     }
   } // end SWITCH
@@ -155,12 +156,15 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     } // end IF
     CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
     CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
+    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
+    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
     // *IMPORTANT NOTE*: as long as connections are inactive (i.e. events are
     // dispatched by reactor thread(s), there is no real reason to wait here)
     //CONNECTIONMANAGER_SINGLETON::instance ()->waitConnections ();
 
-    // step2: stop GTK event dispatch
-    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+    // step2: stop GTK event dispatch ?
+    if (!consoleMode_)
+      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 
     // step3: stop reactor (&& proactor, if applicable)
     Common_Tools::finalizeEventDispatch (true,         // stop reactor ?

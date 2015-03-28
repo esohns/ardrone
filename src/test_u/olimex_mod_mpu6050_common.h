@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Erik Sohns   *
+ *   Copyright (C) 2010 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,37 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef OLIMEX_MOD_MPU6050_EVENTHANDLER_H
-#define OLIMEX_MOD_MPU6050_EVENTHANDLER_H
+#ifndef OLIMEX_MOD_MPU6050_COMMON_H
+#define OLIMEX_MOD_MPU6050_COMMON_H
 
-#include "olimex_mod_mpu6050_message.h"
-#include "olimex_mod_mpu6050_types.h"
-
-// forward declarations
-struct Olimex_Mod_MPU6050_GtkCBData_t;
-
-class Olimex_Mod_MPU6050_EventHandler
- : public Olimex_Mod_MPU6050_Notification_t
-{
- public:
-  Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t*); // Gtk state
-  virtual ~Olimex_Mod_MPU6050_EventHandler ();
-
-  // implement Common_INotify_T
-  virtual void start (const Stream_ModuleConfiguration_t&);
-  virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
-  virtual void end ();
-
- private:
-  typedef Olimex_Mod_MPU6050_Notification_t inherited;
-
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler ());
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler (const Olimex_Mod_MPU6050_EventHandler&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&));
-
-  const Stream_ModuleConfiguration_t* configuration_;
-  bool                                consoleMode_;
-  Olimex_Mod_MPU6050_GtkCBData_t*     GtkCBData_;
-};
+void extract_data (const char*,             // data
+                   float&, float&, float&,  // return value: accelerometer data
+                   float&,                  // return value: thermometer data
+                   float&, float&, float&); // return value: gyroscope data
 
 #endif

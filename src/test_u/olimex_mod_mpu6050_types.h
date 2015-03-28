@@ -69,7 +69,7 @@ typedef Olimex_Mod_MPU6050_Events_t::const_iterator Olimex_Mod_MPU6050_EventsIte
 typedef std::deque<Olimex_Mod_MPU6050_Message*> Olimex_Mod_MPU6050_Messages_t;
 typedef Olimex_Mod_MPU6050_Messages_t::const_iterator Olimex_Mod_MPU6050_MessagesIterator_t;
 
-typedef Common_INotify_T<Stream_State_t,
+typedef Common_INotify_T<Stream_ModuleConfiguration_t,
                          Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
 typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;

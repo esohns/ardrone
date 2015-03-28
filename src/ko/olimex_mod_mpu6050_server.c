@@ -183,7 +183,6 @@ error2:
 error1:
   sock_release (client_data_p->server->socket_send);
 
-  client_data_p->server->thread = NULL;
   client_data_p->server->running = 0;
 
   return 0;
@@ -276,7 +275,8 @@ i2c_mpu6050_server_init (struct i2c_mpu6050_client_data_t* clientData_in)
     return 0;
   }
 
-  clientData_in->server = kzalloc (sizeof (struct server_t), GFP_KERNEL);
+  clientData_in->server =
+      kzalloc (sizeof (struct i2c_mpu6050_server_t), GFP_KERNEL);
   if (unlikely (IS_ERR (clientData_in->server))) {
     err = PTR_ERR (clientData_in->server);
     pr_err ("%s: kzalloc() failed: %d\n", __FUNCTION__,
@@ -286,7 +286,7 @@ i2c_mpu6050_server_init (struct i2c_mpu6050_client_data_t* clientData_in)
 
   clientData_in->server->thread =
       kthread_run (i2c_mpu6050_server_run, clientData_in,
-                   KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
+                   KO_OLIMEX_MOD_MPU6050_SERVER_THREAD_NAME);
   if (unlikely (IS_ERR (clientData_in->server->thread)))
   {
     err = PTR_ERR (clientData_in->server->thread);
@@ -339,6 +339,7 @@ i2c_mpu6050_server_fini (struct i2c_mpu6050_client_data_t* clientData_in)
     msleep (10);
   pr_info ("%s: server thread terminated\n", __FUNCTION__);
 
+  kfree (clientData_in->server->thread);
 error1:
   kfree (clientData_in->server);
   clientData_in->server = NULL;

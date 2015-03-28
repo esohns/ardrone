@@ -67,13 +67,15 @@ Olimex_Mod_MPU6050_Stream::~Olimex_Mod_MPU6050_Stream ()
 
 bool
 Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
-                                       const Stream_Configuration_t& configuration_in,
+                                       Stream_Configuration_t& configuration_in,
                                        const Net_ProtocolConfiguration_t& protocolConfiguration_in,
                                        const Net_UserData_t& userData_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::initialize"));
 
   ACE_UNUSED_ARG (protocolConfiguration_in);
+
+  bool result = false;
 
   // sanity check(s)
   ACE_ASSERT (!isInitialized_);
@@ -114,6 +116,39 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
   // ---------------------------------------------------------------------------
 
   if (configuration_in.module)
+  {
+    inherited::IMODULE_T* module_p = NULL;
+    module_p =
+        dynamic_cast<inherited::IMODULE_T*> (configuration_in.module);
+    if (!module_p)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("dynamic_cast<Stream_IModule> failed, aborting\n")));
+      return false;
+    } // end IF
+
+    configuration_in.moduleConfiguration.streamState =
+        const_cast<Stream_State_t*> (getState ());
+    try
+    {
+      result = module_p->initialize (configuration_in.moduleConfiguration);
+    }
+    catch (...)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in Stream_IModule::initialize(\"%s\"): \"%s\", aborting\n"),
+                  ACE_TEXT (configuration_in.module->name ())));
+      return false;
+    }
+    if (!result)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
+                  ACE_TEXT (configuration_in.module->name ())));
+      return false;
+    } // end IF
+
+    // enqueue the module...
     if (inherited::push (configuration_in.module) == -1)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -121,6 +156,7 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
                   ACE_TEXT (configuration_in.module->name ())));
       return false;
     } // end IF
+  } // end IF
 
   // ---------------------------------------------------------------------------
 
@@ -164,9 +200,9 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic> failed, aborting\n")));
     return false;
   } // end IF
-  if (!runtimeStatistic_impl->init (configuration_in.statisticsReportingInterval, // reporting interval (seconds)
-                                    configuration_in.printFinalReport,            // print final report ?
-                                    configuration_in.messageAllocator))           // message allocator handle
+  if (!runtimeStatistic_impl->initialize (configuration_in.statisticReportingInterval, // reporting interval (seconds)
+                                          configuration_in.printFinalReport,           // print final report ?
+                                          configuration_in.messageAllocator))          // message allocator handle
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),

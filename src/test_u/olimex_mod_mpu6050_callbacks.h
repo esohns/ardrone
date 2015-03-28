@@ -23,11 +23,6 @@
 
 #include "gtk/gtk.h"
 
-void extract_data (const char*,             // data
-                   float&, float&, float&,  // return value: accelerometer data
-                   float&,                  // return value: thermometer data
-                   float&, float&, float&); // return value: gyroscope data
-
 #ifdef __cplusplus
 extern "C"
 {

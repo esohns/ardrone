@@ -71,14 +71,17 @@
 #define KO_OLIMEX_MOD_MPU6050_RINGBUFFER_DATA_SIZE            KO_OLIMEX_MOD_MPU6050_DEVICE_BLOCK_LENGTH
 
 // network
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_SERVER_THREAD_NAME      "olimex_mod_mpu6050_netlink_server"
 // *WARNING*: check <linux/netlink.h> for available identifiers !
 //#define NETLINK_PROTOCOL_TYPE             NETLINK_GENERIC
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_FAMILY_NAME    "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_VERSION        1
 
+#define KO_OLIMEX_MOD_MPU6050_SERVER_THREAD_NAME              "olimex_mod_mpu6050_server"
 #define KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PEER             "127.0.0.1"
 #define KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PORT             10001
 //#define SERVER_INADDR_SEND                ((unsigned long int)0x7f000001) /* 127.0.0.1: INADDR_LOOPBACK */
 //#define SERVER_INADDR_SEND                INADDR_LOOPBACK
+
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_DEFINES_H

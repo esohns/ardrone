@@ -28,6 +28,8 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050.cpp \
   olimex_mod_mpu6050_callbacks.cpp \
   olimex_mod_mpu6050_callbacks.h \
+  olimex_mod_mpu6050_common.cpp \
+  olimex_mod_mpu6050_common.h \
   olimex_mod_mpu6050_defines.h \
   olimex_mod_mpu6050_eventhandler.cpp \
   olimex_mod_mpu6050_eventhandler.h \
