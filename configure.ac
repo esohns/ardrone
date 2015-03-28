@@ -24,7 +24,11 @@ m4_ifset([M4_OLINUXINO_VERSION_DEVEL],
 AC_SUBST([OLINUXINO_VERSION_API],[M4_OLINUXINO_VERSION_API])
 
 AC_PREREQ([2.69])
-AC_INIT([olinuxino],[M4_OLINUXINO_VERSION],[eriksohns@123mail.org],[OLinuxIno],[http://www.github.com/esohns/olinuxino])
+AC_INIT([olinuxino],
+        [M4_OLINUXINO_VERSION],
+        [eriksohns@123mail.org],
+        [olinuxino],
+        [http://www.github.com/esohns/olinuxino])
 AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])

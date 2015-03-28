@@ -25,6 +25,7 @@ ccflags-y         = \
   -I$(KDIR)arch/$(ARCH)/include \
   -I$(KDIR)arch/$(ARCH)/uapi/include \
   -I$(KDIR)arch/sh/include \
+  -I$(KDIR)arch/$(ARCH)/plat-sunxi/include \
   -I$(AM_ABSSRCDIR)/3rd_party/i2cdevlib
 
 #ccflags-y        += \

@@ -6,4 +6,5 @@ EXTRA_DIST = \
   olimex_mod_mpu6050.conf \
   olinuxino.pc.in \
   script_a10_lime_HDMI_modmpu6050.fex \
-  sunxi-i2c.patch
+  sunxi-i2c.patch \
+  .config

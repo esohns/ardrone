@@ -1,9 +1,11 @@
 if DO_CROSS_COMPILE
-  ARCH=arm
-  CROSS_COMPILE=arm-linux-gnu-
-  export CROSS_COMPILE
+  ARCH = arm
+  CROSS_COMPILE = arm-linux-gnu-
+  export ARCH CROSS_COMPILE
+else
+  ARCH = @BUILD_PLATFORM@
+  export ARCH
 endif
-export ARCH
 
 if DEBUG
   DEBUG=1

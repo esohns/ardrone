@@ -284,7 +284,7 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
   err = script_parser_fetch(KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
                             KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL,
                             (int*)&client_data_p->gpio_led_data,
-                            sizeof(script_gpio_set_t));
+                            sizeof(client_data_p->gpio_led_data));
   if (unlikely(err != SCRIPT_PARSER_OK)) {
     pr_err("%s: script_parser_fetch(\"%s\",\"%s\") failed: %d\n", __FUNCTION__,
            KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER,
@@ -301,6 +301,9 @@ __devinit i2c_mpu6050_probe(struct i2c_client* client_in,
     err = -ENOSYS;
     goto error2;
   }
+  pr_debug("%s: allocated LED GPIO (\"%s\": %d)\n", __FUNCTION__,
+           client_data_p->gpio_led_data.gpio_name,
+           client_data_p->gpio_led_data.port);
   gpio_write_one_pin_value(client_data_p->gpio_led_handle, 0, KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN_LABEL);
 
 //  err = gpio_request(KO_OLIMEX_MOD_MPU6050_GPIO_LED_PIN,
@@ -557,16 +560,16 @@ const struct regmap_config i2c_mpu6050_regmap_config = {
 
 int noirq=0;
 module_param(noirq, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(noirq, "use polling (instead of INT line (default))");
-int nofifo=1;
+MODULE_PARM_DESC(noirq, "use polling (instead of the interrupt line (default))");
+int nofifo=0;
 module_param(nofifo, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(nofifo, "do not use the device FIFO buffer (default)");
-int nonetlink=1;
+MODULE_PARM_DESC(nofifo, "read device registers (instead of the FIFO buffer (default))");
+int nonetlink=0;
 module_param(nonetlink, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(nonetlink, "do not forward sensor data over a netlink socket");
-int noserver=0;
+int noserver=1;
 module_param(noserver, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(noserver, "do not forward sensor data over a UDP socket");
+MODULE_PARM_DESC(noserver, "do not forward sensor data over a UDP socket (default)");
 char* peer="";
 module_param(peer, charp, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(peer, "peer address (IPv4)");
@@ -605,13 +608,21 @@ __init i2c_mpu6050_init(void)
 
   INIT_LIST_HEAD(&i2c_mpu6050_i2c_driver.clients);
 
+//  // initialize GPIO
+//  err = gpio_init ();
+//  if (unlikely(err != 1)) {
+//    pr_err("%s: gpio_init() failed: %d\n", __FUNCTION__,
+//           err);
+//    return -ENOSYS;
+//  }
+
   // register I2C driver
   // *NOTE*: this calls i2c_mpu6050_probe()
   err = i2c_add_driver(&i2c_mpu6050_i2c_driver);
   if (unlikely(err)) {
     pr_err("%s: i2c_add_driver() failed: %d\n", __FUNCTION__,
            err);
-    return -ENODEV;
+    goto init_error1;
   }
 
   pr_info("%s: %s...added", __FUNCTION__,
@@ -619,18 +630,32 @@ __init i2c_mpu6050_init(void)
 
   return 0;
 
-//init_error1:
+init_error1:
+//  err = gpio_exit ();
+//  if (unlikely(err)) {
+//    pr_err("%s: gpio_exit() failed: %d\n", __FUNCTION__,
+//           err);
+//  }
+//init_error2:
 //  i2c_del_driver(&i2c_mpu6050_i2c_driver);
 
-//  return -ENOSYS;
+  return -ENOSYS;
 }
 
 void
 __exit i2c_mpu6050_exit(void)
 {
+//  int err;
+
   pr_debug("%s called.\n", __FUNCTION__);
 
   i2c_del_driver(&i2c_mpu6050_i2c_driver);
+
+//  err = gpio_exit ();
+//  if (unlikely(err)) {
+//    pr_err("%s: gpio_exit() failed: %d\n", __FUNCTION__,
+//           err);
+//  }
 
   pr_info("%s: %s...removed", __FUNCTION__,
           KO_OLIMEX_MOD_MPU6050_DRIVER_NAME);
