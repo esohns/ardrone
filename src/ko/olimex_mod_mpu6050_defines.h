@@ -19,6 +19,7 @@
 #define KO_OLIMEX_MOD_MPU6050_DEFINES_H
 
 #include <linux/kernel.h>
+#include <linux/netlink.h>
 
 // *NOTE*: taken from i2cdevlib (see also: http://www.i2cdevlib.com/devices/mpu6050#source)
 #include "MPU6050.h"
@@ -34,7 +35,7 @@
 #define KO_OLIMEX_MOD_MPU6050_DRIVER_WQ_NAME                  "olimex_mod_mpu6050_wq"
 
 // macros
-#define KO_OLIMEX_MOD_MPU6050_ARRAY_AND_SIZE (x)              (x), ARRAY_SIZE (x)
+#define KO_OLIMEX_MOD_MPU6050_ARRAY_AND_SIZE(x)               (x), ARRAY_SIZE (x)
 
 // gpio
 #define KO_OLIMEX_MOD_MPU6050_GPIO_FEX_SECTION_HEADER         "gpio_para"
@@ -72,10 +73,14 @@
 
 // network
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_SERVER_THREAD_NAME      "olimex_mod_mpu6050_netlink_server"
-// *WARNING*: check <linux/netlink.h> for available identifiers !
-//#define NETLINK_PROTOCOL_TYPE             NETLINK_GENERIC
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_FAMILY_NAME    "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
+// *WARNING*: check <linux/netlink.h> for available identifiers !
+// *IMPORTANT NOTE*: this must match with the user space implementation !
+//#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_GENERIC
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_USERSOCK
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_VERSION        1
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_GROUP_NAME     "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_GROUP                   1
 
 #define KO_OLIMEX_MOD_MPU6050_SERVER_THREAD_NAME              "olimex_mod_mpu6050_server"
 #define KO_OLIMEX_MOD_MPU6050_SERVER_DEFAULT_PEER             "127.0.0.1"

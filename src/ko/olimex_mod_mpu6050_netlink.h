@@ -18,14 +18,13 @@
 #ifndef OLIMEX_MOD_MPU6050_NETLINK_H
 #define OLIMEX_MOD_MPU6050_NETLINK_H
 
+//#include <linux/mutex.h>
+#include <net/genetlink.h>
 #include <net/netlink.h>
 
 // forward declarations
 struct sock;
-struct genl_family;
-struct genl_ops;
 struct sk_buff;
-struct genl_info;
 struct i2c_mpu6050_client_data_t;
 
 // types
@@ -52,16 +51,21 @@ enum i2c_mpu6050_netlink_commands_t {
 // types
 struct i2c_mpu6050_netlink_server_t
 {
-  struct task_struct* thread;
-  struct sock* socket;
+//  struct mutex cb_mutex;
   int running;
+  struct sock* socket;
+  struct task_struct* thread;
 };
 
 // globals
-extern int i2c_mpu6050_netlink_sequence_number;
 extern struct nla_policy i2c_mpu6050_netlink_policy[];
 extern struct genl_family i2c_mpu6050_netlink_family;
-extern struct genl_ops i2c_mpu6050_netlink_operations_record;
+extern struct genl_ops i2c_mpu6050_netlink_ops[];
+extern struct genl_ops i2c_mpu6050_netlink_operation_record;
+//extern struct genl_multicast_group i2c_mpu6050_netlink_groups[];
+extern struct genl_multicast_group i2c_mpu6050_netlink_group;
+//extern struct netlink_kernel_cfg i2c_mpu6050_netlink_socket_cfg;
+extern int i2c_mpu6050_netlink_sequence_number;
 
 // function declarations
 int i2c_mpu6050_netlink_handler(struct sk_buff*, struct genl_info*);

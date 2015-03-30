@@ -7,16 +7,17 @@ DEFS = \
   -DSTREAM_HAS_DLL \
   -DNET_HAS_DLL \
   -DNET_CLIENT_HAS_DLL \
-  -DBASEDIR=\"$(datadir)/@META_PACKAGE@\"
+  -DBASEDIR=\"$(datadir)/@PACKAGE_NAME@\"
 
 AM_CPPFLAGS = \
-  -I$(top_srcdir)/src/include \
+  -I/usr/share/gettext \
+  -I$(top_srcdir)/../ATCD/ACE \
   -I$(top_srcdir)/modules/libCommon/src \
   -I$(top_srcdir)/modules/libCommon/src/ui \
   -I$(top_srcdir)/modules/libACEStream/src \
   -I$(top_srcdir)/modules/libACENetwork/src \
   -I$(top_srcdir)/modules/libACENetwork/src/client \
-  -I/usr/share/gettext
+  -I$(top_srcdir)/src/include
 
 bin_PROGRAMS = \
   olimex_mod_mpu6050
@@ -59,15 +60,17 @@ olimex_mod_mpu6050_CPPFLAGS = \
   $(PKGLIB_CFLAGS)
 
 olimex_mod_mpu6050_LDFLAGS = \
+  $(PKGLIB_LDFLAGS) \
+  -L$(top_srcdir)/modules/ATCD/ACE/build/linux/lib \
   -L$(top_builddir)/modules/libCommon/src/.libs \
   -L$(top_builddir)/modules/libCommon/src/ui/.libs \
   -L$(top_builddir)/modules/libACEStream/src/.libs \
   -L$(top_builddir)/modules/libACENetwork/src/.libs \
-  -L$(top_builddir)/modules/libACENetwork/src/client/.libs \
-  $(PKGLIB_LDFLAGS)
+  -L$(top_builddir)/modules/libACENetwork/src/client/.libs
 
 olimex_mod_mpu6050_LDADD = \
   $(PKGLIB_LIBS) \
+  -lACE \
   -lCommon \
   -lCommon_UI \
   -lACEStream \

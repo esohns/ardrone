@@ -40,7 +40,7 @@ i2c_mpu6050_wq_read_handler(struct work_struct* work_in)
 //  pr_debug("%s called.\n", __FUNCTION__);
 
   // sanity check(s)
-  work_p = (struct i2c_mpu6050_wq_read_work_t*)work_in;
+  work_p = container_of (work_in, struct i2c_mpu6050_wq_read_work_t, work);
   if (unlikely(!work_p)) {
     pr_err("%s: invalid argument\n", __FUNCTION__);
     return;

@@ -1,6 +1,6 @@
 #!/bin/sh
 # author:      Erik Sohns <eriksohns@123mail.org>
-# this script collects the libraries in one place for in-source-tree
+# this script collects the required libraries in one place for in-source-tree
 # debugging
 # *NOTE*: this is neither portable nor particularly stable !
 # parameters:   - $1 [BUILD] {"debug" || "debug_tracing" || "release" || ...}
@@ -35,6 +35,13 @@ if [ ! -d "${TARGET_DIR}" ]; then
  echo "INFO: created directory \"${TARGET_DIR}\", continuing"
 fi
 
+LIB_DIR=${PROJECT_DIR}/modules/ATCD/ACE/build/linux/lib
+LIB="${LIB_DIR}/libACE.so.6.3.1"
+[ ! -r "${LIB}" ] && echo "ERROR: invalid library file (was: \"${LIB}\"), aborting" && exit 1
+cp ${LIB} ${TARGET_DIR}
+[ $? -ne 0 ] && echo "ERROR: failed to copy \"${LIB}\" to \"${TARGET_DIR}\": $?, aborting" && exit 1
+echo "copied \"$LIB\"..."
+
 LIB_DIR=".libs"
 SUB_DIRS="libCommon/src
 libCommon/src/ui
@@ -57,4 +64,3 @@ do
 
  i=$i+1
 done
-

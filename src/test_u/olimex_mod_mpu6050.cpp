@@ -116,6 +116,10 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT ("]")
             << std::endl;
+  std::cout << ACE_TEXT ("-g           : (netlink) multicast group [")
+            << OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP
+            << ACE_TEXT ("]")
+            << std::endl;
   std::cout << ACE_TEXT ("-l           : log to a file [")
             << false
             << ACE_TEXT ("]")
@@ -146,10 +150,10 @@ bool
 do_processArguments (int argc_in,
                      ACE_TCHAR** argv_in, // cannot be const...
                      bool& clientMode_out,
+                     unsigned int& netlinkGroup_out,
                      bool& logToFile_out,
                      bool& useReactor_out,
                      ACE_INET_Addr& peerAddress_out,
-                     ACE_Netlink_Addr& peerNetlinkAddress_out,
                      bool& traceInformation_out,
                      std::string& interfaceDefinitionFile_out,
                      bool& printVersionAndExit_out,
@@ -159,16 +163,17 @@ do_processArguments (int argc_in,
 
   // init results
   clientMode_out              = false;
-  consoleMode_out             = false;
+  netlinkGroup_out            = OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP;
   logToFile_out               = false;
   useReactor_out              = OLIMEX_MOD_MPU6050_USE_REACTOR;
   traceInformation_out        = false;
   interfaceDefinitionFile_out = ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
   printVersionAndExit_out     = false;
+  consoleMode_out             = false;
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
-                              ACE_TEXT ("clrs:tu:vx"),
+                              ACE_TEXT ("cg:lrs:tu:vx"),
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -183,6 +188,13 @@ do_processArguments (int argc_in,
       case 'c':
       {
         clientMode_out = true;
+        break;
+      }
+      case 'g':
+      {
+        converter.str (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ()));
+        converter >> netlinkGroup_out;
+
         break;
       }
       case 'l':
@@ -267,9 +279,6 @@ do_processArguments (int argc_in,
     } // end SWITCH
   } // end WHILE
 
-  if (!clientMode_out)
-    peerNetlinkAddress_out.set (ACE_OS::getpid (), 0);
-
   return true;
 }
 
@@ -330,7 +339,7 @@ do_work (int argc_in,
          ACE_TCHAR** argv_in,
          bool clientMode_in,
          const ACE_INET_Addr& peerAddress_in,
-         const ACE_Netlink_Addr& peerNetlinkAddress_in,
+         const ACE_Netlink_Addr& netlinkAddress_in,
          bool useAsynchConnector_in,
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
@@ -382,7 +391,9 @@ do_work (int argc_in,
    OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
   configuration.socketConfiguration.peerAddress = peerAddress_in;
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-  configuration.socketConfiguration.peerNetlinkAddress = peerNetlinkAddress_in;
+  configuration.socketConfiguration.netlinkAddress = netlinkAddress_in;
+  configuration.socketConfiguration.netlinkProtocol =
+      OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL;
 #endif
   //  configuration.socketConfiguration.useLoopbackDevice = false;
   // ******************** stream configuration data ***************************
@@ -578,7 +589,7 @@ do_work (int argc_in,
   if (clientMode_in)
     result = connector_p->connect (peerAddress_in);
   else
-    result = netlink_connector_p->connect (peerNetlinkAddress_in);
+    result = netlink_connector_p->connect (netlinkAddress_in);
   if (!result)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -677,10 +688,11 @@ ACE_TMAIN (int argc_in,
   // step1: process commandline options (if any)
   bool client_mode            = false;
   bool console_mode           = false;
+  unsigned int netlink_group  = OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP;
   bool log_to_file            = false;
   bool use_reactor            = OLIMEX_MOD_MPU6050_USE_REACTOR;
   ACE_INET_Addr peer_address;
-  ACE_Netlink_Addr peer_netlink_address;
+  ACE_Netlink_Addr netlink_address;
   bool trace_information      = false;
   std::string interface_definition_file =
       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
@@ -688,10 +700,10 @@ ACE_TMAIN (int argc_in,
   if (!do_processArguments (argc_in,
                             argv_in,
                             client_mode,
+                            netlink_group,
                             log_to_file,
                             use_reactor,
                             peer_address,
-                            peer_netlink_address,
                             trace_information,
                             interface_definition_file,
                             print_version_and_exit,
@@ -718,7 +730,8 @@ ACE_TMAIN (int argc_in,
                  : OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR);
   if ((client_mode && peer_address.is_any ()) ||
       (use_reactor && use_asynch_connector)   ||
-      (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)))
+      (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)) ||
+      (!netlink_group || (netlink_group > sizeof (unsigned int) * 8)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid configuration, aborting\n")));
@@ -734,6 +747,10 @@ ACE_TMAIN (int argc_in,
 
     return EXIT_FAILURE;
   } // end IF
+  else
+    if (!client_mode)
+      netlink_address.set (ACE_OS::getpid (),
+                           (1 << (netlink_group - 1)));
 
   // step3: initialize logging and/or tracing
   char buffer[PATH_MAX];
@@ -793,7 +810,7 @@ ACE_TMAIN (int argc_in,
              argv_in,
              client_mode,
              peer_address,
-             peer_netlink_address,
+             netlink_address,
              use_asynch_connector,
              use_reactor,
              interface_definition_file,

@@ -140,7 +140,7 @@ i2c_mpu6050_server_run (void* data_in)
     // sanity check(s)
     if ((client_data_p->ringbufferpos == -1) ||
         (client_data_p->ringbuffer[client_data_p->ringbufferpos].used == 0)) {
-      pr_debug ("%s: no data\n", __FUNCTION__);
+//      pr_debug ("%s: no data\n", __FUNCTION__);
       continue;
     }
 

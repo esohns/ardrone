@@ -73,7 +73,8 @@
 #else
 #define OLIMEX_MOD_MPU6050_DEFAULT_NETWORK_INTERFACE                 NET_DEFAULT_NETWORK_INTERFACE
 #endif
-
+#define OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                          NET_DEFAULT_NETLINK_PROTOCOL
+#define OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP                     NET_DEFAULT_NETLINK_PROTOCOL_GROUP
 #define OLIMEX_MOD_MPU6050_DEFAULT_PORT                              NET_DEFAULT_PORT
 
 // default event dispatcher (default: use asynch I/O (proactor))

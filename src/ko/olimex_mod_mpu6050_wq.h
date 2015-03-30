@@ -24,7 +24,6 @@
 #include "olimex_mod_mpu6050_defines.h"
 
 // forward declarations
-struct work_struct;
 struct i2c_client;
 struct i2c_mpu6050_client_data_t;
 
