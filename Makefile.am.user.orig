@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.3.2, 2015-03-31T00:05:29. -->
+<<<<<<< HEAD
+<!-- Written by QtCreator 3.3.2, 2015-03-31T03:09:08. -->
+=======
+<!-- Written by QtCreator 3.3.2, 2015-03-31T01:43:00. -->
+>>>>>>> fcd71a3ff6315044e428b900c09a2d38c7282d0a
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -345,7 +349,7 @@
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
      <value type="QString">LD_LIBRARY_PATH=/mnt/win_d/projects/olinuxino/build/debug/lib:$LD_LIBRARY_PATH</value>
     </valuelist>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-g 2 -s 192.168.1.12 -u /mnt/win_d/projects/olinuxino/src/test_u/olimex_mod_mpu6050.glade -x</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-c -s 192.168.1.12 -u /mnt/win_d/projects/olinuxino/src/test_u/olimex_mod_mpu6050.glade -x</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/mnt/win_d/projects/olinuxino/build/debug/src/test_u/olimex_mod_mpu6050</value>
     <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">false</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">%{buildDir}</value>
