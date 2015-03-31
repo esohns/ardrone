@@ -50,6 +50,7 @@
 #include "stream_allocatorheap.h"
 
 #include "net_configuration.h"
+#include "net_defines.h"
 
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
