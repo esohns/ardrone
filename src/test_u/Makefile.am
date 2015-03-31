@@ -77,5 +77,8 @@ olimex_mod_mpu6050_LDADD = \
   -lACENetwork \
   -lACENetwork_Client
 
-EXTRA_DIST = \
+configdir = $(datadir)/@PACKAGE_NAME@
+config_DATA = \
   olimex_mod_mpu6050.glade
+
+EXTRA_DIST = $(config_DATA)

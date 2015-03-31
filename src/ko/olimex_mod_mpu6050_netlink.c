@@ -207,6 +207,7 @@ i2c_mpu6050_netlink_run (void* data_in)
     if ((client_data_p->ringbufferpos == -1) ||
         (client_data_p->ringbuffer[client_data_p->ringbufferpos].used == 0)) {
 //      pr_debug ("%s: no data\n", __FUNCTION__);
+      mutex_unlock (&client_data_p->sync_lock);
       continue;
     }
 
@@ -218,8 +219,8 @@ i2c_mpu6050_netlink_run (void* data_in)
 
       err = i2c_mpu6050_netlink_forward(client_data_p, i);
       if (unlikely(err)) {
-        pr_err ("%s: i2c_mpu6050_netlink_forward() failed: %d\n", __FUNCTION__,
-                err);
+//        pr_warn ("%s: i2c_mpu6050_netlink_forward() failed: %d\n", __FUNCTION__,
+//                err);
       }
 
 done:
@@ -256,7 +257,7 @@ i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t* clientData_in,
   }
 
 //  buffer_p = alloc_skb(RINGBUFFER_DATA_SIZE, GFP_KERNEL);
-  buffer_p = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+  buffer_p = genlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
   if (unlikely(!buffer_p)) {
     pr_err("%s: genlmsg_new() failed\n", __FUNCTION__);
     return -ENOMEM;
@@ -334,24 +335,38 @@ i2c_mpu6050_netlink_forward(struct i2c_mpu6050_client_data_t* clientData_in,
     goto error2;
   }
 
+  // *IMPORTANT NOTE*: fire-and-forget buffer_p here !
 //  err = genlmsg_unicast(&init_net, buffer_p, 0);
+  err = genlmsg_multicast(buffer_p,
+                          0, i2c_mpu6050_netlink_group.id,
+                          GFP_KERNEL);
+  if (unlikely(err)) {
+//    pr_warn("%s: genlmsg_multicast() failed: %d\n", __FUNCTION__,
+//           err);
+    return err;
+  }
 //  err = genlmsg_multicast_netns(&init_net, buffer_p,
-//                                0, i2c_mpu6050_netlink_group.id ,0);
+//                                0, i2c_mpu6050_netlink_group.id,
+//                                GFP_KERNEL);
 //  if (unlikely(err)) {
 //    pr_err("%s: genlmsg_multicast_netns() failed: %d\n", __FUNCTION__,
 //           err);
-//    goto error1;
+//    return err;
 //  }
-  err = genlmsg_multicast_allns(buffer_p,
-                                0, i2c_mpu6050_netlink_group.id ,0);
-  if (unlikely(err)) {
-    pr_err("%s: genlmsg_multicast_allns() failed: %d\n", __FUNCTION__,
-           err);
-    goto error1;
-  }
-  pr_debug("sent netlink message (%d bytes) to group %d...\n",
-           genlmsg_total_size(NLMSG_GOODSIZE),
-           i2c_mpu6050_netlink_group.id);
+//  rcu_read_lock();
+//  err = genlmsg_multicast_allns(buffer_p,
+//                                0, i2c_mpu6050_netlink_group.id,
+//                                GFP_KERNEL);
+//  if (unlikely(err)) {
+//    rcu_read_unlock();
+//    pr_err("%s: genlmsg_multicast_allns() failed: %d\n", __FUNCTION__,
+//           err);
+//    return err;
+//  }
+//  rcu_read_unlock();
+//  pr_debug("sent netlink message (%d bytes) to group %d...\n",
+//           genlmsg_total_size(NLMSG_GOODSIZE),
+//           i2c_mpu6050_netlink_group.id);
 
   return 0;
 
@@ -429,9 +444,6 @@ i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t* clientData_in)
 //           err);
 //    goto error2;
 //  }
-  pr_info("%s: registered netlink family \"%s\" version: %d --> id: %d\n", __FUNCTION__,
-          i2c_mpu6050_netlink_family.name, i2c_mpu6050_netlink_family.version,
-          i2c_mpu6050_netlink_family.id);
 //  err = genl_register_ops(&i2c_mpu6050_netlink_family,
 //                          &i2c_mpu6050_netlink_operations_record);
 //  if (unlikely(err)) {
@@ -448,6 +460,10 @@ i2c_mpu6050_netlink_init(struct i2c_mpu6050_client_data_t* clientData_in)
            err);
     goto error4;
   }
+  pr_info("%s: registered netlink family \"%s\" version: %d --> id: %d, group --> %d\n", __FUNCTION__,
+          i2c_mpu6050_netlink_family.name, i2c_mpu6050_netlink_family.version,
+          i2c_mpu6050_netlink_family.id,
+          i2c_mpu6050_netlink_group.id);
 
   clientData_in->netlink_server->thread =
       kthread_run (i2c_mpu6050_netlink_run, clientData_in,
@@ -525,11 +541,11 @@ i2c_mpu6050_netlink_fini(struct i2c_mpu6050_client_data_t* clientData_in)
 error1:
   genl_unregister_mc_group (&i2c_mpu6050_netlink_family,
                             &i2c_mpu6050_netlink_group);
-  err = genl_unregister_ops(&i2c_mpu6050_netlink_family,
-                            &i2c_mpu6050_netlink_operation_record);
-  if (unlikely(err))
-    pr_err("%s: genl_unregister_ops() failed: %d\n", __FUNCTION__,
-           err);
+//  err = genl_unregister_ops(&i2c_mpu6050_netlink_family,
+//                            &i2c_mpu6050_netlink_operation_record);
+//  if (unlikely(err))
+//    pr_err("%s: genl_unregister_ops() failed: %d\n", __FUNCTION__,
+//           err);
   err = genl_unregister_family(&i2c_mpu6050_netlink_family);
   if (unlikely(err))
     pr_err("%s: genl_unregister_family() failed: %d\n", __FUNCTION__,
