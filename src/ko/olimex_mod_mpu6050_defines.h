@@ -76,8 +76,8 @@
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_FAMILY_NAME    "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
 // *WARNING*: check <linux/netlink.h> for available identifiers !
 // *IMPORTANT NOTE*: this must match with the user space implementation !
-//#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_GENERIC
-#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_USERSOCK
+#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_GENERIC
+//#define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                NETLINK_USERSOCK
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_VERSION        1
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL_GROUP_NAME     "genl_mpu6050" // max GENL_NAMSIZ (==16) bytes
 #define KO_OLIMEX_MOD_MPU6050_NETLINK_GROUP                   1
