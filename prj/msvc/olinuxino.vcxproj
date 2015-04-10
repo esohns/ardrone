@@ -62,7 +62,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\projects\olinuxino\src\include;D:\projects\olinuxino\src\test_u\3rd_party\gettext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>
+      </ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -79,7 +81,9 @@
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\projects\olinuxino\src\test_u\3rd_party;D:\projects\olinuxino\src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\projects\olinuxino\src\include;D:\projects\olinuxino\src\test_u\3rd_party\gettext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>
+      </ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -89,15 +93,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_device.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_irq.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_main.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_netlink.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_pm.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_server.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_timer.c" />
-    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_wq.c" />
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_device.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_irq.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_main.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_netlink.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_pm.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_server.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_timer.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_wq.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -106,6 +137,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_common.cpp" />
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -145,18 +177,52 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\include\olinuxino_config.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_defines.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_device.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_irq.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_main.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_netlink.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_pm.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_server.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_timer.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_types.h" />
-    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_wq.h" />
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_defines.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_device.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_irq.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_main.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_netlink.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_pm.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_server.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_sysfs.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_timer.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_types.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_wq.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_callbacks.h" />
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_common.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_macros.h" />

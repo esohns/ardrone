@@ -117,10 +117,12 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT ("]")
             << std::endl;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   std::cout << ACE_TEXT ("-g           : (netlink) multicast group [")
             << OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP
             << ACE_TEXT ("]")
             << std::endl;
+#endif
   std::cout << ACE_TEXT ("-l           : log to a file [")
             << false
             << ACE_TEXT ("]")
@@ -151,7 +153,9 @@ bool
 do_processArguments (int argc_in,
                      ACE_TCHAR** argv_in, // cannot be const...
                      bool& clientMode_out,
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
                      unsigned int& netlinkGroup_out,
+#endif
                      bool& logToFile_out,
                      bool& useReactor_out,
                      ACE_INET_Addr& peerAddress_out,
@@ -164,7 +168,9 @@ do_processArguments (int argc_in,
 
   // init results
   clientMode_out              = false;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   netlinkGroup_out            = OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP;
+#endif
   logToFile_out               = false;
   useReactor_out              = OLIMEX_MOD_MPU6050_USE_REACTOR;
   traceInformation_out        = false;
@@ -174,7 +180,11 @@ do_processArguments (int argc_in,
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
                               ACE_TEXT ("cg:lrs:tu:vx"),
+#else
+                              ACE_TEXT ("clrs:tu:vx"),
+#endif
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -191,6 +201,7 @@ do_processArguments (int argc_in,
         clientMode_out = true;
         break;
       }
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
       case 'g':
       {
         converter.str (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ()));
@@ -198,6 +209,7 @@ do_processArguments (int argc_in,
 
         break;
       }
+#endif
       case 'l':
       {
         logToFile_out = true;
@@ -340,7 +352,9 @@ do_work (int argc_in,
          ACE_TCHAR** argv_in,
          bool clientMode_in,
          const ACE_INET_Addr& peerAddress_in,
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
          const ACE_Netlink_Addr& netlinkAddress_in,
+#endif
          bool useAsynchConnector_in,
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
@@ -427,9 +441,17 @@ do_work (int argc_in,
 
   // step4: init client connector
   Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   Olimex_Mod_MPU6050_INetlinkConnector_t* netlink_connector_p = NULL;
+#endif
   if (useAsynchConnector_in)
   {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_NEW_NORETURN (connector_p,
+                      Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
+                                                            CONNECTIONMANAGER_SINGLETON::instance (),
+                                                            OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+#else
     if (clientMode_in)
       ACE_NEW_NORETURN (connector_p,
                         Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
@@ -440,9 +462,16 @@ do_work (int argc_in,
                         Olimex_Mod_MPU6050_AsynchNetlinkConnector_t (&configuration,
                                                                      NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
                                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+#endif
   } // end IF
   else
   {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_NEW_NORETURN (connector_p,
+                      Olimex_Mod_MPU6050_Connector_t (&configuration,
+                                                      CONNECTIONMANAGER_SINGLETON::instance (),
+                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+#else
     if (clientMode_in)
       ACE_NEW_NORETURN (connector_p,
                         Olimex_Mod_MPU6050_Connector_t (&configuration,
@@ -453,19 +482,33 @@ do_work (int argc_in,
                         Olimex_Mod_MPU6050_NetlinkConnector_t (&configuration,
                                                                NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
                                                                OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+#endif
   } // end ELSE
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (clientMode_in && !connector_p)
+#else
   if (( clientMode_in && !connector_p) ||
       (!clientMode_in && !netlink_connector_p))
+#endif
   {
     ACE_DEBUG ((LM_CRITICAL,
                 ACE_TEXT ("failed to allocate memory, returning\n")));
     return;
   } // end IF
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_ASSERT (connector_p);
+#else
   ACE_ASSERT (connector_p || netlink_connector_p);
+#endif
 
   // step5: init connection manager (s)
   Net_UserData_t session_data;
   ACE_OS::memset (&session_data, 0, sizeof (session_data));
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                 &session_data); // will be passed to all handlers
+#else
   if (clientMode_in)
   {
     CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
@@ -478,6 +521,7 @@ do_work (int argc_in,
     NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
                                                            &session_data); // will be passed to all handlers
   } // end ELSE
+#endif
 
   // step6: init signal handling
   Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,  // peer address
@@ -497,8 +541,10 @@ do_work (int argc_in,
     // clean up
     if (clientMode_in)
       delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     else
       delete netlink_connector_p;
+#endif
 
     return;
   } // end IF
@@ -512,8 +558,10 @@ do_work (int argc_in,
     // clean up
     if (clientMode_in)
       delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     else
       delete netlink_connector_p;
+#endif
 
     return;
   } // end IF
@@ -545,8 +593,10 @@ do_work (int argc_in,
       // clean up
       if (clientMode_in)
         delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
       else
         delete netlink_connector_p;
+#endif
 
       return;
     } // end IF
@@ -577,8 +627,10 @@ do_work (int argc_in,
     // clean up
     if (clientMode_in)
       delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     else
       delete netlink_connector_p;
+#endif
 
     return;
   } // end IF
@@ -589,8 +641,10 @@ do_work (int argc_in,
   // step8: connect
   if (clientMode_in)
     result = connector_p->connect (peerAddress_in);
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   else
     result = netlink_connector_p->connect (netlinkAddress_in);
+#endif
   if (!result)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -615,8 +669,10 @@ do_work (int argc_in,
     // clean up
     if (clientMode_in)
       delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     else
       delete netlink_connector_p;
+#endif
 
     return;
   }
@@ -658,8 +714,10 @@ do_work (int argc_in,
 //  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
   if (clientMode_in)
     delete connector_p;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   else
     delete netlink_connector_p;
+#endif
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -689,11 +747,15 @@ ACE_TMAIN (int argc_in,
   // step1: process commandline options (if any)
   bool client_mode            = false;
   bool console_mode           = false;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   unsigned int netlink_group  = OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP;
+#endif
   bool log_to_file            = false;
   bool use_reactor            = OLIMEX_MOD_MPU6050_USE_REACTOR;
   ACE_INET_Addr peer_address;
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   ACE_Netlink_Addr netlink_address;
+#endif
   bool trace_information      = false;
   std::string interface_definition_file =
       ACE_TEXT_ALWAYS_CHAR (OLIMEX_MOD_MPU6050_UI_DEFINITION_FILE_NAME);
@@ -701,7 +763,9 @@ ACE_TMAIN (int argc_in,
   if (!do_processArguments (argc_in,
                             argv_in,
                             client_mode,
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
                             netlink_group,
+#endif
                             log_to_file,
                             use_reactor,
                             peer_address,
@@ -729,10 +793,16 @@ ACE_TMAIN (int argc_in,
   bool use_asynch_connector =
    (!use_reactor ? true 
                  : OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR);
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   if ((client_mode && peer_address.is_any ()) ||
-      (use_reactor && use_asynch_connector)   ||
+      (use_reactor && use_asynch_connector) ||
       (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)) ||
       (!netlink_group || (netlink_group > sizeof (unsigned int) * 8)))
+#else
+  if ((client_mode && peer_address.is_any ()) ||
+      (use_reactor && use_asynch_connector)   ||
+      (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)))
+#endif
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid configuration, aborting\n")));
@@ -748,10 +818,12 @@ ACE_TMAIN (int argc_in,
 
     return EXIT_FAILURE;
   } // end IF
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   else
     if (!client_mode)
       netlink_address.set (ACE_OS::getpid (),
                            (1 << (netlink_group - 1)));
+#endif
 
   // step3: initialize logging and/or tracing
   char buffer[PATH_MAX];
@@ -811,7 +883,9 @@ ACE_TMAIN (int argc_in,
              argv_in,
              client_mode,
              peer_address,
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
              netlink_address,
+#endif
              use_asynch_connector,
              use_reactor,
              interface_definition_file,

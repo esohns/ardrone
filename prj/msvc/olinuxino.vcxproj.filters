@@ -78,6 +78,9 @@
     <ClCompile Include="..\..\src\ko\olimex_mod_mpu6050_wq.c">
       <Filter>Kernel Module</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_defines.h">
@@ -157,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\ko\olimex_mod_mpu6050_wq.h">
       <Filter>Kernel Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_common.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
