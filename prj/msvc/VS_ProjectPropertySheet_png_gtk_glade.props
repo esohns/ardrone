@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\projects\lpng167;D:\projects\gtk\include\glib-2.0;D:\projects\gtk\lib\glib-2.0\include;D:\projects\gtk\include\cairo;D:\projects\gtk\include\pango-1.0;D:\projects\gtk\include\gdk-pixbuf-2.0;D:\projects\gtk\include\atk-1.0;D:\projects\gtk\include\gtk-2.0;D:\projects\freeglut\include;D:\projects\glm;D:\projects\gtkglext-1.2.0\gdk;D:\projects\gtkglext-1.2.0;D:\projects\gtk\lib\gtk-2.0\include;D:\projects\libglade\include\libglade-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\projects\lpng167;D:\projects\gtk\include\glib-2.0;D:\projects\gtk\include\cairo;D:\projects\gtk\include\pango-1.0;D:\projects\gtk\include\gdk-pixbuf-2.0;D:\projects\gtk\include\atk-1.0;D:\projects\gtk\include\gtk-2.0;D:\projects\freeglut\include;D:\projects\glm;D:\projects\gtkglext-1.2.0\gdk;D:\projects\gtkglext-1.2.0;D:\projects\gtk\lib\glib-2.0\include;D:\projects\gtk\lib\gtk-2.0\include;D:\projects\libglade\include\libglade-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>D:\projects\lpng167\projects\vstudio\Debug;D:\projects\gtk\lib;D:\projects\gtkglext-1.2.0\gdk\.libs;D:\projects\gtkglext-1.2.0\gtk\.libs;D:\projects\freeglut\lib;D:\projects\libglade\lib;D:\projects\libgnomeui\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
