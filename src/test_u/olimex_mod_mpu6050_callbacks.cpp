@@ -232,7 +232,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   // step6: draw main window
   gtk_widget_show_all (GTK_WIDGET (main_window_p));
 
-  // step7: init fps, schedule refresh
+  // step7: initialize fps, schedule refresh
   cb_data_p->timestamp = COMMON_TIME_POLICY ();
   guint opengl_refresh_rate =
       static_cast<guint> (OLIMEX_MOD_MPU6050_UI_WIDGET_GL_REFRESH_INTERVAL);
