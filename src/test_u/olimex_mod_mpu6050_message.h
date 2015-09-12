@@ -21,13 +21,10 @@
 #ifndef OLIMEX_MOD_MPU6050_MESSAGE_H
 #define OLIMEX_MOD_MPU6050_MESSAGE_H
 
-#include <string>
-
 #include "ace/Global_Macros.h"
 
-#include "stream_messageallocatorheap_base.h"
-
-#include "net_message_base.h"
+#include "stream_message_base.h"
+//#include "stream_messageallocatorheap_base.h"
 
 #include "olimex_mod_mpu6050_sessionmessage.h"
 #include "olimex_mod_mpu6050_types.h"
@@ -42,7 +39,8 @@ class ACE_Message_Block;
 //class Olimex_Mod_MPU6050_SessionMessage;
 
 class Olimex_Mod_MPU6050_Message
- : public Net_MessageBase_T<Olimex_Mod_MPU6050_MessageType_t>
+ : public Stream_MessageBase
+ //: public Stream_MessageBase_T<Olimex_Mod_MPU6050_MessageType>
 {
   // enable access to specific private ctors...
   friend class Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
@@ -52,8 +50,8 @@ class Olimex_Mod_MPU6050_Message
  public:
   virtual ~Olimex_Mod_MPU6050_Message ();
 
-  virtual Olimex_Mod_MPU6050_MessageType_t getCommand () const; // return value: message type
-  static std::string CommandType2String (Olimex_Mod_MPU6050_MessageType_t);
+  //virtual Olimex_Mod_MPU6050_MessageType getCommand () const; // return value: message type
+  //static std::string CommandType2String (Olimex_Mod_MPU6050_MessageType_t);
 
   // overrides from ACE_Message_Block
   // --> create a "shallow" copy that references the same datablock
@@ -66,13 +64,14 @@ class Olimex_Mod_MPU6050_Message
   Olimex_Mod_MPU6050_Message (const Olimex_Mod_MPU6050_Message&);
 
  private:
-  typedef Net_MessageBase_T<Olimex_Mod_MPU6050_MessageType_t> inherited;
+  typedef Stream_MessageBase inherited;
+  //typedef Stream_MessageBase_T<Olimex_Mod_MPU6050_MessageType> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Message ());
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Message ())
   // *NOTE*: to be used by allocators...
   Olimex_Mod_MPU6050_Message (ACE_Data_Block*, // data block to use
                               ACE_Allocator*); // message allocator
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Message& operator= (const Olimex_Mod_MPU6050_Message&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Message& operator= (const Olimex_Mod_MPU6050_Message&))
 };
 
 #endif

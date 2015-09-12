@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\test_u\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -122,9 +119,6 @@
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\include\olinuxino_config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -162,6 +156,9 @@
       <Filter>Kernel Module</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_stream_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

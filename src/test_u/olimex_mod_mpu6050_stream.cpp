@@ -25,17 +25,18 @@
 
 #include "ace/Log_Msg.h"
 
-#include "net_defines.h"
+//#include "net_defines.h"
 
+#include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_macros.h"
 
 Olimex_Mod_MPU6050_Stream::Olimex_Mod_MPU6050_Stream ()
  : inherited ()
- , socketHandler_ (std::string("SocketHandler"),
-                   NULL)
+ , netReader_ (ACE_TEXT_ALWAYS_CHAR ("NetReader"),
+               NULL)
 // , protocolHandler_ (std::string("ProtocolHandler"),
 //                     NULL)
- , runtimeStatistic_ (std::string("RuntimeStatistic"),
+ , runtimeStatistic_ (ACE_TEXT_ALWAYS_CHAR ("RuntimeStatistic"),
                       NULL)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::Olimex_Mod_MPU6050_Stream"));
@@ -45,16 +46,20 @@ Olimex_Mod_MPU6050_Stream::Olimex_Mod_MPU6050_Stream ()
   // *NOTE*: one problem is that we need to explicitly close() all
   // modules which we have NOT enqueued onto the stream (e.g. because init()
   // failed...)
-  inherited::availableModules_.insert_tail (&socketHandler_);
-  //  inherited::availableModules_.insert_tail (&protocolHandler_);
-  inherited::availableModules_.insert_tail (&runtimeStatistic_);
+  inherited::availableModules_.push_front (&netReader_);
+  //  inherited::availableModules_.push_front (&protocolHandler_);
+  inherited::availableModules_.push_front (&runtimeStatistic_);
 
-  // *CHECK* fix ACE bug: modules should initialize their "next" member to NULL !
-  inherited::MODULE_T* module = NULL;
-  for (ACE_DLList_Iterator<inherited::MODULE_T> iterator (inherited::availableModules_);
-       iterator.next (module);
-       iterator.advance ())
-    module->next (NULL);
+  // *TODO*: fix ACE bug: modules should initialize their "next" member to NULL
+  //inherited::MODULE_T* module_p = NULL;
+  //for (ACE_DLList_Iterator<inherited::MODULE_T> iterator (inherited::availableModules_);
+  //     iterator.next (module_p);
+  //     iterator.advance ())
+  //  module_p->next (NULL);
+  for (inherited::MODULE_CONTAINER_ITERATOR_T iterator = inherited::availableModules_.begin ();
+       iterator != inherited::availableModules_.end ();
+       iterator++)
+       (*iterator)->next (NULL);
 }
 
 Olimex_Mod_MPU6050_Stream::~Olimex_Mod_MPU6050_Stream ()
@@ -66,94 +71,106 @@ Olimex_Mod_MPU6050_Stream::~Olimex_Mod_MPU6050_Stream ()
 }
 
 bool
-Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
-                                       Stream_Configuration_t& configuration_in,
-                                       const Net_ProtocolConfiguration_t& protocolConfiguration_in,
-                                       const Net_UserData_t& userData_in)
+Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfiguration_in,
+                                       Olimex_Mod_MPU6050_Configuration& configuration_inout)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::initialize"));
 
-  ACE_UNUSED_ARG (protocolConfiguration_in);
-
-  bool result = false;
-
   // sanity check(s)
-  ACE_ASSERT (!isInitialized_);
+  ACE_ASSERT (!inherited::isInitialized_);
+  ACE_ASSERT (!isRunning ());
+
+  // allocate a new session state, reset stream
+  if (!inherited::initialize ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Stream_Base_T::initialize(), aborting\n")));
+    return false;
+  } // end IF
 
   // things to be done here:
-  // [- init base class]
-  // ------------------------------------
-  // - init notification strategy (if any)
-  // ------------------------------------
-  // - push the final module onto the stream (if any)
-  // ------------------------------------
-  // - init modules (done for the ones "owned" by the stream)
+  // - create modules (done for the ones "owned" by the stream itself)
+  // - initialize modules
   // - push them onto the stream (tail-first) !
-  // ------------------------------------
 
-//  ACE_OS::memset (&inherited::state_, 0, sizeof (inherited::state_));
-  inherited::state_.sessionID = sessionID_in;
+  inherited::sessionData_->sessionID = streamConfiguration_in.sessionID;
 
-  if (configuration_in.notificationStrategy)
+  int result = -1;
+  inherited::MODULE_T* module_p = NULL;
+  if (streamConfiguration_in.notificationStrategy)
   {
-    inherited::MODULE_T* module = inherited::head ();
-    if (!module)
+    module_p = inherited::head ();
+    if (!module_p)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("no head module found, aborting\n")));
       return false;
     } // end IF
-    inherited::TASK_T* task = module->reader ();
-    if (!task)
+    inherited::TASK_T* task_p = module_p->reader ();
+    if (!task_p)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("no head module reader task found, aborting\n")));
       return false;
     } // end IF
-    task->msg_queue ()->notification_strategy (configuration_in.notificationStrategy);
+    inherited::QUEUE_T* queue_p = task_p->msg_queue ();
+    if (!queue_p)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("no head module reader task queue found, aborting\n")));
+      return false;
+    } // end IF
+    queue_p->notification_strategy (streamConfiguration_in.notificationStrategy);
   } // end IF
 
+  //  ACE_ASSERT (configuration_in.moduleConfiguration);
+  //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
+
   // ---------------------------------------------------------------------------
-
-  if (configuration_in.module)
+  if (streamConfiguration_in.module)
   {
-    inherited::IMODULE_T* module_p = NULL;
-    module_p =
-        dynamic_cast<inherited::IMODULE_T*> (configuration_in.module);
-    if (!module_p)
+    // *TODO*: (at least part of) this procedure belongs in libACEStream
+    //         --> remove type inferences
+    inherited::IMODULE_T* module_2 =
+      dynamic_cast<inherited::IMODULE_T*> (streamConfiguration_in.module);
+    if (!module_2)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("dynamic_cast<Stream_IModule> failed, aborting\n")));
+                  ACE_TEXT ("%s: dynamic_cast<Stream_IModule_T> failed, aborting\n"),
+                  streamConfiguration_in.module->name ()));
       return false;
     } // end IF
-
-    configuration_in.moduleConfiguration.streamState =
-        const_cast<Stream_State_t*> (getState ());
-    try
-    {
-      result = module_p->initialize (configuration_in.moduleConfiguration);
-    }
-    catch (...)
+    if (!module_2->initialize (configuration_inout.moduleConfiguration_2))
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in Stream_IModule::initialize(\"%s\"): \"%s\", aborting\n"),
-                  ACE_TEXT (configuration_in.module->name ())));
-      return false;
-    }
-    if (!result)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
-                  ACE_TEXT (configuration_in.module->name ())));
+                  ACE_TEXT ("%s: failed to initialize module, aborting\n"),
+                  streamConfiguration_in.module->name ()));
       return false;
     } // end IF
-
-    // enqueue the module...
-    if (inherited::push (configuration_in.module) == -1)
+    Stream_Task_t* task_p = streamConfiguration_in.module->writer ();
+    ACE_ASSERT (task_p);
+    inherited::IMODULEHANDLER_T* module_handler_p =
+      dynamic_cast<inherited::IMODULEHANDLER_T*> (task_p);
+    if (!module_handler_p)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: dynamic_cast<Common_IInitialize_T<HandlerConfigurationType>> failed, aborting\n"),
+                  streamConfiguration_in.module->name ()));
+      return false;
+    } // end IF
+    if (!module_handler_p->initialize (configuration_inout.moduleHandlerConfiguration_2))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to initialize module handler, aborting\n"),
+                  streamConfiguration_in.module->name ()));
+      return false;
+    } // end IF
+    result = inherited::push (streamConfiguration_in.module);
+    if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
-                  ACE_TEXT (configuration_in.module->name ())));
+                  streamConfiguration_in.module->name ()));
       return false;
     } // end IF
   } // end IF
@@ -191,75 +208,72 @@ Olimex_Mod_MPU6050_Stream::initialize (unsigned int sessionID_in,
 //  } // end IF
 
   // ******************* Runtime Statistics ************************
-  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl = NULL;
-  runtimeStatistic_impl =
-      dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t*> (runtimeStatistic_.writer ());
-  if (!runtimeStatistic_impl)
+  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl_p =
+    dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t*> (runtimeStatistic_.writer ());
+  if (!runtimeStatistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic> failed, aborting\n")));
     return false;
   } // end IF
-  if (!runtimeStatistic_impl->initialize (configuration_in.statisticReportingInterval, // reporting interval (seconds)
-                                          configuration_in.printFinalReport,           // print final report ?
-                                          configuration_in.messageAllocator))          // message allocator handle
+  if (!runtimeStatistic_impl_p->initialize (streamConfiguration_in.statisticReportingInterval,
+                                            streamConfiguration_in.messageAllocator))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
-                ACE_TEXT (runtimeStatistic_.name ())));
+                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
+                runtimeStatistic_.name ()));
     return false;
   } // end IF
 
   // enqueue the module...
-  if (inherited::push (&runtimeStatistic_) == -1)
+  result = inherited::push (&runtimeStatistic_);
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT (runtimeStatistic_.name ())));
+                runtimeStatistic_.name ()));
     return false;
   } // end IF
 
-  // ******************* Socket Handler ************************
-  Olimex_Mod_MPU6050_Module_SocketHandler* socketHandler_impl = NULL;
-  socketHandler_impl =
-      dynamic_cast<Olimex_Mod_MPU6050_Module_SocketHandler*> (socketHandler_.writer ());
-  if (!socketHandler_impl)
+  // ******************* Net Reader ************************
+  Olimex_Mod_MPU6050_Module_SocketHandler* socketHandler_impl_p =
+    dynamic_cast<Olimex_Mod_MPU6050_Module_SocketHandler*> (netReader_.writer ());
+  if (!socketHandler_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_SocketHandler> failed, aborting\n")));
     return false;
   } // end IF
-  if (!socketHandler_impl->initialize (&state_,
-                                       configuration_in.messageAllocator,
-                                       configuration_in.useThreadPerConnection,
-                                       NET_STATISTICS_COLLECTION_INTERVAL))
+  if (!socketHandler_impl_p->initialize (configuration_inout))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize module: \"%s\", aborting\n"),
-                ACE_TEXT (socketHandler_.name ())));
+                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
+                netReader_.name ()));
     return false;
   } // end IF
 
   // enqueue the module...
   // *NOTE*: push()ing the module will open() it
   // --> set the argument that is passed along
-  socketHandler_.arg (&const_cast<Net_UserData_t&> (userData_in));
-  if (inherited::push (&socketHandler_) == -1)
+  netReader_.arg (&configuration_inout);
+  result = inherited::push (&netReader_);
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT (socketHandler_.name ())));
+                netReader_.name ()));
     return false;
   } // end IF
 
   // -------------------------------------------------------------
 
   // set (session) message allocator
-  inherited::allocator_ = configuration_in.messageAllocator;
+  // *TODO*: clean this up ! --> sanity check
+  ACE_ASSERT (streamConfiguration_in.messageAllocator);
+  inherited::allocator_ = streamConfiguration_in.messageAllocator;
 
-  // OK: all went well
   inherited::isInitialized_ = true;
-//   inherited::dump_state ();
+  //   inherited::dump_state();
 
   return true;
 }
@@ -284,43 +298,68 @@ Olimex_Mod_MPU6050_Stream::ping ()
 
   ACE_ASSERT (false);
   ACE_NOTSUP;
-
-#if defined (_MSC_VER)
-  ACE_NOTREACHED (true);
-#endif
+  ACE_NOTREACHED (return;)
 }
 
 bool
-Olimex_Mod_MPU6050_Stream::collect (Stream_Statistic_t& data_out)
+Olimex_Mod_MPU6050_Stream::collect (Olimex_Mod_MPU6050_RuntimeStatistic_t& data_out)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::collect"));
 
-  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl =
-   NULL;
-  runtimeStatistic_impl =
-      dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t*> (const_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module&> (runtimeStatistic_).writer ());
-  if (!runtimeStatistic_impl)
+  Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t* runtimeStatistic_impl_p =
+    dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t*> (const_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module&> (runtimeStatistic_).writer ());
+  if (!runtimeStatistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t> failed, aborting\n")));
     return false;
   } // end IF
 
-  // *NOTE*: the statistics module knows nothing about dropped messages
+  // *NOTE*: the statistic module knows nothing about dropped messages
   //         --> retain this data, as it could be overwritten
-  data_out = inherited::state_.currentStatistics;
+  ACE_ASSERT (inherited::state_.currentSessionData);
+
+  int result = -1;
+  if (inherited::state_.currentSessionData->lock)
+  {
+    result = inherited::state_.currentSessionData->lock->acquire ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_Thread_Mutex::acquire(): \"%m\", continuing\n")));
+  } // end IF
+  data_out = inherited::state_.currentSessionData->currentStatistic;
+
   // delegate to statistics module...
-  if (!runtimeStatistic_impl->collect (inherited::state_.currentStatistics))
+  if (!runtimeStatistic_impl_p->collect (inherited::state_.currentSessionData->currentStatistic))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t::collect(), aborting\n")));
+
+    // clean up
+    if (inherited::state_.currentSessionData->lock)
+    {
+      result = inherited::state_.currentSessionData->lock->release ();
+      if (result == -1)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_Thread_Mutex::release(): \"%m\", continuing\n")));
+    } // end IF
+
     return false;
   } // end IF
-  inherited::state_.lastCollectionTimestamp = ACE_OS::gettimeofday ();
-  inherited::state_.currentStatistics.numDroppedMessages =
-   data_out.numDroppedMessages;
+  inherited::state_.currentSessionData->lastCollectionTimestamp =
+    ACE_OS::gettimeofday ();
+  inherited::state_.currentSessionData->currentStatistic.droppedMessages =
+    data_out.droppedMessages;
 
-  data_out = inherited::state_.currentStatistics;
+  data_out = inherited::state_.currentSessionData->currentStatistic;
+
+  if (inherited::state_.currentSessionData->lock)
+  {
+    result = inherited::state_.currentSessionData->lock->release ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_Thread_Mutex::release(): \"%m\", continuing\n")));
+  } // end IF
 
   return true;
 }
@@ -330,11 +369,13 @@ Olimex_Mod_MPU6050_Stream::report () const
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::report"));
 
+  ACE_ASSERT (inherited::state_.currentSessionData);
+
   ACE_DEBUG ((LM_INFO,
               ACE_TEXT ("*** [session: %u] RUNTIME STATISTICS ***\n--> Stream Statistics @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
-              inherited::state_.sessionID,
-              &inherited::state_.lastCollectionTimestamp,
-              inherited::state_.currentStatistics.numDataMessages,
-              inherited::state_.currentStatistics.numDroppedMessages,
-              inherited::state_.currentStatistics.numBytes));
+              inherited::state_.currentSessionData->sessionID,
+              &inherited::state_.currentSessionData->lastCollectionTimestamp,
+              inherited::state_.currentSessionData->currentStatistic.dataMessages,
+              inherited::state_.currentSessionData->currentStatistic.droppedMessages,
+              inherited::state_.currentSessionData->currentStatistic.bytes));
 }

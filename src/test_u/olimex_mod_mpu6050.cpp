@@ -38,6 +38,7 @@
 #include "ace/Log_Msg.h"
 #include "ace/OS.h"
 #include "ace/OS_main.h"
+#include "ace/Profile_Timer.h"
 #include "ace/Time_Value.h"
 
 #include "olinuxino_config.h"
@@ -45,16 +46,18 @@
 #include "common_file_tools.h"
 #include "common_tools.h"
 
+#include "common_ui_defines.h"
+#include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_manager.h"
 
 #include "stream_allocatorheap.h"
 
-#include "net_configuration.h"
 #include "net_defines.h"
 
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
+#include "olimex_mod_mpu6050_callbacks.h"
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_eventhandler.h"
 #include "olimex_mod_mpu6050_macros.h"
@@ -63,7 +66,6 @@
 #include "olimex_mod_mpu6050_signalhandler.h"
 #include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
-#include "olimex_mod_mpu6050_uidefinition.h"
 
 void
 do_printVersion (const std::string& programName_in)
@@ -296,46 +298,101 @@ do_processArguments (int argc_in,
 }
 
 void
-do_initSignals (ACE_Sig_Set& signals_inout)
+do_initializeSignals (bool useReactor_in,
+                      bool allowUserRuntimeStats_in,
+                      ACE_Sig_Set& signals_out,
+                      ACE_Sig_Set& ignoredSignals_out)
 {
-  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_initSignals"));
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_initializeSignals"));
 
-  // init return value(s)
-  if (signals_inout.empty_set () == -1)
+  int result = -1;
+
+  // initialize return value(s)
+  result = signals_out.empty_set ();
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", aborting\n")));
+                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", returning\n")));
+    return;
+  } // end IF
+  result = ignoredSignals_out.empty_set ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", returning\n")));
     return;
   } // end IF
 
-  // *PORTABILITY*: on Windows most signals are not defined,
-  // and ACE_Sig_Set::fill_set() doesn't really work as specified
-  // --> add valid signals (see <signal.h>)...
+  // *PORTABILITY*: on Microsoft Windows (TM) most signals are not defined,
+  //                and ACE_Sig_Set::fill_set() doesn't really work as specified
+  //                --> add valid signals (see <signal.h>)...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  signals_inout.sig_add (SIGINT);         // 2       /* interrupt */
-  signals_inout.sig_add (SIGILL);         // 4       /* illegal instruction - invalid function image */
-  signals_inout.sig_add (SIGFPE);         // 8       /* floating point exception */
-  //signals_inout.sig_add (SIGSEGV);        // 11      /* segment violation */
-  signals_inout.sig_add (SIGTERM);        // 15      /* Software termination signal from kill */
-  //signals_inout.sig_add (SIGBREAK);       // 21      /* Ctrl-Break sequence */
-  signals_inout.sig_add (SIGABRT);        // 22      /* abnormal termination triggered by abort call */
-  signals_inout.sig_add (SIGABRT_COMPAT); // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
+  signals_out.sig_add (SIGINT);            // 2       /* interrupt */
+  signals_out.sig_add (SIGILL);            // 4       /* illegal instruction - invalid function image */
+  signals_out.sig_add (SIGFPE);            // 8       /* floating point exception */
+  //  signals_out.sig_add(SIGSEGV);          // 11      /* segment violation */
+  signals_out.sig_add (SIGTERM);           // 15      /* Software termination signal from kill */
+  if (allowUserRuntimeStats_in)
+  {
+    signals_out.sig_add (SIGBREAK);        // 21      /* Ctrl-Break sequence */
+    ignoredSignals_out.sig_add (SIGBREAK); // 21      /* Ctrl-Break sequence */
+  } // end IF
+  signals_out.sig_add (SIGABRT);           // 22      /* abnormal termination triggered by abort call */
+  signals_out.sig_add (SIGABRT_COMPAT);    // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
 #else
-  if (signals_inout.fill_set () == -1)
+  result = signals_out.fill_set ();
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", aborting\n")));
+      ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", returning\n")));
     return;
   } // end IF
   // *NOTE*: cannot handle some signals --> registration fails for these...
-  signals_inout.sig_del (SIGKILL);        // 9       /* Kill signal */
-  signals_inout.sig_del (SIGSTOP);        // 19      /* Stop process */
+  signals_out.sig_del (SIGKILL);           // 9       /* Kill signal */
   // ---------------------------------------------------------------------------
-  //signals_inout.sig_del (SIGUSR1);        // 10      /* User-defined signal 1 */
+  if (!allowUserRuntimeStats_in)
+  {
+    signals_out.sig_del (SIGUSR1);         // 10      /* User-defined signal 1 */
+    ignoredSignals_out.sig_add (SIGUSR1);  // 10      /* User-defined signal 1 */
+} // end IF
   // *NOTE* core dump on SIGSEGV
-  signals_inout.sig_del (SIGSEGV);        // 11      /* Segmentation fault: Invalid memory reference */
+  signals_out.sig_del (SIGSEGV);           // 11      /* Segmentation fault: Invalid memory reference */
   // *NOTE* don't care about SIGPIPE
-  signals_inout.sig_del (SIGPIPE);        // 12      /* Broken pipe: write to pipe with no readers */
+  signals_out.sig_del (SIGPIPE);           // 12      /* Broken pipe: write to pipe with no readers */
+  signals_out.sig_del (SIGSTOP);           // 19      /* Stop process */
+
+  // *IMPORTANT NOTE*: "...NPTL makes internal use of the first two real-time
+  //                   signals (see also signal(7)); these signals cannot be
+  //                   used in applications. ..." (see 'man 7 pthreads')
+  // --> on POSIX platforms, make sure that ACE_SIGRTMIN == 34
+  //  for (int i = ACE_SIGRTMIN;
+  //       i <= ACE_SIGRTMAX;
+  //       i++)
+  //    signals_out.sig_del (i);
+
+  if (!useReactor_in)
+  {
+    ACE_Proactor* proactor_p = ACE_Proactor::instance ();
+    ACE_ASSERT (proactor_p);
+    ACE_POSIX_Proactor* proactor_impl_p =
+      dynamic_cast<ACE_POSIX_Proactor*> (proactor_p->implementation ());
+    ACE_ASSERT (proactor_impl_p);
+    if (proactor_impl_p->get_impl_type () == ACE_POSIX_Proactor::PROACTOR_SIG)
+      signals_out.sig_del (COMMON_EVENT_PROACTOR_SIG_RT_SIGNAL);
+  } // end IF
+#endif
+
+  // *NOTE*: gdb sends some signals (when running in an IDE ?)
+  //         --> remove signals (and let IDE handle them)
+  // *TODO*: clean this up
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (DEBUG_DEBUGGER)
+  //  signals_out.sig_del (SIGINT);
+  signals_out.sig_del (SIGCONT);
+  signals_out.sig_del (SIGHUP);
+#endif
+#endif
 
   // *TODO*: improve valgrind support
 #ifdef OLINUXINO_ENABLE_VALGRIND_SUPPORT
@@ -343,7 +400,6 @@ do_initSignals (ACE_Sig_Set& signals_inout)
   // if the application installs its own handler (see documentation)
   if (RUNNING_ON_VALGRIND)
     signals_inout.sig_del (SIGRTMAX);     // 64
-#endif
 #endif
 }
 
@@ -355,30 +411,26 @@ do_work (int argc_in,
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
          const ACE_Netlink_Addr& netlinkAddress_in,
 #endif
-         bool useAsynchConnector_in,
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
-         bool consoleMode_in)
+         bool consoleMode_in,
+         ////////////////////////////////
+         Olimex_Mod_MPU6050_GtkCBData& CBData_in,
+         ////////////////////////////////
+         const ACE_Sig_Set& signalSet_in,
+         const ACE_Sig_Set& ignoredSignalSet_in,
+         Common_SignalActions_t& previousSignalActions_inout)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::do_work"));
 
-  bool result = false;
+  int result = false;
 
-  // step1: initialize gtk cb data
-  Olimex_Mod_MPU6050_GtkCBData_t gtk_cb_data;
-  gtk_cb_data.argc = argc_in;
-  gtk_cb_data.argv = argv_in;
-  gtk_cb_data.clientMode = clientMode_in;
-  ACE_OS::memset (&gtk_cb_data.clientSensorBias,
-                  0,
-                  sizeof (gtk_cb_data.clientSensorBias));
-  gtk_cb_data.openGLDoubleBuffered = OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED;
-  ACE_OS::memset (gtk_cb_data.temperature,
-                  0,
-                  sizeof (gtk_cb_data.temperature));
+  // step1: initialize configuration data
+  Olimex_Mod_MPU6050_UserData user_data;
+  Olimex_Mod_MPU6050_Configuration configuration;
 
   // step2: initialize stream
-  Olimex_Mod_MPU6050_EventHandler event_handler (&gtk_cb_data);
+  Olimex_Mod_MPU6050_EventHandler event_handler (&CBData_in);
   std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
   Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (module_name,
                                                                       NULL);
@@ -398,39 +450,55 @@ do_work (int argc_in,
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                            &heap_allocator,
                                                            false); // do not block
-  gtk_cb_data.allocator = &message_allocator;
-  Net_Configuration_t configuration;
-  ACE_OS::memset (&configuration, 0, sizeof (configuration));
+
   // ******************* socket configuration data ****************************
   configuration.socketConfiguration.bufferSize =
-   OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
+    OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
   configuration.socketConfiguration.peerAddress = peerAddress_in;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
   configuration.socketConfiguration.netlinkAddress = netlinkAddress_in;
   configuration.socketConfiguration.netlinkProtocol =
-      OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL;
+    OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL;
 #endif
   //  configuration.socketConfiguration.useLoopbackDevice = false;
+
+  configuration.socketHandlerConfiguration.messageAllocator =
+    &message_allocator;
+  configuration.socketHandlerConfiguration.PDUSize =
+    OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
+  configuration.socketHandlerConfiguration.socketConfiguration =
+    &configuration.socketConfiguration;
+  configuration.socketHandlerConfiguration.statisticReportingInterval =
+    OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL;
+  configuration.socketHandlerConfiguration.userData = &user_data;
+
   // ******************** stream configuration data ***************************
+  configuration.moduleHandlerConfiguration_2.consoleMode = consoleMode_in;
+
   configuration.streamConfiguration.messageAllocator = &message_allocator;
   configuration.streamConfiguration.bufferSize =
-   OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
+    OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
   configuration.streamConfiguration.useThreadPerConnection = false;
   //configuration.streamConfiguration.serializeOutput = false;
   configuration.streamConfiguration.notificationStrategy = NULL;
   configuration.streamConfiguration.module = &event_handler_module;
   configuration.streamConfiguration.deleteModule = false;
 //  configuration.streamConfiguration.moduleConfiguration.streamState = NULL;
-  configuration.streamConfiguration.moduleConfiguration.userData = &consoleMode_in;
-  configuration.streamConfiguration.statisticReportingInterval = 0;
+  configuration.streamConfiguration.moduleConfiguration =
+    &(configuration.moduleConfiguration_2);
+  configuration.streamConfiguration.moduleHandlerConfiguration =
+    &(configuration.moduleHandlerConfiguration_2);
+  configuration.streamConfiguration.statisticReportingInterval =
+    OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL;
   configuration.streamConfiguration.printFinalReport = false;
-  // ******************* protocol configuration data ***************************
-  configuration.protocolConfiguration.bufferSize =
-      OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
 
-  // step3: init event dispatch
+  configuration.userData = &user_data;
+
+  // step3: initialize event dispatch
   bool serialize_output;
   if (!Common_Tools::initializeEventDispatch (useReactor_in,
+                                              false,
                                               1,
                                               serialize_output))
   {
@@ -439,55 +507,49 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // step4: init client connector
-  Olimex_Mod_MPU6050_IConnector_t* connector_p = NULL;
+  // step4: initialize client connector
+  Olimex_Mod_MPU6050_IConnector_t* iconnector_p = NULL;
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   Olimex_Mod_MPU6050_INetlinkConnector_t* netlink_connector_p = NULL;
 #endif
-  if (useAsynchConnector_in)
+  if (useReactor_in)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_NEW_NORETURN (connector_p,
-                      Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
-                                                            CONNECTIONMANAGER_SINGLETON::instance (),
-                                                            OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+    ACE_NEW_NORETURN (iconnector_p,
+                      Olimex_Mod_MPU6050_Connector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
 #else
     if (clientMode_in)
       ACE_NEW_NORETURN (connector_p,
-                        Olimex_Mod_MPU6050_AsynchConnector_t (&configuration,
-                                                              CONNECTIONMANAGER_SINGLETON::instance (),
-                                                              OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+                        Olimex_Mod_MPU6050_Connector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                        OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
     else
       ACE_NEW_NORETURN (netlink_connector_p,
-                        Olimex_Mod_MPU6050_AsynchNetlinkConnector_t (&configuration,
-                                                                     NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
-                                                                     OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+                        Olimex_Mod_MPU6050_NetlinkConnector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                               OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
 #endif
   } // end IF
   else
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_NEW_NORETURN (connector_p,
-                      Olimex_Mod_MPU6050_Connector_t (&configuration,
-                                                      CONNECTIONMANAGER_SINGLETON::instance (),
-                                                      OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+    ACE_NEW_NORETURN (iconnector_p,
+                      Olimex_Mod_MPU6050_AsynchConnector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                            OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
 #else
     if (clientMode_in)
-      ACE_NEW_NORETURN (connector_p,
-                        Olimex_Mod_MPU6050_Connector_t (&configuration,
-                                                        CONNECTIONMANAGER_SINGLETON::instance (),
-                                                        OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+      ACE_NEW_NORETURN (iconnector_p,
+                        Olimex_Mod_MPU6050_AsynchConnector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                              OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
     else
       ACE_NEW_NORETURN (netlink_connector_p,
-                        Olimex_Mod_MPU6050_NetlinkConnector_t (&configuration,
-                                                               NETLINK_CONNECTIONMANAGER_SINGLETON::instance (),
-                                                               OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
+                        Olimex_Mod_MPU6050_AsynchNetlinkConnector_t (OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance (),
+                                                                     OLIMEX_MOD_MPU6050_STATISTICS_REPORTING_INTERVAL));
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (clientMode_in && !connector_p)
+  if (clientMode_in && !iconnector_p)
 #else
-  if (( clientMode_in && !connector_p) ||
+  if (( clientMode_in && !iconnector_p) ||
       (!clientMode_in && !netlink_connector_p))
 #endif
   {
@@ -496,72 +558,56 @@ do_work (int argc_in,
     return;
   } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_ASSERT (connector_p);
+  ACE_ASSERT (iconnector_p);
 #else
   ACE_ASSERT (connector_p || netlink_connector_p);
 #endif
-
-  // step5: init connection manager (s)
-  Net_UserData_t session_data;
-  ACE_OS::memset (&session_data, 0, sizeof (session_data));
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-  CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                 &session_data); // will be passed to all handlers
-#else
-  if (clientMode_in)
-  {
-    CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-    CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                   &session_data); // will be passed to all handlers
-  } // end IF
-  else
-  {
-    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                           &session_data); // will be passed to all handlers
-  } // end ELSE
-#endif
-
-  // step6: init signal handling
-  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,  // peer address
-                                                   connector_p,     // connector
-                                                   useReactor_in,   // use reactor ?
-                                                   consoleMode_in); // console mode ?
-  ACE_Sig_Set signal_set (0);
-  do_initSignals (signal_set);
-  Common_SignalActions_t previous_signal_actions;
-  if (!Common_Tools::preInitializeSignals (signal_set,
-                                           useReactor_in,
-                                           previous_signal_actions))
+  if (!iconnector_p->initialize (configuration.socketHandlerConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
+                ACE_TEXT ("failed to initialize connector, returning\n")));
 
     // clean up
-    if (clientMode_in)
-      delete connector_p;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-    else
-      delete netlink_connector_p;
-#endif
+    delete iconnector_p;
 
     return;
   } // end IF
-  if (!Common_Tools::initializeSignals (signal_set,
+
+  // step5: initialize connection manager (s)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+  OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                                    &user_data); // will be passed to all connection handlers
+#else
+  if (clientMode_in)
+  {
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                                      &user_data); // will be passed to all handlers
+  } // end IF
+  else
+  {
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
+                                                                      &user_data); // will be passed to all handlers
+  } // end ELSE
+#endif
+
+  // step6: initialize signal handling
+  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,  // peer address
+                                                   iconnector_p,    // connector
+                                                   useReactor_in,   // use reactor ?
+                                                   consoleMode_in); // console mode ?
+  if (!Common_Tools::initializeSignals (signalSet_in,
+                                        ignoredSignalSet_in,
                                         &signal_handler,
-                                        previous_signal_actions))
+                                        previousSignalActions_inout))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize signal handling, aborting\n")));
 
     // clean up
-    if (clientMode_in)
-      delete connector_p;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-    else
-      delete netlink_connector_p;
-#endif
+    delete iconnector_p;
 
     return;
   } // end IF
@@ -571,38 +617,29 @@ do_work (int argc_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step7a: start GTK event loop ?
-  Olimex_Mod_MPU6050_GTKUIDefinition interface_definition (argc_in,
-                                                           argv_in,
-                                                           &gtk_cb_data);
   if (!consoleMode_in)
   {
-    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
-                                                              argv_in,
-                                                              interfaceDefinitionFile_in,
-                                                              &interface_definition);
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
-    ACE_OS::sleep (ACE_Time_Value (0, OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY));
+    ACE_Time_Value delay (0,
+                          OLIMEX_MOD_MPU6050_UI_INITIALIZATION_DELAY);
+    result = ACE_OS::sleep (delay);
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::sleep(%#T): \"%m\", continuing\n"),
+                  &delay));
     if (!COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to start GTK event dispatch, aborting\n")));
-      Common_Tools::finalizeSignals (signal_set,
-                                     useReactor_in,
-                                     previous_signal_actions);
 
       // clean up
-      if (clientMode_in)
-        delete connector_p;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-      else
-        delete netlink_connector_p;
-#endif
+      delete iconnector_p;
 
       return;
     } // end IF
   } // end IF
 
-  // step7b: init worker(s)
+  // step7b: initialize worker(s)
   int group_id = -1;
   if (!Common_Tools::startEventDispatch (useReactor_in,
                                          1,
@@ -620,13 +657,10 @@ do_work (int argc_in,
 //		} // end lock scope
     if (!consoleMode_in)
       COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-    Common_Tools::finalizeSignals (signal_set,
-                                   useReactor_in,
-                                   previous_signal_actions);
 
     // clean up
     if (clientMode_in)
-      delete connector_p;
+      delete iconnector_p;
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     else
       delete netlink_connector_p;
@@ -639,13 +673,14 @@ do_work (int argc_in,
               ACE_TEXT ("started event dispatch...\n")));
 
   // step8: connect
+  bool result_2 = false;
   if (clientMode_in)
-    result = connector_p->connect (peerAddress_in);
+    result_2 = iconnector_p->connect (peerAddress_in);
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   else
-    result = netlink_connector_p->connect (netlinkAddress_in);
+    result_2 = netlink_connector_p->connect (netlinkAddress_in);
 #endif
-  if (!result)
+  if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to connect, aborting\n")));
@@ -662,47 +697,23 @@ do_work (int argc_in,
     //		} // end lock scope
     if (!consoleMode_in)
       COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-    Common_Tools::finalizeSignals (signal_set,
-                                   useReactor_in,
-                                   previous_signal_actions);
 
     // clean up
-    if (clientMode_in)
-      delete connector_p;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-    else
-      delete netlink_connector_p;
-#endif
+    delete iconnector_p;
 
     return;
   }
   // *WARNING*: from this point on, clean up any remote connections !
 
   // step9: dispatch events
-  // *NOTE*: when using a thread pool, handle things differently...
-  if (useReactor_in)
-  {
-/*      // *WARNING*: restart system calls (after e.g. SIGINT) for the reactor
-      ACE_Reactor::instance()->restart(1);
-*/
-    if (ACE_Reactor::instance ()->run_reactor_event_loop (0) == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to handle events: \"%m\", aborting\n")));
-  } // end IF
-  else
-    if (ACE_Proactor::instance ()->proactor_run_event_loop (0) == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to handle events: \"%m\", aborting\n")));
-
+  Common_Tools::dispatchEvents (useReactor_in,
+                                group_id);
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished event dispatch...\n")));
 
   // step10: clean up
   // *NOTE*: any action timer has been cancelled, connections have been
   // aborted and any GTK event dispatcher has returned by now...
-  Common_Tools::finalizeSignals (signal_set,
-                                 useReactor_in,
-                                 previous_signal_actions);
 //  { // synch access
 //    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (CBData_in.lock);
 
@@ -712,12 +723,7 @@ do_work (int argc_in,
 //			g_source_remove (*iterator);
 //	} // end lock scope
 //  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
-  if (clientMode_in)
-    delete connector_p;
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-  else
-    delete netlink_connector_p;
-#endif
+  delete iconnector_p;
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -727,10 +733,15 @@ int
 ACE_TMAIN (int argc_in,
            ACE_TCHAR** argv_in)
 {
-  // step0: init ACE
+  OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("::main"));
+
+  int result = -1;
+
+  // step0: initialize ACE
   // *PORTABILITY*: on Windows, ACE needs initialization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (ACE::init () == -1)
+  result = ACE::init ();
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
@@ -743,6 +754,11 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_INFO,
                 ACE_TEXT ("running on valgrind...\n")));
 #endif
+
+  // *PROCESS PROFILE*
+  ACE_Profile_Timer process_profile;
+  // start profile timer...
+  process_profile.start ();
 
   // step1: process commandline options (if any)
   bool client_mode            = false;
@@ -781,7 +797,8 @@ ACE_TMAIN (int argc_in,
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (ACE::fini () == -1)
+    result = ACE::fini ();
+    if (result == -1)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
 #endif
@@ -790,17 +807,14 @@ ACE_TMAIN (int argc_in,
   } // end IF
 
   // step2: validate configuration
-  bool use_asynch_connector =
-   (!use_reactor ? true 
-                 : OLIMEX_MOD_MPU6050_USE_ASYNCH_CONNECTOR);
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
   if ((client_mode && peer_address.is_any ()) ||
-      (use_reactor && use_asynch_connector) ||
+      use_reactor ||
       (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)) ||
       (!netlink_group || (netlink_group > sizeof (unsigned int) * 8)))
 #else
   if ((client_mode && peer_address.is_any ()) ||
-      (use_reactor && use_asynch_connector)   ||
+      use_reactor   ||
       (!console_mode && !Common_File_Tools::isReadable (interface_definition_file)))
 #endif
   {
@@ -811,7 +825,8 @@ ACE_TMAIN (int argc_in,
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (ACE::fini () == -1)
+    result = ACE::fini ();
+    if (result == -1)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
 #endif
@@ -834,7 +849,8 @@ ACE_TMAIN (int argc_in,
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (ACE::fini () == -1)
+    result = ACE::fini ();
+    if (result == -1)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
 #endif
@@ -857,7 +873,8 @@ ACE_TMAIN (int argc_in,
 
     // *PORTABILITY*: on Windows, ACE needs finalization...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (ACE::fini () == -1)
+    result = ACE::fini ();
+    if (result == -1)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
 #endif
@@ -865,7 +882,53 @@ ACE_TMAIN (int argc_in,
     return EXIT_FAILURE;
   } // end IF
 
-  // step4: init NLS
+  // step4: (pre-)initialize signal handling
+  ACE_Sig_Set signal_set (0);
+  ACE_Sig_Set ignored_signal_set (0);
+  do_initializeSignals (use_reactor,
+                        true,
+                        signal_set,
+                        ignored_signal_set);
+  Common_SignalActions_t previous_signal_actions;
+  sigset_t previous_signal_mask;
+  result = ACE_OS::sigemptyset (&previous_signal_mask);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
+
+    Common_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, fini ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif
+
+    return EXIT_FAILURE;
+  } // end IF
+  if (!Common_Tools::preInitializeSignals (signal_set,
+                                           use_reactor,
+                                           previous_signal_actions,
+                                           previous_signal_mask))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
+
+    Common_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, fini ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif
+
+    return EXIT_FAILURE;
+  } // end IF
+
+  // step4: initialize NLS
 #ifdef ENABLE_NLS
 #ifdef HAVE_LOCALE_H
   setlocale (LC_ALL, "");
@@ -875,7 +938,50 @@ ACE_TMAIN (int argc_in,
   textdomain (PACKAGE);
 #endif
 
-  // step5: run program
+  // step5: initialize GTK UI
+  Olimex_Mod_MPU6050_GtkCBData gtk_cb_data;
+  gtk_cb_data.argc = argc_in;
+  gtk_cb_data.argv = argv_in;
+  gtk_cb_data.clientMode = client_mode;
+  ACE_OS::memset (&gtk_cb_data.clientSensorBias,
+                  0,
+                  sizeof (gtk_cb_data.clientSensorBias));
+  gtk_cb_data.openGLDoubleBuffered =
+    OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED;
+  ACE_OS::memset (gtk_cb_data.temperature,
+                  0,
+                  sizeof (gtk_cb_data.temperature));
+  gtk_cb_data.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN)] =
+    std::make_pair (interface_definition_file, static_cast<GtkBuilder*> (NULL));
+  gtk_cb_data.finalizationHook = idle_finalize_ui_cb;
+  gtk_cb_data.initializationHook = idle_initialize_ui_cb;
+  gtk_cb_data.userData = &gtk_cb_data;
+  Common_UI_GtkBuilderDefinition ui_definition (argc_in,
+                                                argv_in);
+  if (!ui_definition.initialize (gtk_cb_data))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_UI_GtkBuilderDefinition::initialize(), aborting\n")));
+
+    Common_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, fini ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif
+
+    return EXIT_FAILURE;
+  } // end IF
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
+                                                            argv_in,
+                                                            &gtk_cb_data,
+                                                            &ui_definition);
+
+  // step6: run program ?
+  ACE_High_Res_Timer timer;
+  timer.start ();
   if (print_version_and_exit)
     do_printVersion (ACE::basename (argv_in[0]));
   else
@@ -886,19 +992,109 @@ ACE_TMAIN (int argc_in,
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
              netlink_address,
 #endif
-             use_asynch_connector,
              use_reactor,
              interface_definition_file,
-             console_mode);
+             console_mode,
+             ////////////////////////////
+             gtk_cb_data,
+             ////////////////////////////
+             signal_set,
+             ignored_signal_set,
+             previous_signal_actions);
 
-  // step6: clean u
+  // debug info
+  timer.stop ();
+  std::string working_time_string;
+  ACE_Time_Value working_time;
+  timer.elapsed_time (working_time);
+  Common_Tools::period2String (working_time,
+                               working_time_string);
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("total working time (h:m:s.us): \"%s\"...\n"),
+              ACE_TEXT (working_time_string.c_str ())));
+
+  // debug info
+  process_profile.stop ();
+  ACE_Profile_Timer::ACE_Elapsed_Time elapsed_time;
+  elapsed_time.real_time = 0.0;
+  elapsed_time.user_time = 0.0;
+  elapsed_time.system_time = 0.0;
+  if (process_profile.elapsed_time (elapsed_time) == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+               ACE_TEXT ("failed to ACE_Profile_Timer::elapsed_time: \"%m\", aborting\n")));
+
+    Common_Tools::finalizeSignals (signal_set,
+                                   previous_signal_actions,
+                                   previous_signal_mask);
+    Common_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, fini ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif
+
+    return EXIT_FAILURE;
+  } // end IF
+  ACE_Profile_Timer::Rusage elapsed_rusage;
+  ACE_OS::memset (&elapsed_rusage, 0, sizeof (ACE_Profile_Timer::Rusage));
+  process_profile.elapsed_rusage (elapsed_rusage);
+  ACE_Time_Value user_time (elapsed_rusage.ru_utime);
+  ACE_Time_Value system_time (elapsed_rusage.ru_stime);
+  std::string user_time_string;
+  std::string system_time_string;
+  Common_Tools::period2String (user_time,
+                               user_time_string);
+  Common_Tools::period2String (system_time,
+                               system_time_string);
+  // debug info
+#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT (" --> Process Profile <--\nreal time = %A seconds\nuser time = %A seconds\nsystem time = %A seconds\n --> Resource Usage <--\nuser time used: %s\nsystem time used: %s\nmaximum resident set size = %d\nintegral shared memory size = %d\nintegral unshared data size = %d\nintegral unshared stack size = %d\npage reclaims = %d\npage faults = %d\nswaps = %d\nblock input operations = %d\nblock output operations = %d\nmessages sent = %d\nmessages received = %d\nsignals received = %d\nvoluntary context switches = %d\ninvoluntary context switches = %d\n"),
+              elapsed_time.real_time,
+              elapsed_time.user_time,
+              elapsed_time.system_time,
+              user_time_string.c_str (),
+              system_time_string.c_str (),
+              elapsed_rusage.ru_maxrss,
+              elapsed_rusage.ru_ixrss,
+              elapsed_rusage.ru_idrss,
+              elapsed_rusage.ru_isrss,
+              elapsed_rusage.ru_minflt,
+              elapsed_rusage.ru_majflt,
+              elapsed_rusage.ru_nswap,
+              elapsed_rusage.ru_inblock,
+              elapsed_rusage.ru_oublock,
+              elapsed_rusage.ru_msgsnd,
+              elapsed_rusage.ru_msgrcv,
+              elapsed_rusage.ru_nsignals,
+              elapsed_rusage.ru_nvcsw,
+              elapsed_rusage.ru_nivcsw));
+#else
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT (" --> Process Profile <--\nreal time = %A seconds\nuser time = %A seconds\nsystem time = %A seconds\n --> Resource Usage <--\nuser time used: %s\nsystem time used: %s\n"),
+              elapsed_time.real_time,
+              elapsed_time.user_time,
+              elapsed_time.system_time,
+              ACE_TEXT (user_time_string.c_str ()),
+              ACE_TEXT (system_time_string.c_str ())));
+#endif
+
+  // step6: clean up
+  Common_Tools::finalizeSignals (signal_set,
+                                 previous_signal_actions,
+                                 previous_signal_mask);
+  Common_Tools::finalizeLogging ();
+
   // *PORTABILITY*: on Windows, must fini ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (ACE::fini () == -1)
+  result = ACE::fini ();
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
-
     return EXIT_FAILURE;
   } // end IF
 #endif

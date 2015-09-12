@@ -26,27 +26,28 @@
 
 #include "ace/Global_Macros.h"
 #include "ace/OS.h"
-#include "ace/Synch.h"
 #include "ace/Time_Value.h"
 
 #include "gtk/gtk.h"
 #include "gtk/gtkgl.h"
-#include "glade/glade.h"
 
-#include "common.h"
 #include "common_inotify.h"
 
-#include "common_ui_types.h"
+#include "common_ui_common.h"
 
 #include "stream_common.h"
+
+#include "net_common.h"
 
 #include "olimex_mod_mpu6050_defines.h"
 
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
+class Olimex_Mod_MPU6050_SessionMessage;
 class Stream_IAllocator;
+struct Olimex_Mod_MPU6050_SessionData;
 
-enum Olimex_Mod_MPU6050_MessageType_t
+enum Olimex_Mod_MPU6050_MessageType
 {
   OLIMEX_MOD_MPU6050_MESSAGE_INVALID = -1,
   OLIMEX_MOD_MPU6050_MESSAGE_SENSOR_DATA,
@@ -54,27 +55,29 @@ enum Olimex_Mod_MPU6050_MessageType_t
   OLIMEX_MOD_MPU6050_MESSAGE_MAX
 };
 
-enum Olimex_Mod_MPU6050_Event_t
+enum Olimex_Mod_MPU6050_Event
 {
   OLIMEX_MOD_MPU6050_EVENT_INVALID = -1,
   OLIMEX_MOD_MPU6050_EVENT_CONNECT,
   OLIMEX_MOD_MPU6050_EVENT_DISCONNECT,
   OLIMEX_MOD_MPU6050_EVENT_MESSAGE,
+  OLIMEX_MOD_MPU6050_EVENT_SESSION_MESSAGE,
   ///////////////////////////////////////
   OLIMEX_MOD_MPU6050_EVENT_MAX
 };
-typedef std::deque<Olimex_Mod_MPU6050_Event_t> Olimex_Mod_MPU6050_Events_t;
+typedef std::deque<Olimex_Mod_MPU6050_Event> Olimex_Mod_MPU6050_Events_t;
 typedef Olimex_Mod_MPU6050_Events_t::const_iterator Olimex_Mod_MPU6050_EventsIterator_t;
 
 typedef std::deque<Olimex_Mod_MPU6050_Message*> Olimex_Mod_MPU6050_Messages_t;
 typedef Olimex_Mod_MPU6050_Messages_t::const_iterator Olimex_Mod_MPU6050_MessagesIterator_t;
 
-typedef Common_INotify_T<Stream_ModuleConfiguration_t,
-                         Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_Notification_t;
+typedef Common_INotify_T<Olimex_Mod_MPU6050_SessionData,
+                         Olimex_Mod_MPU6050_Message,
+                         Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_Notification_t;
 typedef std::list<Olimex_Mod_MPU6050_Notification_t*> Olimex_Mod_MPU6050_Subscribers_t;
 typedef Olimex_Mod_MPU6050_Subscribers_t::iterator Olimex_Mod_MPU6050_SubscribersIterator_t;
 
-struct sensorBias_t
+struct SensorBias
 {
   gfloat ax_bias;
   gfloat ay_bias;
@@ -84,7 +87,7 @@ struct sensorBias_t
   gfloat gz_bias;
 };
 
-struct camera_t
+struct Camera
 {
   //glm::vec3 position;
   //glm::vec3 looking_at;
@@ -96,30 +99,72 @@ struct camera_t
   int last[2];
 };
 
-struct Olimex_Mod_MPU6050_GtkCBData_t
+typedef Stream_Statistic Olimex_Mod_MPU6050_RuntimeStatistic_t;
+
+struct Olimex_Mod_MPU6050_UserData
+ : public Net_UserData
 {
- inline Olimex_Mod_MPU6050_GtkCBData_t ()
- : allocator (NULL)
- , argc (0)
- , argv (NULL)
- , clientMode (false)
- , contextIdData (0)
- , contextIdInformation (0)
- //  , eventQueue ()
-//  , eventSourceIds ()
- , frameCounter (0)
- , lock (NULL, NULL)
-//  , messageQueue ()
- , openGLAxesListId (0)
-//  , openGLCamera ()
- , openGLContext (NULL)
- , openGLDrawable (NULL)
- , openGLRefreshId (0)
- , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
- //, temperature ()
- , temperatureIndex (-1)
- , timestamp (ACE_Time_Value::zero)
- , XML (NULL)
+  inline Olimex_Mod_MPU6050_UserData ()
+   : Net_UserData ()
+  {};
+};
+
+struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
+ : public Stream_ModuleHandlerConfiguration
+{
+  inline Olimex_Mod_MPU6050_ModuleHandlerConfiguration ()
+   : Stream_ModuleHandlerConfiguration ()
+   , consoleMode (false)
+   , state (NULL)
+  {};
+
+  bool          consoleMode;
+  Stream_State* state;
+};
+
+struct Olimex_Mod_MPU6050_Configuration
+{
+  inline Olimex_Mod_MPU6050_Configuration ()
+   : socketConfiguration ()
+   , socketHandlerConfiguration ()
+   , moduleConfiguration_2 ()
+   , moduleHandlerConfiguration_2 ()
+   , streamConfiguration ()
+   , userData (NULL)
+  {};
+
+  Net_SocketConfiguration                       socketConfiguration;
+  Net_SocketHandlerConfiguration                socketHandlerConfiguration;
+
+  Stream_ModuleConfiguration                    moduleConfiguration_2;
+  Olimex_Mod_MPU6050_ModuleHandlerConfiguration moduleHandlerConfiguration_2;
+  Stream_Configuration                          streamConfiguration;
+
+  Olimex_Mod_MPU6050_UserData*                  userData;
+};
+
+struct Olimex_Mod_MPU6050_GtkCBData
+ : public Common_UI_GTKState
+{
+ inline Olimex_Mod_MPU6050_GtkCBData ()
+  : Common_UI_GTKState ()
+  , argc (0)
+  , argv (NULL)
+  , clientMode (false)
+  , contextIdData (0)
+  , contextIdInformation (0)
+  , eventQueue ()
+  , frameCounter (0)
+  , messageQueue ()
+  , openGLAxesListId (0)
+  , openGLCamera ()
+  , openGLContext (NULL)
+  , openGLDrawable (NULL)
+  , openGLRefreshId (0)
+  , openGLDoubleBuffered (OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED)
+  , temperature ()
+  , temperatureIndex (-1)
+  , timestamp (ACE_Time_Value::zero)
  {
    resetCamera ();
  };
@@ -130,22 +175,19 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
    openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
  };
 
- Stream_IAllocator*                 allocator;
  int                                argc;
  ACE_TCHAR**                        argv;
  bool                               clientMode;
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
- sensorBias_t                       clientSensorBias; // client side ONLY (!)
+ SensorBias                         clientSensorBias; // client side ONLY (!)
  guint                              contextIdData; // status bar context
  guint                              contextIdInformation; // status bar context
  Olimex_Mod_MPU6050_Events_t        eventQueue;
- Common_UI_GTK_EventSourceIDs_t     eventSourceIds;
  unsigned int                       frameCounter;
- mutable ACE_Recursive_Thread_Mutex lock;
  Olimex_Mod_MPU6050_Messages_t      messageQueue;
  GLuint                             openGLAxesListId;
- camera_t                           openGLCamera;
+ Camera                             openGLCamera;
  GdkGLContext*                      openGLContext;
  GdkGLDrawable*                     openGLDrawable;
  guint                              openGLRefreshId;
@@ -153,7 +195,6 @@ struct Olimex_Mod_MPU6050_GtkCBData_t
  gfloat                             temperature[OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE * 2];
  int                                temperatureIndex;
  ACE_Time_Value                     timestamp;
- GladeXML*                          XML;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

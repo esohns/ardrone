@@ -154,15 +154,16 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
         return false;
       }
     } // end IF
-    CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
-    CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
-#if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
-    NETLINK_CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->abort ();
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->stop ();
+    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->abort ();
 #endif
     // *IMPORTANT NOTE*: as long as connections are inactive (i.e. events are
     // dispatched by reactor thread(s), there is no real reason to wait here)
-    //CONNECTIONMANAGER_SINGLETON::instance ()->waitConnections ();
+    //OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->wait ();
 
     // step2: stop GTK event dispatch ?
     if (!consoleMode_)

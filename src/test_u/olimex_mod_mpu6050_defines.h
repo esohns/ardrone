@@ -20,9 +20,9 @@
 
 //#include "ace/Default_Constants.h"
 
-#include "GL/glut.h"
+//#include "GL/glut.h"
 
-#include "net_defines.h"
+//#include "net_defines.h"
 
 // *** OpenGL-related
 #define OLIMEX_MOD_MPU6050_OPENGL_DOUBLE_BUFFERED                    true
@@ -73,16 +73,16 @@
 #else
 #define OLIMEX_MOD_MPU6050_DEFAULT_NETWORK_INTERFACE                 NET_DEFAULT_NETWORK_INTERFACE
 #endif
-#define OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                          NET_DEFAULT_NETLINK_PROTOCOL
-#define OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP                     NET_DEFAULT_NETLINK_PROTOCOL_GROUP
-#define OLIMEX_MOD_MPU6050_DEFAULT_PORT                              NET_DEFAULT_PORT
+#define OLIMEX_MOD_MPU6050_NETLINK_PROTOCOL                          NET_PROTOCOL_DEFAULT_NETLINK
+#define OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP                     NET_PROTOCOL_DEFAULT_NETLINK_GROUP
+#define OLIMEX_MOD_MPU6050_DEFAULT_PORT                              NET_ADDRESS_DEFAULT_PORT
 
 // default event dispatcher (default: use asynch I/O (proactor))
 #define OLIMEX_MOD_MPU6050_CONNECTION_HANDLER_THREAD_NAME            NET_CONNECTION_HANDLER_THREAD_NAME
 #define OLIMEX_MOD_MPU6050_CONNECTION_HANDLER_THREAD_GROUP_ID        1
 
 //#define SOCKET_RECEIVE_BUFFER_SIZE                    ACE_DEFAULT_MAX_SOCKET_BUFSIZ
-#define OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE                NET_DEFAULT_SOCKET_RECEIVE_BUFFER_SIZE
+#define OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE                NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 //#define DEFAULT_SOCKET_TCP_NODELAY                  true
 //#define DEFAULT_SOCKET_TCP_KEEPALIVE                false
 //#define DEFAULT_SOCKET_LINGER                       10 // seconds {0 --> off}

@@ -23,30 +23,29 @@
 
 #include "ace/Global_Macros.h"
 
+#include "stream_common.h"
 #include "stream_session_message_base.h"
 
-#include "net_stream_common.h"
+#include "net_common.h"
 
-//#include "olimex_mod_mpu6050_stream.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 
 // forward declarations
 class ACE_Allocator;
 class ACE_Data_Block;
 
 class Olimex_Mod_MPU6050_SessionMessage
- : public Stream_SessionMessageBase_T<Stream_State_t,
-                                      Net_StreamSessionData_t>
- //: public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t>
+ : public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
+                                      Net_UserData>
 {
   //// enable access to private ctor(s)...
   //friend class Stream_MessageAllocatorHeapBase<Olimex_Mod_MPU6050_Message,
   //                                             Olimex_Mod_MPU6050_SessionMessage>;
  public:
-  // *NOTE*: assume lifetime responsibility for the third argument !
-  Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType_t, // session message type
-                                     Stream_State_t*,             // stream state handle
-                                     Net_StreamSessionData_t*&);  // session data handle
-                                     //Olimex_Mod_MPU6050_StreamSessionData_t*&); // session data handle
+  // *NOTE*: assume lifetime responsibility for the second argument !
+  Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType,                // session message type
+                                     Olimex_Mod_MPU6050_StreamSessionData_t*&, // session data handle
+                                     Net_UserData*);                           // user data handle
   // *NOTE*: to be used by message allocators...
   Olimex_Mod_MPU6050_SessionMessage (ACE_Allocator*); // message allocator
   Olimex_Mod_MPU6050_SessionMessage (ACE_Data_Block*, // data block
@@ -58,13 +57,13 @@ class Olimex_Mod_MPU6050_SessionMessage
   virtual ACE_Message_Block* duplicate (void) const;
 
  private:
-  typedef Stream_SessionMessageBase_T<Stream_State_t,
-                                      Net_StreamSessionData_t> inherited;
+  typedef Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
+                                      Net_UserData> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ());
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ())
   // copy ctor (to be used by duplicate())
   Olimex_Mod_MPU6050_SessionMessage (const Olimex_Mod_MPU6050_SessionMessage&);
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage& operator= (const Olimex_Mod_MPU6050_SessionMessage&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage& operator= (const Olimex_Mod_MPU6050_SessionMessage&))
 };
 
 #endif

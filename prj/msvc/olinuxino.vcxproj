@@ -62,7 +62,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\projects\olinuxino\src\include;D:\projects\olinuxino\src\test_u\3rd_party\gettext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\include;$(ProjectDir)..\..\src\test_u\3rd_party\gettext;$(ProjectDir)..\..\..\libCommon\src;$(ProjectDir)..\..\..\libCommon\src\ui;$(ProjectDir)..\..\..\libACEStream\src;$(ProjectDir)..\..\..\libACEStream\src\modules\misc;$(ProjectDir)..\..\..\libACENetwork\src;$(ProjectDir)..\..\..\libACENetwork\src\client_server;$(ProjectDir)..\..\..\libACEStream\src\modules\net;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>
       </ShowIncludes>
     </ClCompile>
@@ -166,10 +166,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="..\..\src\test_u\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -233,8 +229,8 @@
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_sessionmessage.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_signalhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_stream.h" />
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_stream_common.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_types.h" />
-    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_uidefinition.h" />
     <ClInclude Include="..\..\src\test_u\stdafx.h" />
   </ItemGroup>
   <ItemGroup>

@@ -21,34 +21,45 @@
 #ifndef OLIMEX_MOD_MPU6050_EVENTHANDLER_H
 #define OLIMEX_MOD_MPU6050_EVENTHANDLER_H
 
+#include "ace/Global_Macros.h"
+
+#include "common_iinitialize.h"
+
+#include "stream_common.h"
+
 #include "olimex_mod_mpu6050_message.h"
-#include "olimex_mod_mpu6050_types.h"
+#include "olimex_mod_mpu6050_sessionmessage.h"
+//#include "olimex_mod_mpu6050_stream_common.h"
+//#include "olimex_mod_mpu6050_types.h"
 
 // forward declarations
-struct Olimex_Mod_MPU6050_GtkCBData_t;
+struct Olimex_Mod_MPU6050_GtkCBData;
+struct Olimex_Mod_MPU6050_SessionData;
 
 class Olimex_Mod_MPU6050_EventHandler
  : public Olimex_Mod_MPU6050_Notification_t
 {
  public:
-  Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData_t*); // Gtk state
+  Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData*, // Gtk state
+                                   bool = false);                 // console mode ?
   virtual ~Olimex_Mod_MPU6050_EventHandler ();
 
   // implement Common_INotify_T
-  virtual void start (const Stream_ModuleConfiguration_t&);
+  virtual void start (const Olimex_Mod_MPU6050_SessionData&);
   virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
+  virtual void notify (const Olimex_Mod_MPU6050_SessionMessage&); // session message
   virtual void end ();
 
  private:
   typedef Olimex_Mod_MPU6050_Notification_t inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler ());
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler (const Olimex_Mod_MPU6050_EventHandler&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler ())
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler (const Olimex_Mod_MPU6050_EventHandler&))
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&))
 
-  const Stream_ModuleConfiguration_t* configuration_;
-  bool                                consoleMode_;
-  Olimex_Mod_MPU6050_GtkCBData_t*     GtkCBData_;
+  bool                            consoleMode_;
+  Olimex_Mod_MPU6050_SessionData* sessionData_;
+  Olimex_Mod_MPU6050_GtkCBData*   GtkCBData_;
 };
 
 #endif

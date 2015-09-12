@@ -24,25 +24,33 @@
 #include "ace/Global_Macros.h"
 #include "ace/Synch_Traits.h"
 
-#include "common.h"
+#include "common_time_common.h"
 
 #include "stream_base.h"
 #include "stream_common.h"
-
-#include "net_configuration.h"
-#include "net_stream_common.h"
+#include "stream_statemachine_control.h"
 
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_sessionmessage.h"
 #include "olimex_mod_mpu6050_stream_common.h"
+#include "olimex_mod_mpu6050_types.h"
 
 class Olimex_Mod_MPU6050_Stream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        Stream_State_t,
-                        Stream_Statistic_t,
-                        Net_UserData_t,
-                        Net_StreamSessionData_t,
+                        /////////////////
+                        Stream_StateMachine_ControlState,
+                        Stream_State,
+                        /////////////////
+                        Olimex_Mod_MPU6050_Configuration,
+                        /////////////////
+                        Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                        /////////////////
+                        Stream_ModuleConfiguration,
+                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                        /////////////////
+                        Olimex_Mod_MPU6050_SessionData,
+                        Olimex_Mod_MPU6050_StreamSessionData_t,
                         Olimex_Mod_MPU6050_SessionMessage,
                         Olimex_Mod_MPU6050_Message>
 {
@@ -51,40 +59,46 @@ class Olimex_Mod_MPU6050_Stream
   virtual ~Olimex_Mod_MPU6050_Stream ();
 
   // initialize stream
-  bool initialize (unsigned int,                       // session ID
-                   // *NOTE*: will be modified
-                   Stream_Configuration_t&,            // configuration
-                   const Net_ProtocolConfiguration_t&, // protocol configuration
-                   const Net_UserData_t&);             // user data
+  bool initialize (const Stream_Configuration&,        // stream configuration
+                   Olimex_Mod_MPU6050_Configuration&); // configuration
 
   // *TODO*: re-consider this API
   void ping ();
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (Stream_Statistic_t&); // return value: statistic data
+  virtual bool collect (Olimex_Mod_MPU6050_RuntimeStatistic_t&); // return value: statistic data
   virtual void report () const;
 
  private:
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        Stream_State_t,
-                        Stream_Statistic_t,
-                        Net_UserData_t,
-                        Net_StreamSessionData_t,
+                        /////////////////
+                        Stream_StateMachine_ControlState,
+                        Stream_State,
+                        /////////////////
+                        Olimex_Mod_MPU6050_Configuration,
+                        /////////////////
+                        Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                        /////////////////
+                        Stream_ModuleConfiguration,
+                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                        /////////////////
+                        Olimex_Mod_MPU6050_SessionData,
+                        Olimex_Mod_MPU6050_StreamSessionData_t,
                         Olimex_Mod_MPU6050_SessionMessage,
                         Olimex_Mod_MPU6050_Message> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream (const Olimex_Mod_MPU6050_Stream&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream& operator= (const Olimex_Mod_MPU6050_Stream&));
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream (const Olimex_Mod_MPU6050_Stream&))
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream& operator= (const Olimex_Mod_MPU6050_Stream&))
 
   // finalize stream
   // *NOTE*: need this to clean up queued modules if something goes wrong during
   //         initialize () !
-  bool finalize (const Stream_Configuration_t&); // configuration
+  bool finalize (const Olimex_Mod_MPU6050_Configuration&); // configuration
 
   // modules
-  Olimex_Mod_MPU6050_Module_SocketHandler_Module    socketHandler_;
+  Olimex_Mod_MPU6050_Module_SocketHandler_Module    netReader_;
   Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module runtimeStatistic_;
 };
 

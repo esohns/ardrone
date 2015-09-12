@@ -22,68 +22,55 @@
 #define OLIMEX_MOD_MPU6050_MODULE_EVENTHANDLER_H
 
 #include "ace/Global_Macros.h"
-#include "ace/Synch.h"
 
-#include "common.h"
-#include "common_isubscribe.h"
-#include "common_iclone.h"
+#include "common_time_common.h"
 
 #include "stream_common.h"
-#include "stream_task_base_synch.h"
 #include "stream_streammodule_base.h"
 
+#include "stream_module_messagehandler.h"
+
+#include "olimex_mod_mpu6050_message.h"
+#include "olimex_mod_mpu6050_sessionmessage.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
 
-// forward declaration(s)
-class Olimex_Mod_MPU6050_SessionMessage;
-class Olimex_Mod_MPU6050_Message;
+//// forward declaration(s)
+//class Olimex_Mod_MPU6050_SessionMessage;
+//class Olimex_Mod_MPU6050_Message;
 
 class Olimex_Mod_MPU6050_Module_EventHandler
- : public Stream_TaskBaseSynch_T<Common_TimePolicy_t,
-                                 Olimex_Mod_MPU6050_SessionMessage,
-                                 Olimex_Mod_MPU6050_Message>
- , public Common_ISubscribe_T<Olimex_Mod_MPU6050_Notification_t>
- , public Common_IClone_T<Common_Module_t>
+ : public Stream_Module_MessageHandler_T<Olimex_Mod_MPU6050_SessionMessage,
+                                         Olimex_Mod_MPU6050_Message,
+                                         
+                                         Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                         
+                                         Olimex_Mod_MPU6050_SessionData>
 {
  public:
   Olimex_Mod_MPU6050_Module_EventHandler ();
   virtual ~Olimex_Mod_MPU6050_Module_EventHandler ();
 
-  void initialize (Olimex_Mod_MPU6050_Subscribers_t* = NULL, // subscribers (handle)
-                   ACE_Recursive_Thread_Mutex* = NULL);      // subscribers lock
-
-  // implement (part of) Stream_ITaskBase_T
-  virtual void handleDataMessage (Olimex_Mod_MPU6050_Message*&, // data message handle
-                                  bool&);                       // return value: pass message downstream ?
-  virtual void handleSessionMessage (Olimex_Mod_MPU6050_SessionMessage*&, // session message handle
-                                     bool&);                              // return value: pass message downstream ?
-
-  // implement Common_ISubscribe_T
-  virtual void subscribe (Olimex_Mod_MPU6050_Notification_t*);   // new subscriber
-  virtual void unsubscribe (Olimex_Mod_MPU6050_Notification_t*); // existing subscriber
-
   // implement Common_IClone_T
-  virtual Common_Module_t* clone ();
+  virtual Stream_Module_t* clone ();
 
  private:
-  typedef Stream_TaskBaseSynch_T<Common_TimePolicy_t,
-                                 Olimex_Mod_MPU6050_SessionMessage,
-                                 Olimex_Mod_MPU6050_Message> inherited;
+  typedef Stream_Module_MessageHandler_T<Olimex_Mod_MPU6050_SessionMessage,
+                                         Olimex_Mod_MPU6050_Message,
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler (const Olimex_Mod_MPU6050_Module_EventHandler&));
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler& operator= (const Olimex_Mod_MPU6050_Module_EventHandler&));
+                                         Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
 
-  bool                              delete_;
-  // *NOTE*: recursive so that users may unsubscribe from within the
-  // notification callbacks...
-  ACE_Recursive_Thread_Mutex*       lock_;
-  Olimex_Mod_MPU6050_Subscribers_t* subscribers_;
+                                         Olimex_Mod_MPU6050_SessionData> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler (const Olimex_Mod_MPU6050_Module_EventHandler&))
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler& operator= (const Olimex_Mod_MPU6050_Module_EventHandler&))
 };
 
 // declare module
 DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                            // task synch type
                               Common_TimePolicy_t,                     // time policy
-                              Stream_ModuleConfiguration_t,            // configuration type
+                              Stream_ModuleConfiguration,              // module configuration type
+                              Stream_ModuleHandlerConfiguration,       // module handler configuration type
                               Olimex_Mod_MPU6050_Module_EventHandler); // writer type
 
 #endif
