@@ -1,30 +1,39 @@
 ACLOCAL_AMFLAGS = \
   -I m4
 
+#  -I/usr/include/c++/3.4.6/backward
+#  -I$(top_srcdir)/modules/ATCD/ACE
+#  *NOTE*: -frepo is broken in gcc 4.9.2
+#  *TODO*: repair test_i_template_instantiations.cpp so it works with
+#          -fno-implicit-templates
+AM_CPPFLAGS = \
+  -I/usr/share/gettext \
+  -I$(top_srcdir)/../ATCD/ACE \
+  $(PKGSDL_CFLAGS) \
+  $(PKGGTK_CFLAGS)
+if VALGRIND_SUPPORT
+AM_CPPFLAGS += \
+  $(PKGVALGRIND_CFLAGS)
+endif
+
 DEFS = \
+  -DHAVE_CONFIG_H \
+  -DBASEDIR=\"$(datadir)/@PACKAGE_NAME@\" \
   -DCOMMON_HAS_DLL \
   -DCOMMON_UI_HAS_DLL \
   -DSTREAM_HAS_DLL \
   -DNET_HAS_DLL \
-  -DNET_CLIENT_HAS_DLL \
-  -DBASEDIR=\"$(datadir)/@PACKAGE_NAME@\"
-
-AM_CPPFLAGS = \
-  -I/usr/share/gettext \
-  -I$(top_srcdir)/../ATCD/ACE \
-  -I$(top_srcdir)/modules/libCommon/src \
-  -I$(top_srcdir)/modules/libCommon/src/ui \
-  -I$(top_srcdir)/modules/libACEStream/src \
-  -I$(top_srcdir)/modules/libACENetwork/src \
-  -I$(top_srcdir)/modules/libACENetwork/src/client \
-  -I$(top_srcdir)/src/include
+  -DNET_CLIENT_HAS_DLL
+if DEBUG
+DEFS += \
+  -DDEBUG_DEBUGGER
+endif
 
 bin_PROGRAMS = \
   olimex_mod_mpu6050
 
 noinst_HEADERS = \
   stdafx.h
-
 olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050.cpp \
   olimex_mod_mpu6050_callbacks.cpp \
@@ -50,30 +59,36 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_stream.cpp \
   olimex_mod_mpu6050_stream.h \
   olimex_mod_mpu6050_types.h \
-  olimex_mod_mpu6050_uidefinition.cpp \
-  olimex_mod_mpu6050_uidefinition.h \
   stdafx.cpp \
   stdafx.h
 
 olimex_mod_mpu6050_CPPFLAGS = \
   $(AM_CPPFLAGS) \
-  $(PKGLIB_CFLAGS)
-
+  -I$(top_srcdir)/modules/libCommon/src \
+  -I$(top_srcdir)/modules/libCommon/src/ui \
+  -I$(top_srcdir)/modules/libACEStream/src \
+  -I$(top_srcdir)/modules/libACEStream/src/modules/misc \
+  -I$(top_srcdir)/modules/libACEStream/src/modules/net \
+  -I$(top_srcdir)/modules/libACENetwork/src \
+  -I$(top_srcdir)/modules/libACENetwork/src/client_server \
+  -I$(top_srcdir)/src/include
 olimex_mod_mpu6050_LDFLAGS = \
-  $(PKGLIB_LDFLAGS) \
   -L$(top_srcdir)/modules/ATCD/ACE/build/linux/lib \
-  -L$(top_builddir)/modules/libCommon/src/.libs \
-  -L$(top_builddir)/modules/libCommon/src/ui/.libs \
-  -L$(top_builddir)/modules/libACEStream/src/.libs \
-  -L$(top_builddir)/modules/libACENetwork/src/.libs \
-  -L$(top_builddir)/modules/libACENetwork/src/client/.libs
-
+  $(PKGGTK_LDFLAGS) \
+  -L$(abs_builddir)/modules/libCommon/src/.libs \
+  -L$(abs_builddir)/modules/libCommon/src/ui/.libs \
+  -L$(abs_builddir)/modules/libACEStream/src/.libs \
+  -L$(abs_builddir)/modules/libACEStream/src/modules/.libs \
+  -L$(abs_builddir)/modules/libACENetwork/src/.libs \
+  -L$(abs_builddir)/modules/libACENetwork/src/client_server/.libs
 olimex_mod_mpu6050_LDADD = \
-  $(PKGLIB_LIBS) \
   -lACE \
+  $(PKGGTK_LIBS) \
   -lCommon \
   -lCommon_UI \
   -lACEStream \
+  -lACEStream_Misc \
+  -lACEStream_Net \
   -lACENetwork \
   -lACENetwork_Client
 
@@ -81,4 +96,5 @@ configdir = $(datadir)/@PACKAGE_NAME@
 config_DATA = \
   olimex_mod_mpu6050.glade
 
-EXTRA_DIST = $(config_DATA)
+EXTRA_DIST = \
+  $(config_DATA)

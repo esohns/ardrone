@@ -24,28 +24,34 @@
 #include "ace/Global_Macros.h"
 
 #include "stream_common.h"
+#include "stream_messageallocatorheap_base.h"
 #include "stream_session_message_base.h"
 
 #include "net_common.h"
 
-#include "olimex_mod_mpu6050_stream_common.h"
+//#include "olimex_mod_mpu6050_stream_common.h"
 
 // forward declarations
 class ACE_Allocator;
 class ACE_Data_Block;
+class Olimex_Mod_MPU6050_Message;
+struct Olimex_Mod_MPU6050_SessionData;
+typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
+struct Olimex_Mod_MPU6050_UserData;
 
 class Olimex_Mod_MPU6050_SessionMessage
  : public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
-                                      Net_UserData>
+                                      Olimex_Mod_MPU6050_UserData>
 {
-  //// enable access to private ctor(s)...
-  //friend class Stream_MessageAllocatorHeapBase<Olimex_Mod_MPU6050_Message,
-  //                                             Olimex_Mod_MPU6050_SessionMessage>;
+  // enable access to private ctor(s)...
+  friend class Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
+                                                 Olimex_Mod_MPU6050_SessionMessage>;
+
  public:
   // *NOTE*: assume lifetime responsibility for the second argument !
   Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType,                // session message type
                                      Olimex_Mod_MPU6050_StreamSessionData_t*&, // session data handle
-                                     Net_UserData*);                           // user data handle
+                                     Olimex_Mod_MPU6050_UserData*);            // user data handle
   // *NOTE*: to be used by message allocators...
   Olimex_Mod_MPU6050_SessionMessage (ACE_Allocator*); // message allocator
   Olimex_Mod_MPU6050_SessionMessage (ACE_Data_Block*, // data block
@@ -58,7 +64,7 @@ class Olimex_Mod_MPU6050_SessionMessage
 
  private:
   typedef Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
-                                      Net_UserData> inherited;
+                                      Olimex_Mod_MPU6050_UserData> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ())
   // copy ctor (to be used by duplicate())

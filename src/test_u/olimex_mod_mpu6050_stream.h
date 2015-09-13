@@ -40,9 +40,9 @@ class Olimex_Mod_MPU6050_Stream
                         Common_TimePolicy_t,
                         /////////////////
                         Stream_StateMachine_ControlState,
-                        Stream_State,
+                        Olimex_Mod_MPU6050_StreamState,
                         /////////////////
-                        Olimex_Mod_MPU6050_Configuration,
+                        Olimex_Mod_MPU6050_StreamConfiguration,
                         /////////////////
                         Olimex_Mod_MPU6050_RuntimeStatistic_t,
                         /////////////////
@@ -58,9 +58,8 @@ class Olimex_Mod_MPU6050_Stream
   Olimex_Mod_MPU6050_Stream ();
   virtual ~Olimex_Mod_MPU6050_Stream ();
 
-  // initialize stream
-  bool initialize (const Stream_Configuration&,        // stream configuration
-                   Olimex_Mod_MPU6050_Configuration&); // configuration
+  // implement Common_IInitialize_T
+  virtual bool initialize (const Olimex_Mod_MPU6050_StreamConfiguration&); // configuration
 
   // *TODO*: re-consider this API
   void ping ();
@@ -75,9 +74,9 @@ class Olimex_Mod_MPU6050_Stream
                         Common_TimePolicy_t,
                         /////////////////
                         Stream_StateMachine_ControlState,
-                        Stream_State,
+                        Olimex_Mod_MPU6050_StreamState,
                         /////////////////
-                        Olimex_Mod_MPU6050_Configuration,
+                        Olimex_Mod_MPU6050_StreamConfiguration,
                         /////////////////
                         Olimex_Mod_MPU6050_RuntimeStatistic_t,
                         /////////////////

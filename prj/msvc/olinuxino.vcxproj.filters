@@ -163,7 +163,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\test_u\olimex_mod_mpu6050.glade">
+    <None Include="..\..\src\test_u\etc\olimex_mod_mpu6050.glade">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

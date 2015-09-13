@@ -24,6 +24,8 @@
 #include "ace/Guard_T.h"
 #include "ace/Synch_Traits.h"
 
+#include "olimex_mod_mpu6050_stream_common.h"
+
 #include "olimex_mod_mpu6050_common.h"
 #include "olimex_mod_mpu6050_macros.h"
 

@@ -50,8 +50,8 @@ class Olimex_Mod_MPU6050_Message
  public:
   virtual ~Olimex_Mod_MPU6050_Message ();
 
-  //virtual Olimex_Mod_MPU6050_MessageType getCommand () const; // return value: message type
-  //static std::string CommandType2String (Olimex_Mod_MPU6050_MessageType_t);
+  virtual Olimex_Mod_MPU6050_MessageType command () const; // return value: message type
+  static std::string CommandType2String (Olimex_Mod_MPU6050_MessageType);
 
   // overrides from ACE_Message_Block
   // --> create a "shallow" copy that references the same datablock

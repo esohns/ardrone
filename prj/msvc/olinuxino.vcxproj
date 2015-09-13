@@ -52,15 +52,17 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG_DEBUGGER;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\include;$(ProjectDir)..\..\src\test_u\3rd_party\gettext;$(ProjectDir)..\..\..\libCommon\src;$(ProjectDir)..\..\..\libCommon\src\ui;$(ProjectDir)..\..\..\libACEStream\src;$(ProjectDir)..\..\..\libACEStream\src\modules\misc;$(ProjectDir)..\..\..\libACENetwork\src;$(ProjectDir)..\..\..\libACENetwork\src\client_server;$(ProjectDir)..\..\..\libACEStream\src\modules\net;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>
@@ -251,7 +253,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\test_u\olimex_mod_mpu6050.glade" />
+    <None Include="..\..\src\test_u\etc\olimex_mod_mpu6050.glade" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

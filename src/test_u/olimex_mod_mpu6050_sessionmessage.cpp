@@ -27,7 +27,7 @@
 
 Olimex_Mod_MPU6050_SessionMessage::Olimex_Mod_MPU6050_SessionMessage (Stream_SessionMessageType messageType_in,
                                                                       Olimex_Mod_MPU6050_StreamSessionData_t*& sessionData_inout,
-                                                                      Net_UserData* userData_in)
+                                                                      Olimex_Mod_MPU6050_UserData* userData_in)
  : inherited (messageType_in,
               sessionData_inout,
               userData_in)

@@ -67,10 +67,10 @@ class Olimex_Mod_MPU6050_Module_EventHandler
 };
 
 // declare module
-DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                            // task synch type
-                              Common_TimePolicy_t,                     // time policy
-                              Stream_ModuleConfiguration,              // module configuration type
-                              Stream_ModuleHandlerConfiguration,       // module handler configuration type
-                              Olimex_Mod_MPU6050_Module_EventHandler); // writer type
+DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                  // task synch type
+                              Common_TimePolicy_t,                           // time policy
+                              Stream_ModuleConfiguration,                    // module configuration type
+                              Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
+                              Olimex_Mod_MPU6050_Module_EventHandler);       // writer type
 
 #endif

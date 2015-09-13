@@ -1,0 +1,107 @@
+# author:      Erik Sohns <@MAINTAINER_EMAIL_ADDRESS@>
+# rpm spec file
+
+AutoReqProv:  yes
+BuildRoot:    %{_tmppath}/%{name}-root
+Distribution: N/A
+Group:        Applications/Tools
+#Icon: N/A
+License:      GPL
+Name:         @PACKAGE_NAME@
+Packager:     Erik Sohns <@MAINTAINER_EMAIL_ADDRESS@>
+Prefix:       /usr/local
+Provides:     %{name}
+Release:      1
+Requires:     libCommon libACEStream libACENetwork
+#Serial:       1
+Source:       %{name}-%{version}.tar.gz
+Summary:      OLinuxIno MOD MPU6050 kernel driver unit test
+URL:          @PACKAGE_URL@
+Vendor:       N/A
+Version:      @VERSION@
+
+%description
+kernel driver and (graphical) test tool for the OlinuxIno MPU6050 module
+
+%prep
+#rm -rf %{_topdir}/BUILD/*
+%setup -q
+
+%build
+PROJECT_ROOT_MODULES=/mnt/win_d/projects
+%if %{?project_root:1}0
+  PROJECT_ROOT_MODULES=%{project_root}/modules
+%endif
+
+#rm -rf modules/ATCD
+#[ $? -ne 0 ] && echo "ERROR: failed to rm modules/ATCD, aborting" && exit 1
+ATCD_ROOT=$PROJECT_ROOT_MODULES/ATCD
+[ ! -d $ATCD_ROOT ] && echo "ERROR: ATCD project not found, aborting" && exit 1
+ln -s  $ATCD_ROOT modules/ATCD
+[ $? -ne 0 ] && echo "ERROR: failed to link ATCD project, aborting" && exit 1
+
+#rm -rf modules/libCommon
+#[ $? -ne 0 ] && echo "ERROR: failed to rm modules/libCommon, aborting" && exit 1
+LIBCOMMON_ROOT=$PROJECT_ROOT_MODULES/libCommon
+[ ! -d $LIBCOMMON_ROOT ] && echo "ERROR: libCommon project not found, aborting" && exit 1
+ln -s  $LIBCOMMON_ROOT modules/libCommon
+[ $? -ne 0 ] && echo "ERROR: failed to link libCommon project, aborting" && exit 1
+
+#rm -rf modules/libACEStream
+#[ $? -ne 0 ] && echo "ERROR: failed to rm modules/libACEStream, aborting" && exit 1
+LIBACESTREAM_ROOT=$PROJECT_ROOT_MODULES/libACEStream
+[ ! -d $LIBACESTREAM_ROOT ] && echo "ERROR: libACEStream project not found, aborting" && exit 1
+ln -s  $LIBACESTREAM_ROOT modules/libACEStream
+[ $? -ne 0 ] && echo "ERROR: failed to link libACEStream project, aborting" && exit 1
+
+#rm -rf modules/libACENetwork
+#[ $? -ne 0 ] && echo "ERROR: failed to rm modules/libACENetwork, aborting" && exit 1
+LIBACENETWORK_ROOT=$PROJECT_ROOT_MODULES/libACENetwork
+[ ! -d $LIBACENETWORK_ROOT ] && echo "ERROR: libACENetwork project not found, aborting" && exit 1
+ln -s  $LIBACENETWORK_ROOT modules/libACENetwork
+[ $? -ne 0 ] && echo "ERROR: failed to link libACENetwork project, aborting" && exit 1
+
+#./autogen.sh
+
+#cd test_i/scripts
+#./scanner.sh
+#[ $? -ne 0 ] && echo "ERROR: failed to generate scanner, aborting" && exit 1
+#./parser.sh
+#[ $? -ne 0 ] && echo "ERROR: failed to generate parser, aborting" && exit 1
+#cd ../..
+
+%configure
+make %{?_smp_mflags}
+
+%install
+#rm -rf %{buildroot} # redundant except for RHEL 5
+%make_install
+# *PORTABILITY*: this is highly platform-specific
+mkdir /var/log/@PACKAGE_NAME@
+[ $? -ne 0 ] && echo "ERROR: failed to mkdir \"@PACKAGE_NAME@\", aborting" && exit 1
+# *TODO*: specify package owner/group ?
+chmod go+w /var/log/@PACKAGE_NAME@
+[ $? -ne 0 ] && echo "ERROR: failed to chmod \"@PACKAGE_NAME@\", aborting" && exit 1
+#%makeinstall
+#libtool --finish /usr/lib64
+
+%clean
+rm -rf %{buildroot}
+
+%pre
+%post -p /sbin/ldconfig
+%verifyscript
+
+%preun
+%postun -p /sbin/ldconfig
+
+%files
+%defattr(-, root, root)
+%doc AUTHORS ChangeLog INSTALL LICENSE NEWS README.md TODO
+%{_bindir}/*
+%{_includedir}/*
+%{_libdir}/*
+%{_datadir}/%{name}/*
+
+%changelog
+

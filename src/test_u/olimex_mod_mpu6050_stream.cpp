@@ -71,8 +71,7 @@ Olimex_Mod_MPU6050_Stream::~Olimex_Mod_MPU6050_Stream ()
 }
 
 bool
-Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfiguration_in,
-                                       Olimex_Mod_MPU6050_Configuration& configuration_inout)
+Olimex_Mod_MPU6050_Stream::initialize (const Olimex_Mod_MPU6050_StreamConfiguration& configuration_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_Stream::initialize"));
 
@@ -93,11 +92,11 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
   // - initialize modules
   // - push them onto the stream (tail-first) !
 
-  inherited::sessionData_->sessionID = streamConfiguration_in.sessionID;
+  inherited::sessionData_->sessionID = configuration_in.sessionID;
 
   int result = -1;
   inherited::MODULE_T* module_p = NULL;
-  if (streamConfiguration_in.notificationStrategy)
+  if (configuration_in.notificationStrategy)
   {
     module_p = inherited::head ();
     if (!module_p)
@@ -120,34 +119,34 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
                   ACE_TEXT ("no head module reader task queue found, aborting\n")));
       return false;
     } // end IF
-    queue_p->notification_strategy (streamConfiguration_in.notificationStrategy);
+    queue_p->notification_strategy (configuration_in.notificationStrategy);
   } // end IF
 
   //  ACE_ASSERT (configuration_in.moduleConfiguration);
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
 
   // ---------------------------------------------------------------------------
-  if (streamConfiguration_in.module)
+  if (configuration_in.module)
   {
     // *TODO*: (at least part of) this procedure belongs in libACEStream
     //         --> remove type inferences
     inherited::IMODULE_T* module_2 =
-      dynamic_cast<inherited::IMODULE_T*> (streamConfiguration_in.module);
+      dynamic_cast<inherited::IMODULE_T*> (configuration_in.module);
     if (!module_2)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<Stream_IModule_T> failed, aborting\n"),
-                  streamConfiguration_in.module->name ()));
+                  configuration_in.module->name ()));
       return false;
     } // end IF
-    if (!module_2->initialize (configuration_inout.moduleConfiguration_2))
+    if (!module_2->initialize (*configuration_in.moduleConfiguration))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to initialize module, aborting\n"),
-                  streamConfiguration_in.module->name ()));
+                  configuration_in.module->name ()));
       return false;
     } // end IF
-    Stream_Task_t* task_p = streamConfiguration_in.module->writer ();
+    Stream_Task_t* task_p = configuration_in.module->writer ();
     ACE_ASSERT (task_p);
     inherited::IMODULEHANDLER_T* module_handler_p =
       dynamic_cast<inherited::IMODULEHANDLER_T*> (task_p);
@@ -155,22 +154,22 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<Common_IInitialize_T<HandlerConfigurationType>> failed, aborting\n"),
-                  streamConfiguration_in.module->name ()));
+                  configuration_in.module->name ()));
       return false;
     } // end IF
-    if (!module_handler_p->initialize (configuration_inout.moduleHandlerConfiguration_2))
+    if (!module_handler_p->initialize (*configuration_in.moduleHandlerConfiguration))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to initialize module handler, aborting\n"),
-                  streamConfiguration_in.module->name ()));
+                  configuration_in.module->name ()));
       return false;
     } // end IF
-    result = inherited::push (streamConfiguration_in.module);
+    result = inherited::push (configuration_in.module);
     if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_Stream::push(\"%s\"): \"%m\", aborting\n"),
-                  streamConfiguration_in.module->name ()));
+                  configuration_in.module->name ()));
       return false;
     } // end IF
   } // end IF
@@ -216,8 +215,8 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_RuntimeStatistic> failed, aborting\n")));
     return false;
   } // end IF
-  if (!runtimeStatistic_impl_p->initialize (streamConfiguration_in.statisticReportingInterval,
-                                            streamConfiguration_in.messageAllocator))
+  if (!runtimeStatistic_impl_p->initialize (configuration_in.statisticReportingInterval,
+                                            configuration_in.messageAllocator))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
@@ -244,7 +243,7 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
                 ACE_TEXT ("dynamic_cast<Olimex_Mod_MPU6050_Module_SocketHandler> failed, aborting\n")));
     return false;
   } // end IF
-  if (!socketHandler_impl_p->initialize (configuration_inout))
+  if (!socketHandler_impl_p->initialize (*configuration_in.moduleHandlerConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
@@ -255,7 +254,7 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
   // enqueue the module...
   // *NOTE*: push()ing the module will open() it
   // --> set the argument that is passed along
-  netReader_.arg (&configuration_inout);
+  netReader_.arg (const_cast<Olimex_Mod_MPU6050_ModuleHandlerConfiguration*> (configuration_in.moduleHandlerConfiguration));
   result = inherited::push (&netReader_);
   if (result == -1)
   {
@@ -269,8 +268,8 @@ Olimex_Mod_MPU6050_Stream::initialize (const Stream_Configuration& streamConfigu
 
   // set (session) message allocator
   // *TODO*: clean this up ! --> sanity check
-  ACE_ASSERT (streamConfiguration_in.messageAllocator);
-  inherited::allocator_ = streamConfiguration_in.messageAllocator;
+  ACE_ASSERT (configuration_in.messageAllocator);
+  inherited::allocator_ = configuration_in.messageAllocator;
 
   inherited::isInitialized_ = true;
   //   inherited::dump_state();

@@ -33,9 +33,10 @@ AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SUBDIRS([modules/libCommon
-                   modules/libACENetwork
-                   modules/libACEStream])
+#AC_CONFIG_SUBDIRS([modules/ATCD
+dnl                 modules/libCommon
+#                   modules/libACENetwork
+#                   modules/libACEStream])
 
 #AC_USE_SYSTEM_EXTENSIONS
 
@@ -95,7 +96,7 @@ AM_COND_IF([DO_CROSS_COMPILE],
 
 ## (re)set the cpp compiler flags
 #CXXFLAGS="-fno-implicit-templates"
-CXXFLAGS=
+CXXFLAGS_DEBUG=
 # --> enable debug support ?
 AC_MSG_CHECKING([enable debugging])
 debug_default="no"
@@ -109,10 +110,11 @@ AC_ARG_ENABLE([debug],
               [debug=$debug_default])
 AM_CONDITIONAL([DEBUG], [test x$debug = xyes])
 if test x$debug = xyes; then
-  CXXFLAGS="-g -O0 -Wall -fno-inline -D_DEBUG"
+  CXXFLAGS_DEBUG="-g -O0 -fno-inline -Wall -D_DEBUG"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS="-O3 -Wall -Werror -DACE_NDEBUG"
+#  CXXFLAGS_DEBUG="-O3 -Werror -DACE_NDEBUG"
+  CXXFLAGS_DEBUG="-O3 -Wall -DACE_NDEBUG"
   AC_MSG_RESULT([no])
 fi
 
@@ -129,10 +131,10 @@ AC_ARG_ENABLE([tracing],
               [tracing=$tracing_default])
 AM_CONDITIONAL([TRACING], [test x$tracing = xyes])
 if test x$tracing = xyes; then
-  CXXFLAGS="${CXXFLAGS} -DOLINUXINO_NTRACE=0"
+  CXXFLAGS_TRACING="-DOLINUXINO_NTRACE=0"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS="${CXXFLAGS} -DOLINUXINO_NTRACE=1"
+  CXXFLAGS_TRACING="-DOLINUXINO_NTRACE=1"
   AC_MSG_RESULT([no])
 fi
 
@@ -149,14 +151,45 @@ AC_ARG_ENABLE([valgrind-support],
               [valgrind_support=$valgrind_support_default])
 AM_CONDITIONAL([VALGRIND_SUPPORT], [test x$valgrind_support = xyes])
 if test x$valgrind_support = xyes; then
-  CXXFLAGS="${CXXFLAGS} -DOLINUXINO_ENABLE_VALGRIND_SUPPORT"
+  CXXFLAGS_VALGRIND="-DOLINUXINO_ENABLE_VALGRIND_SUPPORT"
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
 fi
 
-# export this (so pkgconfig substitutions can be made)
-AC_SUBST([CXXFLAGS])
+# export variables (so Makefile substitutions can be made)
+#CXXFLAGS_BASE="-ansi -D_POSIX_C_SOURCE=199506L -D_REENTRANT -D_GNU_SOURCE"
+CXXFLAGS_BASE="-ansi -std=c++11 -Wall -D_GNU_SOURCE"
+CXXFLAGS="${CXXFLAGS_BASE} ${CXXFLAGS_DEBUG} ${CXXFLAGS_TRACING} ${CXXFLAGS_VALGRIND}"
+AC_SUBST(CXXFLAGS)
+
+# build modules ?
+AC_MSG_CHECKING([enable module support])
+module_support_default="yes"
+AC_ARG_ENABLE([module-support],
+              [AS_HELP_STRING([--enable-module_support], [compile submodules [default="$module_support_default"]])],
+              [case "${enableval}" in
+                 yes) module_support=yes ;;
+                 no)  module_support=no  ;;
+                 *) AC_MSG_ERROR([bad value ${enableval} for --enable-module-support]) ;;
+               esac],
+              [module_support=$module_support_default])
+AM_CONDITIONAL([BUILD_MODULES], [test x$module_support = xyes])
+if test x$module_support = xyes; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+#AM_COND_IF([BUILD_MODULES],
+#           [AC_CONFIG_SUBDIRS([modules/libCommon
+#                               modules/libACEStream
+#                               modules/libACENetwork])])
+dnl AC_CONFIG_SUBDIRS([modules/ATCD
+dnl                    modules/libCommon
+dnl                    modules/libACEStream
+dnl                    modules/libACENetwork])])
+#AM_COND_IF([BUILD_MODULES],
+#           [AC_CONFIG_FILES([modules/Makefile])])
 
 # checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -188,13 +221,16 @@ AC_FUNC_ERROR_AT_LINE
 # checks for libraries
 AM_COND_IF([VALGRIND_SUPPORT],
            [PKG_CHECK_MODULES([PKGVALGRIND], [valgrind])])
-PKG_CHECK_MODULES([PKGLIB], [gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0 libglade-2.0])
+PKG_CHECK_MODULES([PKGGTK], [libpng gmodule-export-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0 libglade-2.0])
+PKG_CHECK_MODULES([PKGGL], [gl glu])
 
 # checks for other libraries (non-pkg-config)
 # FIXME: Replace `main' with a function in `-lpthread':
 AC_CHECK_LIB([pthread], [main])
 # FIXME: Replace `main' with a function in `-lACE':
 AC_CHECK_LIB([ACE], [main])
+# FIXME: Replace `main' with a function in `-lglm':
+AC_CHECK_LIB([glm], [main])
 # FIXME: Replace `main' with a function in `-lglut':
 AC_CHECK_LIB([glut], [main])
 
@@ -209,7 +245,6 @@ AM_GNU_GETTEXT([external], [need-formatstring-macros], [$(top_builddir)/intl/])
 
 AC_CONFIG_FILES([Makefile
                  m4/Makefile
-                 modules/Makefile
                  po/Makefile
                  scripts/Makefile
                  src/Makefile
@@ -218,7 +253,8 @@ AC_CONFIG_FILES([Makefile
                  src/ko/3rd_party/Makefile
                  src/ko/3rd_party/i2cdevlib/Makefile
                  src/test_u/Makefile])
-AC_CONFIG_FILES([olinuxino.pc:scripts/olinuxino.pc.in])
+AC_CONFIG_FILES([scripts/olinuxino.pc
+                 scripts/olinuxino.spec])
 #AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
 #                [],
 #                [OLINUXINO_VERSION_API=$OLINUXINO_VERSION_API])

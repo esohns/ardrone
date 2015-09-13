@@ -61,30 +61,42 @@
 typedef Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
                                           Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_MessageAllocator_t;
 
+struct Olimex_Mod_MPU6050_ConnectionState;
+struct Olimex_Mod_MPU6050_StreamState;
 struct Olimex_Mod_MPU6050_SessionData
  : public Stream_SessionData
 {
   inline Olimex_Mod_MPU6050_SessionData ()
    : Stream_SessionData ()
+   , connectionState (NULL)
    , currentStatistic ()
    , state (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_ConnectionState*   connectionState;
+  Olimex_Mod_MPU6050_RuntimeStatistic_t currentStatistic;
+
+  Olimex_Mod_MPU6050_StreamState*       state;
+};
+typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
+
+struct Olimex_Mod_MPU6050_StreamState
+{
+  inline Olimex_Mod_MPU6050_StreamState ()
+   : currentSessionData (NULL)
    , userData (NULL)
   {};
 
-  Olimex_Mod_MPU6050_RuntimeStatistic_t currentStatistic;
-
-  Stream_State*                         state;
-
-  Olimex_Mod_MPU6050_UserData*          userData;
+  Olimex_Mod_MPU6050_SessionData* currentSessionData;
+  Olimex_Mod_MPU6050_UserData*    userData;
 };
-typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
 
 typedef Stream_Module_Net_Source_T<Olimex_Mod_MPU6050_SessionMessage,
                                    Olimex_Mod_MPU6050_Message,
                                    //////
-                                   Olimex_Mod_MPU6050_Configuration,
+                                   Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
                                    //////
-                                   Stream_State,
+                                   Olimex_Mod_MPU6050_StreamState,
                                    //////
                                    Olimex_Mod_MPU6050_SessionData,
                                    Olimex_Mod_MPU6050_StreamSessionData_t,
