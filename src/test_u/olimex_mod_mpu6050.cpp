@@ -850,24 +850,8 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   ACE_Netlink_Addr netlink_address;
-  pid_t pid = ACE_OS::get_pid ();
-  result = netlink_address.set (pid, OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP);
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_Netlink_Addr::set(%u,%d): \"%m\", aborting\n"),
-                pid, OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP));
-
-    // *PORTABILITY*: on Windows, ACE needs finalization...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
-
-    return EXIT_FAILURE;
-  } // end IF
+  pid_t pid = ACE_OS::getpid ();
+  netlink_address.set (pid, OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP);
 #endif
   bool trace_information      = false;
   std::string path = configuration_path;
@@ -909,23 +893,7 @@ ACE_TMAIN (int argc_in,
   } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  result = netlink_address.set (pid, netlink_group);
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_Netlink_Addr::set(%u,%d): \"%m\", aborting\n"),
-                pid, netlink_group));
-
-    // *PORTABILITY*: on Windows, ACE needs finalization...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
-
-    return EXIT_FAILURE;
-  } // end IF
+  netlink_address.set (pid, netlink_group);
 #endif
 
   // step2: validate configuration

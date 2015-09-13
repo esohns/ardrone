@@ -140,11 +140,13 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<Olimex_Mod_
                                         Olimex_Mod_MPU6050_UserData,
 
                                         Stream_ModuleConfiguration,
-                                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration> Olimex_Mod_MPU6050_AsynchUDPHandler_t;
+                                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+
+                                        Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_AsynchUDPHandler_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchNetlinkSocketHandler_T<Olimex_Mod_MPU6050_SocketHandlerConfiguration>,
-                                        Net_SOCK_Dgram,
+                                        Net_SOCK_Netlink,
 
                                         ACE_Netlink_Addr,
                                         Olimex_Mod_MPU6050_Configuration,
@@ -155,7 +157,9 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchNetlinkSocketHandler_T<Olimex_
                                         Olimex_Mod_MPU6050_UserData,
 
                                         Stream_ModuleConfiguration,
-                                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration> Olimex_Mod_MPU6050_AsynchNetlinkHandler_t;
+                                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration
+
+                                        Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_AsynchNetlinkHandler_t;
 #endif
 
 typedef Net_IConnector_T<ACE_INET_Addr,
