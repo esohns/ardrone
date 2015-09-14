@@ -29,14 +29,14 @@
 
 #include "net_common.h"
 
-//#include "olimex_mod_mpu6050_stream_common.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 
 // forward declarations
 class ACE_Allocator;
 class ACE_Data_Block;
 class Olimex_Mod_MPU6050_Message;
-struct Olimex_Mod_MPU6050_SessionData;
-typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
+//struct Olimex_Mod_MPU6050_SessionData;
+//typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
 struct Olimex_Mod_MPU6050_UserData;
 
 class Olimex_Mod_MPU6050_SessionMessage

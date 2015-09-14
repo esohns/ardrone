@@ -33,10 +33,10 @@ AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
-#AC_CONFIG_SUBDIRS([modules/ATCD
-dnl                 modules/libCommon
-#                   modules/libACENetwork
-#                   modules/libACEStream])
+dnl AC_CONFIG_SUBDIRS([modules/ATCD
+dnl                    modules/libCommon
+dnl                    modules/libACENetwork
+dnl                    modules/libACEStream])
 
 #AC_USE_SYSTEM_EXTENSIONS
 
@@ -180,16 +180,16 @@ if test x$module_support = xyes; then
 else
   AC_MSG_RESULT([no])
 fi
-#AM_COND_IF([BUILD_MODULES],
-#           [AC_CONFIG_SUBDIRS([modules/libCommon
-#                               modules/libACEStream
-#                               modules/libACENetwork])])
+AM_COND_IF([BUILD_MODULES],
+           [AC_CONFIG_SUBDIRS([modules/libCommon
+                               modules/libACEStream
+                               modules/libACENetwork])])
 dnl AC_CONFIG_SUBDIRS([modules/ATCD
 dnl                    modules/libCommon
 dnl                    modules/libACEStream
 dnl                    modules/libACENetwork])])
-#AM_COND_IF([BUILD_MODULES],
-#           [AC_CONFIG_FILES([modules/Makefile])])
+AM_COND_IF([BUILD_MODULES],
+           [AC_CONFIG_FILES([modules/Makefile])])
 
 # checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -252,7 +252,8 @@ AC_CONFIG_FILES([Makefile
                  src/ko/Makefile
                  src/ko/3rd_party/Makefile
                  src/ko/3rd_party/i2cdevlib/Makefile
-                 src/test_u/Makefile])
+                 src/test_u/Makefile
+                 src/test_u/etc/Makefile])
 AC_CONFIG_FILES([scripts/olinuxino.pc
                  scripts/olinuxino.spec])
 #AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
@@ -260,3 +261,4 @@ AC_CONFIG_FILES([scripts/olinuxino.pc
 #                [OLINUXINO_VERSION_API=$OLINUXINO_VERSION_API])
 
 AC_OUTPUT
+

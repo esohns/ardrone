@@ -117,6 +117,10 @@ do_printUsage (const std::string& programName_in)
     Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_u");
@@ -189,6 +193,10 @@ do_processArguments (int argc_in,
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
@@ -440,7 +448,7 @@ do_work (int argc_in,
          bool clientMode_in,
          const ACE_INET_Addr& peerAddress_in,
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
-         const ACE_Netlink_Addr& netlinkAddress_in,
+         const Net_Netlink_Addr& netlinkAddress_in,
 #endif
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
@@ -457,8 +465,17 @@ do_work (int argc_in,
 
   // step1: initialize configuration data
   Olimex_Mod_MPU6050_Configuration configuration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  Olimex_Mod_MPU6050_NetlinkConfiguration netlink_configuration;
+#endif
   Olimex_Mod_MPU6050_UserData user_data;
   user_data.configuration = &configuration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  Olimex_Mod_MPU6050_NetlinkUserData netlink_user_data;
+  netlink_user_data.configuration = &netlink_configuration;
+#endif
 
   // step2: initialize stream
   Olimex_Mod_MPU6050_EventHandler event_handler (&CBData_in);
@@ -611,7 +628,7 @@ do_work (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   if (netlink_iconnector_p)
-    if (!netlink_iconnector_p->initialize (configuration.socketHandlerConfiguration))
+    if (!netlink_iconnector_p->initialize (netlink_configuration.socketHandlerConfiguration))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to initialize connector, returning\n")));
@@ -624,22 +641,22 @@ do_work (int argc_in,
 #endif
 
   // step5: initialize connection manager (s)
+  Olimex_Mod_MPU6050_ConnectionManager_t* connectionManager_p =
+      OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ();
+  ACE_ASSERT (connectionManager_p);
+  connectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  connectionManager_p->set (configuration,
+                            &user_data); // passed to all handlers
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-  OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                                    &user_data); // will be passed to all connection handlers
 #else
-  if (clientMode_in)
+  Olimex_Mod_MPU6050_NetlinkConnectionManager_t* netlinkConnectionManager_p =
+      OLIMEX_MOD_MPU6050_NETLINKCONNECTIONMANAGER_SINGLETON::instance ();
+  ACE_ASSERT (netlinkConnectionManager_p);
+  if (!clientMode_in)
   {
-    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                                      &user_data); // will be passed to all handlers
-  } // end IF
-  else
-  {
-    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->initialize (std::numeric_limits<unsigned int>::max ());
-    OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ()->set (configuration,
-                                                                      &user_data); // will be passed to all handlers
+    netlinkConnectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
+    netlinkConnectionManager_p->set (netlink_configuration,
+                                     &netlink_user_data); // passed to all handlers
   } // end ELSE
 #endif
 
@@ -725,16 +742,16 @@ do_work (int argc_in,
               ACE_TEXT ("started event dispatch...\n")));
 
   // step8: connect
-  bool result_2 = false;
+  ACE_HANDLE handle = ACE_INVALID_HANDLE;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  result_2 = iconnector_p->connect (peerAddress_in);
+  handle = iconnector_p->connect (peerAddress_in);
 #else
   if (clientMode_in)
-    result_2 = iconnector_p->connect (peerAddress_in);
+    handle = iconnector_p->connect (peerAddress_in);
   else
-    result_2 = netlink_iconnector_p->connect (netlinkAddress_in);
+    handle = netlink_iconnector_p->connect (netlinkAddress_in);
 #endif
-  if (!result_2)
+  if (handle == ACE_INVALID_HANDLE)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to connect, aborting\n")));
@@ -773,25 +790,23 @@ do_work (int argc_in,
               ACE_TEXT ("finished event dispatch...\n")));
 
   // step10: clean up
-  // *NOTE*: any action timer has been cancelled, connections have been
-  // aborted and any GTK event dispatcher has returned by now...
-//  { // synch access
-//    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (CBData_in.lock);
-
-//		for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
-//				 iterator != CBData_in.event_source_ids.end ();
-//				 iterator++)
-//			g_source_remove (*iterator);
-//	} // end lock scope
-//  CLIENT_GTK_MANAGER_SINGLETON::instance ()->stop ();
+  connectionManager_p->stop ();
+  connectionManager_p->abort ();
+  connectionManager_p->wait ();
+  delete iconnector_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    delete iconnector_p;
 #else
-    if (clientMode_in)
-      delete iconnector_p;
-    else
-      delete netlink_iconnector_p;
+  netlinkConnectionManager_p->stop ();
+  netlinkConnectionManager_p->abort ();
+  netlinkConnectionManager_p->wait ();
+  if (!clientMode_in)
+    delete netlink_iconnector_p;
 #endif
+  result = event_handler_module.close ();
+  if (result == -1)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Module::close(): \"%m\", continuing\n"),
+                event_handler_module.name ()));
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -833,6 +848,10 @@ ACE_TMAIN (int argc_in,
     Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
   configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_u");
@@ -849,7 +868,7 @@ ACE_TMAIN (int argc_in,
                               static_cast<ACE_UINT32> (INADDR_ANY));
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  ACE_Netlink_Addr netlink_address;
+  Net_Netlink_Addr netlink_address;
   pid_t pid = ACE_OS::getpid ();
   netlink_address.set (pid, OLIMEX_MOD_MPU6050_DEFAULT_NETLINK_GROUP);
 #endif
@@ -1049,23 +1068,6 @@ ACE_TMAIN (int argc_in,
                                                             argv_in,
                                                             &gtk_cb_data,
                                                             &ui_definition);
-  if (!interface_definition_file.empty ())
-    if (!ui_definition.initialize (gtk_cb_data))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Common_UI_GtkBuilderDefinition::initialize(), aborting\n")));
-
-      Common_Tools::finalizeLogging ();
-      // *PORTABILITY*: on Windows, fini ACE...
-  #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      result = ACE::fini ();
-      if (result == -1)
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-  #endif
-
-      return EXIT_FAILURE;
-    } // end IF
 
   // step6: run program ?
   ACE_High_Res_Timer timer;

@@ -75,12 +75,13 @@ olimex_mod_mpu6050_CPPFLAGS = \
 olimex_mod_mpu6050_LDFLAGS = \
   -L$(top_srcdir)/modules/ATCD/ACE/build/linux/lib \
   $(PKGGTK_LDFLAGS) \
-  -L$(abs_builddir)/modules/libCommon/src/.libs \
-  -L$(abs_builddir)/modules/libCommon/src/ui/.libs \
-  -L$(abs_builddir)/modules/libACEStream/src/.libs \
-  -L$(abs_builddir)/modules/libACEStream/src/modules/.libs \
-  -L$(abs_builddir)/modules/libACENetwork/src/.libs \
-  -L$(abs_builddir)/modules/libACENetwork/src/client_server/.libs
+  -L$(abs_builddir)/../../modules/libCommon/src/.libs \
+  -L$(abs_builddir)/../../modules/libCommon/src/ui/.libs \
+  -L$(abs_builddir)/../../modules/libACEStream/src/.libs \
+  -L$(abs_builddir)/../../modules/libACEStream/src/modules/misc/.libs \
+  -L$(abs_builddir)/../../modules/libACEStream/src/modules/net/.libs \
+  -L$(abs_builddir)/../../modules/libACENetwork/src/.libs \
+  -L$(abs_builddir)/../../modules/libACENetwork/src/client_server/.libs
 olimex_mod_mpu6050_LDADD = \
   -lACE \
   $(PKGGTK_LIBS) \
@@ -92,9 +93,5 @@ olimex_mod_mpu6050_LDADD = \
   -lACENetwork \
   -lACENetwork_Client
 
-configdir = $(datadir)/@PACKAGE_NAME@
-config_DATA = \
-  olimex_mod_mpu6050.glade
-
-EXTRA_DIST = \
-  $(config_DATA)
+SUBDIRS = \
+  etc

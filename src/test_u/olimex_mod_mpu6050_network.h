@@ -20,11 +20,10 @@
 
 #include "ace/Global_Macros.h"
 #include "ace/INET_Addr.h"
-//#include "ace/Netlink_Addr.h"
 #include "ace/Singleton.h"
 #include "ace/Synch_Traits.h"
-//#include "ace/SOCK_Dgram.h"
-//#include "ace/SOCK_Netlink.h"
+
+#include "common_time_common.h"
 
 #include "stream_common.h"
 #include "stream_session_data_base.h"
@@ -57,7 +56,6 @@
 
 // forward declarations
 struct Olimex_Mod_MPU6050_StreamState;
-struct Olimex_Mod_MPU6050_StreamConfiguration;
 struct Olimex_Mod_MPU6050_SessionData;
 typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
 
@@ -80,6 +78,36 @@ struct Olimex_Mod_MPU6050_ConnectionState
   Olimex_Mod_MPU6050_UserData*          userData;
 };
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkConnectionState
+ : public Olimex_Mod_MPU6050_ConnectionState
+{
+  inline Olimex_Mod_MPU6050_NetlinkConnectionState ()
+   : Olimex_Mod_MPU6050_ConnectionState ()
+   , userData (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_NetlinkUserData* userData;
+};
+#endif
+
+typedef Net_Connection_Manager_T<ACE_INET_Addr,
+                                 Olimex_Mod_MPU6050_Configuration,
+                                 Olimex_Mod_MPU6050_ConnectionState,
+                                 Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                 ////////
+                                 Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_ConnectionManager_t;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+typedef Net_Connection_Manager_T<Net_Netlink_Addr,
+                                 Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                 Olimex_Mod_MPU6050_NetlinkConnectionState,
+                                 Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                 ////////
+                                 Olimex_Mod_MPU6050_NetlinkUserData> Olimex_Mod_MPU6050_NetlinkConnectionManager_t;
+#endif
+
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
                                       ///
@@ -98,7 +126,31 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Olimex_Mod_MPU6050_SessionMessage,
                                       Olimex_Mod_MPU6050_Message,
                                       ///
-                                      Olimex_Mod_MPU6050_InetConnectionManager_t> Olimex_Mod_MPU6050_NetStream_t;
+                                      ACE_INET_Addr,
+                                      Olimex_Mod_MPU6050_ConnectionManager_t> Olimex_Mod_MPU6050_NetStream_t;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
+                                      Common_TimePolicy_t,
+
+                                      Stream_StateMachine_ControlState,
+                                      Olimex_Mod_MPU6050_StreamState,
+
+                                      Olimex_Mod_MPU6050_NetlinkStreamConfiguration,
+
+                                      Olimex_Mod_MPU6050_RuntimeStatistic_t,
+
+                                      Stream_ModuleConfiguration,
+                                      Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration,
+
+                                      Olimex_Mod_MPU6050_SessionData,
+                                      Olimex_Mod_MPU6050_StreamSessionData_t,
+                                      Olimex_Mod_MPU6050_SessionMessage,
+                                      Olimex_Mod_MPU6050_Message,
+
+                                      Net_Netlink_Addr,
+                                      Olimex_Mod_MPU6050_NetlinkConnectionManager_t> Olimex_Mod_MPU6050_NetNetlinkStream_t;
+#endif
 
 typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
                                                          Olimex_Mod_MPU6050_SocketHandlerConfiguration>,
@@ -112,21 +164,25 @@ typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
                                   Olimex_Mod_MPU6050_UserData,
                                   ///////
                                   Stream_ModuleConfiguration,
-                                  Olimex_Mod_MPU6050_ModuleHandlerConfiguration> Olimex_Mod_MPU6050_UDPHandler_t;
+                                  Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                  ///////
+                                  Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_UDPHandler_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_StreamUDPSocketBase_T<Net_NetlinkSocketHandler_T<Olimex_Mod_MPU6050_SocketHandlerConfiguration>,
+typedef Net_StreamUDPSocketBase_T<Net_NetlinkSocketHandler_T<Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration>,
                                   ///////
-                                  ACE_Netlink_Addr,
-                                  Olimex_Mod_MPU6050_Configuration,
-                                  Olimex_Mod_MPU6050_ConnectionState,
+                                  Net_Netlink_Addr,
+                                  Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                  Olimex_Mod_MPU6050_NetlinkConnectionState,
                                   Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                  Olimex_Mod_MPU6050_NetStream_t,
+                                  Olimex_Mod_MPU6050_NetNetlinkStream_t,
                                   ///////
-                                  Olimex_Mod_MPU6050_UserData,
+                                  Olimex_Mod_MPU6050_NetlinkUserData,
                                   ///////
                                   Stream_ModuleConfiguration,
-                                  Olimex_Mod_MPU6050_ModuleHandlerConfiguration> Olimex_Mod_MPU6050_NetlinkHandler_t;
+                                  Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration,
+                                  ///////
+                                  Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration> Olimex_Mod_MPU6050_NetlinkHandler_t;
 #endif
 typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<Olimex_Mod_MPU6050_SocketHandlerConfiguration>,
                                         Net_SOCK_Dgram,
@@ -145,29 +201,29 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<Olimex_Mod_
                                         Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_AsynchUDPHandler_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchNetlinkSocketHandler_T<Olimex_Mod_MPU6050_SocketHandlerConfiguration>,
+typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchNetlinkSocketHandler_T<Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration>,
                                         Net_SOCK_Netlink,
 
-                                        ACE_Netlink_Addr,
-                                        Olimex_Mod_MPU6050_Configuration,
-                                        Olimex_Mod_MPU6050_ConnectionState,
+                                        Net_Netlink_Addr,
+                                        Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                        Olimex_Mod_MPU6050_NetlinkConnectionState,
                                         Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                        Olimex_Mod_MPU6050_NetStream_t,
+                                        Olimex_Mod_MPU6050_NetNetlinkStream_t,
 
-                                        Olimex_Mod_MPU6050_UserData,
+                                        Olimex_Mod_MPU6050_NetlinkUserData,
 
                                         Stream_ModuleConfiguration,
-                                        Olimex_Mod_MPU6050_ModuleHandlerConfiguration
+                                        Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration,
 
-                                        Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_AsynchNetlinkHandler_t;
+                                        Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration> Olimex_Mod_MPU6050_AsynchNetlinkHandler_t;
 #endif
 
 typedef Net_IConnector_T<ACE_INET_Addr,
                          Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_IConnector_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_IConnector_T<ACE_Netlink_Addr,
-                         Olimex_Mod_MPU6050_SocketHandlerConfiguration> Olimex_Mod_MPU6050_INetlinkConnector_t;
+typedef Net_IConnector_T<Net_Netlink_Addr,
+                         Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration> Olimex_Mod_MPU6050_INetlinkConnector_t;
 #endif
 
 typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<Olimex_Mod_MPU6050_UDPHandler_t,
@@ -192,26 +248,26 @@ typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<Olimex_Mod_MPU6050_UDPHan
                                Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_Connector_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_Client_Connector_T<Net_NetlinkConnection_T<Olimex_Mod_MPU6050_UDPHandler_t,
+typedef Net_Client_Connector_T<Net_NetlinkConnection_T<Olimex_Mod_MPU6050_NetlinkHandler_t,
 
-                                                       Olimex_Mod_MPU6050_Configuration,
-                                                       Olimex_Mod_MPU6050_ConnectionState,
+                                                       Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                                       Olimex_Mod_MPU6050_NetlinkConnectionState,
                                                        Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                                       Olimex_Mod_MPU6050_NetStream_t,
+                                                       Olimex_Mod_MPU6050_NetNetlinkStream_t,
 
-                                                       Olimex_Mod_MPU6050_SocketHandlerConfiguration,
+                                                       Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration,
 
-                                                       Olimex_Mod_MPU6050_UserData>,
+                                                       Olimex_Mod_MPU6050_NetlinkUserData>,
                                //////////
-                               ACE_Netlink_Addr,
-                               Olimex_Mod_MPU6050_Configuration,
-                               Olimex_Mod_MPU6050_ConnectionState,
+                               Net_Netlink_Addr,
+                               Olimex_Mod_MPU6050_NetlinkConfiguration,
+                               Olimex_Mod_MPU6050_NetlinkConnectionState,
                                Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                               Olimex_Mod_MPU6050_NetStream_t,
+                               Olimex_Mod_MPU6050_NetNetlinkStream_t,
                                //////////
-                               Olimex_Mod_MPU6050_SocketHandlerConfiguration,
+                               Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration,
                                //////////
-                               Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_NetlinkConnector_t;
+                               Olimex_Mod_MPU6050_NetlinkUserData> Olimex_Mod_MPU6050_NetlinkConnector_t;
 #endif
 
 typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<Olimex_Mod_MPU6050_AsynchUDPHandler_t,
@@ -237,45 +293,33 @@ typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<Olimex_Mod_MP
                                      Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_AsynchConnector_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_Client_AsynchConnector_T<Net_AsynchNetlinkConnection_T<Olimex_Mod_MPU6050_AsynchUDPHandler_t,
+typedef Net_Client_AsynchConnector_T<Net_AsynchNetlinkConnection_T<Olimex_Mod_MPU6050_AsynchNetlinkHandler_t,
 
-                                                                   Olimex_Mod_MPU6050_Configuration,
-                                                                   Olimex_Mod_MPU6050_ConnectionState,
+                                                                   Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                                                   Olimex_Mod_MPU6050_NetlinkConnectionState,
                                                                    Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                                                   Olimex_Mod_MPU6050_NetStream_t,
+                                                                   Olimex_Mod_MPU6050_NetNetlinkStream_t,
 
-                                                                   Olimex_Mod_MPU6050_SocketHandlerConfiguration,
+                                                                   Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration,
 
-                                                                   Olimex_Mod_MPU6050_UserData>,
+                                                                   Olimex_Mod_MPU6050_NetlinkUserData>,
                                      ////
-                                     ACE_Netlink_Addr,
-                                     Olimex_Mod_MPU6050_Configuration,
-                                     Olimex_Mod_MPU6050_ConnectionState,
+                                     Net_Netlink_Addr,
+                                     Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                     Olimex_Mod_MPU6050_NetlinkConnectionState,
                                      Olimex_Mod_MPU6050_RuntimeStatistic_t,
                                      ////
-                                     Olimex_Mod_MPU6050_NetStream_t,
+                                     Olimex_Mod_MPU6050_NetNetlinkStream_t,
                                      ////
-                                     Olimex_Mod_MPU6050_SocketHandlerConfiguration,
+                                     Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration,
                                      ////
-                                     Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_AsynchNetlinkConnector_t;
+                                     Olimex_Mod_MPU6050_NetlinkUserData> Olimex_Mod_MPU6050_AsynchNetlinkConnector_t;
 #endif
 
-typedef Net_Connection_Manager_T<ACE_INET_Addr,
-                                 Olimex_Mod_MPU6050_Configuration,
-                                 Olimex_Mod_MPU6050_ConnectionState,
-                                 Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                 ////////
-                                 Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_ConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_ConnectionManager_t,
                       ACE_SYNCH_MUTEX> OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Net_Connection_Manager_T<ACE_Netlink_Addr,
-                                 Olimex_Mod_MPU6050_Configuration,
-                                 Olimex_Mod_MPU6050_ConnectionState,
-                                 Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                 ////////
-                                 Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_NetlinkConnectionManager_t;
 typedef ACE_Singleton<Olimex_Mod_MPU6050_NetlinkConnectionManager_t,
                       ACE_SYNCH_MUTEX> OLIMEX_MOD_MPU6050_NETLINKCONNECTIONMANAGER_SINGLETON;
 #endif

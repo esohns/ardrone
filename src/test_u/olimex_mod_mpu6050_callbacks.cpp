@@ -190,6 +190,8 @@ idle_initialize_ui_cb (gpointer userData_in)
     return G_SOURCE_REMOVE;
   } // end IF
 
+  if (gtk_widget_get_realized (drawing_area_p))
+    gtk_widget_unrealize (drawing_area_p);
   if (!gtk_widget_set_gl_capability (drawing_area_p,    // (container) widget
                                      configuration_p,   // GdkGLConfig: configuration
                                      NULL,              // GdkGLContext: share list
@@ -829,7 +831,7 @@ process_cb (gpointer userData_in)
     ((t + OLIMEX_MOD_MPU6050_THERMOMETER_OFFSET) /
     OLIMEX_MOD_MPU6050_THERMOMETER_RANGE) *
     OLIMEX_MOD_MPU6050_UI_WIDGET_CURVE_MAXIMUM_Y;
-  //gtk_curve_set_range (curve_p, 
+  //gtk_curve_set_range (curve_p,
   //                     0.0F,
   //                     static_cast<gfloat> (cb_data_p->temperatureIndex),
   //                     0.0F,

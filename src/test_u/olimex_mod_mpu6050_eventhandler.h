@@ -57,8 +57,8 @@ class Olimex_Mod_MPU6050_EventHandler
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_EventHandler& operator= (const Olimex_Mod_MPU6050_EventHandler&))
 
   bool                            consoleMode_;
-  Olimex_Mod_MPU6050_SessionData* sessionData_;
   Olimex_Mod_MPU6050_GtkCBData*   GtkCBData_;
+  Olimex_Mod_MPU6050_SessionData* sessionData_;
 };
 
 #endif

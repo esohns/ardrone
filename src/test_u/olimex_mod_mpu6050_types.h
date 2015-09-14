@@ -40,6 +40,10 @@
 #include "net_common.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#include "net_netlinksockethandler.h"
+#endif
 
 #include "olimex_mod_mpu6050_defines.h"
 
@@ -113,6 +117,21 @@ struct Olimex_Mod_MPU6050_UserData
   Olimex_Mod_MPU6050_Configuration* configuration;
 };
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkConfiguration;
+struct Olimex_Mod_MPU6050_NetlinkUserData
+ : public Olimex_Mod_MPU6050_UserData
+{
+  inline Olimex_Mod_MPU6050_NetlinkUserData ()
+   : Olimex_Mod_MPU6050_UserData ()
+   , configuration (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_NetlinkConfiguration* configuration;
+};
+#endif
+
 typedef Stream_Statistic Olimex_Mod_MPU6050_RuntimeStatistic_t;
 struct Olimex_Mod_MPU6050_Configuration;
 struct Olimex_Mod_MPU6050_ConnectionState;
@@ -120,12 +139,30 @@ typedef Net_IConnection_T<ACE_INET_Addr,
                           Olimex_Mod_MPU6050_Configuration,
                           Olimex_Mod_MPU6050_ConnectionState,
                           Olimex_Mod_MPU6050_RuntimeStatistic_t> Olimex_Mod_MPU6050_IConnection_t;
+struct Olimex_Mod_MPU6050_NetlinkConfiguration;
+struct Olimex_Mod_MPU6050_NetlinkConnectionState;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+typedef Net_IConnection_T<Net_Netlink_Addr,
+                          Olimex_Mod_MPU6050_NetlinkConfiguration,
+                          Olimex_Mod_MPU6050_NetlinkConnectionState,
+                          Olimex_Mod_MPU6050_RuntimeStatistic_t> Olimex_Mod_MPU6050_INetlinkConnection_t;
+#endif
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  Olimex_Mod_MPU6050_Configuration,
                                  Olimex_Mod_MPU6050_ConnectionState,
                                  Olimex_Mod_MPU6050_RuntimeStatistic_t,
                                  //////
-                                 Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_InetConnectionManager_t;
+                                 Olimex_Mod_MPU6050_UserData> Olimex_Mod_MPU6050_IConnectionManager_t;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+typedef Net_IConnectionManager_T<Net_Netlink_Addr,
+                                 Olimex_Mod_MPU6050_NetlinkConfiguration,
+                                 Olimex_Mod_MPU6050_NetlinkConnectionState,
+                                 Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                 //////
+                                 Olimex_Mod_MPU6050_NetlinkUserData> Olimex_Mod_MPU6050_INetlinkConnectionManager_t;
+#endif
 
 struct Olimex_Mod_MPU6050_SocketHandlerConfiguration
  : public Net_SocketHandlerConfiguration
@@ -137,6 +174,20 @@ struct Olimex_Mod_MPU6050_SocketHandlerConfiguration
 
   Olimex_Mod_MPU6050_UserData* userData;
 };
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration
+ : public Olimex_Mod_MPU6050_SocketHandlerConfiguration
+{
+  inline Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration ()
+   : Olimex_Mod_MPU6050_SocketHandlerConfiguration ()
+   , userData (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_NetlinkUserData* userData;
+};
+#endif
 
 struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
  : public Stream_ModuleHandlerConfiguration
@@ -152,15 +203,35 @@ struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
    , socketHandlerConfiguration (NULL)
   {};
 
-  Olimex_Mod_MPU6050_IConnection_t*              connection; // UDP source/IO module
-  Olimex_Mod_MPU6050_InetConnectionManager_t*    connectionManager; // UDP IO module
-  bool                                           consoleMode;
-  bool                                           inbound;
-  bool                                           passive;
+  Olimex_Mod_MPU6050_IConnection_t*               connection; // UDP source/IO module
+  Olimex_Mod_MPU6050_IConnectionManager_t*        connectionManager; // UDP IO module
 
-  Net_SocketConfiguration*                       socketConfiguration;
-  Olimex_Mod_MPU6050_SocketHandlerConfiguration* socketHandlerConfiguration;
+  bool                                            consoleMode;
+  bool                                            inbound;
+  bool                                            passive;
+
+  Net_SocketConfiguration*                        socketConfiguration;
+  Olimex_Mod_MPU6050_SocketHandlerConfiguration*  socketHandlerConfiguration;
 };
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration
+ : public Olimex_Mod_MPU6050_ModuleHandlerConfiguration
+{
+  inline Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration ()
+   : Olimex_Mod_MPU6050_ModuleHandlerConfiguration ()
+   , connection (NULL)
+   , connectionManager (NULL)
+   , socketHandlerConfiguration (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_INetlinkConnection_t*              connection; // Netlink source/IO module
+  Olimex_Mod_MPU6050_INetlinkConnectionManager_t*       connectionManager; // Netlink IO module
+
+  Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration* socketHandlerConfiguration;
+};
+#endif
 
 struct Olimex_Mod_MPU6050_StreamConfiguration
  : public Stream_Configuration
@@ -172,6 +243,20 @@ struct Olimex_Mod_MPU6050_StreamConfiguration
 
   Olimex_Mod_MPU6050_ModuleHandlerConfiguration* moduleHandlerConfiguration;
 };
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkStreamConfiguration
+ : public Olimex_Mod_MPU6050_StreamConfiguration
+{
+  inline Olimex_Mod_MPU6050_NetlinkStreamConfiguration ()
+   : Olimex_Mod_MPU6050_StreamConfiguration ()
+   , moduleHandlerConfiguration (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration* moduleHandlerConfiguration;
+};
+#endif
 
 struct Olimex_Mod_MPU6050_Configuration
 {
@@ -191,6 +276,28 @@ struct Olimex_Mod_MPU6050_Configuration
 
   Olimex_Mod_MPU6050_UserData*                  userData;
 };
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+struct Olimex_Mod_MPU6050_NetlinkConfiguration
+ : public Olimex_Mod_MPU6050_Configuration
+{
+  inline Olimex_Mod_MPU6050_NetlinkConfiguration ()
+   : Olimex_Mod_MPU6050_Configuration ()
+   , socketHandlerConfiguration ()
+   , moduleHandlerConfiguration ()
+   , streamConfiguration ()
+   , userData (NULL)
+  {};
+
+  Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration socketHandlerConfiguration;
+
+  Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration moduleHandlerConfiguration;
+  Olimex_Mod_MPU6050_NetlinkStreamConfiguration        streamConfiguration;
+
+  Olimex_Mod_MPU6050_NetlinkUserData*                  userData;
+};
+#endif
 
 struct Olimex_Mod_MPU6050_GtkCBData
  : public Common_UI_GTKState
