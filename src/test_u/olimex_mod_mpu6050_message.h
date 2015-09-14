@@ -21,22 +21,21 @@
 #ifndef OLIMEX_MOD_MPU6050_MESSAGE_H
 #define OLIMEX_MOD_MPU6050_MESSAGE_H
 
+#include <string>
+
 #include "ace/Global_Macros.h"
 
 #include "stream_message_base.h"
-//#include "stream_messageallocatorheap_base.h"
+#include "stream_messageallocatorheap_base.h"
 
-#include "olimex_mod_mpu6050_sessionmessage.h"
+//#include "olimex_mod_mpu6050_sessionmessage.h"
 #include "olimex_mod_mpu6050_types.h"
 
 // forward declaration(s)
 class ACE_Allocator;
 class ACE_Data_Block;
 class ACE_Message_Block;
-//class Olimex_Mod_MPU6050_MessageAllocator_t;
-//template <typename MessageType,
-//          typename SessionMessageType> class Stream_MessageAllocatorHeapBase_T;
-//class Olimex_Mod_MPU6050_SessionMessage;
+class Olimex_Mod_MPU6050_SessionMessage;
 
 class Olimex_Mod_MPU6050_Message
  : public Stream_MessageBase
@@ -45,7 +44,6 @@ class Olimex_Mod_MPU6050_Message
   // enable access to specific private ctors...
   friend class Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
                                                  Olimex_Mod_MPU6050_SessionMessage>;
-//  friend class Olimex_Mod_MPU6050_MessageAllocator_t;
 
  public:
   virtual ~Olimex_Mod_MPU6050_Message ();

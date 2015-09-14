@@ -80,12 +80,7 @@ Olimex_Mod_MPU6050_Stream::initialize (const Olimex_Mod_MPU6050_StreamConfigurat
   ACE_ASSERT (!isRunning ());
 
   // allocate a new session state, reset stream
-  if (!inherited::initialize ())
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Base_T::initialize(), aborting\n")));
-    return false;
-  } // end IF
+  inherited::initialize ();
 
   // things to be done here:
   // - create modules (done for the ones "owned" by the stream itself)

@@ -52,7 +52,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -67,6 +67,12 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\src\include;$(ProjectDir)..\..\src\test_u\3rd_party\gettext;$(ProjectDir)..\..\..\libCommon\src;$(ProjectDir)..\..\..\libCommon\src\ui;$(ProjectDir)..\..\..\libACEStream\src;$(ProjectDir)..\..\..\libACEStream\src\modules\misc;$(ProjectDir)..\..\..\libACENetwork\src;$(ProjectDir)..\..\..\libACENetwork\src\client_server;$(ProjectDir)..\..\..\libACEStream\src\modules\net;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>
       </ShowIncludes>
+      <BrowseInformation>true</BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,7 +84,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>
+      </WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;NET_CLIENT_HAS_DLL=1;NET_HAS_DLL=1;STREAM_HAS_DLL=1;COMMON_UI_HAS_DLL=1;COMMON_HAS_DLL=1;WIN32;_WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -86,6 +93,11 @@
       <AdditionalIncludeDirectories>D:\projects\olinuxino\src\include;D:\projects\olinuxino\src\test_u\3rd_party\gettext;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ShowIncludes>
       </ShowIncludes>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -163,6 +175,8 @@
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_signalhandler.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ShowIncludes>
     </ClCompile>
     <ClCompile Include="..\..\src\test_u\olimex_mod_mpu6050_stream.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -225,6 +239,7 @@
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_eventhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_macros.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_message.h" />
+    <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_modules_common.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_module_eventhandler.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_network.h" />
     <ClInclude Include="..\..\src\test_u\olimex_mod_mpu6050_opengl.h" />

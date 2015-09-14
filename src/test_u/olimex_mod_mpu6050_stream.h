@@ -31,6 +31,7 @@
 #include "stream_statemachine_control.h"
 
 #include "olimex_mod_mpu6050_message.h"
+#include "olimex_mod_mpu6050_modules_common.h"
 #include "olimex_mod_mpu6050_sessionmessage.h"
 #include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"

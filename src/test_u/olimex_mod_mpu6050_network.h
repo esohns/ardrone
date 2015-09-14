@@ -52,31 +52,8 @@
 #include "net_client_asynchconnector.h"
 #include "net_client_connector.h"
 
+#include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
-
-// forward declarations
-struct Olimex_Mod_MPU6050_StreamState;
-struct Olimex_Mod_MPU6050_SessionData;
-typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
-
-struct Olimex_Mod_MPU6050_ConnectionState
-{
-  inline Olimex_Mod_MPU6050_ConnectionState ()
-   : configuration (NULL)
-   , status (NET_CONNECTION_STATUS_INVALID)
-   , currentStatistic ()
-   , userData (NULL)
-  {};
-
-  // *TODO*: consider making this a separate entity (i.e. a pointer)
-  Olimex_Mod_MPU6050_Configuration*     configuration;
-
-  Net_Connection_Status                 status;
-
-  Olimex_Mod_MPU6050_RuntimeStatistic_t currentStatistic;
-
-  Olimex_Mod_MPU6050_UserData*          userData;
-};
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else

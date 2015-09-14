@@ -23,21 +23,17 @@
 
 #include "ace/Global_Macros.h"
 
-#include "stream_common.h"
 #include "stream_messageallocatorheap_base.h"
 #include "stream_session_message_base.h"
 
-#include "net_common.h"
-
+#include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_stream_common.h"
+#include "olimex_mod_mpu6050_types.h"
 
 // forward declarations
 class ACE_Allocator;
 class ACE_Data_Block;
-class Olimex_Mod_MPU6050_Message;
-//struct Olimex_Mod_MPU6050_SessionData;
-//typedef Stream_SessionDataBase_T<Olimex_Mod_MPU6050_SessionData> Olimex_Mod_MPU6050_StreamSessionData_t;
-struct Olimex_Mod_MPU6050_UserData;
+class ACE_Message_Block;
 
 class Olimex_Mod_MPU6050_SessionMessage
  : public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,

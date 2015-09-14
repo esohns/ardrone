@@ -132,7 +132,27 @@ struct Olimex_Mod_MPU6050_NetlinkUserData
 };
 #endif
 
+struct Olimex_Mod_MPU6050_Configuration;
 typedef Stream_Statistic Olimex_Mod_MPU6050_RuntimeStatistic_t;
+struct Olimex_Mod_MPU6050_ConnectionState
+{
+  inline Olimex_Mod_MPU6050_ConnectionState ()
+   : configuration (NULL)
+   , status (NET_CONNECTION_STATUS_INVALID)
+   , currentStatistic ()
+   , userData (NULL)
+  {};
+
+  // *TODO*: consider making this a separate entity (i.e. a pointer)
+  Olimex_Mod_MPU6050_Configuration*     configuration;
+
+  Net_Connection_Status                 status;
+
+  Olimex_Mod_MPU6050_RuntimeStatistic_t currentStatistic;
+
+  Olimex_Mod_MPU6050_UserData*          userData;
+};
+
 struct Olimex_Mod_MPU6050_Configuration;
 struct Olimex_Mod_MPU6050_ConnectionState;
 typedef Net_IConnection_T<ACE_INET_Addr,
@@ -331,26 +351,26 @@ struct Olimex_Mod_MPU6050_GtkCBData
    openGLCamera.zoom = OLIMEX_MOD_MPU6050_OPENGL_CAMERA_DEFAULT_ZOOM;
  };
 
- int                                argc;
- ACE_TCHAR**                        argv;
- bool                               clientMode;
+ int                           argc;
+ ACE_TCHAR**                   argv;
+ bool                          clientMode;
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
- SensorBias                         clientSensorBias; // client side ONLY (!)
- guint                              contextIdData; // status bar context
- guint                              contextIdInformation; // status bar context
- Olimex_Mod_MPU6050_Events_t        eventQueue;
- unsigned int                       frameCounter;
- Olimex_Mod_MPU6050_Messages_t      messageQueue;
- GLuint                             openGLAxesListId;
- Camera                             openGLCamera;
- GdkGLContext*                      openGLContext;
- GdkGLDrawable*                     openGLDrawable;
- guint                              openGLRefreshId;
- bool                               openGLDoubleBuffered;
- gfloat                             temperature[OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE * 2];
- int                                temperatureIndex;
- ACE_Time_Value                     timestamp;
+ SensorBias                    clientSensorBias; // client side ONLY (!)
+ guint                         contextIdData; // status bar context
+ guint                         contextIdInformation; // status bar context
+ Olimex_Mod_MPU6050_Events_t   eventQueue;
+ unsigned int                  frameCounter;
+ Olimex_Mod_MPU6050_Messages_t messageQueue;
+ GLuint                        openGLAxesListId;
+ Camera                        openGLCamera;
+ GdkGLContext*                 openGLContext;
+ GdkGLDrawable*                openGLDrawable;
+ guint                         openGLRefreshId;
+ bool                          openGLDoubleBuffered;
+ gfloat                        temperature[OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE * 2];
+ int                           temperatureIndex;
+ ACE_Time_Value                timestamp;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H
