@@ -31,7 +31,7 @@
 
 Olimex_Mod_MPU6050_EventHandler::Olimex_Mod_MPU6050_EventHandler (Olimex_Mod_MPU6050_GtkCBData* GtkCBData_in,
                                                                   bool consoleMode_in)
- : consoleMode_ (false)
+ : consoleMode_ (consoleMode_in)
  , GtkCBData_ (GtkCBData_in)
  , sessionData_ (NULL)
 {

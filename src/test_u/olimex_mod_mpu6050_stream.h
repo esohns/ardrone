@@ -33,10 +33,10 @@
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_modules_common.h"
 #include "olimex_mod_mpu6050_sessionmessage.h"
-#include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
 
-class Olimex_Mod_MPU6050_Stream
+template <typename SourceModuleType>
+class Olimex_Mod_MPU6050_Stream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         /////////////////
@@ -56,8 +56,8 @@ class Olimex_Mod_MPU6050_Stream
                         Olimex_Mod_MPU6050_Message>
 {
  public:
-  Olimex_Mod_MPU6050_Stream ();
-  virtual ~Olimex_Mod_MPU6050_Stream ();
+  Olimex_Mod_MPU6050_Stream_T ();
+  virtual ~Olimex_Mod_MPU6050_Stream_T ();
 
   // implement Common_IInitialize_T
   virtual bool initialize (const Olimex_Mod_MPU6050_StreamConfiguration&); // configuration
@@ -89,8 +89,8 @@ class Olimex_Mod_MPU6050_Stream
                         Olimex_Mod_MPU6050_SessionMessage,
                         Olimex_Mod_MPU6050_Message> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream (const Olimex_Mod_MPU6050_Stream&))
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream& operator= (const Olimex_Mod_MPU6050_Stream&))
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream_T (const Olimex_Mod_MPU6050_Stream_T&))
+  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream_T& operator= (const Olimex_Mod_MPU6050_Stream_T&))
 
   // finalize stream
   // *NOTE*: need this to clean up queued modules if something goes wrong during
@@ -98,8 +98,13 @@ class Olimex_Mod_MPU6050_Stream
   bool finalize (const Olimex_Mod_MPU6050_Configuration&); // configuration
 
   // modules
-  Olimex_Mod_MPU6050_Module_SocketHandler_Module    netReader_;
-  Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module runtimeStatistic_;
+  SourceModuleType                                  source_;
+  Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module statistic_;
 };
+
+typedef Olimex_Mod_MPU6050_Stream_T<Olimex_Mod_MPU6050_Module_SocketHandler_Module> Olimex_Mod_MPU6050_Stream_t;
+typedef Olimex_Mod_MPU6050_Stream_T<Olimex_Mod_MPU6050_Module_AsynchSocketHandler_Module> Olimex_Mod_MPU6050_AsynchStream_t;
+
+#include "olimex_mod_mpu6050_stream.inl"
 
 #endif

@@ -69,7 +69,6 @@
 #include "olimex_mod_mpu6050_module_eventhandler.h"
 #include "olimex_mod_mpu6050_network.h"
 #include "olimex_mod_mpu6050_signalhandler.h"
-#include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_stream.h"
 #include "olimex_mod_mpu6050_types.h"
 
@@ -478,7 +477,8 @@ do_work (int argc_in,
   netlink_user_data.configuration = &netlink_configuration;
 #endif
 
-  Olimex_Mod_MPU6050_EventHandler event_handler (&CBData_in);
+  Olimex_Mod_MPU6050_EventHandler event_handler (&CBData_in,
+                                                 interfaceDefinitionFile_in.empty ());
   std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
   Olimex_Mod_MPU6050_Module_EventHandler_Module event_handler_module (module_name,
                                                                       NULL);
@@ -503,20 +503,17 @@ do_work (int argc_in,
     OLIMEX_MOD_MPU6050_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connectionManager_p);
   connectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
-  connectionManager_p->set (configuration,
-                            &user_data); // passed to all handlers
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   Olimex_Mod_MPU6050_NetlinkConnectionManager_t* netlinkConnectionManager_p =
     OLIMEX_MOD_MPU6050_NETLINKCONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (netlinkConnectionManager_p);
   if (!clientMode_in)
-  {
     netlinkConnectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
-    netlinkConnectionManager_p->set (netlink_configuration,
-                                     &netlink_user_data); // passed to all handlers
-  } // end ELSE
 #endif
+
+  Olimex_Mod_MPU6050_Stream_t stream;
+  Olimex_Mod_MPU6050_AsynchStream_t asynch_stream;
 
   // ******************* socket configuration data ****************************
   configuration.socketConfiguration.bufferSize =
@@ -541,26 +538,27 @@ do_work (int argc_in,
   configuration.socketHandlerConfiguration.userData = &user_data;
 
   // ******************** stream configuration data ***************************
+  configuration.moduleHandlerConfiguration.streamConfiguration =
+    &configuration.streamConfiguration;
+
   configuration.moduleHandlerConfiguration.connectionManager =
     connectionManager_p;
+  configuration.moduleHandlerConfiguration.consoleMode =
+    interfaceDefinitionFile_in.empty ();
   configuration.moduleHandlerConfiguration.socketConfiguration =
     &configuration.socketConfiguration;
   configuration.moduleHandlerConfiguration.socketHandlerConfiguration =
     &configuration.socketHandlerConfiguration;
-  configuration.moduleHandlerConfiguration.streamConfiguration =
-    &configuration.streamConfiguration;
-  configuration.moduleHandlerConfiguration.consoleMode =
-    interfaceDefinitionFile_in.empty ();
+  configuration.moduleHandlerConfiguration.stream = &stream;
+  if (!useReactor_in)
+    configuration.moduleHandlerConfiguration.stream = &asynch_stream;
 
   configuration.streamConfiguration.messageAllocator = &message_allocator;
   configuration.streamConfiguration.bufferSize =
     OLIMEX_MOD_MPU6050_STREAM_BUFFER_SIZE;
   configuration.streamConfiguration.useThreadPerConnection = false;
-  //configuration.streamConfiguration.serializeOutput = false;
   configuration.streamConfiguration.notificationStrategy = NULL;
   configuration.streamConfiguration.module = &event_handler_module;
-  configuration.streamConfiguration.deleteModule = false;
-//  configuration.streamConfiguration.moduleConfiguration.streamState = NULL;
   configuration.streamConfiguration.moduleConfiguration =
     &configuration.moduleConfiguration;
   configuration.streamConfiguration.moduleHandlerConfiguration =
@@ -571,7 +569,24 @@ do_work (int argc_in,
 
   configuration.userData = &user_data;
 
-  // step2: initialize event dispatch
+  // step2: initialize connection manager
+  Olimex_Mod_MPU6050_Configuration configuration_2 = configuration;
+  configuration_2.streamConfiguration.module = NULL;
+  connectionManager_p->set (configuration_2,
+                            &user_data); // passed to all handlers
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  if (!clientMode_in)
+  {
+    Olimex_Mod_MPU6050_NetlinkConfiguration netlink_configuration_2 =
+        netlink_configuration;
+    netlink_configuration_2.streamConfiguration.module = NULL;
+    netlinkConnectionManager_p->set (netlink_configuration_2,
+                                     &netlink_user_data); // passed to all handlers
+  } // end ELSE
+#endif
+
+  // step3: initialize event dispatch
   bool serialize_output;
   if (!Common_Tools::initializeEventDispatch (useReactor_in,
                                               false,
@@ -583,7 +598,7 @@ do_work (int argc_in,
     return;
   } // end IF
 
-//  // step3: initialize client connector
+//  // step4: initialize client connector
 //  Olimex_Mod_MPU6050_IConnector_t* iconnector_p = NULL;
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //#else
@@ -692,11 +707,49 @@ do_work (int argc_in,
     return;
   } // end IF
 
-  // step5: start event loop(s):
+  // step5: start stream
+  if (!configuration.moduleHandlerConfiguration.stream->initialize (configuration.streamConfiguration))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize processing stream, returning\n")));
+
+    // clean up
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    delete iconnector_p;
+//#else
+//    if (clientMode_in)
+//      delete iconnector_p;
+//    else
+//      delete netlink_iconnector_p;
+//#endif
+
+    return;
+  } // end IF
+  configuration.moduleHandlerConfiguration.stream->start ();
+  if (!configuration.moduleHandlerConfiguration.stream->isRunning ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to start processing stream, returning\n")));
+
+    // clean up
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    delete iconnector_p;
+//#else
+//    if (clientMode_in)
+//      delete iconnector_p;
+//    else
+//      delete netlink_iconnector_p;
+//#endif
+
+    return;
+  } // end IF
+  // *WARNING*: from this point on, clean up any remote connections !
+
+  // step6: start event loop(s):
   // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
   // [- signal timer expiration to perform server queries] (see above)
 
-  // step5a: start GTK event loop ?
+  // step6a: start GTK event loop ?
   if (!interfaceDefinitionFile_in.empty ())
   {
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
@@ -713,6 +766,7 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to start GTK event dispatch, returning\n")));
 
       // clean up
+      configuration.moduleHandlerConfiguration.stream->stop (true);
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //    delete iconnector_p;
 //#else
@@ -726,7 +780,7 @@ do_work (int argc_in,
     } // end IF
   } // end IF
 
-  // step5b: initialize worker(s)
+  // step6b: initialize worker(s)
   int group_id = -1;
   if (!Common_Tools::startEventDispatch (useReactor_in,
                                          1,
@@ -746,6 +800,7 @@ do_work (int argc_in,
       COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 
     // clean up
+    configuration.moduleHandlerConfiguration.stream->stop (true);
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //    delete iconnector_p;
 //#else
@@ -761,7 +816,7 @@ do_work (int argc_in,
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("started event dispatch...\n")));
 
-//  // step6: connect
+//  // step7: connect
 //  ACE_HANDLE handle = ACE_INVALID_HANDLE;
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //  handle = iconnector_p->connect (peerAddress_in);
@@ -790,6 +845,7 @@ do_work (int argc_in,
 //      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 //
 //    // clean up
+//    configuration.moduleHandlerConfiguration.stream->stop (true);
 //    delete iconnector_p;
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //#else
@@ -801,89 +857,30 @@ do_work (int argc_in,
 //
 //    return;
 //  }
-  // step6: start stream
-  Olimex_Mod_MPU6050_Stream stream;
-  if (!stream.initialize (configuration.streamConfiguration))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize processing stream, returning\n")));
-    //		{ // synch access
-    //			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
 
-    //			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
-    //					 iterator != CBData_in.event_source_ids.end ();
-    //					 iterator++)
-    //				g_source_remove (*iterator);
-    //		} // end lock scope
-    if (!interfaceDefinitionFile_in.empty ())
-      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-
-    // clean up
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    delete iconnector_p;
-//#else
-//    if (clientMode_in)
-//      delete iconnector_p;
-//    else
-//      delete netlink_iconnector_p;
-//#endif
-
-    return;
-  } // end IF
-  stream.start ();
-  if (!stream.isRunning ())
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to start processing stream, returning\n")));
-    //		{ // synch access
-    //			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
-
-    //			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
-    //					 iterator != CBData_in.event_source_ids.end ();
-    //					 iterator++)
-    //				g_source_remove (*iterator);
-    //		} // end lock scope
-    if (!interfaceDefinitionFile_in.empty ())
-      COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
-
-    // clean up
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    delete iconnector_p;
-//#else
-//    if (clientMode_in)
-//      delete iconnector_p;
-//    else
-//      delete netlink_iconnector_p;
-//#endif
-
-    return;
-  } // end IF
-  // *WARNING*: from this point on, clean up any remote connections !
-
-  // step7: dispatch events
+  // step8: dispatch events
   Common_Tools::dispatchEvents (useReactor_in,
                                 group_id);
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("finished event dispatch...\n")));
 
-  // step8: clean up
-  connectionManager_p->stop ();
-  connectionManager_p->abort ();
-  connectionManager_p->wait ();
+  // step9: clean up
+  configuration.moduleHandlerConfiguration.stream->stop (true);
+//  connectionManager_p->stop ();
+//  connectionManager_p->abort ();
+//  connectionManager_p->wait ();
   //delete iconnector_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  netlinkConnectionManager_p->stop ();
-  netlinkConnectionManager_p->abort ();
-  netlinkConnectionManager_p->wait ();
-  if (!clientMode_in)
-    delete netlink_iconnector_p;
+//  netlinkConnectionManager_p->stop ();
+//  netlinkConnectionManager_p->abort ();
+//  netlinkConnectionManager_p->wait ();
+//  if (!clientMode_in)
+//    delete netlink_iconnector_p;
 #endif
-  result = event_handler_module.close ();
-  if (result == -1)
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to ACE_Module::close(): \"%m\", continuing\n"),
-                event_handler_module.name ()));
+//  result = event_handler_module.close ();
+//  if (result == -1)
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("%s: failed to ACE_Module::close(): \"%m\", continuing\n"),
+//                event_handler_module.name ()));
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));

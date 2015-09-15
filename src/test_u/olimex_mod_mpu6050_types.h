@@ -26,16 +26,20 @@
 
 #include "ace/Global_Macros.h"
 #include "ace/OS.h"
+#include "ace/Synch_Traits.h"
 #include "ace/Time_Value.h"
 
 #include "gtk/gtk.h"
 #include "gtk/gtkgl.h"
 
 #include "common_inotify.h"
+#include "common_time_common.h"
 
 #include "common_ui_common.h"
 
+#include "stream_base.h"
 #include "stream_common.h"
+#include "stream_statemachine_control.h"
 
 #include "net_common.h"
 #include "net_iconnection.h"
@@ -46,6 +50,7 @@
 #endif
 
 #include "olimex_mod_mpu6050_defines.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
@@ -209,6 +214,25 @@ struct Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration
 };
 #endif
 
+struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration;
+struct Olimex_Mod_MPU6050_StreamConfiguration;
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      /////////////////
+                      Stream_StateMachine_ControlState,
+                      Olimex_Mod_MPU6050_StreamState,
+                      /////////////////
+                      Olimex_Mod_MPU6050_StreamConfiguration,
+                      /////////////////
+                      Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                      /////////////////
+                      Stream_ModuleConfiguration,
+                      Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                      /////////////////
+                      Olimex_Mod_MPU6050_SessionData,
+                      Olimex_Mod_MPU6050_StreamSessionData_t,
+                      Olimex_Mod_MPU6050_SessionMessage,
+                      Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_StreamBase_t;
 struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
  : public Stream_ModuleHandlerConfiguration
 {
@@ -221,6 +245,7 @@ struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
    , passive (false)
    , socketConfiguration (NULL)
    , socketHandlerConfiguration (NULL)
+   , stream (NULL)
   {};
 
   Olimex_Mod_MPU6050_IConnection_t*               connection; // UDP source/IO module
@@ -232,6 +257,7 @@ struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
 
   Net_SocketConfiguration*                        socketConfiguration;
   Olimex_Mod_MPU6050_SocketHandlerConfiguration*  socketHandlerConfiguration;
+  Olimex_Mod_MPU6050_StreamBase_t*                stream;
 };
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

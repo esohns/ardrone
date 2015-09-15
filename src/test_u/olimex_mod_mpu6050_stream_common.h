@@ -24,7 +24,7 @@
 
 //#include "olimex_mod_mpu6050_message.h"
 //#include "olimex_mod_mpu6050_sessionmessage.h"
-#include "olimex_mod_mpu6050_types.h"
+//#include "olimex_mod_mpu6050_types.h"
 
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
@@ -33,6 +33,8 @@ class Olimex_Mod_MPU6050_SessionMessage;
 typedef Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
                                           Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_MessageAllocator_t;
 
+struct Olimex_Mod_MPU6050_UserData;
+struct Olimex_Mod_MPU6050_SessionData;
 struct Olimex_Mod_MPU6050_StreamState
 {
   inline Olimex_Mod_MPU6050_StreamState ()
@@ -44,6 +46,8 @@ struct Olimex_Mod_MPU6050_StreamState
   Olimex_Mod_MPU6050_UserData*    userData;
 };
 
+struct Olimex_Mod_MPU6050_ConnectionState;
+typedef Stream_Statistic Olimex_Mod_MPU6050_RuntimeStatistic_t;
 struct Olimex_Mod_MPU6050_SessionData
   : public Stream_SessionData
 {

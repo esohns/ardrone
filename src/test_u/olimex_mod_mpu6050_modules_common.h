@@ -56,6 +56,25 @@ DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                  // 
                               Stream_ModuleConfiguration,                    // module configuration type
                               Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
                               Olimex_Mod_MPU6050_Module_SocketHandler);      // writer type
+typedef Stream_Module_Net_Source_T<Olimex_Mod_MPU6050_SessionMessage,
+                                   Olimex_Mod_MPU6050_Message,
+                                   //////
+                                   Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                   //////
+                                   Olimex_Mod_MPU6050_StreamState,
+                                   //////
+                                   Olimex_Mod_MPU6050_SessionData,
+                                   Olimex_Mod_MPU6050_StreamSessionData_t,
+                                   //////
+                                   Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                   //////
+                                   Olimex_Mod_MPU6050_ConnectionManager_t,
+                                   Olimex_Mod_MPU6050_AsynchConnector_t> Olimex_Mod_MPU6050_Module_AsynchSocketHandler;
+DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                   // task synch type
+                              Common_TimePolicy_t,                            // time policy type
+                              Stream_ModuleConfiguration,                     // module configuration type
+                              Olimex_Mod_MPU6050_ModuleHandlerConfiguration,  // module handler configuration type
+                              Olimex_Mod_MPU6050_Module_AsynchSocketHandler); // writer type
 
 typedef Stream_Module_Statistic_ReaderTask_T<ACE_MT_SYNCH,
                                              Common_TimePolicy_t,

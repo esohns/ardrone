@@ -48,6 +48,7 @@ olimex_mod_mpu6050_SOURCES = \
   olimex_mod_mpu6050_message.h \
   olimex_mod_mpu6050_module_eventhandler.cpp \
   olimex_mod_mpu6050_module_eventhandler.h \
+  olimex_mod_mpu6050_modules_common.h \
   olimex_mod_mpu6050_network.h \
   olimex_mod_mpu6050_opengl.cpp \
   olimex_mod_mpu6050_opengl.h \
