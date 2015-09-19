@@ -81,13 +81,17 @@ typedef Stream_Module_Statistic_ReaderTask_T<ACE_MT_SYNCH,
                                              Olimex_Mod_MPU6050_SessionMessage,
                                              Olimex_Mod_MPU6050_Message,
                                              Olimex_Mod_MPU6050_MessageType,
-                                             Olimex_Mod_MPU6050_RuntimeStatistic_t> Olimex_Mod_MPU6050_Module_Statistic_ReaderTask_t;
+                                             Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                             Olimex_Mod_MPU6050_SessionData,
+                                             Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Module_Statistic_ReaderTask_t;
 typedef Stream_Module_Statistic_WriterTask_T<ACE_MT_SYNCH,
                                              Common_TimePolicy_t,
                                              Olimex_Mod_MPU6050_SessionMessage,
                                              Olimex_Mod_MPU6050_Message,
                                              Olimex_Mod_MPU6050_MessageType,
-                                             Olimex_Mod_MPU6050_RuntimeStatistic_t> Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t;
+                                             Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                             Olimex_Mod_MPU6050_SessionData,
+                                             Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t;
 DATASTREAM_MODULE_DUPLEX (ACE_MT_SYNCH,                                     // task synch type
                           Common_TimePolicy_t,                              // time policy type
                           Stream_ModuleConfiguration,                       // module configuration type

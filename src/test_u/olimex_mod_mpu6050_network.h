@@ -21,6 +21,7 @@
 #include "ace/Global_Macros.h"
 #include "ace/INET_Addr.h"
 #include "ace/Singleton.h"
+#include "ace/SOCK_Connector.h"
 #include "ace/Synch_Traits.h"
 
 #include "common_time_common.h"
@@ -213,6 +214,7 @@ typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<Olimex_Mod_MPU6050_UDPHan
                                                        Olimex_Mod_MPU6050_SocketHandlerConfiguration,
 
                                                        Olimex_Mod_MPU6050_UserData>,
+                               ACE_SOCK_CONNECTOR,
                                //////////
                                ACE_INET_Addr,
                                Olimex_Mod_MPU6050_Configuration,
@@ -235,6 +237,7 @@ typedef Net_Client_Connector_T<Net_NetlinkConnection_T<Olimex_Mod_MPU6050_Netlin
                                                        Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration,
 
                                                        Olimex_Mod_MPU6050_NetlinkUserData>,
+                               ACE_SOCK_CONNECTOR,
                                //////////
                                Net_Netlink_Addr,
                                Olimex_Mod_MPU6050_NetlinkConfiguration,
