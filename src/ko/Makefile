@@ -1,0 +1,62 @@
+ifeq ($(KDIR),)
+#  echo "KDIR not set, cannot proceed"
+  export KDIR="/lib/modules/$(shell uname -r)/build"
+endif
+ifeq ($(module_DATA),)
+#  echo "module_DATA not set, cannot proceed"
+endif
+ifeq ($(AM_ABSSRCDIR),)
+#  echo "AM_ABSSRCDIR not set, cannot proceed"
+endif
+#ifeq ($(AM_CWDCDIR),)
+#  echo "AM_CWDCDIR not set, cannot proceed"
+#endif
+
+ifeq ($(ARCH),)
+#  echo "ARCH not set, setting to default: x86"
+  export ARCH=x86
+  export CROSS_COMPILE=
+endif
+
+obj-m += $(module_DATA)
+$(module_NAME)-y := $(module_OBJS)
+#MI_OBJS = $(module_DATA)
+ccflags-y         = \
+  -I$(KDIR)arch/$(ARCH)/include \
+  -I$(KDIR)arch/$(ARCH)/uapi/include \
+  -I$(KDIR)arch/sh/include \
+  -I$(KDIR)arch/$(ARCH)/plat-sunxi/include \
+  -I$(AM_ABSSRCDIR)/3rd_party/i2cdevlib
+
+#ccflags-y        += \
+#  -mfloat-abi=softfp
+ifeq ($(DEBUG),1)
+  ccflags-y      += \
+    -mfpu=neon \
+    -mcpu=cortex-a8 \
+    -DDEBUG
+else
+  ccflags-y      += \
+    -mfpu=neon \
+    -mcpu=cortex-a8 \
+    -mtune=cortex-a8 \
+    -funroll-loops \
+    -ftree-vectorize \
+    -fassociative-math \
+    -funsafe-math-optimizations
+endif
+
+#KBUILD_EXTRA_SYMBOLS
+#INSTALL_MOD_PATH=$(AM_CWDCDIR)
+#INSTALL_MOD_DIR=$(AM_CWDCDIR)
+
+all: modules
+
+modules:
+	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) \
+  KBUILD_VERBOSE=$(KBUILD_VERBOSE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
+  V=$(KBUILD_VERBOSE) modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(AM_ABSSRCDIR) clean
+	rm -rf $(AM_ABSSRCDIR)/.tmp_versions

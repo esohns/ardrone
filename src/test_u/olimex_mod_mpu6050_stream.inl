@@ -23,10 +23,11 @@
 
 #include "olimex_mod_mpu6050_defines.h"
 #include "olimex_mod_mpu6050_macros.h"
+#include "olimex_mod_mpu6050_stream_common.h"
 
 template <typename SourceModuleType>
 Olimex_Mod_MPU6050_Stream_T<SourceModuleType>::Olimex_Mod_MPU6050_Stream_T ()
- : inherited ()
+ : inherited (ACE_TEXT_ALWAYS_CHAR ("OlimexModMPU6050"))
  , source_ (ACE_TEXT_ALWAYS_CHAR ("Source"),
             NULL)
 // , protocolHandler_ (std::string("ProtocolHandler"),
@@ -77,14 +78,15 @@ Olimex_Mod_MPU6050_Stream_T<SourceModuleType>::initialize (const Olimex_Mod_MPU6
   ACE_ASSERT (!isRunning ());
 
   // allocate a new session state, reset stream
-  inherited::initialize ();
+  inherited::initialize (configuration_in);
 
   // things to be done here:
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
-  // - push them onto the stream (tail-first) !
-
-  inherited::sessionData_->sessionID = configuration_in.sessionID;
+  // - push them onto the stream (tail-first)
+  Olimex_Mod_MPU6050_SessionData& session_data_r =
+    const_cast<Olimex_Mod_MPU6050_SessionData&> (inherited::sessionData_->get ());
+  session_data_r.sessionID = configuration_in.sessionID;
 
   int result = -1;
   inherited::MODULE_T* module_p = NULL;

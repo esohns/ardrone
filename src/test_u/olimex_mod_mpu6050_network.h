@@ -27,7 +27,7 @@
 #include "common_time_common.h"
 
 #include "stream_common.h"
-#include "stream_session_data_base.h"
+#include "stream_session_data.h"
 
 #include "stream_module_io_stream.h"
 
@@ -59,7 +59,7 @@
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 struct Olimex_Mod_MPU6050_NetlinkConnectionState
- : public Olimex_Mod_MPU6050_ConnectionState
+ : Olimex_Mod_MPU6050_ConnectionState
 {
   inline Olimex_Mod_MPU6050_NetlinkConnectionState ()
    : Olimex_Mod_MPU6050_ConnectionState ()
@@ -86,7 +86,9 @@ typedef Net_Connection_Manager_T<Net_Netlink_Addr,
                                  Olimex_Mod_MPU6050_NetlinkUserData> Olimex_Mod_MPU6050_NetlinkConnectionManager_t;
 #endif
 
-typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
+typedef Stream_Module_Net_IO_Stream_T<ACE_SYNCH_MUTEX,
+                                      ///
+                                      ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
                                       ///
                                       Stream_StateMachine_ControlState,
@@ -108,24 +110,26 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Olimex_Mod_MPU6050_ConnectionManager_t> Olimex_Mod_MPU6050_NetStream_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
+typedef Stream_Module_Net_IO_Stream_T<ACE_SYNCH_MUTEX,
+                                      ///
+                                      ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
-
+                                      ///
                                       Stream_StateMachine_ControlState,
                                       Olimex_Mod_MPU6050_StreamState,
-
+                                      ///
                                       Olimex_Mod_MPU6050_NetlinkStreamConfiguration,
-
+                                      ///
                                       Olimex_Mod_MPU6050_RuntimeStatistic_t,
-
+                                      ///
                                       Stream_ModuleConfiguration,
                                       Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration,
-
+                                      ///
                                       Olimex_Mod_MPU6050_SessionData,
                                       Olimex_Mod_MPU6050_StreamSessionData_t,
                                       Olimex_Mod_MPU6050_SessionMessage,
                                       Olimex_Mod_MPU6050_Message,
-
+                                      ///
                                       Net_Netlink_Addr,
                                       Olimex_Mod_MPU6050_NetlinkConnectionManager_t> Olimex_Mod_MPU6050_NetNetlinkStream_t;
 #endif

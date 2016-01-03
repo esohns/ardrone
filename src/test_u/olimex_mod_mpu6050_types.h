@@ -42,6 +42,7 @@
 #include "stream_statemachine_control.h"
 
 #include "net_common.h"
+#include "net_configuration.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -112,7 +113,7 @@ struct Camera
 
 struct Olimex_Mod_MPU6050_Configuration;
 struct Olimex_Mod_MPU6050_UserData
- : public Net_UserData
+ : Net_UserData
 {
   inline Olimex_Mod_MPU6050_UserData ()
    : Net_UserData ()
@@ -126,7 +127,7 @@ struct Olimex_Mod_MPU6050_UserData
 #else
 struct Olimex_Mod_MPU6050_NetlinkConfiguration;
 struct Olimex_Mod_MPU6050_NetlinkUserData
- : public Olimex_Mod_MPU6050_UserData
+ : Olimex_Mod_MPU6050_UserData
 {
   inline Olimex_Mod_MPU6050_NetlinkUserData ()
    : Olimex_Mod_MPU6050_UserData ()
@@ -190,7 +191,7 @@ typedef Net_IConnectionManager_T<Net_Netlink_Addr,
 #endif
 
 struct Olimex_Mod_MPU6050_SocketHandlerConfiguration
- : public Net_SocketHandlerConfiguration
+ : Net_SocketHandlerConfiguration
 {
   inline Olimex_Mod_MPU6050_SocketHandlerConfiguration ()
    : Net_SocketHandlerConfiguration ()
@@ -203,7 +204,7 @@ struct Olimex_Mod_MPU6050_SocketHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 struct Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration
- : public Olimex_Mod_MPU6050_SocketHandlerConfiguration
+ : Olimex_Mod_MPU6050_SocketHandlerConfiguration
 {
   inline Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration ()
    : Olimex_Mod_MPU6050_SocketHandlerConfiguration ()
@@ -216,25 +217,27 @@ struct Olimex_Mod_MPU6050_NetlinkSocketHandlerConfiguration
 
 struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration;
 struct Olimex_Mod_MPU6050_StreamConfiguration;
-typedef Stream_Base_T<ACE_MT_SYNCH,
+typedef Stream_Base_T<ACE_SYNCH_MUTEX,
+                      ///////////////////
+                      ACE_MT_SYNCH,
                       Common_TimePolicy_t,
-                      /////////////////
+                      ///////////////////
                       Stream_StateMachine_ControlState,
                       Olimex_Mod_MPU6050_StreamState,
-                      /////////////////
+                      ///////////////////
                       Olimex_Mod_MPU6050_StreamConfiguration,
-                      /////////////////
+                      ///////////////////
                       Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                      /////////////////
+                      ///////////////////
                       Stream_ModuleConfiguration,
                       Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                      /////////////////
+                      ///////////////////
                       Olimex_Mod_MPU6050_SessionData,
                       Olimex_Mod_MPU6050_StreamSessionData_t,
                       Olimex_Mod_MPU6050_SessionMessage,
                       Olimex_Mod_MPU6050_Message> Olimex_Mod_MPU6050_StreamBase_t;
 struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
- : public Stream_ModuleHandlerConfiguration
+ : Stream_ModuleHandlerConfiguration
 {
   inline Olimex_Mod_MPU6050_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
@@ -263,7 +266,7 @@ struct Olimex_Mod_MPU6050_ModuleHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 struct Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration
- : public Olimex_Mod_MPU6050_ModuleHandlerConfiguration
+ : Olimex_Mod_MPU6050_ModuleHandlerConfiguration
 {
   inline Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration ()
    : Olimex_Mod_MPU6050_ModuleHandlerConfiguration ()
@@ -280,7 +283,7 @@ struct Olimex_Mod_MPU6050_NetlinkModuleHandlerConfiguration
 #endif
 
 struct Olimex_Mod_MPU6050_StreamConfiguration
- : public Stream_Configuration
+ : Stream_Configuration
 {
   inline Olimex_Mod_MPU6050_StreamConfiguration ()
    : Stream_Configuration ()
@@ -293,7 +296,7 @@ struct Olimex_Mod_MPU6050_StreamConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 struct Olimex_Mod_MPU6050_NetlinkStreamConfiguration
- : public Olimex_Mod_MPU6050_StreamConfiguration
+ : Olimex_Mod_MPU6050_StreamConfiguration
 {
   inline Olimex_Mod_MPU6050_NetlinkStreamConfiguration ()
    : Olimex_Mod_MPU6050_StreamConfiguration ()
@@ -326,7 +329,7 @@ struct Olimex_Mod_MPU6050_Configuration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 struct Olimex_Mod_MPU6050_NetlinkConfiguration
- : public Olimex_Mod_MPU6050_Configuration
+ : Olimex_Mod_MPU6050_Configuration
 {
   inline Olimex_Mod_MPU6050_NetlinkConfiguration ()
    : Olimex_Mod_MPU6050_Configuration ()
@@ -346,7 +349,7 @@ struct Olimex_Mod_MPU6050_NetlinkConfiguration
 #endif
 
 struct Olimex_Mod_MPU6050_GtkCBData
- : public Common_UI_GTKState
+ : Common_UI_GTKState
 {
  inline Olimex_Mod_MPU6050_GtkCBData ()
   : Common_UI_GTKState ()
@@ -367,6 +370,7 @@ struct Olimex_Mod_MPU6050_GtkCBData
   , temperature ()
   , temperatureIndex (-1)
   , timestamp (ACE_Time_Value::zero)
+  , XML (NULL)
  {
    resetCamera ();
  };
@@ -397,6 +401,8 @@ struct Olimex_Mod_MPU6050_GtkCBData
  gfloat                        temperature[OLIMEX_MOD_MPU6050_TEMPERATURE_BUFFER_SIZE * 2];
  int                           temperatureIndex;
  ACE_Time_Value                timestamp;
+
+ GladeXML*                     XML;
 };
 
 #endif // #ifndef OLIMEX_MOD_MPU6050_TYPES_H

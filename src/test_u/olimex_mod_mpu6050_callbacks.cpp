@@ -23,6 +23,10 @@
 
 #include <cmath>
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "math.h"
+#endif
+
 #include "ace/Log_Msg.h"
 
 #include "GL/gl.h"
@@ -284,7 +288,7 @@ idle_finalize_ui_cb (gpointer userData_in)
 
   // synch access
   {
-    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
 
     unsigned int num_messages = cb_data_p->messageQueue.size ();
     while (!cb_data_p->messageQueue.empty ())
@@ -373,7 +377,7 @@ configure_cb (GtkWidget* widget_in,
 
   if (!cb_data_p->openGLAxesListId)
   {
-    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
 
     cb_data_p->openGLAxesListId = ::axes ();
     if (!glIsList (cb_data_p->openGLAxesListId))
@@ -545,7 +549,7 @@ expose_cb (GtkWidget* widget_in,
   ACE_ASSERT (widget_in);
   ACE_ASSERT (cb_data_p);
 
-//  ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
+//  ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
 
   if (!gdk_gl_drawable_gl_begin (cb_data_p->openGLDrawable,
                                  cb_data_p->openGLContext))
@@ -580,9 +584,9 @@ expose_cb (GtkWidget* widget_in,
 
   // step3: draw object(s)
   // step3a: draw model
-  const static gboolean solid = TRUE; // wireframe
-  const static gdouble scale = 1.0;
-  gdk_gl_draw_teapot (solid, scale);
+  const static bool solid = TRUE; // wireframe
+  const static float scale = 1.0;
+  draw_teapot (solid, scale);
 
   // step3b: draw axes
   // restrict viewport to upper left corner
@@ -707,7 +711,7 @@ process_cb (gpointer userData_in)
   ACE_ASSERT (status_bar_p);
   Olimex_Mod_MPU6050_Message* message_p = NULL;
   {
-    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
     {
       return TRUE; // --> continue processing
@@ -1078,7 +1082,7 @@ calibrate_clicked_gtk_cb (GtkWidget* widget_in,
                     0,
                     sizeof (cb_data_p->clientSensorBias));
 
-    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
     {
       ACE_DEBUG ((LM_WARNING,

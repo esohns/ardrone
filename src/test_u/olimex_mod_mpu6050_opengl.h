@@ -33,6 +33,8 @@
 //void axes (GLfloat); // length
 
 GLuint axes ();
+void draw_teapot (bool,    // solid ?
+                  float); // scale
 void frames_per_second (float); // fps
 
 #endif

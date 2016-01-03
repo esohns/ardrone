@@ -25,7 +25,7 @@
 #include "glade/glade.h"
 
 #include "ace/Log_Msg.h"
-#include "ace/Synch.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_file_tools.h"
 
@@ -35,7 +35,7 @@
 
 Olimex_Mod_MPU6050_GTKUIDefinition::Olimex_Mod_MPU6050_GTKUIDefinition (int argc_in,
                                                                         ACE_TCHAR** argv_in,
-                                                                        Olimex_Mod_MPU6050_GtkCBData_t* GtkCBData_in)
+                                                                        Olimex_Mod_MPU6050_GtkCBData* GtkCBData_in)
  : argc_ (argc_in)
  , argv_ (argv_in)
  , GtkCBData_ (GtkCBData_in)
@@ -65,20 +65,21 @@ Olimex_Mod_MPU6050_GTKUIDefinition::initialize (const std::string& filename_in)
     return false;
   } // end IF
 
-  ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
+  ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (GtkCBData_->lock);
 
   // step1: load widget tree
-  ACE_ASSERT (!GtkCBData_->XML);
-  GtkCBData_->XML = glade_xml_new (filename_in.c_str (), // definition file
-                                   NULL,                 // root widget --> construct all
-                                   NULL);                // domain
-  if (!GtkCBData_->XML)
+  GladeXML* XML_p =
+    glade_xml_new (filename_in.c_str (), // definition file
+                   NULL,                 // root widget --> construct all
+                   NULL);                // domain
+  if (!XML_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to glade_xml_new(\"%s\"): \"%m\", aborting\n"),
                 ACE_TEXT (filename_in.c_str ())));
     return false;
   } // end IF
+  GtkCBData_->gladeXML.insert (std::make_pair ());
 
   // step2: schedule UI initialization
   guint event_source_id = g_idle_add (idle_initialize_ui_cb,
@@ -102,7 +103,7 @@ Olimex_Mod_MPU6050_GTKUIDefinition::finalize ()
 
   // schedule UI finalization
   gpointer user_data_p =
-      const_cast<Olimex_Mod_MPU6050_GtkCBData_t*> (GtkCBData_);
+      const_cast<Olimex_Mod_MPU6050_GtkCBData*> (GtkCBData_);
   guint event_source_id = g_idle_add (idle_finalize_ui_cb,
                                       user_data_p);
   if (event_source_id == 0)
@@ -110,7 +111,7 @@ Olimex_Mod_MPU6050_GTKUIDefinition::finalize ()
                 ACE_TEXT ("failed to g_idle_add(): \"%m\", continuing\n")));
   else
   {
-    ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard (GtkCBData_->lock);
+    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (GtkCBData_->lock);
 
     GtkCBData_->eventSourceIds.push_back (event_source_id);
   } // end ELSE

@@ -37,7 +37,9 @@
 #include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
 
-typedef Stream_Module_Net_Source_T<Olimex_Mod_MPU6050_SessionMessage,
+typedef Stream_Module_Net_Source_T<ACE_SYNCH_MUTEX,
+                                   //////
+                                   Olimex_Mod_MPU6050_SessionMessage,
                                    Olimex_Mod_MPU6050_Message,
                                    //////
                                    Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
@@ -56,7 +58,9 @@ DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                  // 
                               Stream_ModuleConfiguration,                    // module configuration type
                               Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
                               Olimex_Mod_MPU6050_Module_SocketHandler);      // writer type
-typedef Stream_Module_Net_Source_T<Olimex_Mod_MPU6050_SessionMessage,
+typedef Stream_Module_Net_Source_T<ACE_SYNCH_MUTEX,
+                                   //////
+                                   Olimex_Mod_MPU6050_SessionMessage,
                                    Olimex_Mod_MPU6050_Message,
                                    //////
                                    Olimex_Mod_MPU6050_ModuleHandlerConfiguration,

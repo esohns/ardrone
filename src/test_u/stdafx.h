@@ -3,7 +3,8 @@
 //      are changed infrequently
 //
 #if defined _MSC_VER
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#define _USE_MATH_DEFINES
 
 // Windows Header Files
 #include <windows.h>

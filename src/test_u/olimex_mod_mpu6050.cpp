@@ -494,7 +494,7 @@ do_work (int argc_in,
   event_handler_impl->initialize ();
   event_handler_impl->subscribe (&event_handler);
 
-  Stream_AllocatorHeap heap_allocator;
+  Stream_AllocatorHeap_T<Stream_AllocatorConfiguration> heap_allocator;
   Olimex_Mod_MPU6050_MessageAllocator_t message_allocator (OLIMEX_MOD_MPU6050_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                            &heap_allocator,
                                                            true); // block
@@ -782,7 +782,8 @@ do_work (int argc_in,
 
   // step6b: initialize worker(s)
   int group_id = -1;
-  if (!Common_Tools::startEventDispatch (useReactor_in,
+  bool* use_reactor = &useReactor_in;
+  if (!Common_Tools::startEventDispatch (use_reactor,
                                          1,
                                          group_id))
   {

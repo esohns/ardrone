@@ -23,6 +23,7 @@
 
 #include "ace/Global_Macros.h"
 
+#include "stream_common.h"
 #include "stream_messageallocatorheap_base.h"
 #include "stream_session_message_base.h"
 
@@ -36,11 +37,15 @@ class ACE_Data_Block;
 class ACE_Message_Block;
 
 class Olimex_Mod_MPU6050_SessionMessage
- : public Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
+ : public Stream_SessionMessageBase_T<Stream_AllocatorConfiguration,
+                                      ///
+                                      Olimex_Mod_MPU6050_StreamSessionData_t,
                                       Olimex_Mod_MPU6050_UserData>
 {
   // enable access to private ctor(s)...
-  friend class Stream_MessageAllocatorHeapBase_T<Olimex_Mod_MPU6050_Message,
+  friend class Stream_MessageAllocatorHeapBase_T<Stream_AllocatorConfiguration,
+                                                 
+                                                 Olimex_Mod_MPU6050_Message,
                                                  Olimex_Mod_MPU6050_SessionMessage>;
 
  public:
@@ -59,7 +64,9 @@ class Olimex_Mod_MPU6050_SessionMessage
   virtual ACE_Message_Block* duplicate (void) const;
 
  private:
-  typedef Stream_SessionMessageBase_T<Olimex_Mod_MPU6050_StreamSessionData_t,
+  typedef Stream_SessionMessageBase_T<Stream_AllocatorConfiguration,
+                                      ///
+                                      Olimex_Mod_MPU6050_StreamSessionData_t,
                                       Olimex_Mod_MPU6050_UserData> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ())
