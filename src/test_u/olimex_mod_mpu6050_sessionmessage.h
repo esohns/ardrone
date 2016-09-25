@@ -38,13 +38,15 @@ class ACE_Message_Block;
 
 class Olimex_Mod_MPU6050_SessionMessage
  : public Stream_SessionMessageBase_T<Stream_AllocatorConfiguration,
-                                      ///
+                                      Stream_SessionMessageType,
                                       Olimex_Mod_MPU6050_StreamSessionData_t,
-                                      Olimex_Mod_MPU6050_UserData>
+                                      Olimex_Mod_MPU6050_UserData,
+                                      Stream_ControlMessageType,
+                                      Olimex_Mod_MPU6050_Message>
 {
   // enable access to private ctor(s)...
   friend class Stream_MessageAllocatorHeapBase_T<Stream_AllocatorConfiguration,
-                                                 
+                                                 Olimex_Mod_MPU6050_ControlMessage_t,
                                                  Olimex_Mod_MPU6050_Message,
                                                  Olimex_Mod_MPU6050_SessionMessage>;
 
@@ -65,9 +67,11 @@ class Olimex_Mod_MPU6050_SessionMessage
 
  private:
   typedef Stream_SessionMessageBase_T<Stream_AllocatorConfiguration,
-                                      ///
+                                      Stream_SessionMessageType,
                                       Olimex_Mod_MPU6050_StreamSessionData_t,
-                                      Olimex_Mod_MPU6050_UserData> inherited;
+                                      Olimex_Mod_MPU6050_UserData,
+                                      Stream_ControlMessageType,
+                                      Olimex_Mod_MPU6050_Message> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SessionMessage ())
   // copy ctor (to be used by duplicate())

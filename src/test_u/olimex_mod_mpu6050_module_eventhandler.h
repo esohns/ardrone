@@ -29,7 +29,7 @@
 #include "stream_common.h"
 #include "stream_streammodule_base.h"
 
-#include "stream_module_messagehandler.h"
+#include "stream_misc_messagehandler.h"
 
 #include "olimex_mod_mpu6050_message.h"
 #include "olimex_mod_mpu6050_sessionmessage.h"
@@ -41,11 +41,13 @@
 //class Olimex_Mod_MPU6050_Message;
 
 class Olimex_Mod_MPU6050_Module_EventHandler
- : public Stream_Module_MessageHandler_T<Olimex_Mod_MPU6050_SessionMessage,
-                                         Olimex_Mod_MPU6050_Message,
-                                         
+ : public Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
+                                         Common_TimePolicy_t,
                                          Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                                         
+                                         Olimex_Mod_MPU6050_ControlMessage_t,
+                                         Olimex_Mod_MPU6050_Message,
+                                         Olimex_Mod_MPU6050_SessionMessage,
+                                         Stream_SessionId_t,
                                          Olimex_Mod_MPU6050_SessionData>
 {
  public:
@@ -56,11 +58,13 @@ class Olimex_Mod_MPU6050_Module_EventHandler
   virtual Stream_Module_t* clone ();
 
  private:
-  typedef Stream_Module_MessageHandler_T<Olimex_Mod_MPU6050_SessionMessage,
-                                         Olimex_Mod_MPU6050_Message,
-
+  typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
+                                         Common_TimePolicy_t,
                                          Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-
+                                         Olimex_Mod_MPU6050_ControlMessage_t,
+                                         Olimex_Mod_MPU6050_Message,
+                                         Olimex_Mod_MPU6050_SessionMessage,
+                                         Stream_SessionId_t,
                                          Olimex_Mod_MPU6050_SessionData> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Module_EventHandler (const Olimex_Mod_MPU6050_Module_EventHandler&))
@@ -68,10 +72,10 @@ class Olimex_Mod_MPU6050_Module_EventHandler
 };
 
 // declare module
-DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                  // task synch type
-                              Common_TimePolicy_t,                           // time policy
-                              Stream_ModuleConfiguration,                    // module configuration type
+DATASTREAM_MODULE_INPUT_ONLY (Olimex_Mod_MPU6050_SessionData,                // session data type
+                              Stream_SessionMessageType,                     // session event type
                               Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
+                              Olimex_Mod_MPU6050_IStreamNotify_t,            // stream notification interface type
                               Olimex_Mod_MPU6050_Module_EventHandler);       // writer type
 
 #endif

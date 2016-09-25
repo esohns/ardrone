@@ -29,17 +29,8 @@
 
 #include "olimex_mod_mpu6050_macros.h"
 
-Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr& peerAddress_in,
-                                                                    Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_in,
-                                                                    // ---------
-                                                                    bool consoleMode_in,
-                                                                    bool useReactor_in)
- : inherited (this,          // event handler handle
-              useReactor_in) // use reactor ?
- , consoleMode_ (consoleMode_in)
- , interfaceHandle_ (interfaceHandle_in)
- , peerAddress_ (peerAddress_in)
- , useReactor_ (useReactor_in)
+Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler ()
+ : inherited (this) // event handler handle
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SignalHandler::Olimex_Mod_MPU6050_SignalHandler"));
 
@@ -55,6 +46,9 @@ bool
 Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
 {
   OLIMEX_MOD_MPU6050_TRACE (ACE_TEXT ("Olimex_Mod_MPU6050_SignalHandler::handleSignal"));
+
+  // sanity check(s)
+  ACE_ASSERT (inherited::configuration_);
 
   bool stop_event_dispatching = false;
   bool connect = false;
@@ -117,14 +111,11 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
 
   // ...connect ?
   if (connect &&
-      interfaceHandle_)
+      inherited::configuration_->interfaceHandle)
   {
-    try
-    {
-      interfaceHandle_->connect (peerAddress_);
-    }
-    catch (...)
-    {
+    try {
+      inherited::configuration_->interfaceHandle->connect (inherited::configuration_->peerAddress);
+    } catch (...) {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("caught exception in Olimex_Mod_MPU6050_IConnector_t::connect(), aborting\n")));
 
@@ -140,14 +131,11 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     // --> (try to) terminate in a well-behaved manner
 
     // step1: close open connection attempt(s)
-    if (interfaceHandle_)
+    if (inherited::configuration_->interfaceHandle)
     {
-      try
-      {
-        interfaceHandle_->abort ();
-      }
-      catch (...)
-      {
+      try {
+        inherited::configuration_->interfaceHandle->abort ();
+      } catch (...) {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("caught exception in Olimex_Mod_MPU6050_IConnector_t::abort(), aborting\n")));
 
@@ -156,13 +144,13 @@ Olimex_Mod_MPU6050_SignalHandler::handleSignal (int signal_in)
     } // end IF
 
     // step2: stop GTK event dispatch ?
-    if (!consoleMode_)
+    if (!inherited::configuration_->consoleMode)
       COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (true,         // stop reactor ?
-                                         !useReactor_, // stop proactor ?
-                                         -1);          // group ID (--> don't block !)
+    Common_Tools::finalizeEventDispatch (true,                                   // stop reactor ?
+                                         !inherited::configuration_->useReactor, // stop proactor ?
+                                         -1);                                    // group ID (--> don't block !)
   } // end IF
 
   return true;

@@ -28,7 +28,9 @@
 #include "stream_common.h"
 #include "stream_streammodule_base.h"
 
-#include "stream_module_runtimestatistic.h"
+#include "stream_misc_queue_source.h"
+#include "stream_misc_runtimestatistic.h"
+
 #include "stream_module_source.h"
 
 #include "olimex_mod_mpu6050_message.h"
@@ -37,69 +39,67 @@
 #include "olimex_mod_mpu6050_stream_common.h"
 #include "olimex_mod_mpu6050_types.h"
 
-typedef Stream_Module_Net_Source_T<ACE_SYNCH_MUTEX,
-                                   //////
-                                   Olimex_Mod_MPU6050_SessionMessage,
-                                   Olimex_Mod_MPU6050_Message,
-                                   //////
-                                   Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                                   //////
-                                   Olimex_Mod_MPU6050_StreamState,
-                                   //////
-                                   Olimex_Mod_MPU6050_SessionData,
-                                   Olimex_Mod_MPU6050_StreamSessionData_t,
-                                   //////
-                                   Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                   //////
-                                   Olimex_Mod_MPU6050_ConnectionManager_t,
-                                   Olimex_Mod_MPU6050_Connector_t> Olimex_Mod_MPU6050_Module_SocketHandler;
-DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                  // task synch type
-                              Common_TimePolicy_t,                           // time policy type
-                              Stream_ModuleConfiguration,                    // module configuration type
+typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
+                                    Olimex_Mod_MPU6050_ControlMessage_t,
+                                    Olimex_Mod_MPU6050_Message,
+                                    Olimex_Mod_MPU6050_SessionMessage,
+                                    Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                    Stream_ControlType,
+                                    Stream_SessionMessageType,
+                                    Olimex_Mod_MPU6050_StreamState,
+                                    Olimex_Mod_MPU6050_SessionData,
+                                    Olimex_Mod_MPU6050_StreamSessionData_t,
+                                    Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                    Olimex_Mod_MPU6050_ConnectionManager_t,
+                                    Olimex_Mod_MPU6050_Connector_t> Olimex_Mod_MPU6050_Module_SocketHandler;
+DATASTREAM_MODULE_INPUT_ONLY (Olimex_Mod_MPU6050_SessionData,                // session data type
+                              Stream_SessionMessageType,                     // session event type
                               Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
+                              Olimex_Mod_MPU6050_IStreamNotify_t,            // stream notification interface type
                               Olimex_Mod_MPU6050_Module_SocketHandler);      // writer type
-typedef Stream_Module_Net_Source_T<ACE_SYNCH_MUTEX,
-                                   //////
-                                   Olimex_Mod_MPU6050_SessionMessage,
-                                   Olimex_Mod_MPU6050_Message,
-                                   //////
-                                   Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                                   //////
-                                   Olimex_Mod_MPU6050_StreamState,
-                                   //////
-                                   Olimex_Mod_MPU6050_SessionData,
-                                   Olimex_Mod_MPU6050_StreamSessionData_t,
-                                   //////
-                                   Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                                   //////
-                                   Olimex_Mod_MPU6050_ConnectionManager_t,
-                                   Olimex_Mod_MPU6050_AsynchConnector_t> Olimex_Mod_MPU6050_Module_AsynchSocketHandler;
-DATASTREAM_MODULE_INPUT_ONLY (ACE_MT_SYNCH,                                   // task synch type
-                              Common_TimePolicy_t,                            // time policy type
-                              Stream_ModuleConfiguration,                     // module configuration type
-                              Olimex_Mod_MPU6050_ModuleHandlerConfiguration,  // module handler configuration type
+typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
+                                    Olimex_Mod_MPU6050_ControlMessage_t,
+                                    Olimex_Mod_MPU6050_Message,
+                                    Olimex_Mod_MPU6050_SessionMessage,
+                                    Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                    Stream_ControlType,
+                                    Stream_SessionMessageType,
+                                    Olimex_Mod_MPU6050_StreamState,
+                                    Olimex_Mod_MPU6050_SessionData,
+                                    Olimex_Mod_MPU6050_StreamSessionData_t,
+                                    Olimex_Mod_MPU6050_RuntimeStatistic_t,
+                                    Olimex_Mod_MPU6050_ConnectionManager_t,
+                                    Olimex_Mod_MPU6050_AsynchConnector_t> Olimex_Mod_MPU6050_Module_AsynchSocketHandler;
+DATASTREAM_MODULE_INPUT_ONLY (Olimex_Mod_MPU6050_SessionData,                // session data type
+                              Stream_SessionMessageType,                     // session event type
+                              Olimex_Mod_MPU6050_ModuleHandlerConfiguration, // module handler configuration type
+                              Olimex_Mod_MPU6050_IStreamNotify_t,            // stream notification interface type
                               Olimex_Mod_MPU6050_Module_AsynchSocketHandler); // writer type
 
 typedef Stream_Module_Statistic_ReaderTask_T<ACE_MT_SYNCH,
                                              Common_TimePolicy_t,
-                                             Olimex_Mod_MPU6050_SessionMessage,
+                                             Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                             Olimex_Mod_MPU6050_ControlMessage_t,
                                              Olimex_Mod_MPU6050_Message,
+                                             Olimex_Mod_MPU6050_SessionMessage,
                                              Olimex_Mod_MPU6050_MessageType,
                                              Olimex_Mod_MPU6050_RuntimeStatistic_t,
                                              Olimex_Mod_MPU6050_SessionData,
                                              Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Module_Statistic_ReaderTask_t;
 typedef Stream_Module_Statistic_WriterTask_T<ACE_MT_SYNCH,
                                              Common_TimePolicy_t,
-                                             Olimex_Mod_MPU6050_SessionMessage,
+                                             Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
+                                             Olimex_Mod_MPU6050_ControlMessage_t,
                                              Olimex_Mod_MPU6050_Message,
+                                             Olimex_Mod_MPU6050_SessionMessage,
                                              Olimex_Mod_MPU6050_MessageType,
                                              Olimex_Mod_MPU6050_RuntimeStatistic_t,
                                              Olimex_Mod_MPU6050_SessionData,
                                              Olimex_Mod_MPU6050_StreamSessionData_t> Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t;
-DATASTREAM_MODULE_DUPLEX (ACE_MT_SYNCH,                                     // task synch type
-                          Common_TimePolicy_t,                              // time policy type
-                          Stream_ModuleConfiguration,                       // module configuration type
+DATASTREAM_MODULE_DUPLEX (Olimex_Mod_MPU6050_SessionData,                   // session data type
+                          Stream_SessionMessageType,                        // session event type
                           Olimex_Mod_MPU6050_ModuleHandlerConfiguration,    // module handler configuration type
+                          Olimex_Mod_MPU6050_IStreamNotify_t,               // stream notification interface type
                           Olimex_Mod_MPU6050_Module_Statistic_ReaderTask_t, // reader type
                           Olimex_Mod_MPU6050_Module_Statistic_WriterTask_t, // writer type
                           Olimex_Mod_MPU6050_Module_RuntimeStatistic);      // name

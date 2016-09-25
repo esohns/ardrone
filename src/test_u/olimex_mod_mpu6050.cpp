@@ -24,26 +24,26 @@
 #include <locale.h>
 #include <libintl.h>
 #endif
-#include "gettext.h"
+#include <gettext.h>
 
 #if defined (OLINUXINO_ENABLE_VALGRIND_SUPPORT)
-#include "valgrind/memcheck.h"
+#include <valgrind/memcheck.h>
 #endif
 
-#include "ace/ACE.h"
-#include "ace/Get_Opt.h"
+#include <ace/ACE.h>
+#include <ace/Get_Opt.h>
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "ace/Init_ACE.h"
+#include <ace/Init_ACE.h>
 #endif
-#include "ace/Log_Msg.h"
-#include "ace/OS.h"
-#include "ace/OS_main.h"
+#include <ace/Log_Msg.h>
+#include <ace/OS.h>
+#include <ace/OS_main.h>
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#include "ace/POSIX_Proactor.h"
+#include <ace/POSIX_Proactor.h>
 #endif
-#include "ace/Profile_Timer.h"
-#include "ace/Time_Value.h"
+#include <ace/Profile_Timer.h>
+#include <ace/Time_Value.h>
 
 #include "olinuxino_config.h"
 
@@ -82,7 +82,11 @@ do_printVersion (const std::string& programName_in)
   std::cout << programName_in
             << ACE_TEXT_ALWAYS_CHAR (": ")
 #ifdef HAVE_CONFIG_H
-            << OLINUXINO_VERSION
+            << olinuxino_VERSION_MAJOR
+            << ACE_TEXT_ALWAYS_CHAR (".")
+            << olinuxino_VERSION_MINOR
+            << ACE_TEXT_ALWAYS_CHAR (".")
+            << olinuxino_VERSION_MICRO
 #else
             << ACE_TEXT_ALWAYS_CHAR ("N/A")
 #endif
@@ -516,9 +520,9 @@ do_work (int argc_in,
   Olimex_Mod_MPU6050_AsynchStream_t asynch_stream;
 
   // ******************* socket configuration data ****************************
+  configuration.socketConfiguration.address = peerAddress_in;
   configuration.socketConfiguration.bufferSize =
     OLIMEX_MOD_MPU6050_SOCKET_RECEIVE_BUFFER_SIZE;
-  configuration.socketConfiguration.peerAddress = peerAddress_in;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   configuration.socketConfiguration.netlinkAddress = netlinkAddress_in;
@@ -587,10 +591,14 @@ do_work (int argc_in,
 #endif
 
   // step3: initialize event dispatch
+  Common_ProactorType proactor_type;
+  Common_ReactorType reactor_type;
   bool serialize_output;
   if (!Common_Tools::initializeEventDispatch (useReactor_in,
                                               false,
                                               1,
+                                              proactor_type,
+                                              reactor_type,
                                               serialize_output))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -681,11 +689,17 @@ do_work (int argc_in,
 //#endif
 
   // step4: initialize signal handling
-  Olimex_Mod_MPU6050_SignalHandler signal_handler (peerAddress_in,                       // peer address
-                                                   //iconnector_p,                         // connector
-                                                   NULL,                                 // connector
-                                                   useReactor_in,                        // use reactor ?
-                                                   interfaceDefinitionFile_in.empty ()); // console mode ?
+  Olimex_Mod_MPU6050_SignalHandlerConfiguration signalhandler_configuration;
+  signalhandler_configuration.consoleMode = interfaceDefinitionFile_in.empty ();
+  signalhandler_configuration.peerAddress = peerAddress_in;
+  signalhandler_configuration.useReactor = useReactor_in;
+  Olimex_Mod_MPU6050_SignalHandler signal_handler;
+  if (!signal_handler.initialize (signalhandler_configuration))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize signal handler, returning\n")));
+    return;
+  } // end IF
   if (!Common_Tools::initializeSignals (signalSet_in,
                                         ignoredSignalSet_in,
                                         &signal_handler,
@@ -782,9 +796,12 @@ do_work (int argc_in,
 
   // step6b: initialize worker(s)
   int group_id = -1;
-  bool* use_reactor = &useReactor_in;
-  if (!Common_Tools::startEventDispatch (use_reactor,
-                                         1,
+  Common_DispatchThreadData thread_data;
+  thread_data.numberOfDispatchThreads = 1;
+  thread_data.proactorType = proactor_type;
+  thread_data.reactorType = reactor_type;
+  thread_data.useReactor = useReactor_in;
+  if (!Common_Tools::startEventDispatch (thread_data,
                                          group_id))
   {
     ACE_DEBUG ((LM_ERROR,

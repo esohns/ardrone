@@ -43,11 +43,16 @@ class Olimex_Mod_MPU6050_EventHandler
                                    bool = false);                 // console mode ?
   virtual ~Olimex_Mod_MPU6050_EventHandler ();
 
-  // implement Common_INotify_T
-  virtual void start (const Olimex_Mod_MPU6050_SessionData&);
-  virtual void notify (const Olimex_Mod_MPU6050_Message&); // data
-  virtual void notify (const Olimex_Mod_MPU6050_SessionMessage&); // session message
-  virtual void end ();
+  // implement Stream_ISessionDataNotify_T
+  virtual void start (Stream_SessionId_t,                     // session id
+                      const Olimex_Mod_MPU6050_SessionData&); // session data
+  virtual void notify (Stream_SessionId_t,                // session id
+                       const Stream_SessionMessageType&); // event (state/status change, ...)
+  virtual void notify (Stream_SessionId_t,                 // session id
+                       const Olimex_Mod_MPU6050_Message&); // data
+  virtual void notify (Stream_SessionId_t,                        // session id
+                       const Olimex_Mod_MPU6050_SessionMessage&); // session message
+  virtual void end (Stream_SessionId_t); // session id
 
  private:
   typedef Olimex_Mod_MPU6050_Notification_t inherited;

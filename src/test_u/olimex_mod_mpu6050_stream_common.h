@@ -23,14 +23,16 @@
 #include "stream_common.h"
 #include "stream_messageallocatorheap_base.h"
 
+#include "olimex_mod_mpu6050_types.h"
+
 // forward declarations
 class Olimex_Mod_MPU6050_Message;
 class Olimex_Mod_MPU6050_SessionMessage;
 
-typedef Stream_MessageAllocatorHeapBase_T<Stream_AllocatorConfiguration,
-
-                                          Olimex_Mod_MPU6050_Message,
-                                          Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_MessageAllocator_t;
+//typedef Stream_MessageAllocatorHeapBase_T<Stream_AllocatorConfiguration,
+//                                          Olimex_Mod_MPU6050_ControlMessage_t,
+//                                          Olimex_Mod_MPU6050_Message,
+//                                          Olimex_Mod_MPU6050_SessionMessage> Olimex_Mod_MPU6050_MessageAllocator_t;
 
 struct Olimex_Mod_MPU6050_UserData;
 struct Olimex_Mod_MPU6050_SessionData;

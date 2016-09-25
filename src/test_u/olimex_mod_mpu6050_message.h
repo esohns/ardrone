@@ -39,11 +39,15 @@ class ACE_Message_Block;
 class Olimex_Mod_MPU6050_SessionMessage;
 
 class Olimex_Mod_MPU6050_Message
- : public Stream_MessageBase_T<Stream_AllocatorConfiguration>
+ : public Stream_MessageBase_T<Stream_AllocatorConfiguration,
+                               Stream_ControlMessageType,
+                               Stream_SessionMessageType,
+                               Olimex_Mod_MPU6050_MessageType>
  //: public Stream_DataMessageBase_T<Olimex_Mod_MPU6050_MessageType>
 {
   // enable access to specific private ctors...
   friend class Stream_MessageAllocatorHeapBase_T<Stream_AllocatorConfiguration,
+                                                 Olimex_Mod_MPU6050_ControlMessage_t,
                                                  Olimex_Mod_MPU6050_Message,
                                                  Olimex_Mod_MPU6050_SessionMessage>;
 
@@ -64,7 +68,10 @@ class Olimex_Mod_MPU6050_Message
   Olimex_Mod_MPU6050_Message (const Olimex_Mod_MPU6050_Message&);
 
  private:
-  typedef Stream_MessageBase_T<Stream_AllocatorConfiguration> inherited;
+  typedef Stream_MessageBase_T<Stream_AllocatorConfiguration,
+                               Stream_ControlMessageType,
+                               Stream_SessionMessageType,
+                               Olimex_Mod_MPU6050_MessageType> inherited;
   //typedef Stream_MessageBase_T<Olimex_Mod_MPU6050_MessageType> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Message ())

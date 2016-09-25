@@ -74,13 +74,13 @@ install (EXPORT ${PROJECT_NAME}Targets
 
 set (PACKAGE ${PROJECT_NAME})
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}_config.h
+                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h
                 @ONLY)
 #add_custom_target (${PROJECT_NAME}_config)
 #set_target_properties (${PROJECT_NAME}_config PROPERTIES
 #                       PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h")
 
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}_config.h"
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
          DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
          COMPONENT dev)
 

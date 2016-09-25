@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 2.8)
-
 if (UNIX)
 # include (CheckLibraryExists)
 # check_library_exists (pthread pthread_create "" HAVE_LIB_PTHREAD)
@@ -36,7 +34,7 @@ else ()
 endif ()
 add_definitions (-DACE_HAS_DLL)
 
-set (GLUT_LIB_FILE libGlut.so)
+set (GLUT_LIB_FILE libglut.so.3)
 if (UNIX)
  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
                DOC "searching for ${GLUT_LIB_FILE} (system paths)")
@@ -54,10 +52,16 @@ else ()
  message (STATUS "Found Glut library \"${GLUT_LIBRARY}\"")
 endif ()
 
+include (FindGettext)
 include (FindPkgConfig)
+
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 if (UNIX)
- pkg_check_modules (PKG_GTK_GLADE REQUIRED libpng gmodule-2.0 gthread-2.0 gtk+-2.0 libglade-2.0)
+# *NOTE*: libCommon requires libcap
+ pkg_check_modules (PKG_CAP REQUIRED libcap)
+ pkg_check_modules (PKG_GTKGL REQUIRED libpng gmodule-2.0 gthread-2.0 gtk+-2.0 gtkglext-1.0)
+# pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
+ pkg_check_modules (PKG_GLADE REQUIRED libglade-2.0)
 endif ()
 # *TODO*: repair WIN32 pkgconfig support
 
@@ -95,11 +99,15 @@ endif ()
 add_definitions (-DNETWORK_HAS_DLL)
 
 add_definitions (-DHAVE_CONFIG_H)
+add_definitions (-DLIBGLADE_SUPPORT)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 if (UNIX)
+ include_directories (/usr/share/gettext)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACE)
- include_directories (${PKG_GTK_GLADE_INCLUDE_DIRS})
+ include_directories (${PKG_CAP_INCLUDE_DIRS})
+ include_directories (${PKG_GTKGL_INCLUDE_DIRS})
+ include_directories (${PKG_GLADE_INCLUDE_DIRS})
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src)
@@ -179,7 +187,11 @@ add_executable (${EXECUTABLE} ${mod_mpu6050_EXE_SRCS} etc/olimex_mod_mpu6050.gla
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 if (UNIX)
- target_link_libraries (${EXECUTABLE} ${PKG_GTK_GLADE_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} rt)
+ target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${PKG_GTKGL_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${PKG_GLADE_LIBRARIES})
+# target_link_libraries (${EXECUTABLE} ${PKG_GTK3_LIBRARIES})
 elseif (WIN32)
 # *TODO*: repair WIN32 pkgconfig support
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/lib/gio-2.0.lib)
@@ -194,6 +206,7 @@ elseif (WIN32)
 endif ()
 target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
 target_link_libraries (${EXECUTABLE} Common)
+target_link_libraries (${EXECUTABLE} CommonUI)
 if (WIN32)
  # *WARNING*: linking CommonUI requires "/FORCE:MULTIPLE""
  set_target_properties (${EXECUTABLE} PROPERTIES LINK_FLAGS "/FORCE:MULTIPLE /SAFESEH:NO")

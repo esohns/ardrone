@@ -21,41 +21,30 @@
 #ifndef OLIMEX_MOD_MPU6050_SIGNALHANDLER_H
 #define OLIMEX_MOD_MPU6050_SIGNALHANDLER_H
 
-#include "ace/Global_Macros.h"
-#include "ace/INET_Addr.h"
+#include <ace/Global_Macros.h>
 
 #include "common_signalhandler.h"
 #include "common_isignal.h"
 
 #include "olimex_mod_mpu6050_network.h"
+#include "olimex_mod_mpu6050_types.h"
 
 class Olimex_Mod_MPU6050_SignalHandler
- : public Common_SignalHandler,
-   public Common_ISignal
+ : public Common_SignalHandler_T<Olimex_Mod_MPU6050_SignalHandlerConfiguration>
+ , public Common_ISignal
 {
  public:
-  Olimex_Mod_MPU6050_SignalHandler (const ACE_INET_Addr&,             // peer address
-                                    Olimex_Mod_MPU6050_IConnector_t*, // connector
-                                    // -----------------------------------------
-                                    bool,                             // use reactor ?
-                                    bool);                            // console mode ?
+  Olimex_Mod_MPU6050_SignalHandler ();
   virtual ~Olimex_Mod_MPU6050_SignalHandler ();
 
   // implement Common_ISignal
   virtual bool handleSignal (int); // signal
 
  private:
-  typedef Common_SignalHandler inherited;
+  typedef Common_SignalHandler_T<Olimex_Mod_MPU6050_SignalHandlerConfiguration> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler ());
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler (const Olimex_Mod_MPU6050_SignalHandler&));
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_SignalHandler& operator= (const Olimex_Mod_MPU6050_SignalHandler&));
-
-  long                             actionTimerID_;
-  bool                             consoleMode_;
-  Olimex_Mod_MPU6050_IConnector_t* interfaceHandle_;
-  ACE_INET_Addr                    peerAddress_;
-  bool                             useReactor_;
 };
 
 #endif

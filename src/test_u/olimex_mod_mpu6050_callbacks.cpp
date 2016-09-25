@@ -27,17 +27,17 @@
 #include "math.h"
 #endif
 
-#include "ace/Log_Msg.h"
+#include <ace/Log_Msg.h>
 
-#include "GL/gl.h"
-#include "GL/glu.h"
-#include "GL/glut.h"
-#include "glm/glm.hpp"
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
+#include <glm/glm.hpp>
 
-#include "gmodule.h"
+#include <gmodule.h>
 
-#include "gdk/gdkkeysyms.h"
-#include "gtk/gtkgl.h"
+#include <gdk/gdkkeysyms.h>
+#include <gtk/gtkgl.h>
 
 #include "common_timer_manager.h"
 
@@ -288,7 +288,7 @@ idle_finalize_ui_cb (gpointer userData_in)
 
   // synch access
   {
-    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
 
     unsigned int num_messages = cb_data_p->messageQueue.size ();
     while (!cb_data_p->messageQueue.empty ())
@@ -377,7 +377,7 @@ configure_cb (GtkWidget* widget_in,
 
   if (!cb_data_p->openGLAxesListId)
   {
-    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
 
     cb_data_p->openGLAxesListId = ::axes ();
     if (!glIsList (cb_data_p->openGLAxesListId))
@@ -711,7 +711,7 @@ process_cb (gpointer userData_in)
   ACE_ASSERT (status_bar_p);
   Olimex_Mod_MPU6050_Message* message_p = NULL;
   {
-    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
     {
       return TRUE; // --> continue processing
@@ -1082,7 +1082,7 @@ calibrate_clicked_gtk_cb (GtkWidget* widget_in,
                     0,
                     sizeof (cb_data_p->clientSensorBias));
 
-    ACE_Guard<ACE_SYNCH_RECURSIVE_MUTEX> aGuard (cb_data_p->lock);
+    ACE_Guard<ACE_SYNCH_MUTEX> aGuard (cb_data_p->lock);
     if (cb_data_p->eventQueue.empty ())
     {
       ACE_DEBUG ((LM_WARNING,

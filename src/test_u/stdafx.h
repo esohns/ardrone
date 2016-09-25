@@ -31,3 +31,5 @@
 #include <iostream>
 #include <sstream>
 #include <functional>
+
+#define LIGBGLADE_SUPPORT

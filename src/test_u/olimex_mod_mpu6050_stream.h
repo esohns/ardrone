@@ -37,35 +37,35 @@
 
 template <typename SourceModuleType>
 class Olimex_Mod_MPU6050_Stream_T
- : public Stream_Base_T<ACE_SYNCH_MUTEX,
-                        /////////////////
+ : public Stream_Base_T<ACE_MT_SYNCH,
                         ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        /////////////////
+                        Stream_ControlType,
+                        Stream_SessionMessageType,
                         Stream_StateMachine_ControlState,
                         Olimex_Mod_MPU6050_StreamState,
-                        /////////////////
                         Olimex_Mod_MPU6050_StreamConfiguration,
-                        /////////////////
                         Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                        /////////////////
                         Stream_ModuleConfiguration,
                         Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                        /////////////////
                         Olimex_Mod_MPU6050_SessionData,
                         Olimex_Mod_MPU6050_StreamSessionData_t,
-                        Olimex_Mod_MPU6050_SessionMessage,
-                        Olimex_Mod_MPU6050_Message>
+                        Olimex_Mod_MPU6050_ControlMessage_t,
+                        Olimex_Mod_MPU6050_Message,
+                        Olimex_Mod_MPU6050_SessionMessage>
 {
  public:
   Olimex_Mod_MPU6050_Stream_T ();
   virtual ~Olimex_Mod_MPU6050_Stream_T ();
 
-  // implement Common_IInitialize_T
-  virtual bool initialize (const Olimex_Mod_MPU6050_StreamConfiguration&); // configuration
+  // implement (part of) Stream_IStreamControlBase
+  virtual bool load (Stream_ModuleList_t&, // return value: module list
+                     bool&);               // return value: delete modules ?
 
-  // *TODO*: re-consider this API
-  void ping ();
+  // implement Common_IInitialize_T
+  virtual bool initialize (const Olimex_Mod_MPU6050_StreamConfiguration&, // configuration
+                           bool = true,                                   // setup pipeline ?
+                           bool = true);                                  // reset session data ?
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
@@ -73,37 +73,28 @@ class Olimex_Mod_MPU6050_Stream_T
   virtual void report () const;
 
  private:
-  typedef Stream_Base_T<ACE_SYNCH_MUTEX,
-                        /////////////////
+  typedef Stream_Base_T<ACE_MT_SYNCH,
                         ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        /////////////////
+                        Stream_ControlType,
+                        Stream_SessionMessageType,
                         Stream_StateMachine_ControlState,
                         Olimex_Mod_MPU6050_StreamState,
-                        /////////////////
                         Olimex_Mod_MPU6050_StreamConfiguration,
-                        /////////////////
                         Olimex_Mod_MPU6050_RuntimeStatistic_t,
-                        /////////////////
                         Stream_ModuleConfiguration,
                         Olimex_Mod_MPU6050_ModuleHandlerConfiguration,
-                        /////////////////
                         Olimex_Mod_MPU6050_SessionData,
                         Olimex_Mod_MPU6050_StreamSessionData_t,
-                        Olimex_Mod_MPU6050_SessionMessage,
-                        Olimex_Mod_MPU6050_Message> inherited;
+                        Olimex_Mod_MPU6050_ControlMessage_t,
+                        Olimex_Mod_MPU6050_Message,
+                        Olimex_Mod_MPU6050_SessionMessage> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream_T (const Olimex_Mod_MPU6050_Stream_T&))
   ACE_UNIMPLEMENTED_FUNC (Olimex_Mod_MPU6050_Stream_T& operator= (const Olimex_Mod_MPU6050_Stream_T&))
 
-  // finalize stream
-  // *NOTE*: need this to clean up queued modules if something goes wrong during
-  //         initialize () !
-  bool finalize (const Olimex_Mod_MPU6050_Configuration&); // configuration
-
-  // modules
-  SourceModuleType                                  source_;
-  Olimex_Mod_MPU6050_Module_RuntimeStatistic_Module statistic_;
+  // *TODO*: re-consider this API
+  void ping ();
 };
 
 typedef Olimex_Mod_MPU6050_Stream_T<Olimex_Mod_MPU6050_Module_SocketHandler_Module> Olimex_Mod_MPU6050_Stream_t;
