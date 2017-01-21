@@ -1,3 +1,2 @@
 #add_subdirectory (ko)
-add_subdirectory (test_u)
-
+add_subdirectory (test_i)

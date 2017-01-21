@@ -1,0 +1,16 @@
+# ardroneConfig.cmake.in
+#  ARDRONE_INCLUDE_DIRS - include directories for FooBar
+#  ARDRONE_LIBRARIES    - libraries to link against
+
+# Compute paths
+get_filename_component (ARDRONE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set (ARDRONE_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# library dependencies (contains definitions for IMPORTED targets)
+if (NOT TARGET ardrone AND NOT ARDRONE_BINARY_DIR)
+include ("${ARDRONE_CMAKE_DIR}/ARDRoneTargets.cmake")
+endif ()
+
+# These are IMPORTED targets created by ARDroneCommonTargets.cmake
+#set (ARDRONE_LIBRARIES ARDRONE)
+

@@ -1,0 +1,349 @@
+﻿/***************************************************************************
+*   Copyright (C) 2009 by Erik Sohns   *
+*   erik.sohns@web.de   *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************/
+
+#ifndef ARDRONE_STREAM_COMMON_H
+#define ARDRONE_STREAM_COMMON_H
+
+#include <list>
+
+#include <ace/config-lite.h>
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include <d3d9.h>
+#include <strmif.h>
+#include <minwindef.h>
+//#include <mfidl.h>
+#endif
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#ifdef __cplusplus
+extern "C"
+{
+#include <libavformat/avformat.h>
+}
+#endif /* __cplusplus */
+#endif /* ACE_WIN32 || ACE_WIN64 */
+
+#include "common_ui_defines.h"
+
+#include "stream_base.h"
+#include "stream_common.h"
+#include "stream_control_message.h"
+#include "stream_messageallocatorheap_base.h"
+#include "stream_inotify.h"
+#include "stream_isessionnotify.h"
+#include "stream_session_data.h"
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "stream_dev_directshow_tools.h"
+#endif
+
+#include "net_iconnection.h"
+#include "net_iconnectionmanager.h"
+
+#include "ardrone_modules_common.h"
+//#include "ardrone_stream.h"
+
+// forward declarations
+class ARDrone_Message;
+class ARDrone_SessionMessage;
+
+struct ARDrone_UserData;
+struct ARDrone_SessionData;
+struct ARDrone_StreamState
+ : Stream_State
+{
+  inline ARDrone_StreamState ()
+   : currentSessionData (NULL)
+   , userData (NULL)
+  {};
+
+  struct ARDrone_SessionData* currentSessionData;
+  struct ARDrone_UserData*    userData;
+};
+
+struct ARDrone_ConnectionState;
+typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
+struct ARDrone_SessionData
+ : Stream_SessionData
+{
+  inline ARDrone_SessionData ()
+   : Stream_SessionData ()
+   , connectionState (NULL)
+   , currentStatistic ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , direct3DDevice (NULL)
+   , format (NULL)
+   , graphBuilder (NULL)
+   //, rendererNodeId (0)
+   , resetToken (0)
+   , session (NULL)
+   , windowController (NULL)
+#else
+   , format (NULL)
+#endif
+   , state (NULL)
+   , targetFileName ()
+   , userData (NULL)
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    format =
+      static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
+    if (!format)
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to allocate memory, continuing\n")));
+    else
+      ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
+#endif
+  };
+
+  inline struct ARDrone_SessionData operator+= (const struct ARDrone_SessionData& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_SessionData::operator+= (rhs_in);
+
+    // *NOTE*: the idea is to 'merge' the data
+    currentStatistic += rhs_in.currentStatistic;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    // *NOTE*: always use upstream data, if available
+    ULONG reference_count = 0;
+    if (rhs_in.direct3DDevice)
+    {
+      if (direct3DDevice)
+      {
+        direct3DDevice->Release ();
+        direct3DDevice = NULL;
+      } // end IF
+      reference_count = rhs_in.direct3DDevice->AddRef ();
+      direct3DDevice = rhs_in.direct3DDevice;
+      resetToken = rhs_in.resetToken;
+    } // end IF
+    bool format_is_empty = (!format || (format->majortype == GUID_NULL));
+    if (format_is_empty && rhs_in.format)
+      Stream_Module_Device_DirectShow_Tools::copyMediaType (*rhs_in.format,
+                                                            format);
+    if (rhs_in.graphBuilder)
+    {
+      if (graphBuilder)
+      {
+        graphBuilder->Release ();
+        graphBuilder = NULL;
+      } // end IF
+      reference_count = rhs_in.graphBuilder->AddRef ();
+      graphBuilder = rhs_in.graphBuilder;
+    } // end IF
+    //rendererNodeId = (rendererNodeId ? rendererNodeId : rhs_in.rendererNodeId);
+    //session = (session ? session : rhs_in.session);
+    if (rhs_in.windowController)
+    {
+      if (windowController)
+      {
+        windowController->Release ();
+        windowController = NULL;
+      } // end IF
+      reference_count = rhs_in.windowController->AddRef ();
+      windowController = rhs_in.windowController;
+    } // end IF
+#else
+    //format =
+#endif
+    state = (state ? state : rhs_in.state);
+    targetFileName =
+      (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
+    userData = (userData ? userData : rhs_in.userData);
+
+    return *this;
+  };
+
+  struct ARDrone_ConnectionState* connectionState;
+  ARDrone_RuntimeStatistic_t      currentStatistic;
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  IDirect3DDevice9Ex*             direct3DDevice;
+  struct _AMMediaType*            format;
+  IGraphBuilder*                  graphBuilder;
+  //TOPOID                          rendererNodeId;
+  UINT                            resetToken; // direct 3D manager 'id'
+  IMFMediaSession*                session;
+  IVideoWindow*                   windowController;
+#else
+  struct AVInputFormat*           format;
+#endif
+
+  struct ARDrone_StreamState*     state;
+  std::string                     targetFileName;
+
+  struct ARDrone_UserData*        userData;
+};
+typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_StreamSessionData_t;
+
+typedef Stream_ControlMessage_T<enum Stream_ControlType,
+                                enum Stream_ControlMessageType,
+                                struct Stream_AllocatorConfiguration> ARDrone_ControlMessage_t;
+
+typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                          struct Stream_AllocatorConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
+
+typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
+
+typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
+                                    struct ARDrone_SessionData,
+                                    enum Stream_SessionMessageType,
+                                    ARDrone_Message,
+                                    ARDrone_SessionMessage> ARDrone_Notification_t;
+typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
+typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
+
+struct ARDrone_ConnectionConfiguration;
+struct ARDrone_ConnectionState;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          struct ARDrone_ConnectionConfiguration,
+                          struct ARDrone_ConnectionState,
+                          ARDrone_RuntimeStatistic_t> ARDrone_IConnection_t;
+struct ARDrone_UserData;
+typedef Net_IConnectionManager_T<ACE_INET_Addr,
+                                 struct ARDrone_ConnectionConfiguration,
+                                 struct ARDrone_ConnectionState,
+                                 ARDrone_RuntimeStatistic_t,
+                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
+struct ARDrone_DirectShow_FilterConfiguration;
+struct ARDrone_StreamState;
+struct ARDrone_StreamConfiguration;
+struct ARDrone_ModuleHandlerConfiguration;
+struct ARDrone_SocketHandlerConfiguration;
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      enum Stream_ControlType,
+                      enum Stream_SessionMessageType,
+                      enum Stream_StateMachine_ControlState,
+                      struct ARDrone_StreamState,
+                      struct ARDrone_StreamConfiguration,
+                      ARDrone_RuntimeStatistic_t,
+                      struct Stream_ModuleConfiguration,
+                      struct ARDrone_ModuleHandlerConfiguration,
+                      struct ARDrone_SessionData,
+                      ARDrone_StreamSessionData_t,
+                      ARDrone_ControlMessage_t,
+                      ARDrone_Message,
+                      ARDrone_SessionMessage> ARDrone_StreamBase_t;
+struct ARDrone_ModuleHandlerConfiguration
+ : Stream_ModuleHandlerConfiguration
+{
+  inline ARDrone_ModuleHandlerConfiguration ()
+   : Stream_ModuleHandlerConfiguration ()
+   , connection (NULL)
+   , connectionManager (NULL)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , area ()
+   , consoleMode (false)
+   , direct3DDevice (NULL)
+   , filterCLSID (GUID_NULL)
+   , filterConfiguration (NULL)
+   , format (NULL)
+   , graphBuilder (NULL)
+   , push (COMMON_UI_DEFAULT_WIN32_DIRECTSHOW_USE_PUSH)
+   , rendererNodeId (0)
+   , session (NULL)
+   , window (NULL)
+   , windowController (NULL)
+#else
+   , area ()
+   , format (NULL)
+   , pixelBuffer (NULL)
+   , window (NULL)
+#endif
+   , inbound (true)
+   , printProgressDot (false)
+   , pushStatisticMessages (true)
+   , socketConfiguration (NULL)
+   , socketHandlerConfiguration (NULL)
+   , stream (NULL)
+   , subscriber (NULL)
+   , subscribers (NULL)
+   , targetFileName ()
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    format =
+      static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
+    if (!format)
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to allocate memory, continuing\n")));
+    else
+      ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
+#endif
+
+    passive = false;
+  };
+
+  ARDrone_IConnection_t*                         connection; // net source/IO module
+  ARDrone_IConnectionManager_t*                  connectionManager; // net IO module
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct tagRECT                                 area;                // display module
+  bool                                           consoleMode;
+  IDirect3DDevice9Ex*                            direct3DDevice;      // display module
+  struct _GUID                                   filterCLSID;         // display module
+  struct ARDrone_DirectShow_FilterConfiguration* filterConfiguration; // display module
+  struct _AMMediaType*                           format;              // display module
+  IGraphBuilder*                                 graphBuilder;        // display module
+  bool                                           push;                // display module
+  TOPOID                                         rendererNodeId;
+  IMFMediaSession*                               session;
+  HWND                                           window;              // display module
+  IVideoWindow*                                  windowController;    // display module
+  //IMFVideoDisplayControl*                    windowController;
+#else
+  GdkRectangle                                   area;           // display module
+  struct AVInputFormat*                          format;
+  GdkPixbuf*                                     pixelBuffer;
+  GdkWindow*                                     window;         // display module
+#endif
+  bool                                           inbound;
+  bool                                           printProgressDot;
+  bool                                           pushStatisticMessages;
+
+  struct Net_SocketConfiguration*                socketConfiguration;
+  struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration;
+  ARDrone_StreamBase_t*                          stream;
+  ARDrone_Notification_t*                        subscriber;
+  ARDrone_Subscribers_t*                         subscribers;
+  std::string                                    targetFileName;
+};
+
+struct ARDrone_StreamConfiguration
+ : Stream_Configuration
+{
+  inline ARDrone_StreamConfiguration ()
+   : Stream_Configuration ()
+   , moduleHandlerConfiguration (NULL)
+   , userData (NULL)
+  {
+    bufferSize = ARDRONE_STREAM_BUFFER_SIZE;
+  };
+
+  struct ARDrone_ModuleHandlerConfiguration* moduleHandlerConfiguration;
+
+  struct ARDrone_UserData*                   userData;
+};
+
+#endif // #ifndef ARDRONE_STREAM_COMMON_H
