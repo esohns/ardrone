@@ -29,10 +29,8 @@
 #include "stream_common.h"
 #include "stream_streammodule_base.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
+#include "stream_dec_h264_nal_decoder.h"
 #include "stream_dec_libav_decoder.h"
-#endif
 
 #include "stream_file_sink.h"
 
@@ -154,6 +152,31 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               ARDrone_IStreamNotify_t,                   // stream notification interface type
                               ARDrone_Module_PaVEDecoder);               // writer type
 
+typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,
+                                      Common_TimePolicy_t,
+                                      struct ARDrone_ModuleHandlerConfiguration,
+                                      ARDrone_ControlMessage_t,
+                                      ARDrone_Message,
+                                      ARDrone_SessionMessage,
+                                      ARDrone_StreamSessionData_t> ARDrone_Module_H264Decoder;
+DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
+                              enum Stream_SessionMessageType,            // session event type
+                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                              ARDrone_IStreamNotify_t,                   // stream notification interface type
+                              ARDrone_Module_H264Decoder);               // writer type
+typedef Stream_Decoder_H264_NAL_Decoder_T<ACE_MT_SYNCH,
+                                          Common_TimePolicy_t,
+                                          struct ARDrone_ModuleHandlerConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_SessionMessage,
+                                          ARDrone_StreamSessionData_t> ARDrone_Module_H264NALDecoder;
+DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
+                              enum Stream_SessionMessageType,            // session event type
+                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                              ARDrone_IStreamNotify_t,                   // stream notification interface type
+                              ARDrone_Module_H264NALDecoder);            // writer type
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Misc_DirectShow_Source_Filter_T<Common_TimePolicy_t,
                                                ARDrone_SessionMessage,
@@ -198,19 +221,6 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               ARDrone_IStreamNotify_t,                   // stream notification interface type
                               ARDrone_Module_MediaFoundationDisplay);    // writer type
 #else
-typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,
-                                      Common_TimePolicy_t,
-                                      struct ARDrone_ModuleHandlerConfiguration,
-                                      ARDrone_ControlMessage_t,
-                                      ARDrone_Message,
-                                      ARDrone_SessionMessage,
-                                      ARDrone_StreamSessionData_t> ARDrone_Module_H264Decoder;
-DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
-                              enum Stream_SessionMessageType,            // session event type
-                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-                              ARDrone_IStreamNotify_t,                   // stream notification interface type
-                              ARDrone_Module_H264Decoder);               // writer type
-
 typedef Stream_Module_Vis_GTK_Pixbuf_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct ARDrone_ModuleHandlerConfiguration,

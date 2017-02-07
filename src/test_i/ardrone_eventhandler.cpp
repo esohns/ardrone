@@ -35,7 +35,6 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
  , GtkCBData_ (GtkCBData_in)
- , sessionData_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
@@ -57,8 +56,6 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
-
-  sessionData_ = &const_cast<struct ARDrone_SessionData&> (sessionData_in);
 
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
@@ -92,11 +89,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
-  ACE_ASSERT (GtkCBData_->progressData);
+  //ACE_ASSERT (GtkCBData_->progressData);
 
   ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
-  GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
+  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
   GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
 
   guint event_source_id = g_idle_add (idle_update_video_display_cb,
@@ -134,29 +131,29 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     }
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
-      // sanity check(s)
-      if (!sessionData_)
-        goto continue_;
+      const ARDrone_StreamSessionData_t& session_data_container_r =
+        message_in.get ();
+      struct ARDrone_SessionData& session_data_r =
+        const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
 
-      if (sessionData_->lock)
+      if (session_data_r.lock)
       {
-        result = sessionData_->lock->acquire ();
+        result = session_data_r.lock->acquire ();
         if (result == -1)
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
       } // end IF
 
-      GtkCBData_->progressData->statistic = sessionData_->currentStatistic;
+      GtkCBData_->progressData->statistic = session_data_r.currentStatistic;
 
-      if (sessionData_->lock)
+      if (session_data_r.lock)
       {
-        result = sessionData_->lock->release ();
+        result = session_data_r.lock->release ();
         if (result == -1)
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n")));
       } // end IF
 
-continue_:
       event = ARDRONE_EVENT_SESSION_MESSAGE;
       break;
     }

@@ -41,22 +41,23 @@ class ARDrone_Message;
 class ARDrone_SessionMessage;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
-                                struct Stream_AllocatorConfiguration> ARDrone_ControlMessage_t;
+                                struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
 class ARDrone_Message
- : public Stream_MessageBase_T<struct Stream_AllocatorConfiguration,
+ : public Stream_MessageBase_T<struct ARDrone_AllocatorConfiguration,
                                enum ARDrone_MessageType,
                                int>
  //: public Stream_DataMessageBase_T<ardrone_MessageType>
 {
-  // enable access to specific private ctors...
+  // enable access to specific private ctors
   friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
-                                                 struct Stream_AllocatorConfiguration,
+                                                 struct ARDrone_AllocatorConfiguration,
                                                  ARDrone_ControlMessage_t,
                                                  ARDrone_Message,
                                                  ARDrone_SessionMessage>;
 
  public:
+  ARDrone_Message (unsigned int);
   virtual ~ARDrone_Message ();
 
   virtual int command () const; // return value: message type
@@ -73,7 +74,7 @@ class ARDrone_Message
   ARDrone_Message (const ARDrone_Message&);
 
  private:
-  typedef Stream_MessageBase_T<struct Stream_AllocatorConfiguration,
+  typedef Stream_MessageBase_T<struct ARDrone_AllocatorConfiguration,
                                enum ARDrone_MessageType,
                                int> inherited;
   //typedef Stream_MessageBase_T<ardrone_MessageType> inherited;

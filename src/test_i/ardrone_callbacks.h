@@ -23,6 +23,11 @@
 
 #include <gtk/gtk.h>
 
+// thread functions
+ACE_THR_FUNC_RETURN stream_processing_function (void*);
+
+//------------------------------------------------------------------------------
+
 gboolean idle_finalize_ui_cb (gpointer);
 gboolean idle_initialize_ui_cb (gpointer);
 //gboolean idle_reset_ui_cb (gpointer);

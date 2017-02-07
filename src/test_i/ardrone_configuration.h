@@ -49,6 +49,18 @@
 // forward declarations
 class ARDrone_Message;
 
+struct ARDrone_AllocatorConfiguration
+ : Stream_AllocatorConfiguration
+{
+  inline ARDrone_AllocatorConfiguration ()
+   : Stream_AllocatorConfiguration ()
+  {
+    // *NOTE*: this facilitates (message block) data buffers to be scanned with
+    //         'flex's yy_scan_buffer() method
+    buffer = STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE;
+  };
+};
+
 struct _AMMediaType;
 class ACE_Message_Queue_Base;
 struct ARDrone_DirectShow_PinConfiguration
@@ -56,11 +68,13 @@ struct ARDrone_DirectShow_PinConfiguration
   inline ARDrone_DirectShow_PinConfiguration ()
     : bufferSize (ARDRONE_STREAM_BUFFER_SIZE)
     , format (NULL)
+    , isTopToBottom (true)
     , queue (NULL)
   {};
 
   size_t                  bufferSize; // medial sample-
   struct _AMMediaType*    format; // (preferred) media type handle
+  bool                    isTopToBottom; // frame memory layout
   ACE_Message_Queue_Base* queue;  // (inbound) buffer queue handle
 };
 struct ARDrone_DirectShow_FilterConfiguration
@@ -119,7 +133,7 @@ struct ARDrone_Configuration
   struct ARDrone_SocketHandlerConfiguration     socketHandlerConfiguration;
   struct ARDrone_ConnectionConfiguration        connectionConfiguration;
 
-  struct Stream_AllocatorConfiguration          allocatorConfiguration;
+  struct ARDrone_AllocatorConfiguration         allocatorConfiguration;
   struct Stream_ModuleConfiguration             moduleConfiguration;
   struct ARDrone_ModuleHandlerConfiguration     moduleHandlerConfiguration;
   struct ARDrone_DirectShow_FilterConfiguration directShowFilterConfiguration;
@@ -217,7 +231,7 @@ struct ARDrone_ThreadData
    : CBData (NULL)
    , eventSourceID (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , useMediaFoundation (COMMON_UI_DEFAULT_WIN32_USE_MEDIAFOUNDATION)
+   , useMediaFoundation (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
 #endif
   {};
 

@@ -129,7 +129,7 @@ typedef Net_Connection_Manager_T<ACE_INET_Addr,
 typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_StreamSessionData_t;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
-                                struct Stream_AllocatorConfiguration> ARDrone_ControlMessage_t;
+                                struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
                                       enum Stream_ControlType,

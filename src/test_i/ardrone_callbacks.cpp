@@ -119,8 +119,6 @@ load_display_devices (GtkListStore* listStore_in)
 {
   STREAM_TRACE (ACE_TEXT ("::load_display_devices"));
 
-  bool result = false;
-
   // initialize result
   gtk_list_store_clear (listStore_in);
 
@@ -135,110 +133,83 @@ load_display_devices (GtkListStore* listStore_in)
                 ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
     return false;
   } // end IF
-
-  result = true;
 #else
-  GtkTreeIter iterator;
-  void** hints_p = NULL;
-  int result_2 =
-      snd_device_name_hint (-1,
-                            ACE_TEXT_ALWAYS_CHAR (MODULE_DEV_ALSA_PCM_INTERFACE_NAME),
-                            &hints_p);
-  if (result_2 < 0)
+  int result = -1;
+  // *TODO*: this should work on most Xorg systems, but is really a bad idea:
+  //         - relies on local 'xrandr' tool
+  //         - temporary files
+  //         - system(3) call
+  //         --> extremely inefficient; remove ASAP
+  std::string filename_string =
+      Common_File_Tools::getTempFilename (ACE_TEXT_ALWAYS_CHAR (""));
+  std::string command_line_string = ACE_TEXT_ALWAYS_CHAR ("xrandr >> ");
+  command_line_string += filename_string;
+
+  result = ACE_OS::system (ACE_TEXT (command_line_string.c_str ()));
+//  result = execl ("/bin/sh", "sh", "-c", command, (char *) 0);
+  if ((result == -1)      ||
+      !WIFEXITED (result) ||
+      WEXITSTATUS (result))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to snd_device_name_hint(): \"%s\", aborting\n"),
-                ACE_TEXT (snd_strerror (result_2))));
+                ACE_TEXT ("failed to ACE_OS::system(\"%s\"): \"%m\" (result was: %d), aborting\n"),
+                ACE_TEXT (command_line_string.c_str ()),
+                WEXITSTATUS (result)));
     return false;
   } // end IF
-
-  std::string device_name_string;
-  char* string_p = NULL;
-  for (void** i = hints_p;
-       *i;
-       ++i)
+  unsigned char* data_p = NULL;
+  if (!Common_File_Tools::load (filename_string,
+                                data_p))
   {
-    string_p = snd_device_name_get_hint (*i, "IOID");
-    if (!string_p)
-    {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("failed to snd_device_name_get_hint(): \"%m\", aborting\n")));
-      goto continue_;
-    } // end IF
-    if (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("Input")))
-    {
-      // clean up
-      free (string_p);
-      string_p = NULL;
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_File_Tools::load(\"%s\"): \"%m\", aborting\n"),
+                ACE_TEXT (filename_string.c_str ())));
+    return false;
+  } // end IF
+  if (!Common_File_Tools::deleteFile (filename_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
+                ACE_TEXT (filename_string.c_str ())));
 
+  std::string display_records_string = reinterpret_cast<char*> (data_p);
+  delete [] data_p;
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("xrandr data: \"%s\"\n"),
+//              ACE_TEXT (display_record_string.c_str ())));
+
+  std::istringstream converter;
+  char buffer [BUFSIZ];
+  std::string regex_string =
+      ACE_TEXT_ALWAYS_CHAR ("^(.+) (?:connected) (.+) (.+) \\((?:(.+)\\w*)+\\) ([[:digit:]]+)mm x ([[:digit:]]+)mm$");
+  std::regex regex (regex_string);
+  std::smatch match_results;
+  converter.str (display_records_string);
+  std::string buffer_string;
+  GtkTreeIter iterator;
+  do
+  {
+    converter.getline (buffer, sizeof (buffer));
+    buffer_string = buffer;
+    if (!std::regex_match (buffer_string,
+                           match_results,
+                           regex,
+                           std::regex_constants::match_default))
       continue;
-    } // end IF
+    ACE_ASSERT (match_results.ready () && !match_results.empty ());
+    ACE_ASSERT (match_results[1].matched && !match_results[1].str ().empty ());
 
-continue_:
-    string_p = snd_device_name_get_hint (*i, "NAME");
-    if (!string_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to snd_device_name_get_hint(): \"%m\", aborting\n")));
-      goto clean;
-    } // end IF
-    if ((ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("default")) == 0)                   ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("dmix:CARD=MID,DEV=0")) == 0)       ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("dsnoop:CARD=MID,DEV=0")) == 0)     ||
-//        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("hw:CARD=MID,DEV=0")) == 0)         ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("front:CARD=MID,DEV=0")) == 0)      ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("null")) == 0)                      ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("plughw:CARD=MID,DEV=0")) == 0)     ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("pulse")) == 0)                     ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("sysdefault:CARD=MID")) == 0)       ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround21:CARD=MID,DEV=0")) == 0) ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround40:CARD=MID,DEV=0")) == 0) ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround41:CARD=MID,DEV=0")) == 0) ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround50:CARD=MID,DEV=0")) == 0) ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround51:CARD=MID,DEV=0")) == 0) ||
-        (ACE_OS::strcmp (string_p, ACE_TEXT_ALWAYS_CHAR ("surround71:CARD=MID,DEV=0")) == 0))
-    {
-      // clean up
-      free (string_p);
-      string_p = NULL;
-
-      continue;
-    } // end IF
-    device_name_string = string_p;
-    free (string_p);
-    string_p = NULL;
-    string_p = snd_device_name_get_hint (*i, "DESC");
-    if (!string_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to snd_device_name_get_hint(): \"%m\", aborting\n")));
-      goto clean;
-    } // end IF
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("found display device \"%s\"...\n"),
+                ACE_TEXT (match_results[1].str ().c_str ())));
 
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT (string_p),
-                        1, ACE_TEXT (device_name_string.c_str ()),
+                        0, ACE_TEXT (match_results[1].str ().c_str ()),
                         -1);
-
-    // clean up
-    free (string_p);
-    string_p = NULL;
-  } // end IF
-  result = true;
-
-clean:
-  if (hints_p)
-  {
-    result_2 = snd_device_name_free_hint (hints_p);
-    if (result_2 < 0)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to snd_device_name_free_hint(): \"%s\", continuing\n"),
-                  ACE_TEXT (snd_strerror (result_2))));
-  } // end IF
+  } while (!converter.fail ());
 #endif
 
-  return result;
+  return true;
 }
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -452,7 +423,7 @@ load_formats (IMFMediaSource* IMFMediaSource_in,
   {
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, Stream_Module_Device_DirectShow_Tools::mediaSubTypeToString (*iterator_2).c_str (),
+                        0, Stream_Module_Decoder_Tools::mediaSubTypeToString (*iterator_2, false).c_str (),
                         1, Stream_Module_Decoder_Tools::GUIDToString (*iterator_2).c_str (),
                         -1);
   } // end FOR
@@ -460,6 +431,121 @@ load_formats (IMFMediaSource* IMFMediaSource_in,
   return true;
 }
 #endif
+
+// -----------------------------------------------------------------------------
+
+ACE_THR_FUNC_RETURN
+stream_processing_function (void* arg_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::stream_processing_function"));
+
+  ACE_THR_FUNC_RETURN result;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  result = std::numeric_limits<unsigned long>::max ();
+#else
+  result = arg_in;
+#endif
+
+  Common_UI_GTKBuildersIterator_t iterator;
+  ACE_SYNCH_MUTEX* lock_p = NULL;
+  struct ARDrone_ThreadData* data_p =
+    static_cast<struct ARDrone_ThreadData*> (arg_in);
+
+  // sanity check(s)
+  ACE_ASSERT (data_p);
+  ACE_ASSERT (data_p->CBData);
+  ACE_ASSERT (data_p->CBData->configuration);
+
+  iterator =
+    data_p->CBData->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  lock_p = &data_p->CBData->lock;
+
+  // sanity check(s)
+  ACE_ASSERT (iterator != data_p->CBData->builders.end ());
+  ACE_ASSERT (lock_p);
+
+//  GtkStatusbar* statusbar_p = NULL;
+  Stream_IStreamControlBase* stream_p = NULL;
+  std::ostringstream converter;
+  const struct ARDrone_SessionData* session_data_p = NULL;
+  bool result_2 = false;
+//  guint context_id = 0;
+
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
+#else
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
+#endif
+
+    // retrieve stream handle
+    stream_p = data_p->CBData->stream;
+    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
+      data_p->CBData->stream;
+    result_2 =
+      data_p->CBData->stream->initialize (data_p->CBData->configuration->streamConfiguration);
+    const ARDrone_SessionData_t* session_data_container_p =
+      data_p->CBData->stream->get ();
+    session_data_p =
+      &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
+    ACE_ASSERT (session_data_p);
+    converter.clear ();
+    converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+    converter << session_data_p->sessionID;
+
+//    // set context ID
+//    gdk_threads_enter ();
+//    statusbar_p =
+//      GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
+//                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
+//    ACE_ASSERT (statusbar_p);
+//    data_p->CBData->configuration->moduleHandlerConfiguration.contextID =
+//        gtk_statusbar_get_context_id (statusbar_p,
+//                                      converter.str ().c_str ());
+//    gdk_threads_leave ();
+  } // end lock scope
+  if (!result_2)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize stream: \"%m\", aborting\n")));
+    goto done;
+  } // end IF
+  ACE_ASSERT (stream_p);
+
+  // *NOTE*: processing currently happens 'inline' (borrows calling thread)
+  stream_p->start ();
+  //    if (!stream_p->isRunning ())
+  //    {
+  //      ACE_DEBUG ((LM_ERROR,
+  //                  ACE_TEXT ("failed to start stream, aborting\n")));
+  //      return;
+  //    } // end IF
+  stream_p->wait (true, false, false);
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  result = 0;
+#else
+  result = NULL;
+#endif
+
+done:
+  { // synch access
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
+#else
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
+#endif
+
+    data_p->CBData->progressData->completedActions.insert (data_p->eventSourceID);
+  } // end lock scope
+
+  // clean up
+  delete data_p;
+
+  return result;
+}
+
+// -----------------------------------------------------------------------------
 
 gboolean
 idle_initialize_ui_cb (gpointer userData_in)
@@ -1769,157 +1855,204 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
 
-  if (gtk_toggle_action_get_active (toggleAction_in))
+  if (!gtk_toggle_action_get_active (toggleAction_in))
   {
-    // update configuration
+    // stop stream
+    cb_data_p->stream->stop (false, true);
 
-    // retrieve address
-    GtkEntry* entry_p =
+    return;
+  } // end IF
+
+  GtkFileChooserButton* file_chooser_button_p = NULL;
+  char* URI_p = NULL;
+  GError* error_p = NULL;
+  gchar* hostname_p = NULL;
+  gchar* directory_p = NULL;
+  GtkComboBox* combo_box_p = NULL;
+  GtkTreeIter iterator_2;
+  GtkFrame* frame_p = NULL;
+  GtkProgressBar* progress_bar_p = NULL;
+
+  bool stop_progress_reporting = false;
+
+  struct ARDrone_ThreadData* thread_data_p = NULL;
+  ACE_thread_t thread_id = -1;
+  ACE_hthread_t thread_handle;
+  ACE_TCHAR thread_name[BUFSIZ];
+  const char* thread_name_p = NULL;
+  ACE_Thread_Manager* thread_manager_p = NULL;
+  int result = -1;
+  Stream_IStreamControlBase* stream_p = NULL;
+
+  // update configuration
+
+  // retrieve address
+  GtkEntry* entry_p =
       GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
-    ACE_ASSERT (entry_p);
-    GtkSpinButton* spin_button_p =
+  ACE_ASSERT (entry_p);
+  GtkSpinButton* spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
-    ACE_ASSERT (spin_button_p);
-    std::string address_string = gtk_entry_get_text (entry_p);
-    address_string += ACE_TEXT_ALWAYS_CHAR (':');
-    std::ostringstream converter;
-    converter <<
-      static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
-    address_string += converter.str ();
-    int result =
+  ACE_ASSERT (spin_button_p);
+  std::string address_string = gtk_entry_get_text (entry_p);
+  address_string += ACE_TEXT_ALWAYS_CHAR (':');
+  std::ostringstream converter;
+  converter <<
+    static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
+  address_string += converter.str ();
+  result =
       cb_data_p->configuration->socketConfiguration.address.set (address_string.c_str (),
                                                                  AF_INET);
-    if (result == -1)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", returning\n"),
-                  ACE_TEXT (address_string.c_str ())));
-      return;
-    } // end IF
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", returning\n"),
+                ACE_TEXT (address_string.c_str ())));
+    return;
+  } // end IF
 
-    // retrieve buffer
-    spin_button_p =
+  // retrieve buffer
+  spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_BUFFERSIZE)));
-    ACE_ASSERT (spin_button_p);
-    cb_data_p->configuration->streamConfiguration.bufferSize =
+  ACE_ASSERT (spin_button_p);
+  cb_data_p->configuration->streamConfiguration.bufferSize =
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
 
-    // retrieve filename
-    GtkFileChooserButton* file_chooser_button_p =
+  // retrieve filename ?
+  GtkCheckButton* check_button_p =
+      GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
+  ACE_ASSERT (check_button_p);
+  if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p)))
+  {
+    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.clear ();
+
+    goto continue_;
+  } // end IF
+
+  file_chooser_button_p =
       GTK_FILE_CHOOSER_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE)));
-    ACE_ASSERT (file_chooser_button_p);
-    char* URI_p =
+  ACE_ASSERT (file_chooser_button_p);
+  URI_p =
       gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (file_chooser_button_p));
-    if (!URI_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to gtk_file_chooser_get_uri(), aborting\n")));
-      return;
-    } // end IF
-    GError* error_p = NULL;
-    gchar* hostname_p = NULL;
-    gchar* directory_p = g_filename_from_uri (URI_p,
-                                              &hostname_p,
-                                              &error_p);
-    g_free (URI_p);
-    if (!directory_p)
-    { ACE_ASSERT (error_p);
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", aborting\n"),
-                  ACE_TEXT (error_p->message)));
+  if (!URI_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_file_chooser_get_uri(), aborting\n")));
+    return;
+  } // end IF
+  directory_p = g_filename_from_uri (URI_p,
+                                     &hostname_p,
+                                     &error_p);
+  g_free (URI_p);
+  if (!directory_p)
+  { ACE_ASSERT (error_p);
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", aborting\n"),
+                ACE_TEXT (error_p->message)));
 
-      // clean up
-      g_error_free (error_p);
+    // clean up
+    g_error_free (error_p);
 
-      return;
-    } // end IF
-    ACE_ASSERT (!hostname_p);
-    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName =
+    return;
+  } // end IF
+  ACE_ASSERT (!hostname_p);
+  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName =
       directory_p;
-    g_free (directory_p);
-    ACE_ASSERT (Common_File_Tools::isDirectory (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName));
-    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
+  g_free (directory_p);
+  ACE_ASSERT (Common_File_Tools::isDirectory (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName));
+  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
       ACE_DIRECTORY_SEPARATOR_STR;
-    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
+  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
 
-    // retrieve save format
-    GtkComboBox* combo_box_p =
+  // retrieve save format
+  combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT)));
-    ACE_ASSERT (combo_box_p);
-    GtkTreeIter iterator_2;
-    if (gtk_combo_box_get_active_iter (combo_box_p,
-                                       &iterator_2))
-    {
-      GtkListStore* list_store_p =
+  ACE_ASSERT (combo_box_p);
+  if (gtk_combo_box_get_active_iter (combo_box_p,
+                                     &iterator_2))
+  {
+    GtkListStore* list_store_p =
         GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT)));
-      ACE_ASSERT (list_store_p);
-      GValue value = {0,};
-      gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
-                                &iterator_2,
+    ACE_ASSERT (list_store_p);
+    GValue value = {0,};
+    gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                              &iterator_2,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                                1, &value);
+                              1, &value);
 #else
-                                0, &value);
+                              0, &value);
 #endif
-      ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-      std::string format_string = g_value_get_string (&value);
-      g_value_unset (&value);
+    ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
+    std::string format_string = g_value_get_string (&value);
+    g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      HRESULT result = E_FAIL;
+    HRESULT result = E_FAIL;
 #if defined (OLE2ANSI)
-      result = CLSIDFromString (format_string.c_str (),
-#else
-      result = CLSIDFromString (ACE_TEXT_ALWAYS_WCHAR (format_string.c_str ()),
-#endif
-                                &cb_data_p->configuration->moduleHandlerConfiguration.format->subtype);
-      if (FAILED (result))
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to CLSIDFromString(): \"%s\", returning\n"),
-                    ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-        return;
-      } // end IF
-#else
-#endif
+    result = CLSIDFromString (format_string.c_str (),
+                          #else
+    result = CLSIDFromString (ACE_TEXT_ALWAYS_WCHAR (format_string.c_str ()),
+                          #endif
+                              &cb_data_p->configuration->moduleHandlerConfiguration.format->subtype);
+    if (FAILED (result))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to CLSIDFromString(): \"%s\", returning\n"),
+                  ACE_TEXT (Common_Tools::error2String (result).c_str ())));
+      return;
     } // end IF
+#else
+#endif
+  } // end IF
 
-    // update widgets
-    gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
-                             GTK_STOCK_DISCONNECT);
-    gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), false);
+continue_:
+  // update widgets
+  gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
+                           GTK_STOCK_DISCONNECT);
+  gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), false);
 
-    GtkFrame* frame_p =
+  frame_p =
       GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
-                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION)));
-    ACE_ASSERT (frame_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (frame_p), false);
-    frame_p =
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION)));
+  ACE_ASSERT (frame_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), false);
+  frame_p =
       GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
-                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS)));
-    ACE_ASSERT (frame_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (frame_p), false);
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS)));
+  ACE_ASSERT (frame_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), false);
 
-    GtkProgressBar* progress_bar_p =
+  progress_bar_p =
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
-    ACE_ASSERT (progress_bar_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), true);
+  ACE_ASSERT (progress_bar_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), true);
 
-    // reset info
-    idle_reset_ui_cb (userData_in);
+  // reset info
+  idle_reset_ui_cb (userData_in);
 
-    // start progress reporting
-    ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+  // start processing thread
+  ACE_NEW_NORETURN (thread_data_p,
+                    struct ARDrone_ThreadData ());
+  if (!thread_data_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate memory: \"%m\", returning\n")));
+    goto error;
+  } // end IF
+  thread_data_p->CBData = cb_data_p;
 
-      cb_data_p->progressData->eventSourceID =
+  // start progress reporting
+  ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+
+    cb_data_p->progressData->eventSourceID =
         //g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, // _LOW doesn't work (on Win32)
         //                 idle_update_progress_cb,
         //                 &data_p->progressData,
@@ -1929,29 +2062,97 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                             idle_update_progress_cb,
                             cb_data_p->progressData,
                             NULL);
-      if (cb_data_p->progressData->eventSourceID > 0)
-        cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceID);
-      else
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to g_timeout_add_full(idle_update_progress_cb): \"%m\", continuing\n")));
-    } // end lock scope
-
-    // initialize stream
-    if (!cb_data_p->stream->initialize (cb_data_p->configuration->streamConfiguration))
+    if (cb_data_p->progressData->eventSourceID > 0)
     {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize processing stream, returning\n")));
-      return;
+      thread_data_p->eventSourceID = cb_data_p->progressData->eventSourceID;
+      cb_data_p->progressData->pendingActions[cb_data_p->progressData->eventSourceID] =
+          ACE_Thread_ID (thread_id, thread_handle);
+      cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceID);
     } // end IF
+    else
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_timeout_add_full(idle_update_progress_cb): \"%m\", continuing\n")));
+  } // end lock scope
+  stop_progress_reporting = true;
 
-    // start stream
-    cb_data_p->stream->start ();
-  } // end IF
-  else
+  ACE_OS::memset (thread_name, 0, sizeof (thread_name));
+  //  char* thread_name_p = NULL;
+  //  ACE_NEW_NORETURN (thread_name_p,
+  //                    ACE_TCHAR[BUFSIZ]);
+  //  if (!thread_name_p)
+  //  {
+  //    ACE_DEBUG ((LM_CRITICAL,
+  //                ACE_TEXT ("failed to allocate memory: \"%m\", returning\n")));
+
+  //    // clean up
+  //    delete thread_data_p;
+
+  //    return;
+  //  } // end IF
+  //  ACE_OS::memset (thread_name_p, 0, sizeof (thread_name_p));
+  //  ACE_OS::strcpy (thread_name_p,
+  //                  ACE_TEXT (TEST_I_STREAM_FILECOPY_THREAD_NAME));
+  //  const char* thread_name_2 = thread_name_p;
+  ACE_OS::strcpy (thread_name,
+                  ACE_TEXT (ARDRONE_UI_PROCESSING_THREAD_NAME));
+  thread_name_p = thread_name;
+  thread_manager_p = ACE_Thread_Manager::instance ();
+  ACE_ASSERT (thread_manager_p);
+  result =
+      thread_manager_p->spawn (::stream_processing_function,     // function
+                               thread_data_p,                    // argument
+                               (THR_NEW_LWP      |
+                                THR_JOINABLE     |
+                                THR_INHERIT_SCHED),              // flags
+                               &thread_id,                       // id
+                               &thread_handle,                   // handle
+                               ACE_DEFAULT_THREAD_PRIORITY,      // priority
+                               COMMON_EVENT_THREAD_GROUP_ID + 2, // *TODO*: group id
+                               NULL,                             // stack
+                               0,                                // stack size
+                               &thread_name_p);                  // name
+  if (result == -1)
   {
-    // stop stream
-    cb_data_p->stream->stop (false, true);
-  } // end ELSE
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Thread_Manager::spawn(): \"%m\", returning\n")));
+    goto error;
+  } // end IF
+  thread_data_p = NULL;
+
+  return;
+
+error:
+  // update widgets
+  gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
+                           GTK_STOCK_CONNECT);
+  gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), true);
+
+  frame_p =
+      GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION)));
+  ACE_ASSERT (frame_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
+  frame_p =
+      GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS)));
+  ACE_ASSERT (frame_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
+
+  progress_bar_p =
+      GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+  ACE_ASSERT (progress_bar_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), false);
+
+  if (stop_progress_reporting)
+  {
+    ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+
+    cb_data_p->progressData->completedActions.insert (cb_data_p->progressData->eventSourceID);
+  } // end IF
+
+  if (thread_data_p)
+    delete thread_data_p;
 }
 
 G_MODULE_EXPORT void
@@ -2254,6 +2455,28 @@ drawingarea_draw_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+  if (!cb_data_p->pixelBuffer)
+    return FALSE; // --> widget has not been realized yet
+
+  //GdkWindow* window_p = gtk_widget_get_window (widget_in);
+  //ACE_ASSERT (window_p);
+  //GtkAllocation allocation;
+  //gtk_widget_get_allocation (widget_in,
+  //                           &allocation);
+  gdk_cairo_set_source_pixbuf (context_in,
+                               cb_data_p->pixelBuffer,
+                               0.0, 0.0);
+
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
+
+    // *IMPORTANT NOTE*: potentially, this involves tranfer of image data to an
+    //                   X server running on a different host
+    //gdk_draw_pixbuf (GDK_DRAWABLE (window_p), NULL,
+    //                 data_p->pixelBuffer,
+    //                 0, 0, 0, 0, allocation.width, allocation.height,
+    //                 GDK_RGB_DITHER_NONE, 0, 0);
+    cairo_paint (context_in);
+  } // end lock scope
 
   return TRUE;
 }

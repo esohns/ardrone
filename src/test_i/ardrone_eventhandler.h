@@ -61,9 +61,8 @@ class ARDrone_EventHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler (const ARDrone_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler& operator= (const ARDrone_EventHandler&))
 
-  bool                        consoleMode_;
-  struct ARDrone_GtkCBData*   GtkCBData_;
-  struct ARDrone_SessionData* sessionData_;
+  bool                      consoleMode_;
+  struct ARDrone_GtkCBData* GtkCBData_;
 };
 
 #endif

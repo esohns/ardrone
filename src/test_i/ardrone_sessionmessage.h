@@ -37,14 +37,14 @@ class ACE_Data_Block;
 class ACE_Message_Block;
 
 class ARDrone_SessionMessage
- : public Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
+ : public Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
                                       ARDrone_StreamSessionData_t,
                                       struct ARDrone_UserData>
 {
-  // enable access to private ctor(s)...
+  // enable access to private ctor(s)
   friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
-                                                 struct Stream_AllocatorConfiguration,
+                                                 struct ARDRone_AllocatorConfiguration,
                                                  ARDrone_ControlMessage_t,
                                                  ARDrone_Message,
                                                  ARDrone_SessionMessage>;
@@ -65,7 +65,7 @@ class ARDrone_SessionMessage
   virtual ACE_Message_Block* duplicate (void) const;
 
  private:
-  typedef Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
+  typedef Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
                                       ARDrone_StreamSessionData_t,
                                       struct ARDrone_UserData> inherited;

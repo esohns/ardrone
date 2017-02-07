@@ -36,7 +36,7 @@ extract_data (const char* data_in,
   const short int* data_p = reinterpret_cast<const short int*> (data_in);
   short int a_x, a_y, a_z;
   short int g_x, g_y, g_z;
-  short int t;
+//  short int t;
   // *NOTE*: i2c uses a big-endian transfer syntax
   a_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
          : *data_p);
@@ -51,8 +51,8 @@ extract_data (const char* data_in,
          : *data_p);
   a_z = (a_z & 0x8000) ? ((a_z & 0x7FFF) - 0x8000) : a_z;
   data_p++;
-  t = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
-       : *data_p);
+//  t = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
+//       : *data_p);
   data_p++;
   g_x = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
          : *data_p);

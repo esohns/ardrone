@@ -1,19 +1,22 @@
-/*  I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module
-    (see https://www.olimex.com/Products/Modules/Sensors/MOD-MPU6050/open-source-hardware,
-         http://www.invensense.com/mems/gyro/mpu6050.html)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+/***************************************************************************
+*   Copyright (C) 2009 by Erik Sohns   *
+*   erik.sohns@web.de   *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************/
 
 #ifndef ARDRONE_TYPES_H
 #define ARDRONE_TYPES_H
@@ -80,7 +83,8 @@ struct ARDrone_Camera
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 __pragma (pack (push, 1))
-typedef struct {
+struct ARDrone_ParrotVideoEncapsulation_Header
+{
   /*00*/ uint8_t  signature[4];
   /*04*/ uint8_t  version;
   /*05*/ uint8_t  video_codec;
@@ -106,7 +110,7 @@ typedef struct {
   /*46*/ uint8_t  reserved2[2];             /* Padding to align on 48 bytes */
   /*48*/ uint32_t advertised_size;          /* Size of frames announced as advertised frames */
   /*52*/ uint8_t  reserved3[12];            /* Padding to align on 64 bytes */
-} parrot_video_encapsulation_t;
+};
 __pragma (pack (pop))
 #endif
 
@@ -116,10 +120,10 @@ struct ARDrone_UserData
 {
   inline ARDrone_UserData ()
    : Net_UserData ()
-   , configuration (NULL)
+   , connectionConfiguration (NULL)
   {};
 
-  struct ARDrone_ConnectionConfiguration* configuration;
+  struct ARDrone_ConnectionConfiguration* connectionConfiguration;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H

@@ -31,15 +31,12 @@
 //#include <mfidl.h>
 #endif
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
 #ifdef __cplusplus
 extern "C"
 {
 #include <libavformat/avformat.h>
 }
 #endif /* __cplusplus */
-#endif /* ACE_WIN32 || ACE_WIN64 */
 
 #include "common_ui_defines.h"
 
@@ -97,7 +94,9 @@ struct ARDrone_SessionData
    , session (NULL)
    , windowController (NULL)
 #else
-   , format (NULL)
+   , format (AV_PIX_FMT_RGB24)
+   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
+   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
    , state (NULL)
    , targetFileName ()
@@ -162,7 +161,6 @@ struct ARDrone_SessionData
       windowController = rhs_in.windowController;
     } // end IF
 #else
-    //format =
 #endif
     state = (state ? state : rhs_in.state);
     targetFileName =
@@ -184,7 +182,9 @@ struct ARDrone_SessionData
   IMFMediaSession*                session;
   IVideoWindow*                   windowController;
 #else
-  struct AVInputFormat*           format;
+  enum AVPixelFormat              format;
+  unsigned int                    height;
+  unsigned int                    width;
 #endif
 
   struct ARDrone_StreamState*     state;
@@ -192,14 +192,14 @@ struct ARDrone_SessionData
 
   struct ARDrone_UserData*        userData;
 };
-typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_StreamSessionData_t;
+typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_SessionData_t;
 
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
-                                struct Stream_AllocatorConfiguration> ARDrone_ControlMessage_t;
+                                struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
 typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
-                                          struct Stream_AllocatorConfiguration,
+                                          struct ARDrone_AllocatorConfiguration,
                                           ARDrone_ControlMessage_t,
                                           ARDrone_Message,
                                           ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
@@ -251,8 +251,12 @@ struct ARDrone_ModuleHandlerConfiguration
 {
   inline ARDrone_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
+   , block (false)
+   , codecFormat (AV_PIX_FMT_YUV420P)
+   , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
    , connectionManager (NULL)
+   , debugScanner (COMMON_PARSER_DEFAULT_LEX_TRACE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , area ()
    , consoleMode (false)
@@ -261,15 +265,18 @@ struct ARDrone_ModuleHandlerConfiguration
    , filterConfiguration (NULL)
    , format (NULL)
    , graphBuilder (NULL)
-   , push (COMMON_UI_DEFAULT_WIN32_DIRECTSHOW_USE_PUSH)
+   , push (COMMON_DEFAULT_WIN32_DIRECTSHOW_USE_PUSH_SOURCE_FILTER)
    , rendererNodeId (0)
    , session (NULL)
    , window (NULL)
    , windowController (NULL)
 #else
    , area ()
-   , format (NULL)
+   , format (AV_PIX_FMT_RGB24)
+   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , pixelBuffer (NULL)
+   , pixelBufferLock (NULL)
+   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
    , window (NULL)
 #endif
    , inbound (true)
@@ -281,6 +288,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , subscriber (NULL)
    , subscribers (NULL)
    , targetFileName ()
+   , useYYScanBuffer (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     format =
@@ -295,8 +303,12 @@ struct ARDrone_ModuleHandlerConfiguration
     passive = false;
   };
 
-  ARDrone_IConnection_t*                         connection; // net source/IO module
-  ARDrone_IConnectionManager_t*                  connectionManager; // net IO module
+  bool                                           block;               // H264 NAL bisector module
+  enum AVPixelFormat                             codecFormat;         // H264 decoder module
+  enum AVCodecID                                 codecId;             // H264 decoder module
+  ARDrone_IConnection_t*                         connection;          // net source/IO module
+  ARDrone_IConnectionManager_t*                  connectionManager;   // net IO module
+  bool                                           debugScanner;        // H264 NAL bisector module
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagRECT                                 area;                // display module
@@ -313,10 +325,13 @@ struct ARDrone_ModuleHandlerConfiguration
   IVideoWindow*                                  windowController;    // display module
   //IMFVideoDisplayControl*                    windowController;
 #else
-  GdkRectangle                                   area;           // display module
-  struct AVInputFormat*                          format;
-  GdkPixbuf*                                     pixelBuffer;
-  GdkWindow*                                     window;         // display module
+  GdkRectangle                                   area;            // display module
+  enum AVPixelFormat                             format;          // display module
+  unsigned int                                   height;          // display module
+  GdkPixbuf*                                     pixelBuffer;     // display module
+  ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
+  unsigned int                                   width;           // display module
+  GdkWindow*                                     window;          // display module
 #endif
   bool                                           inbound;
   bool                                           printProgressDot;
@@ -328,6 +343,7 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
   std::string                                    targetFileName;
+  bool                                           useYYScanBuffer; // H264 NAL bisector module
 };
 
 struct ARDrone_StreamConfiguration

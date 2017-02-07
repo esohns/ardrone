@@ -48,9 +48,10 @@
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
 // *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
 #define ARDRONE_UI_WIDGET_GL_REFRESH_INTERVAL              1000.0F / 30.0F // Hz
+#define ARDRONE_UI_PROCESSING_THREAD_NAME                  "stream processor"
 
-#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_WIDTH  320
-#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
+//#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_WIDTH  320
+//#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE            "action_calibrate"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CUT                  "action_cut"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                "button_about"
@@ -101,9 +102,10 @@
 #define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
 // *** stream-related ***
-#define ARDRONE_STREAM_BUFFER_SIZE                         65535 // bytes
+#define ARDRONE_STREAM_BUFFER_SIZE                         131070 // bytes
 //#define ARDRONE_MAXIMUM_QUEUE_SLOTS                       STREAM_QUEUE_MAX_MESSAGES
-//#define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES       1000
+// *TODO*: fore testing purposes; reduce for the application
+#define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES        50000
 
 #define ARDRONE_STATISTICS_REPORTING_INTERVAL              0 // seconds [0 --> OFF]
 
@@ -116,10 +118,16 @@
 // *IMPORTANT NOTE*: currently (!) this value must correspond to the actual
 //                   device driver setting i.e. TIMER_DELAY_MS (for noint=1)
 //#define ARDRONE_DATA_RATE                                 100 // messages/s
+// *TODO*: apparently, the Microsoft H264 decoder cannot handle the 720P
+//         resolution
+#define ARDRONE_DEFAULT_VIDEO_WIDTH                        1280
+#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       720
+//#define ARDRONE_DEFAULT_VIDEO_WIDTH                        720
+//#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       480
 
 // *** application-related ***
 //#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
-#define ARDRONE_VIDEO_FILE_NAME                            "ardrone.mp4"
+#define ARDRONE_VIDEO_FILE_NAME                            "ardrone.rgb"
 
 #endif // #ifndef ARDRONE_DEFINES_H

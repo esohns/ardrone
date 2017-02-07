@@ -34,6 +34,13 @@
 #include <mfapi.h>
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#include <libavutil/imgutils.h>
+}
+#endif /* __cplusplus */
+
 #if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
 #include <valgrind/memcheck.h>
 #endif
@@ -67,9 +74,11 @@
 
 #include "stream_allocatorheap.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dev_directshow_tools.h"
-#endif
+#include "stream_dec_tools.h"
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//#include "stream_dev_directshow_tools.h"
+//#endif
+#include "stream_dev_tools.h"
 
 #include "net_defines.h"
 
@@ -164,7 +173,7 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-m           : use media foundation [")
-            << COMMON_UI_DEFAULT_WIN32_USE_MEDIAFOUNDATION
+            << (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #endif
@@ -231,7 +240,8 @@ do_processArguments (int argc_in,
   showConsole_out             = false;
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  useMediaFoundation_out      = COMMON_UI_DEFAULT_WIN32_USE_MEDIAFOUNDATION;
+  useMediaFoundation_out      =
+    (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION);
 #endif
   portNumber_out              = ARDRONE_VIDEO_LIVE_PORT;
   useReactor_out              = NET_EVENT_USE_REACTOR;
@@ -482,6 +492,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
 
   HRESULT result = E_FAIL;
   std::list<std::wstring> filter_pipeline;
+  BOOL result_2 = FALSE;
 
   // sanity check(s)
   ACE_ASSERT (!IGraphBuilder_out);
@@ -503,7 +514,40 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   } // end IF
 
 continue_:
-  Stream_Module_Device_Tools::initialize ();
+#if defined (_DEBUG)
+  DWORD dwFlags = GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+  HMODULE module_h = NULL;
+  result_2 = GetModuleHandleEx (dwFlags,
+                                NULL,
+                                &module_h);
+  if (!result_2)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to GetModuleHandleEx(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::error2String (::GetLastError ()).c_str ())));
+    return false;
+  } // end IF
+
+  DbgInitialise (module_h);
+
+  DWORD debug_log_type = (LOG_TIMING  |
+                          LOG_TRACE   |
+                          LOG_MEMORY  |
+                          LOG_LOCKING |
+                          LOG_ERROR   |
+                          LOG_CUSTOM1 |
+                          LOG_CUSTOM2 |
+                          LOG_CUSTOM3 |
+                          LOG_CUSTOM4 |
+                          LOG_CUSTOM5);
+  // *NOTE*: message levels < of the current setting will be displayed
+  //         --> 0: display all messages
+  // *TODO*: find other debug levels in the DirectShow base-class code
+  DWORD debug_log_level = 0;
+  //DWORD debug_log_level = CONNECT_TRACE_LEVEL;
+  DbgSetModuleLevel (debug_log_type,
+                     debug_log_level);
+#endif
 
   // sanity check(s)
   ACE_ASSERT (!mediaType_out);
@@ -520,43 +564,75 @@ continue_:
 
   ACE_ASSERT (!mediaType_out->pbFormat);
   mediaType_out->pbFormat =
-      static_cast<BYTE*> (CoTaskMemAlloc (sizeof (struct tagVIDEOINFOHEADER2)));
+    static_cast<BYTE*> (CoTaskMemAlloc (sizeof (struct tagVIDEOINFOHEADER)));
+      //static_cast<BYTE*> (CoTaskMemAlloc (sizeof (struct tagVIDEOINFOHEADER2)));
   if (!mediaType_out->pbFormat)
   {
     ACE_DEBUG ((LM_CRITICAL,
                 ACE_TEXT ("failed to CoTaskMemAlloc(%u): \"%m\", aborting\n"),
-                sizeof (struct tagVIDEOINFOHEADER2)));
+                sizeof (struct tagVIDEOINFOHEADER)));
+                //sizeof (struct tagVIDEOINFOHEADER2)));
     goto error;
   } // end IF
-  ACE_OS::memset (mediaType_out->pbFormat, 0, sizeof (struct tagVIDEOINFOHEADER2));
+  ACE_OS::memset (mediaType_out->pbFormat,
+                  0,
+                  sizeof (struct tagVIDEOINFOHEADER));
+                  //sizeof (struct tagVIDEOINFOHEADER2));
 
-  // *TODO*: make this configurable (and part of a protocol)
+  // *NOTE*: this specifies the 'input' media format, i.e. the media format that
+  //         is delivered to the DirectShow (TM) pipeline. The ARDrone Parrot
+  //         (TM) quadcopter serves an encapsulated H264 ('PaVe') format, which,
+  //         due to yet-to-be-fully-investigated issues of compatibility with
+  //         the system default decoder (Microsoft (TM) 'DTV-DVD Video Decoder')
+  //         is currently pre-processed (ffmpeg) and streamed as uncompressed
+  //         YUV420p. This implementation may be more efficient, as it uses less
+  //         DirectShow capabilities and resources; this also requires more
+  //         investigation, however. Note that the processing pipeline includes
+  //         a decoder module that transforms the chroma-luminance format to
+  //         RGB for convenient display/storage purposes; this module ('Color
+  //         Converter DSP DMO') is included with Microsoft Windows Vista (TM)
+  //         and onwards (i.e. there is no Windows XP support at the moment)
+  // *TODO*: The current implementation does not leverage GPU hardware
+  //         acceleration and does not support the Media Foundation (TM)
+  //         framework, and thus probably requires more CPU power.
+  //         Also, GNU/Linux support is incomplete. Given the diversity of
+  //         computing platforms and graphics capabilities of host devices, this
+  //         may not be an issue at this point and will require specification
   mediaType_out->majortype = MEDIATYPE_Video;
-  mediaType_out->subtype = MEDIASUBTYPE_H264;
-  mediaType_out->bFixedSizeSamples = FALSE;
-  mediaType_out->bTemporalCompression = TRUE;
+  //mediaType_out->subtype = MEDIASUBTYPE_H264;
+  //mediaType_out->subtype = MEDIASUBTYPE_YV12;
+  mediaType_out->subtype = MEDIASUBTYPE_RGB24;
+  //mediaType_out->bFixedSizeSamples = FALSE;
+  //mediaType_out->bTemporalCompression = TRUE;
+  mediaType_out->bFixedSizeSamples = TRUE;
+  mediaType_out->bTemporalCompression = FALSE;
   // *NOTE*: lSampleSize is set after pbFormat (see below)
   //mediaType_out->lSampleSize = video_info_p->bmiHeader.biSizeImage;
-  mediaType_out->formattype = FORMAT_VideoInfo2;
-  mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER2);
+  mediaType_out->formattype = FORMAT_VideoInfo;
+  //mediaType_out->formattype = FORMAT_VideoInfo2;
+  mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER);
+  //mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER2);
 
-  struct tagVIDEOINFOHEADER2* video_info_p =
-    reinterpret_cast<struct tagVIDEOINFOHEADER2*> (mediaType_out->pbFormat);
+  struct tagVIDEOINFOHEADER* video_info_p =
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> (mediaType_out->pbFormat);
+  //struct tagVIDEOINFOHEADER2* video_info_p =
+  //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (mediaType_out->pbFormat);
   ACE_ASSERT (video_info_p);
 
-  BOOL result_2 = SetRectEmpty (&video_info_p->rcSource);
+  result_2 = SetRectEmpty (&video_info_p->rcSource);
   ACE_ASSERT (result_2);
-  video_info_p->rcSource.right = 1280;
-  video_info_p->rcSource.bottom = 720;
+  video_info_p->rcSource.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  video_info_p->rcSource.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
   result_2 = SetRectEmpty (&video_info_p->rcTarget);
   ACE_ASSERT (result_2);
-  video_info_p->rcTarget.right = 1280;
-  video_info_p->rcTarget.bottom = 720;
+  video_info_p->rcTarget.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  video_info_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
 
   // *NOTE*: width * height * bytes/pixel * frames/s * 8
-  video_info_p->dwBitRate = (1280 * 720) * 4 * 30 * 8;
+  video_info_p->dwBitRate =
+    (ARDRONE_DEFAULT_VIDEO_WIDTH * ARDRONE_DEFAULT_VIDEO_HEIGHT) * 4 * 30 * 8;
   //video_info_p->dwBitErrorRate = 0;
-  video_info_p->AvgTimePerFrame = 333333; // --> 30 fps (in 100th ns)
+  video_info_p->AvgTimePerFrame = MILLISECONDS_TO_100NS_UNITS (1000 / 60);
 
   //video_info_p->dwInterlaceFlags = 0; // --> progressive
   //video_info_p->dwCopyProtectFlags = 0; // --> not protected
@@ -569,14 +645,21 @@ continue_:
 
   // *TODO*: make this configurable (and part of a protocol)
   video_info_p->bmiHeader.biSize = sizeof (struct tagBITMAPINFOHEADER);
-  video_info_p->bmiHeader.biWidth = 1280;
-  video_info_p->bmiHeader.biHeight = 720;
+  video_info_p->bmiHeader.biWidth = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  video_info_p->bmiHeader.biHeight = ARDRONE_DEFAULT_VIDEO_HEIGHT;
   video_info_p->bmiHeader.biPlanes = 1;
-  //video_info_p->bmiHeader.biBitCount = 24;
-  video_info_p->bmiHeader.biBitCount = 32;
-  //video_info_p->bmiHeader.biCompression = FCC ('H264');
-  video_info_p->bmiHeader.biCompression = MAKEFOURCC ('H', '2', '6', '4');
-  video_info_p->bmiHeader.biSizeImage = DIBSIZE (video_info_p->bmiHeader);
+  //video_info_p->bmiHeader.biBitCount = 12;
+  video_info_p->bmiHeader.biBitCount = 24;
+  video_info_p->bmiHeader.biCompression = BI_RGB;
+  // *NOTE*: "...For compressed video and YUV formats, this member is a FOURCC
+  //         code, specified as a DWORD in little-endian order. ..."
+  //if (ACE_LITTLE_ENDIAN)
+  //  video_info_p->bmiHeader.biCompression = MAKEFOURCC ('Y', 'V', '1', '2');
+  //else
+  //  video_info_p->bmiHeader.biCompression = FCC (ACE_SWAP_LONG ((DWORD)'YV12'));
+  video_info_p->bmiHeader.biSizeImage =
+    //((video_info_p->bmiHeader.biWidth * video_info_p->bmiHeader.biHeight) * 3) / 2;
+    DIBSIZE (video_info_p->bmiHeader);
   //video_info_p->bmiHeader.biXPelsPerMeter;
   //video_info_p->bmiHeader.biYPelsPerMeter;
   //video_info_p->bmiHeader.biClrUsed;
@@ -616,6 +699,10 @@ do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
   if (mediaType_inout)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (mediaType_inout);
 
+#if defined (_DEBUG)
+  DbgTerminate ();
+#endif
+
   CoUninitialize ();
 }
 
@@ -654,8 +741,6 @@ do_initialize_mediafoundation (bool coInitialize_in)
   } // end IF
 
 continue_:
-  Stream_Module_Device_Tools::initialize ();
-
   return true;
 
 error:
@@ -715,8 +800,8 @@ do_work (int argc_in,
                                                            NULL,
                                                            true);
 
-  Stream_AllocatorHeap_T<struct Stream_AllocatorConfiguration> heap_allocator;
-  ARDrone_MessageAllocator_t message_allocator (STREAM_QUEUE_MAX_MESSAGES,
+  Stream_AllocatorHeap_T<struct ARDrone_AllocatorConfiguration> heap_allocator;
+  ARDrone_MessageAllocator_t message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
                                                 &heap_allocator,
                                                 true); // block
   if (!heap_allocator.initialize (CBData_in.configuration->allocatorConfiguration))
@@ -733,6 +818,12 @@ do_work (int argc_in,
 
   ARDrone_Stream_t stream;
   ARDrone_AsynchStream_t asynch_stream;
+  ACE_ASSERT (CBData_in.configuration);
+  ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
+  //ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER2));
+  //struct tagVIDEOINFOHEADER2* video_info_p =
+  //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (CBData_in.configuration->moduleHandlerConfiguration.format->pbFormat);
+  //ACE_ASSERT (video_info_p);
 
   // ******************* socket configuration data ****************************
   CBData_in.configuration->socketConfiguration.address = address_in;
@@ -759,6 +850,15 @@ do_work (int argc_in,
     CBData_in.configuration->userData;
 
   // ******************** stream configuration data ***************************
+  CBData_in.configuration->moduleHandlerConfiguration.bufferSize =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    CBData_in.configuration->moduleHandlerConfiguration.format->lSampleSize;
+#else
+    av_image_get_buffer_size (CBData_in.configuration->moduleHandlerConfiguration.format,
+                              ARDRONE_DEFAULT_VIDEO_WIDTH,
+                              ARDRONE_DEFAULT_VIDEO_HEIGHT,
+                              1); // *TODO*: linesize alignment
+#endif
   CBData_in.configuration->moduleHandlerConfiguration.streamConfiguration =
     &CBData_in.configuration->streamConfiguration;
 
@@ -768,6 +868,8 @@ do_work (int argc_in,
   CBData_in.configuration->moduleHandlerConfiguration.consoleMode =
     interfaceDefinitionFile_in.empty ();
 #endif
+  //CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
+  //  true;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->moduleHandlerConfiguration.filterConfiguration =
@@ -1012,6 +1114,9 @@ ACE_TMAIN (int argc_in,
   // start profile timer...
   process_profile.start ();
 
+  Stream_Module_Decoder_Tools::initialize ();
+  Stream_Module_Device_Tools::initialize ();
+
   // step1: process commandline options (if any)
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
@@ -1027,19 +1132,20 @@ ACE_TMAIN (int argc_in,
 #endif // #ifdef DEBUG_DEBUGGER
 
 //  bool client_mode            = false;
-  bool log_to_file            = false;
+  bool log_to_file           = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  bool use_media_foundation   = COMMON_UI_DEFAULT_WIN32_USE_MEDIAFOUNDATION;
+  bool use_mediafoundation   =
+    (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION);
 #endif
-  bool use_reactor            = NET_EVENT_USE_REACTOR;
+  bool use_reactor           = NET_EVENT_USE_REACTOR;
   ACE_INET_Addr drone_address (static_cast<u_short> (ARDRONE_VIDEO_LIVE_PORT),
                                static_cast<ACE_UINT32> (192 << 24 | 168 << 16 | 1 << 8 | 1));
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("default ARDrone video port (UDP) address: %s...\n"),
               ACE_TEXT (Net_Common_Tools::IPAddress2String (drone_address).c_str ())));
-  bool show_console           = false;
-  unsigned short port_number  = ARDRONE_VIDEO_LIVE_PORT;
-  bool trace_information      = false;
+  bool show_console          = false;
+  unsigned short port_number = ARDRONE_VIDEO_LIVE_PORT;
+  bool trace_information     = false;
   std::string path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_DIRECTORY);
@@ -1054,7 +1160,7 @@ ACE_TMAIN (int argc_in,
                             show_console,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                            use_media_foundation,
+                            use_mediafoundation,
 #endif
                             port_number,
                             use_reactor,
@@ -1118,7 +1224,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize logging, aborting\n")));
 
-    // *PORTABILITY*: on Windows, ACE needs finalization...
+    // *PORTABILITY*: on Windows, ACE needs finalization
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     result = ACE::fini ();
     if (result == -1)
@@ -1145,7 +1251,7 @@ ACE_TMAIN (int argc_in,
                 ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
 
     Common_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, fini ACE...
+    // *PORTABILITY*: on Windows, fini ACE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     result = ACE::fini ();
     if (result == -1)
@@ -1190,7 +1296,7 @@ ACE_TMAIN (int argc_in,
   struct ARDrone_Configuration configuration;
   struct ARDrone_UserData user_data;
   configuration.userData = &user_data;
-  user_data.configuration = &configuration.connectionConfiguration;
+  user_data.connectionConfiguration = &configuration.connectionConfiguration;
 
   // step6: initialize GTK UI
   struct ARDrone_GtkProgressData gtk_progress_data;
@@ -1213,7 +1319,7 @@ ACE_TMAIN (int argc_in,
   gtk_cb_data.progressData = &gtk_progress_data;
   gtk_cb_data.userData = &gtk_cb_data;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  gtk_cb_data.useMediaFoundation = use_media_foundation;
+  gtk_cb_data.useMediaFoundation = use_mediafoundation;
 #endif
   gtk_progress_data.GTKState = &gtk_cb_data;
   ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
@@ -1225,10 +1331,10 @@ ACE_TMAIN (int argc_in,
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool result_2 =
-    (use_media_foundation ? do_initialize_mediafoundation (true)
-                          : do_initialize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
-                                                      configuration.moduleHandlerConfiguration.format,
-                                                      true));
+    (use_mediafoundation ? do_initialize_mediafoundation (true)
+                         : do_initialize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
+                                                     configuration.moduleHandlerConfiguration.format,
+                                                     true));
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1348,7 +1454,7 @@ ACE_TMAIN (int argc_in,
 
   // step6: clean up
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (use_media_foundation) do_finalize_mediafoundation ();
+  if (use_mediafoundation) do_finalize_mediafoundation ();
   else do_finalize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
                                configuration.moduleHandlerConfiguration.format);
 #endif

@@ -21,6 +21,7 @@
 
 #include "ardrone_opengl.h"
 
+#if defined (GTKOPENGL_SUPPORT)
 #include "GL/gl.h"
 #include "GL/glut.h"
 #include "GL/freeglut_ext.h"
@@ -375,3 +376,4 @@ frames_per_second (float framesPerSecond_in)
   glutBitmapString (ARDRONE_OPENGL_FONT_FPS,
                     reinterpret_cast<unsigned char*> (buffer));
 }
+#endif

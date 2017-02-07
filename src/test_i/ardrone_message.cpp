@@ -28,6 +28,13 @@
 #include "ardrone_macros.h"
 #include "ardrone_types.h"
 
+ARDrone_Message::ARDrone_Message (unsigned int messageSize_in)
+ : inherited (messageSize_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::ARDrone_Message"));
+
+}
+
 // *NOTE*: this is implicitly invoked by duplicate()...
 ARDrone_Message::ARDrone_Message (const ARDrone_Message& message_in)
  : inherited (message_in)
