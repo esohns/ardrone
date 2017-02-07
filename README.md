@@ -1,4 +1,4 @@
-olinuxino
-=========
+ardrone
+=======
 
-software to run on / interact with embedded device(s) (here: OLinuxIno Lime A10)
+code for the Brother AiRScouter competition
