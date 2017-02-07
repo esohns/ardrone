@@ -1,2 +1,3 @@
-SUBDIRS = \
-  i2cdevlib
+#SUBDIRS = \
+#  
+

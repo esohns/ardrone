@@ -4,8 +4,9 @@ libdir     =@libdir@
 includedir =@includedir@
 
 Name       : @PACKAGE_NAME@
-Description: OLinuxIno MOD MPU6050 kernel driver unit test
-Requires   : ACE
-Version    : @OLINUXINO_VERSION@
+Description: ARDrone VR client
+Requires   : ACE libCommon libACEStream libACENetwork gtk-3.0
+Version    : @ARDRONE_VERSION@
 Libs       : -L${libdir}
 Cflags     : @CXXFLAGS@
+
