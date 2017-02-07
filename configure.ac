@@ -2,34 +2,34 @@
 # Process this file with autoconf to produce a configure script.
 
 # define version information
-m4_define([M4_OLINUXINO_VERSION_MAJOR], [0])
-m4_define([M4_OLINUXINO_VERSION_MINOR], [0])
-m4_define([M4_OLINUXINO_VERSION_MICRO], [1])
-m4_define([M4_OLINUXINO_VERSION_DEVEL], [devel])
-m4_define([M4_OLINUXINO_VERSION],
-          [M4_OLINUXINO_VERSION_MAJOR.M4_OLINUXINO_VERSION_MINOR.M4_OLINUXINO_VERSION_MICRO[]m4_ifset([M4_OLINUXINO_VERSION_DEVEL],-[M4_OLINUXINO_VERSION_DEVEL])])
-m4_define([M4_OLINUXINO_VERSION_API]  , [1])
+m4_define([M4_ARDRONE_VERSION_MAJOR], [0])
+m4_define([M4_ARDRONE_VERSION_MINOR], [0])
+m4_define([M4_ARDRONE_VERSION_MICRO], [1])
+m4_define([M4_ARDRONE_VERSION_DEVEL], [devel])
+m4_define([M4_ARDRONE_VERSION],
+          [M4_ARDRONE_VERSION_MAJOR.M4_ARDRONE_VERSION_MINOR.M4_ARDRONE_VERSION_MICRO[]m4_ifset([M4_ARDRONE_VERSION_DEVEL],-[M4_ARDRONE_VERSION_DEVEL])])
+m4_define([M4_ARDRONE_VERSION_API]  , [1])
 dnl # Libtool versioning.
 dnl m4_define([dc_version_lt_current],[0])
 dnl m4_define([dc_version_lt_revision],[0])
 dnl m4_define([dc_version_lt_age],[0])
-AC_SUBST([OLINUXINO_VERSION],[M4_OLINUXINO_VERSION])
-AC_SUBST([OLINUXINO_VERSION_MAJOR],[M4_OLINUXINO_VERSION_MAJOR])
-AC_SUBST([OLINUXINO_VERSION_MINOR],[M4_OLINUXINO_VERSION_MINOR])
-AC_SUBST([OLINUXINO_VERSION_MICRO],[M4_OLINUXINO_VERSION_MICRO])
+AC_SUBST([ARDRONE_VERSION],[M4_ARDRONE_VERSION])
+AC_SUBST([ARDRONE_VERSION_MAJOR],[M4_ARDRONE_VERSION_MAJOR])
+AC_SUBST([ARDRONE_VERSION_MINOR],[M4_ARDRONE_VERSION_MINOR])
+AC_SUBST([ARDRONE_VERSION_MICRO],[M4_ARDRONE_VERSION_MICRO])
 dnl AC_SUBST([DC_VERSION_LIBTOOL],[dc_version_lt_current:dc_version_lt_revision:dc_version_lt_age])
 # Version suffix.
-m4_ifset([M4_OLINUXINO_VERSION_DEVEL],
+m4_ifset([M4_ARDRONE_VERSION_DEVEL],
          [AC_DEFINE(HAVE_VERSION_DEVEL, [1], [Define if a version suffix is present.])])
-AC_SUBST([OLINUXINO_VERSION_API],[M4_OLINUXINO_VERSION_API])
+AC_SUBST([ARDRONE_VERSION_API],[M4_ARDRONE_VERSION_API])
 
 AC_PREREQ([2.69])
-AC_INIT([olinuxino],
-        [M4_OLINUXINO_VERSION],
-        [eriksohns@123mail.org],
-        [olinuxino],
-        [http://www.github.com/esohns/olinuxino])
-AC_CONFIG_SRCDIR([src/ko/olimex_mod_mpu6050_main.c])
+AC_INIT([ardrone],
+        [M4_ARDRONE_VERSION],
+        [eriksohns@fastmail.net],
+        [ardrone],
+        [http://www.github.com/esohns/ardrone])
+AC_CONFIG_SRCDIR([src/test_i/ardrone.cpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([aux_config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -55,8 +55,8 @@ AM_INIT_AUTOMAKE
 AM_SANITY_CHECK
 
 # prefix config.h
-m4_define([OLINUXINO_CONFIG_H], [olinuxino_config.h])
-AX_PREFIX_CONFIG_H([OLINUXINO_CONFIG_H], [olinuxino], [config.h])
+m4_define([ARDRONE_CONFIG_H], [ardrone_config.h])
+AX_PREFIX_CONFIG_H([ARDRONE_CONFIG_H], [ardrone], [config.h])
 
 # set up kernel module support
 AC_ARG_VAR([KERNEL_SRC_DIR], [kernel src directory (overrides --with-kerneldir)])
@@ -71,7 +71,7 @@ AC_ARG_WITH(moduledir,
             [moduledir=${moduledir_default}])
 AC_SUBST([moduledir])
 # *WARNING*: length must be <= 20 !
-AC_SUBST([modulename],[olimex_mod_mpu6050])
+AC_SUBST([modulename],[ardrone_mod])
 # --> enable cross-compilation support ?
 AC_MSG_CHECKING(cross-compile (ARM) the kernel module)
 cross_compile_default="yes"
@@ -131,10 +131,10 @@ AC_ARG_ENABLE([tracing],
               [tracing=$tracing_default])
 AM_CONDITIONAL([TRACING], [test x$tracing = xyes])
 if test x$tracing = xyes; then
-  CXXFLAGS_TRACING="-DOLINUXINO_NTRACE=0"
+  CXXFLAGS_TRACING="-DARDRONE_NTRACE=0"
   AC_MSG_RESULT([yes])
 else
-  CXXFLAGS_TRACING="-DOLINUXINO_NTRACE=1"
+  CXXFLAGS_TRACING="-DARDRONE_NTRACE=1"
   AC_MSG_RESULT([no])
 fi
 
@@ -151,7 +151,7 @@ AC_ARG_ENABLE([valgrind-support],
               [valgrind_support=$valgrind_support_default])
 AM_CONDITIONAL([VALGRIND_SUPPORT], [test x$valgrind_support = xyes])
 if test x$valgrind_support = xyes; then
-  CXXFLAGS_VALGRIND="-DOLINUXINO_ENABLE_VALGRIND_SUPPORT"
+  CXXFLAGS_VALGRIND="-DARDRONE_ENABLE_VALGRIND_SUPPORT"
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
@@ -251,14 +251,13 @@ AC_CONFIG_FILES([Makefile
                  src/include/Makefile
                  src/ko/Makefile
                  src/ko/3rd_party/Makefile
-                 src/ko/3rd_party/i2cdevlib/Makefile
-                 src/test_u/Makefile
-                 src/test_u/etc/Makefile])
-AC_CONFIG_FILES([scripts/olinuxino.pc
-                 scripts/olinuxino.spec])
-#AC_CONFIG_FILES([olinuxino-${OLINUXINO_VERSION_API}.pc:scripts/olinuxino.pc.in],
+                 src/test_i/Makefile
+                 src/test_i/etc/Makefile])
+AC_CONFIG_FILES([scripts/ardrone.pc
+                 scripts/ardrone.spec])
+#AC_CONFIG_FILES([ardrone-${ARDRONE_VERSION_API}.pc:scripts/ardrone.pc.in],
 #                [],
-#                [OLINUXINO_VERSION_API=$OLINUXINO_VERSION_API])
+#                [ARDRONE_VERSION_API=$ARDRONE_VERSION_API])
 
 AC_OUTPUT
 

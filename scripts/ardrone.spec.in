@@ -12,16 +12,16 @@ Packager:     Erik Sohns <@MAINTAINER_EMAIL_ADDRESS@>
 Prefix:       /usr/local
 Provides:     %{name}
 Release:      1
-Requires:     libCommon libACEStream libACENetwork
+Requires:     ACE libCommon libACEStream libACENetwork gtk-3.0
 #Serial:       1
 Source:       %{name}-%{version}.tar.gz
-Summary:      OLinuxIno MOD MPU6050 kernel driver unit test
+Summary:      ARDrone VR client
 URL:          @PACKAGE_URL@
 Vendor:       N/A
 Version:      @VERSION@
 
 %description
-kernel driver and (graphical) test tool for the OlinuxIno MPU6050 module
+code for the Brother AiRScouter competition
 
 %prep
 #rm -rf %{_topdir}/BUILD/*

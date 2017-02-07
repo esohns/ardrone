@@ -1,4 +1,5 @@
 SUBDIRS = \
   include \
   ko \
-  test_u
+  test_i
+
