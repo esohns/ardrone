@@ -21,6 +21,7 @@
 #ifndef ARDRONE_CONFIGURATION_H
 #define ARDRONE_CONFIGURATION_H
 
+#include <algorithm>
 #include <deque>
 
 #if defined (GTKGL_SUPPORT)
@@ -55,41 +56,41 @@ struct ARDrone_AllocatorConfiguration
   inline ARDrone_AllocatorConfiguration ()
    : Stream_AllocatorConfiguration ()
   {
-    // *NOTE*: this facilitates (message block) data buffers to be scanned with
-    //         'flex's yy_scan_buffer() method
-    buffer = STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE;
+    defaultBufferSize = ARDRONE_FRAME_BUFFER_SIZE;
+
+    // *NOTE*: facilitate (message block) data buffers to be scanned with
+    //         (f)lexs' yy_scan_buffer() method, and support 'padding' in ffmpeg
+    paddingBytes =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      AV_INPUT_BUFFER_PADDING_SIZE;
+#else
+      FF_INPUT_BUFFER_PADDING_SIZE;
+#endif
+    paddingBytes =
+      std::max (static_cast<unsigned int> (STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE),
+                paddingBytes);
   };
 };
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct _AMMediaType;
-class ACE_Message_Queue_Base;
-struct ARDrone_DirectShow_PinConfiguration
-{
-  inline ARDrone_DirectShow_PinConfiguration ()
-    : bufferSize (ARDRONE_STREAM_BUFFER_SIZE)
-    , format (NULL)
-    , isTopToBottom (true)
-    , queue (NULL)
-  {};
-
-  size_t                  bufferSize; // medial sample-
-  struct _AMMediaType*    format; // (preferred) media type handle
-  bool                    isTopToBottom; // frame memory layout
-  ACE_Message_Queue_Base* queue;  // (inbound) buffer queue handle
-};
+//class ACE_Message_Queue_Base;
 struct ARDrone_DirectShow_FilterConfiguration
+ : Stream_Miscellaneous_DirectShow_FilterConfiguration
 {
   inline ARDrone_DirectShow_FilterConfiguration ()
-    : format (NULL)
+    : Stream_Miscellaneous_DirectShow_FilterConfiguration ()
+    //, format (NULL)
     , module (NULL)
     , pinConfiguration (NULL)
   {};
 
   // *TODO*: specify this as part of the network protocol header/handshake
-  struct _AMMediaType*                        format; // handle
-  Stream_Module_t*                            module; // handle
-  struct ARDrone_DirectShow_PinConfiguration* pinConfiguration; // handle
+  //struct _AMMediaType*                                           format; // handle
+  Stream_Module_t*                                               module; // handle
+  struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
 };
+#endif
 
 struct ARDrone_SocketHandlerConfiguration;
 typedef Net_IConnector_T<ACE_INET_Addr,
@@ -121,26 +122,30 @@ struct ARDrone_Configuration
    , allocatorConfiguration ()
    , moduleConfiguration ()
    , moduleHandlerConfiguration ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowFilterConfiguration ()
    , directShowPinConfiguration ()
+#endif
    , streamConfiguration ()
    , userData (NULL)
   {};
 
-  struct ARDrone_SignalHandlerConfiguration     signalHandlerConfiguration;
+  struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
-  struct Net_SocketConfiguration                socketConfiguration;
-  struct ARDrone_SocketHandlerConfiguration     socketHandlerConfiguration;
-  struct ARDrone_ConnectionConfiguration        connectionConfiguration;
+  struct Net_SocketConfiguration                                socketConfiguration;
+  struct ARDrone_SocketHandlerConfiguration                     socketHandlerConfiguration;
+  struct ARDrone_ConnectionConfiguration                        connectionConfiguration;
 
-  struct ARDrone_AllocatorConfiguration         allocatorConfiguration;
-  struct Stream_ModuleConfiguration             moduleConfiguration;
-  struct ARDrone_ModuleHandlerConfiguration     moduleHandlerConfiguration;
-  struct ARDrone_DirectShow_FilterConfiguration directShowFilterConfiguration;
-  struct ARDrone_DirectShow_PinConfiguration    directShowPinConfiguration;
-  struct ARDrone_StreamConfiguration            streamConfiguration;
+  struct ARDrone_AllocatorConfiguration                         allocatorConfiguration;
+  struct Stream_ModuleConfiguration                             moduleConfiguration;
+  struct ARDrone_ModuleHandlerConfiguration                     moduleHandlerConfiguration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_FilterConfiguration                 directShowFilterConfiguration;
+  struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration directShowPinConfiguration;
+#endif
+  struct ARDrone_StreamConfiguration                            streamConfiguration;
 
-  struct ARDrone_UserData*                      userData;
+  struct ARDrone_UserData*                                      userData;
 };
 
 //////////////////////////////////////////

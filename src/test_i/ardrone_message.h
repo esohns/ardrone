@@ -64,26 +64,31 @@ class ARDrone_Message
   static std::string CommandType2String (int);
 
   // overrides from ACE_Message_Block
-  // --> create a "shallow" copy that references the same datablock
-  // *NOTE*: this uses the allocator (if any) to create a new message
+  // *NOTE*: these use the allocator (if any)
+  // create a "deep" copy
+  virtual ACE_Message_Block* clone (ACE_Message_Block::Message_Flags = 0) const;
+  // create a "shallow" copy that references the current block(s) of data
   virtual ACE_Message_Block* duplicate (void) const;
 
  protected:
-  // copy ctor to be used by duplicate() and child classes
-  // --> uses an (incremented refcount of) the same datablock ("shallow copy")
+  // ctor to be used by clone() and derived classes
+  // *NOTE*: clone()ing and passing the new data block --> "deep" copy
+  // *NOTE*: fire-and-forget the first argument (i.e. does NOT increment the
+  //         data block reference count)
+  ARDrone_Message (ACE_Data_Block*, // data block handle
+                   ACE_Allocator*,  // message allocator
+                   bool = true);    // increment running message counter ?
+
+  // copy ctor to be used by duplicate() and derived classes. Increments the
+  // reference count of the current data block --> "shallow" copy
   ARDrone_Message (const ARDrone_Message&);
 
  private:
   typedef Stream_MessageBase_T<struct ARDrone_AllocatorConfiguration,
                                enum ARDrone_MessageType,
                                int> inherited;
-  //typedef Stream_MessageBase_T<ardrone_MessageType> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message ())
-  // *NOTE*: to be used by allocators...
-  ARDrone_Message (ACE_Data_Block*, // data block to use
-                   ACE_Allocator*,  // message allocator
-                   bool = true);    // increment running message counter ?
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message& operator= (const ARDrone_Message&))
 };
 

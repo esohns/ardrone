@@ -57,6 +57,7 @@
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                "button_about"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_CLEAR                "button_clear"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_QUIT                 "button_quit"
+#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN      "checkbutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH          "checkbutton_asynch"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE            "checkbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION        "combobox_destination"
@@ -102,10 +103,9 @@
 #define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
 // *** stream-related ***
-#define ARDRONE_STREAM_BUFFER_SIZE                         131070 // bytes
+#define ARDRONE_FRAME_BUFFER_SIZE                          131070 // bytes
 //#define ARDRONE_MAXIMUM_QUEUE_SLOTS                       STREAM_QUEUE_MAX_MESSAGES
-// *TODO*: fore testing purposes; reduce for the application
-#define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES        50000
+#define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES        std::numeric_limits<unsigned int>::max ()
 
 #define ARDRONE_STATISTICS_REPORTING_INTERVAL              0 // seconds [0 --> OFF]
 
@@ -127,6 +127,7 @@
 
 // *** application-related ***
 //#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000
+#define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.rgb"
 
