@@ -279,11 +279,13 @@ struct ARDrone_ModuleHandlerConfiguration
    , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
    , window (NULL)
 #endif
+   , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
    , inbound (true)
    , printProgressDot (false)
    , pushStatisticMessages (true)
    , socketConfiguration (NULL)
    , socketHandlerConfiguration (NULL)
+   , sourceFormat ()
    , stream (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
@@ -301,6 +303,7 @@ struct ARDrone_ModuleHandlerConfiguration
 #endif
 
     passive = false;
+    ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
   };
 
   bool                                           block;               // H264 NAL bisector module
@@ -333,12 +336,14 @@ struct ARDrone_ModuleHandlerConfiguration
   unsigned int                                   width;           // display module
   GdkWindow*                                     window;          // display module
 #endif
+  bool                                           fullScreen;
   bool                                           inbound;
   bool                                           printProgressDot;
   bool                                           pushStatisticMessages;
 
   struct Net_SocketConfiguration*                socketConfiguration;
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration;
+  struct _cairo_rectangle_int                    sourceFormat;
   ARDrone_StreamBase_t*                          stream;
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
@@ -353,9 +358,7 @@ struct ARDrone_StreamConfiguration
    : Stream_Configuration ()
    , moduleHandlerConfiguration (NULL)
    , userData (NULL)
-  {
-    bufferSize = ARDRONE_STREAM_BUFFER_SIZE;
-  };
+  {};
 
   struct ARDrone_ModuleHandlerConfiguration* moduleHandlerConfiguration;
 

@@ -94,6 +94,9 @@ ARDrone_SignalHandler::handle (int signal_in)
 
       break;
     }
+    case SIGABRT:
+    case SIGCHLD:
+      break;
     default:
     {
       ACE_DEBUG ((LM_ERROR,

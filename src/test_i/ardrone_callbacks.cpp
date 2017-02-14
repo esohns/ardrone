@@ -43,6 +43,8 @@
 #endif
 
 #include <ace/Log_Msg.h>
+#include <ace/Process.h>
+#include <ace/Process_Manager.h>
 
 #include <gmodule.h>
 
@@ -145,6 +147,43 @@ load_display_devices (GtkListStore* listStore_in)
   std::string command_line_string = ACE_TEXT_ALWAYS_CHAR ("xrandr >> ");
   command_line_string += filename_string;
 
+//  ACE_Process_Options process_options (false);/*,                                             // inherit environment ?
+//                                       ACE_Process_Options::DEFAULT_COMMAND_LINE_BUF_LEN, // command line buffer length
+//                                       ACE_Process_Options::ENVIRONMENT_BUFFER,           // environment buffer
+//                                       ACE_Process_Options::MAX_ENVIRONMENT_ARGS,         // #environment variables
+//                                       ACE_Process_Options::MAX_COMMAND_LINE_OPTIONS);    // #command line options*/
+//  result =
+//      process_options.command_line (ACE_TEXT (command_line_string.c_str ()));
+//  if (result == -1)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to ACE_Process_Options::command_line(\"%s\"): \"%m\", aborting\n"),
+//                ACE_TEXT (command_line_string.c_str ())));
+//    return false;
+//  } // end IF
+//  ACE_Process_Manager* process_manager_p = ACE_Process_Manager::instance ();
+//  ACE_ASSERT (process_manager_p);
+//  pid_t process_pid = process_manager_p->spawn (process_options,
+//                                                NULL);
+//  if (process_pid == ACE_INVALID_PID)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to ACE_Process_Manager::spawn(\"%s\"): \"%m\", aborting\n"),
+//                ACE_TEXT (command_line_string.c_str ())));
+//    return false;
+//  } // end IF
+//  ACE_exitcode exit_status = -1;
+//  if (process_manager_p->wait (process_pid, &exit_status) == ACE_INVALID_PID)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to ACE_Process_Manager::wait(): \"%m\", aborting\n")));
+//    return false;
+//  } // end IF
+
+  std::string display_records_string;
+#if defined (DEBUG_DEBUGGER)
+  // *TODO*: cannot debug this (gdb crashes)
+#else
   result = ACE_OS::system (ACE_TEXT (command_line_string.c_str ()));
 //  result = execl ("/bin/sh", "sh", "-c", command, (char *) 0);
   if ((result == -1)      ||
@@ -171,11 +210,12 @@ load_display_devices (GtkListStore* listStore_in)
                 ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
                 ACE_TEXT (filename_string.c_str ())));
 
-  std::string display_records_string = reinterpret_cast<char*> (data_p);
+  display_records_string = reinterpret_cast<char*> (data_p);
   delete [] data_p;
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("xrandr data: \"%s\"\n"),
 //              ACE_TEXT (display_record_string.c_str ())));
+#endif
 
   std::istringstream converter;
   char buffer [BUFSIZ];
@@ -462,7 +502,7 @@ stream_processing_function (void* arg_in)
 
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->CBData->builders.end ());
-  ACE_ASSERT (lock_p);
+//  ACE_ASSERT (lock_p);
 
 //  GtkStatusbar* statusbar_p = NULL;
   Stream_IStreamControlBase* stream_p = NULL;
@@ -471,12 +511,12 @@ stream_processing_function (void* arg_in)
   bool result_2 = false;
 //  guint context_id = 0;
 
-  {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
-#else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
-#endif
+//  {
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
+//#else
+//    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
+//#endif
 
     // retrieve stream handle
     stream_p = data_p->CBData->stream;
@@ -503,7 +543,7 @@ stream_processing_function (void* arg_in)
 //        gtk_statusbar_get_context_id (statusbar_p,
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
-  } // end lock scope
+//  } // end lock scope
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -591,7 +631,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                              0.0,
                              std::numeric_limits<unsigned int>::max ());
   gtk_spin_button_set_value (spin_button_p,
-                             cb_data_p->configuration->streamConfiguration.bufferSize);
+                             cb_data_p->configuration->allocatorConfiguration.defaultBufferSize);
 
   GtkListStore* list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -783,6 +823,12 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end IF
 
   GtkCheckButton* check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                cb_data_p->configuration->moduleHandlerConfiguration.fullScreen);
+  check_button_p =
     GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
   ACE_ASSERT (check_button_p);
@@ -1244,51 +1290,14 @@ idle_initialize_ui_cb (gpointer userData_in)
   //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
   cb_data_p->configuration->moduleHandlerConfiguration.window =
-    gdk_win32_window_get_impl_hwnd (window_p);
+    static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+    //gdk_win32_window_get_impl_hwnd (window_p);
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
   cb_data_p->configuration->moduleHandlerConfiguration.window =
     gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
-#endif
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  GtkAllocation allocation;
-  gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
-                             &allocation);
-  cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-    allocation.y + allocation.height;
-  cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-    allocation.x;
-  cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-    allocation.x + allocation.width;
-  cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-    allocation.y;
-#else
-  gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
-                             &cb_data_p->configuration->moduleHandlerConfiguration.area);
-
-  ACE_ASSERT (!cb_data_p->pixelBuffer);
-  cb_data_p->pixelBuffer =
-#if GTK_CHECK_VERSION (3,0,0)
-      gdk_pixbuf_get_from_window (cb_data_p->configuration->moduleHandlerConfiguration.window,
-                                  0, 0,
-                                  cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
-#else
-      gdk_pixbuf_get_from_drawable (NULL,
-                                    GDK_DRAWABLE (cb_data_p->configuration->moduleHandlerConfiguration.window),
-                                    NULL,
-                                    0, 0,
-                                    0, 0, cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
-#endif
-  if (!cb_data_p->pixelBuffer)
-  { // *NOTE*: most probable reason: window is not mapped
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), aborting\n")));
-    return G_SOURCE_REMOVE;
-  } // end IF
-  cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
-    cb_data_p->pixelBuffer;
 #endif
 
   // step6: activate some widgets
@@ -1301,8 +1310,8 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION)));
   ACE_ASSERT (list_store_p);
-  n_rows =
-    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
+  n_rows = 1;
+//    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
   if (n_rows)
   {
     combo_box_p =
@@ -1314,6 +1323,11 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end IF
   else
     gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
+  GtkAction* action_p =
+      GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CUT)));
+  ACE_ASSERT (action_p);
+  gtk_action_set_sensitive (action_p, false);
 
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -1917,11 +1931,19 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_BUFFERSIZE)));
   ACE_ASSERT (spin_button_p);
-  cb_data_p->configuration->streamConfiguration.bufferSize =
+  cb_data_p->configuration->allocatorConfiguration.defaultBufferSize =
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
 
-  // retrieve filename ?
+  // set fullscreen ?
   GtkCheckButton* check_button_p =
+      GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
+  ACE_ASSERT (check_button_p);
+  cb_data_p->configuration->moduleHandlerConfiguration.fullScreen =
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
+
+  // retrieve filename ?
+  check_button_p =
       GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
   ACE_ASSERT (check_button_p);
@@ -1969,6 +1991,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
 
+continue_:
   // retrieve save format
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
@@ -1996,9 +2019,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     HRESULT result = E_FAIL;
 #if defined (OLE2ANSI)
     result = CLSIDFromString (format_string.c_str (),
-                          #else
+#else
     result = CLSIDFromString (ACE_TEXT_ALWAYS_WCHAR (format_string.c_str ()),
-                          #endif
+#endif
                               &cb_data_p->configuration->moduleHandlerConfiguration.format->subtype);
     if (FAILED (result))
     {
@@ -2011,7 +2034,134 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
 #endif
   } // end IF
 
-continue_:
+  // retrieve display settings
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format);
+
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+  struct tagVIDEOINFOHEADER* video_info_header_p =
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.format->pbFormat);
+#endif
+  GtkDrawingArea* drawing_area_p =
+    GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+  ACE_ASSERT (drawing_area_p);
+  struct _cairo_rectangle_int rectangle_s;
+  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+  {
+    GdkDisplay* display_p =
+      gdk_display_manager_get_default_display (gdk_display_manager_get ());
+    ACE_ASSERT (display_p);
+#if GTK_CHECK_VERSION (3,22,0)
+    GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
+    ACE_ASSERT (monitor_p);
+#else
+    GdkScreen* screen_p = gdk_display_get_default_screen (display_p);
+    ACE_ASSERT (screen_p);
+#endif /* GTK_CHECK_VERSION (3,22,0) */
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    gdk_monitor_get_geometry (monitor_p,
+                              &rectangle_s);
+    cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+      rectangle_s.y + rectangle_s.height;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.left =
+      rectangle_s.x;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+      rectangle_s.x + rectangle_s.width;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.top =
+      rectangle_s.y;
+#else
+#if GTK_CHECK_VERSION (3,22,0)
+    gdk_monitor_get_geometry (monitor_p,
+                              &cb_data_p->configuration->moduleHandlerConfiguration.area);
+#else
+    gdk_screen_get_monitor_geometry(screen_p,
+                                    0,
+                                    &cb_data_p->configuration->moduleHandlerConfiguration.area);
+#endif /* GTK_CHECK_VERSION (3,22,0) */
+#endif
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
+    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
+    video_info_header_p->bmiHeader.biSizeImage =
+      DIBSIZE (video_info_header_p->bmiHeader);
+
+    unsigned int source_buffer_size =
+      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat (cb_data_p->configuration->moduleHandlerConfiguration.format->subtype),
+                                cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width,
+                                cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height,
+                                1); // *TODO*: linesize alignment
+    video_info_header_p->bmiHeader.biSizeImage =
+      std::max (video_info_header_p->bmiHeader.biSizeImage,
+                static_cast<ULONG> (source_buffer_size));
+
+    cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
+      video_info_header_p->bmiHeader.biSizeImage;
+    cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+      video_info_header_p->bmiHeader.biSizeImage;
+#endif
+  } // end IF
+  else
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
+                               &rectangle_s);
+    cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+      rectangle_s.y + rectangle_s.height;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.left =
+      rectangle_s.x;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+      rectangle_s.x + rectangle_s.width;
+    cb_data_p->configuration->moduleHandlerConfiguration.area.top =
+      rectangle_s.y;
+
+    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
+    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
+    video_info_header_p->bmiHeader.biSizeImage =
+      DIBSIZE (video_info_header_p->bmiHeader);
+
+    cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
+      video_info_header_p->bmiHeader.biSizeImage;
+    cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+      video_info_header_p->bmiHeader.biSizeImage;
+#else
+    gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
+                               &cb_data_p->configuration->moduleHandlerConfiguration.area);
+#endif
+  } // end ELSE
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  if (cb_data_p->pixelBuffer)
+  {
+    g_object_unref (cb_data_p->pixelBuffer);
+    cb_data_p->pixelBuffer = NULL;
+  } // end IF
+  cb_data_p->pixelBuffer =
+#if GTK_CHECK_VERSION (3,0,0)
+      gdk_pixbuf_get_from_window (cb_data_p->configuration->moduleHandlerConfiguration.window,
+                                  0, 0,
+                                  cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+#else
+      gdk_pixbuf_get_from_drawable (NULL,
+                                    GDK_DRAWABLE (cb_data_p->configuration->moduleHandlerConfiguration.window),
+                                    NULL,
+                                    0, 0,
+                                    0, 0, cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+#endif
+  if (!cb_data_p->pixelBuffer)
+  { // *NOTE*: most probable reason: window is not mapped
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), returning\n")));
+    return;
+  } // end IF
+  cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
+    cb_data_p->pixelBuffer;
+#endif
+
   // update widgets
   gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
                            GTK_STOCK_DISCONNECT);
@@ -2047,33 +2197,6 @@ continue_:
     goto error;
   } // end IF
   thread_data_p->CBData = cb_data_p;
-
-  // start progress reporting
-  ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
-
-    cb_data_p->progressData->eventSourceID =
-        //g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, // _LOW doesn't work (on Win32)
-        //                 idle_update_progress_cb,
-        //                 &data_p->progressData,
-        //                 NULL);
-        g_timeout_add_full (G_PRIORITY_DEFAULT_IDLE,                   // _LOW doesn't work (on Win32)
-                            COMMON_UI_GTK_PROGRESSBAR_UPDATE_INTERVAL, // ms (?)
-                            idle_update_progress_cb,
-                            cb_data_p->progressData,
-                            NULL);
-    if (cb_data_p->progressData->eventSourceID > 0)
-    {
-      thread_data_p->eventSourceID = cb_data_p->progressData->eventSourceID;
-      cb_data_p->progressData->pendingActions[cb_data_p->progressData->eventSourceID] =
-          ACE_Thread_ID (thread_id, thread_handle);
-      cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceID);
-    } // end IF
-    else
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_timeout_add_full(idle_update_progress_cb): \"%m\", continuing\n")));
-  } // end lock scope
-  stop_progress_reporting = true;
 
   ACE_OS::memset (thread_name, 0, sizeof (thread_name));
   //  char* thread_name_p = NULL;
@@ -2117,7 +2240,36 @@ continue_:
                 ACE_TEXT ("failed to ACE_Thread_Manager::spawn(): \"%m\", returning\n")));
     goto error;
   } // end IF
-  thread_data_p = NULL;
+
+  // start progress reporting
+  // *TODO*: there is a race condition here if the processing thread returns
+  //         early
+  ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+
+    cb_data_p->progressData->eventSourceID =
+        //g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, // _LOW doesn't work (on Win32)
+        //                 idle_update_progress_cb,
+        //                 &data_p->progressData,
+        //                 NULL);
+        g_timeout_add_full (G_PRIORITY_DEFAULT_IDLE,                   // _LOW doesn't work (on Win32)
+                            COMMON_UI_GTK_PROGRESSBAR_UPDATE_INTERVAL, // ms (?)
+                            idle_update_progress_cb,
+                            cb_data_p->progressData,
+                            NULL);
+    if (cb_data_p->progressData->eventSourceID > 0)
+    {
+      thread_data_p->eventSourceID = cb_data_p->progressData->eventSourceID;
+      cb_data_p->progressData->pendingActions[cb_data_p->progressData->eventSourceID] =
+          ACE_Thread_ID (thread_id, thread_handle);
+      cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceID);
+    } // end IF
+    else
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_timeout_add_full(idle_update_progress_cb): \"%m\", continuing\n")));
+    thread_data_p = NULL;
+  } // end lock scope
+  stop_progress_reporting = true;
 
   return;
 
@@ -2435,6 +2587,12 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::drawingarea_configure_cb"));
 
+  ACE_UNUSED_ARG (widget_in);
+  ACE_UNUSED_ARG (event_in);
+
+  // sanity check(s)
+  ACE_ASSERT (userData_in);
+
   struct ARDrone_GtkCBData* cb_data_p =
       reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
 
@@ -2443,6 +2601,8 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 
   return TRUE;
 }
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
 G_MODULE_EXPORT gboolean
 drawingarea_draw_cb (GtkWidget* widget_in,
                      cairo_t* context_in,
@@ -2480,17 +2640,31 @@ drawingarea_draw_cb (GtkWidget* widget_in,
 
   return TRUE;
 }
+#endif
 G_MODULE_EXPORT void
 drawingarea_realize_cb (GtkWidget* widget_in,
                         gpointer userData_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::drawingarea_realize_cb"));
 
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+  ACE_ASSERT (userData_in);
+
   struct ARDrone_GtkCBData* cb_data_p =
       reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+
+  GdkWindow* window_p = gtk_widget_get_window (widget_in);
+  ACE_ASSERT (window_p);
+  if (!gdk_window_ensure_native (window_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_window_ensure_native(), returning\n")));
+    return;
+  } // end IF
 }
 
 //G_MODULE_EXPORT gboolean

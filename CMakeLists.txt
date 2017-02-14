@@ -13,6 +13,8 @@ if (VERSION_DEVEL)
  set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}-${VERSION_DEVEL})
 endif ()
 
+set_property (GLOBAL PROPERTY USE_FOLDERS ON)
+
 # *NOTE*: if the user specifies -DCMAKE_BUILD_TYPE on the command line, take
 #         their definition and dump it in the cache along with proper
 #         documentation, otherwise set CMAKE_BUILD_TYPE to Debug prior to
@@ -85,6 +87,9 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
          COMPONENT dev)
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
+ if (DEBUG_DEBUGGER)
+  add_definitions (-DDEBUG_DEBUGGER)
+ endif ()
  if (CMAKE_COMPILER_IS_GNUCXX)
   add_compile_options (-g)
   add_compile_options (-O0)
@@ -143,7 +148,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
  add_definitions (-D_GNU_SOURCE)
 #  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS _GNU_SOURCE)
 endif ()
-if (MSVC)  
+if (MSVC)
  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
  set (MSVC_INCREMENTAL_YES_FLAG "/INCREMENTAL:NO")
@@ -156,7 +161,7 @@ if (MSVC)
   mark_as_advanced (CMAKE_${FLAG_TYPE}_LINKER_FLAGS_DEBUG)
  endforeach ()
 endif (MSVC)
-	
+
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cotire/CMake")
 #list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 include (cotire)

@@ -19,6 +19,7 @@
 ***************************************************************************/
 #include "stdafx.h"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
@@ -60,7 +61,9 @@ extern "C"
 #include <ace/Profile_Timer.h>
 #include <ace/Time_Value.h>
 
+#ifdef HAVE_CONFIG_H
 #include "ardrone_config.h"
+#endif
 
 #include "common_defines.h"
 #include "common_logger.h"
@@ -95,6 +98,25 @@ extern "C"
 #include "ardrone_signalhandler.h"
 #include "ardrone_stream.h"
 #include "ardrone_types.h"
+
+//----------------------------------------
+
+//void
+//do_atExit (void)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("::do_atExit"));
+
+//#ifdef HAVE_CONFIG_H
+//  ACE_DEBUG ((LM_ERROR,
+//              ACE_TEXT ("program %s aborted\n"),
+//              ACE_TEXT (ARDRONE_PACKAGE)));
+//#else
+//  ACE_DEBUG ((LM_ERROR,
+//              ACE_TEXT ("program aborted\n")));
+//#endif
+//}
+
+//----------------------------------------
 
 void
 do_printVersion (const std::string& programName_in)
@@ -144,14 +166,14 @@ do_printUsage (const std::string& programName_in)
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
 #endif // #ifdef DEBUG_DEBUGGER
 
   std::cout << ACE_TEXT_ALWAYS_CHAR ("usage: ")
@@ -165,6 +187,14 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-c           : show console [")
             << false
+            << ACE_TEXT_ALWAYS_CHAR ("])")
+            << std::endl;
+  //std::cout << ACE_TEXT_ALWAYS_CHAR ("-d           : debug flex [")
+  //          << STREAM_DECODER_DEFAULT_LEX_TRACE
+  //          << ACE_TEXT_ALWAYS_CHAR ("])")
+  //          << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-f           : fullscreen display [")
+            << ARDRONE_DEFAULT_VIDEO_FULLSCREEN
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-l           : log to a file [")
@@ -210,6 +240,8 @@ do_processArguments (int argc_in,
                      ACE_TCHAR** argv_in, // cannot be const...
                      ACE_INET_Addr& address_out,
                      bool& showConsole_out,
+                     //bool& debugScanner_out,
+                     bool& fullScreen_out,
                      bool& logToFile_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& useMediaFoundation_out,
@@ -225,19 +257,21 @@ do_processArguments (int argc_in,
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_u");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
 #endif // #ifdef DEBUG_DEBUGGER
 
   // initialize results
   address_out.reset ();
   showConsole_out             = false;
+  //debugScanner_out            = STREAM_DECODER_DEFAULT_LEX_TRACE;
+  fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   useMediaFoundation_out      =
@@ -258,9 +292,9 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:clmprtu::v"),
+                               ACE_TEXT ("a:cflmp:rtu::v"),
 #else
-                               ACE_TEXT ("a:clprtu::v"),
+                               ACE_TEXT ("a:cflp:rtu::v"),
 #endif
                                1,                          // skip command name
                                1,                          // report parsing errors
@@ -298,6 +332,16 @@ do_processArguments (int argc_in,
         showConsole_out = true;
         break;
       }
+      //case 'd':
+      //{
+      //  debugScanner_out = true;
+      //  break;
+      //}
+      case 'f':
+      {
+        fullScreen_out = true;
+        break;
+      }
       case 'l':
       {
         logToFile_out = true;
@@ -314,7 +358,7 @@ do_processArguments (int argc_in,
       {
         converter.clear ();
         converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-        converter << argument_parser.opt_arg ();
+        converter << ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
         converter >> portNumber_out;
         break;
       }
@@ -486,7 +530,8 @@ do_initializeSignals (bool useReactor_in,
 bool
 do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
                           struct _AMMediaType*& mediaType_out,
-                          bool coInitialize_in)
+                          bool coInitialize_in,
+                          bool fullScreen_in)
 {
   STREAM_TRACE (ACE_TEXT ("::do_initialize_directshow"));
 
@@ -592,7 +637,7 @@ continue_:
   //         RGB for convenient display/storage purposes; this module ('Color
   //         Converter DSP DMO') is included with Microsoft Windows Vista (TM)
   //         and onwards (i.e. there is no Windows XP support at the moment)
-  // *TODO*: The current implementation does not leverage GPU hardware
+  // *TODO*: the current implementation does not leverage GPU hardware
   //         acceleration and does not support the Media Foundation (TM)
   //         framework, and thus probably requires more CPU power.
   //         Also, GNU/Linux support is incomplete. Given the diversity of
@@ -619,20 +664,16 @@ continue_:
   //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (mediaType_out->pbFormat);
   ACE_ASSERT (video_info_p);
 
-  result_2 = SetRectEmpty (&video_info_p->rcSource);
-  ACE_ASSERT (result_2);
-  video_info_p->rcSource.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  video_info_p->rcSource.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
-  result_2 = SetRectEmpty (&video_info_p->rcTarget);
-  ACE_ASSERT (result_2);
-  video_info_p->rcTarget.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  video_info_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  //video_info_p->rcSource.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  //video_info_p->rcSource.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  //video_info_p->rcTarget.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  //video_info_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
 
   // *NOTE*: width * height * bytes/pixel * frames/s * 8
   video_info_p->dwBitRate =
     (ARDRONE_DEFAULT_VIDEO_WIDTH * ARDRONE_DEFAULT_VIDEO_HEIGHT) * 4 * 30 * 8;
   //video_info_p->dwBitErrorRate = 0;
-  video_info_p->AvgTimePerFrame = MILLISECONDS_TO_100NS_UNITS (1000 / 60);
+  video_info_p->AvgTimePerFrame = MILLISECONDS_TO_100NS_UNITS (1000 / 30);
 
   //video_info_p->dwInterlaceFlags = 0; // --> progressive
   //video_info_p->dwCopyProtectFlags = 0; // --> not protected
@@ -646,7 +687,7 @@ continue_:
   // *TODO*: make this configurable (and part of a protocol)
   video_info_p->bmiHeader.biSize = sizeof (struct tagBITMAPINFOHEADER);
   video_info_p->bmiHeader.biWidth = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  video_info_p->bmiHeader.biHeight = ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  video_info_p->bmiHeader.biHeight = -ARDRONE_DEFAULT_VIDEO_HEIGHT;
   video_info_p->bmiHeader.biPlanes = 1;
   //video_info_p->bmiHeader.biBitCount = 12;
   video_info_p->bmiHeader.biBitCount = 24;
@@ -657,8 +698,22 @@ continue_:
   //  video_info_p->bmiHeader.biCompression = MAKEFOURCC ('Y', 'V', '1', '2');
   //else
   //  video_info_p->bmiHeader.biCompression = FCC (ACE_SWAP_LONG ((DWORD)'YV12'));
+
+  if (fullScreen_in)
+  {
+    struct _cairo_rectangle_int rectangle_s;
+    GdkDisplay* display_p =
+      gdk_display_manager_get_default_display (gdk_display_manager_get ());
+    ACE_ASSERT (display_p);
+    GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
+    ACE_ASSERT (monitor_p);
+    gdk_monitor_get_geometry (monitor_p,
+                              &rectangle_s);
+
+    video_info_p->bmiHeader.biHeight = -rectangle_s.height;
+    video_info_p->bmiHeader.biWidth = rectangle_s.width;
+  } // end IF
   video_info_p->bmiHeader.biSizeImage =
-    //((video_info_p->bmiHeader.biWidth * video_info_p->bmiHeader.biHeight) * 3) / 2;
     DIBSIZE (video_info_p->bmiHeader);
   //video_info_p->bmiHeader.biXPelsPerMeter;
   //video_info_p->bmiHeader.biYPelsPerMeter;
@@ -776,6 +831,8 @@ void
 do_work (int argc_in,
          ACE_TCHAR** argv_in,
          const ACE_INET_Addr& address_in,
+         //bool debugScanner_in,
+         bool fullScreen_in,
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
          struct ARDrone_GtkCBData& CBData_in,
@@ -833,8 +890,8 @@ do_work (int argc_in,
 
   CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
     &message_allocator;
-  CBData_in.configuration->socketHandlerConfiguration.PDUSize =
-    ARDRONE_STREAM_BUFFER_SIZE;
+  //CBData_in.configuration->socketHandlerConfiguration.PDUSize =
+  //  ARDRONE_FRAME_BUFFER_SIZE;
   CBData_in.configuration->socketHandlerConfiguration.socketConfiguration =
     &CBData_in.configuration->socketConfiguration;
   CBData_in.configuration->socketHandlerConfiguration.statisticReportingInterval =
@@ -850,15 +907,18 @@ do_work (int argc_in,
     CBData_in.configuration->userData;
 
   // ******************** stream configuration data ***************************
-  CBData_in.configuration->moduleHandlerConfiguration.bufferSize =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  CBData_in.configuration->directShowFilterConfiguration.pinConfiguration =
+    &CBData_in.configuration->directShowPinConfiguration;
+
+  CBData_in.configuration->directShowPinConfiguration.format =
+    CBData_in.configuration->moduleHandlerConfiguration.format;
+  CBData_in.configuration->directShowPinConfiguration.isTopToBottom = true;
+
+  CBData_in.configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
     CBData_in.configuration->moduleHandlerConfiguration.format->lSampleSize;
-#else
-    av_image_get_buffer_size (CBData_in.configuration->moduleHandlerConfiguration.format,
-                              ARDRONE_DEFAULT_VIDEO_WIDTH,
-                              ARDRONE_DEFAULT_VIDEO_HEIGHT,
-                              1); // *TODO*: linesize alignment
 #endif
+
   CBData_in.configuration->moduleHandlerConfiguration.streamConfiguration =
     &CBData_in.configuration->streamConfiguration;
 
@@ -869,38 +929,36 @@ do_work (int argc_in,
     interfaceDefinitionFile_in.empty ();
 #endif
   //CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
-  //  true;
-
+  //  debugScanner_in;
+  CBData_in.configuration->moduleHandlerConfiguration.fullScreen =
+    fullScreen_in;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->moduleHandlerConfiguration.filterConfiguration =
     &CBData_in.configuration->directShowFilterConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.push = true;
+#else
+  CBData_in.configuration->moduleHandlerConfiguration.pixelBufferLock =
+      &CBData_in.lock;
 #endif
   CBData_in.configuration->moduleHandlerConfiguration.socketConfiguration =
     &CBData_in.configuration->socketConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.socketHandlerConfiguration =
     &CBData_in.configuration->socketHandlerConfiguration;
+  CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.height =
+    ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.width =
+    ARDRONE_DEFAULT_VIDEO_WIDTH;
   CBData_in.configuration->moduleHandlerConfiguration.stream = &stream;
   if (!useReactor_in)
     CBData_in.configuration->moduleHandlerConfiguration.stream = &asynch_stream;
   CBData_in.configuration->moduleHandlerConfiguration.subscriber =
     &event_handler;
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  CBData_in.configuration->directShowFilterConfiguration.format =
-    CBData_in.configuration->moduleHandlerConfiguration.format;
-  CBData_in.configuration->directShowFilterConfiguration.pinConfiguration =
-    &CBData_in.configuration->directShowPinConfiguration;
-
-  CBData_in.configuration->directShowPinConfiguration.format =
-    CBData_in.configuration->moduleHandlerConfiguration.format;
-#endif
+  //CBData_in.configuration->moduleHandlerConfiguration.useYYScanBuffer = false;
 
   CBData_in.configuration->streamConfiguration.messageAllocator =
     &message_allocator;
-  CBData_in.configuration->streamConfiguration.bufferSize =
-    ARDRONE_STREAM_BUFFER_SIZE;
-  CBData_in.configuration->streamConfiguration.useThreadPerConnection = false;
+  //CBData_in.configuration->streamConfiguration.bufferSize =
+  //  ARDRONE_FRAME_BUFFER_SIZE;
   CBData_in.configuration->streamConfiguration.notificationStrategy = NULL;
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
@@ -928,6 +986,8 @@ do_work (int argc_in,
   struct Common_TimerConfiguration timer_configuration;
   int group_id = -1;
   struct Common_DispatchThreadData thread_data;
+
+  ARDrone_GTK_Manager_t* gtk_manager_p = NULL;
 
   // step3: initialize event dispatch
   enum Common_ProactorType proactor_type;
@@ -971,9 +1031,12 @@ do_work (int argc_in,
   timer_manager_p->start ();
 
   // step1a: start GTK event loop ?
+  gtk_manager_p =
+      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+  ACE_ASSERT (gtk_manager_p);
   if (!interfaceDefinitionFile_in.empty ())
   {
-    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->start ();
+    gtk_manager_p->start ();
     ACE_Time_Value delay (0,
                           ARDRONE_UI_INITIALIZATION_DELAY);
     result = ACE_OS::sleep (delay);
@@ -981,7 +1044,7 @@ do_work (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_OS::sleep(%#T): \"%m\", continuing\n"),
                   &delay));
-    if (!ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->isRunning ())
+    if (!gtk_manager_p->isRunning ())
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to start GTK event dispatch, returning\n")));
@@ -1055,7 +1118,7 @@ do_work (int argc_in,
 
   // step8: dispatch GTK events
   if (!interfaceDefinitionFile_in.empty ())
-    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->wait ();
+    gtk_manager_p->wait ();
 
   Common_Tools::dispatchEvents (useReactor_in,
                                 group_id);
@@ -1090,10 +1153,44 @@ ACE_TMAIN (int argc_in,
   ARDRONE_TRACE (ACE_TEXT ("::main"));
 
   int result = -1;
+  std::string configuration_path;
+  std::string path;
+  std::string interface_definition_file;
+  ACE_INET_Addr drone_address;
+  ACE_Sig_Set signal_set (0);
+  ACE_Sig_Set ignored_signal_set (0);
+  Common_SignalActions_t previous_signal_actions;
+  sigset_t previous_signal_mask;
+  struct ARDrone_GtkCBData gtk_cb_data;
+  //Common_Logger_t logger (&gtk_cb_data.logStack,
+  //                        &gtk_cb_data.lock);
+  std::string log_file_name;
+  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
+                                                argv_in);
+  struct ARDrone_GtkProgressData gtk_progress_data;
+  ARDrone_SignalHandler signal_handler;
+  struct ARDrone_Configuration configuration;
+  struct ARDrone_UserData user_data;
+  ACE_High_Res_Timer timer;
+  std::string working_time_string;
+  ACE_Time_Value working_time;
+  ACE_Time_Value user_time;
+  ACE_Time_Value system_time;
+  std::string user_time_string;
+  std::string system_time_string;
 
-  // step0: initialize ACE
-  // *PORTABILITY*: on Windows, ACE needs initialization...
+  // step-2: initialize NLS
+#ifdef ENABLE_NLS
+#ifdef HAVE_LOCALE_H
+  setlocale (LC_ALL, "");
+#endif
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  bind_textdomain_codeset (PACKAGE, "UTF-8");
+  textdomain (PACKAGE);
+#endif
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  // step-1: initialize ACE ?
   result = ACE::init ();
   if (result == -1)
   {
@@ -1103,61 +1200,75 @@ ACE_TMAIN (int argc_in,
   } // end IF
 #endif
 
-#if defined (OLINUXINO_ENABLE_VALGRIND_SUPPORT)
+#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
   if (RUNNING_ON_VALGRIND)
-    ACE_DEBUG ((LM_INFO,
+    ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("running on valgrind...\n")));
 #endif
 
-  // *PROCESS PROFILE*
+  bool log_to_file            = false;
+  bool use_reactor            = NET_EVENT_USE_REACTOR;
+  bool show_console           = false;
+  //bool debug_scanner         = STREAM_DECODER_DEFAULT_LEX_TRACE;
+  bool fullscreen_display     = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
+  unsigned short port_number  = ARDRONE_VIDEO_LIVE_PORT;
+  bool trace_information      = false;
+  bool print_version_and_exit = false;
+
+  // step0: process profile
   ACE_Profile_Timer process_profile;
-  // start profile timer...
-  process_profile.start ();
+  result = process_profile.start ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Profile_Timer::start(): \"%m\", aborting\n")));
+    goto error;
+  } // end IF
 
-  Stream_Module_Decoder_Tools::initialize ();
-  Stream_Module_Device_Tools::initialize ();
-
-  // step1: process commandline options (if any)
-  std::string configuration_path =
-    Common_File_Tools::getWorkingDirectory ();
+  // step1: process commandline options, if any
+  configuration_path = Common_File_Tools::getWorkingDirectory ();
 #if defined (DEBUG_DEBUGGER)
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_u");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
+//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
 #endif // #ifdef DEBUG_DEBUGGER
 
-//  bool client_mode            = false;
-  bool log_to_file           = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool use_mediafoundation   =
     (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION);
 #endif
-  bool use_reactor           = NET_EVENT_USE_REACTOR;
-  ACE_INET_Addr drone_address (static_cast<u_short> (ARDRONE_VIDEO_LIVE_PORT),
-                               static_cast<ACE_UINT32> (192 << 24 | 168 << 16 | 1 << 8 | 1));
+  result =
+      drone_address.set (static_cast<u_short> (ARDRONE_VIDEO_LIVE_PORT),               // (TCP) port number
+                         static_cast<ACE_UINT32> (192 << 24 | 168 << 16 | 1 << 8 | 1), // IPv4 address
+                         1,                                                            // encode ?
+                         0);                                                           // map to IPv6 ?
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_INET_Addr::set(): \"%m\", aborting\n")));
+    goto error;
+  } // end IF
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("default ARDrone video port (UDP) address: %s...\n"),
               ACE_TEXT (Net_Common_Tools::IPAddress2String (drone_address).c_str ())));
-  bool show_console          = false;
-  unsigned short port_number = ARDRONE_VIDEO_LIVE_PORT;
-  bool trace_information     = false;
-  std::string path = configuration_path;
+  path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_DIRECTORY);
-  std::string interface_definition_file = path;
+  interface_definition_file = path;
   interface_definition_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   interface_definition_file +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
-  bool print_version_and_exit = false;
   if (!do_processArguments (argc_in,
                             argv_in,
                             drone_address,
+                            //debug_scanner,
                             show_console,
+                            fullscreen_display,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             use_mediafoundation,
@@ -1171,47 +1282,39 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
 
+    // help the user, print usage instructions
     do_printUsage (ACE::basename (argv_in[0]));
 
-    // *PORTABILITY*: on Windows, ACE needs finalization...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
-
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
 
   // step2: validate configuration
-  if ((!interface_definition_file.empty () && !Common_File_Tools::isReadable (interface_definition_file)))
+  if ((!interface_definition_file.empty () &&
+       !Common_File_Tools::isReadable (interface_definition_file)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid configuration, aborting\n")));
 
+    // help the user, print usage instructions
     do_printUsage (ACE::basename (argv_in[0]));
 
-    // *PORTABILITY*: on Windows, ACE needs finalization...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
-
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
 
-  // step3: initialize logging and/or tracing
-  struct ARDrone_GtkCBData gtk_cb_data;
-  //Common_Logger_t logger (&gtk_cb_data.logStack,
-  //                        &gtk_cb_data.lock);
-  std::string log_file_name;
+  // step3: run program ?
+  if (print_version_and_exit)
+  {
+    do_printVersion (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
+                                                          ACE_DIRECTORY_SEPARATOR_CHAR)));
+    goto done;
+  } // end IF
+
+  // step4: initialize logging and/or tracing
   if (log_to_file)
     log_file_name =
-    Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
-                                       ACE::basename (argv_in[0]));
+      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                         ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
+                                                                              ACE_DIRECTORY_SEPARATOR_CHAR)));
   if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0]),                      // program name
                                         log_file_name,                                   // log file name
                                         false,                                           // log to syslog ?
@@ -1222,44 +1325,25 @@ ACE_TMAIN (int argc_in,
                                         //                                    : &logger))) // logger ?
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize logging, aborting\n")));
-
-    // *PORTABILITY*: on Windows, ACE needs finalization
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
-
-    return EXIT_FAILURE;
+                ACE_TEXT ("failed to Common_Tools::initializeLogging(), aborting\n")));
+    goto error;
   } // end IF
 
-  // step4: (pre-)initialize signal handling
-  ACE_Sig_Set signal_set (0);
-  ACE_Sig_Set ignored_signal_set (0);
+  // step5: (pre-)initialize signal handling
   do_initializeSignals (use_reactor,
                         true,
                         signal_set,
                         ignored_signal_set);
-  Common_SignalActions_t previous_signal_actions;
-  sigset_t previous_signal_mask;
   result = ACE_OS::sigemptyset (&previous_signal_mask);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
 
+    // clean up
     Common_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, fini ACE
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
 
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
   if (!Common_Tools::preInitializeSignals (signal_set,
                                            use_reactor,
@@ -1269,37 +1353,17 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
 
+    // clean up
     Common_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, fini ACE...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
 
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
-  ARDrone_SignalHandler signal_handler;
 
-  // step4: initialize NLS
-#ifdef ENABLE_NLS
-#ifdef HAVE_LOCALE_H
-  setlocale (LC_ALL, "");
-#endif
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  bind_textdomain_codeset (PACKAGE, "UTF-8");
-  textdomain (PACKAGE);
-#endif
-
-  // step5: initialize configuration
-  struct ARDrone_Configuration configuration;
-  struct ARDrone_UserData user_data;
+  // step6: initialize configuration
   configuration.userData = &user_data;
   user_data.connectionConfiguration = &configuration.connectionConfiguration;
 
-  // step6: initialize GTK UI
-  struct ARDrone_GtkProgressData gtk_progress_data;
+  // step7: initialize user interface, if any
   gtk_cb_data.argc = argc_in;
   gtk_cb_data.argv = argv_in;
   gtk_cb_data.configuration = &configuration;
@@ -1322,60 +1386,56 @@ ACE_TMAIN (int argc_in,
   gtk_cb_data.useMediaFoundation = use_mediafoundation;
 #endif
   gtk_progress_data.GTKState = &gtk_cb_data;
-  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
-                                                argv_in);
   ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                              argv_in,
                                                              &gtk_cb_data,
                                                              &ui_definition);
 
+  // step8: media framework, if any
+  Stream_Module_Decoder_Tools::initialize ();
+  Stream_Module_Device_Tools::initialize ();
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool result_2 =
     (use_mediafoundation ? do_initialize_mediafoundation (true)
                          : do_initialize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
                                                      configuration.moduleHandlerConfiguration.format,
-                                                     true));
+                                                     true,
+                                                     fullscreen_display));
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize media framework, returning\n")));
 
+    // clean up
+    Common_Tools::finalizeSignals (signal_set,
+                                   previous_signal_actions,
+                                   previous_signal_mask);
     Common_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, fini ACE...
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-        ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
 
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
 #endif
 
-  // step6: run program ?
-  ACE_High_Res_Timer timer;
+  // step9: run program
   timer.start ();
-  if (print_version_and_exit)
-    do_printVersion (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
-                                                          ACE_DIRECTORY_SEPARATOR_CHAR)));
-  else
-    do_work (argc_in,
-             argv_in,
-             drone_address,
-             use_reactor,
-             interface_definition_file,
-             ////////////////////////////
-             gtk_cb_data,
-             ////////////////////////////
-             signal_set,
-             ignored_signal_set,
-             previous_signal_actions,
-             show_console,
-             signal_handler);
+  do_work (argc_in,
+            argv_in,
+            drone_address,
+            //debug_scanner,
+            fullscreen_display,
+            use_reactor,
+            interface_definition_file,
+            ////////////////////////////
+            gtk_cb_data,
+            ////////////////////////////
+            signal_set,
+            ignored_signal_set,
+            previous_signal_actions,
+            show_console,
+            signal_handler);
 
   // debug info
   timer.stop ();
-  std::string working_time_string;
-  ACE_Time_Value working_time;
   timer.elapsed_time (working_time);
   Common_Tools::period2String (working_time,
                                working_time_string);
@@ -1383,38 +1443,37 @@ ACE_TMAIN (int argc_in,
               ACE_TEXT ("total working time (h:m:s.us): \"%s\"...\n"),
               ACE_TEXT (working_time_string.c_str ())));
 
+done:
   // debug info
   process_profile.stop ();
   ACE_Profile_Timer::ACE_Elapsed_Time elapsed_time;
   elapsed_time.real_time = 0.0;
   elapsed_time.user_time = 0.0;
   elapsed_time.system_time = 0.0;
-  if (process_profile.elapsed_time (elapsed_time) == -1)
+  result = process_profile.elapsed_time (elapsed_time);
+  if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                ACE_TEXT ("failed to ACE_Profile_Timer::elapsed_time: \"%m\", aborting\n")));
 
+    // clean up
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    if (use_mediafoundation) do_finalize_mediafoundation ();
+    else do_finalize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
+                                 configuration.moduleHandlerConfiguration.format);
+#endif
     Common_Tools::finalizeSignals (signal_set,
                                    previous_signal_actions,
                                    previous_signal_mask);
     Common_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, fini ACE...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif
 
-    return EXIT_FAILURE;
+    goto error;
   } // end IF
   ACE_Profile_Timer::Rusage elapsed_rusage;
   ACE_OS::memset (&elapsed_rusage, 0, sizeof (ACE_Profile_Timer::Rusage));
   process_profile.elapsed_rusage (elapsed_rusage);
-  ACE_Time_Value user_time (elapsed_rusage.ru_utime);
-  ACE_Time_Value system_time (elapsed_rusage.ru_stime);
-  std::string user_time_string;
-  std::string system_time_string;
+  user_time.set (elapsed_rusage.ru_utime);
+  system_time.set (elapsed_rusage.ru_stime);
   Common_Tools::period2String (user_time,
                                user_time_string);
   Common_Tools::period2String (system_time,
@@ -1452,7 +1511,7 @@ ACE_TMAIN (int argc_in,
               elapsed_rusage.ru_nivcsw));
 #endif
 
-  // step6: clean up
+  // step10: clean up
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (use_mediafoundation) do_finalize_mediafoundation ();
   else do_finalize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
@@ -1463,7 +1522,6 @@ ACE_TMAIN (int argc_in,
                                  previous_signal_mask);
   Common_Tools::finalizeLogging ();
 
-  // *PORTABILITY*: on Windows, must fini ACE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = ACE::fini ();
   if (result == -1)
@@ -1475,4 +1533,17 @@ ACE_TMAIN (int argc_in,
 #endif
 
   return EXIT_SUCCESS;
+
+error:
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  result = ACE::fini ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
+    return EXIT_FAILURE;
+  } // end IF
+#endif
+
+  return EXIT_FAILURE;
 } // end main

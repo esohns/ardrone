@@ -85,7 +85,9 @@ struct ARDrone_SocketHandlerConfiguration
   inline ARDrone_SocketHandlerConfiguration ()
    : Net_SocketHandlerConfiguration ()
    , userData (NULL)
-  {};
+  {
+    PDUSize = ARDRONE_FRAME_BUFFER_SIZE;
+  };
 
   struct ARDrone_UserData* userData;
 };
