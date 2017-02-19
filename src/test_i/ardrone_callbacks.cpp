@@ -505,7 +505,8 @@ stream_processing_function (void* arg_in)
 //  ACE_ASSERT (lock_p);
 
 //  GtkStatusbar* statusbar_p = NULL;
-  Stream_IStreamControlBase* stream_p = NULL;
+  Stream_IStreamControlBase* stream_p, *stream_2, *stream_3 = NULL;
+  unsigned short port_number = 0;
   std::ostringstream converter;
   const struct ARDrone_SessionData* session_data_p = NULL;
   bool result_2 = false;
@@ -518,14 +519,52 @@ stream_processing_function (void* arg_in)
 //    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
 //#endif
 
-    // retrieve stream handle
-    stream_p = data_p->CBData->stream;
+    // retrieve stream handles
+    ACE_INET_Addr remote_SAP =
+      data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address;
+
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
+      data_p->CBData->localSAP;
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_MAVLINK_PORT,
+                                                                                                           1);
+    stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->stream;
+      data_p->CBData->MAVLinkStream;
     result_2 =
-      data_p->CBData->stream->initialize (data_p->CBData->configuration->streamConfiguration);
+      data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
+      data_p->CBData->localSAP;
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_NAVDATA_PORT,
+                                                                                                           1);
+    stream_2 = data_p->CBData->NavDataStream;
+    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
+      data_p->CBData->NavDataStream;
+    result_2 =
+      data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
+      remote_SAP;
+    stream_3 = data_p->CBData->videoStream;
+    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
+      data_p->CBData->videoStream;
+    result_2 =
+      data_p->CBData->videoStream->initialize (data_p->CBData->configuration->streamConfiguration);
+
     const ARDrone_SessionData_t* session_data_container_p =
-      data_p->CBData->stream->get ();
+      data_p->CBData->videoStream->get ();
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
     ACE_ASSERT (session_data_p);
@@ -547,13 +586,15 @@ stream_processing_function (void* arg_in)
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize stream: \"%m\", aborting\n")));
+                ACE_TEXT ("failed to initialize video stream: \"%m\", aborting\n")));
     goto done;
   } // end IF
-  ACE_ASSERT (stream_p);
+  ACE_ASSERT (stream_p && stream_2 && stream_3);
 
   // *NOTE*: processing currently happens 'inline' (borrows calling thread)
   stream_p->start ();
+  stream_2->start ();
+  stream_3->start ();
   //    if (!stream_p->isRunning ())
   //    {
   //      ACE_DEBUG ((LM_ERROR,
@@ -561,6 +602,8 @@ stream_processing_function (void* arg_in)
   //      return;
   //    } // end IF
   stream_p->wait (true, false, false);
+  stream_2->wait (true, false, false);
+  stream_3->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = 0;
@@ -598,7 +641,8 @@ idle_initialize_ui_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
-  ACE_ASSERT (cb_data_p->stream);
+  //ACE_ASSERT (cb_data_p->MAVLinkStream);
+  //ACE_ASSERT (cb_data_p->videoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -620,7 +664,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfiguration.address,
+                      Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address,
                                                           true).c_str ());
 
   GtkSpinButton* spin_button_p =
@@ -1449,7 +1493,7 @@ idle_session_end_cb (gpointer userData_in)
   ACE_ASSERT (frame_p);
   gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
 
-  // stop progress reporting
+  // stop progress reporting ?
   ACE_ASSERT (data_p->progressData->eventSourceID);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
 
@@ -1862,7 +1906,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (cb_data_p->progressData);
-  ACE_ASSERT (cb_data_p->stream);
+  ACE_ASSERT (cb_data_p->MAVLinkStream);
+  ACE_ASSERT (cb_data_p->videoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -1872,7 +1917,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
     // stop stream
-    cb_data_p->stream->stop (false, true);
+    cb_data_p->MAVLinkStream->stop (false, true);
+    cb_data_p->videoStream->stop (false, true);
 
     return;
   } // end IF
@@ -1916,8 +1962,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
   result =
-      cb_data_p->configuration->socketConfiguration.address.set (address_string.c_str (),
-                                                                 AF_INET);
+      cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address.set (address_string.c_str (),
+                                                                                            AF_INET);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1925,6 +1971,27 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                 ACE_TEXT (address_string.c_str ())));
     return;
   } // end IF
+  // *TODO*: verify the given address
+  std::string interface_identifier_string;
+  if (!Net_Common_Tools::IPAddress2Interface (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address,
+                                              interface_identifier_string))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
+                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address).c_str ())));
+    return;
+  } // end IF
+  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
+                                              cb_data_p->localSAP))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
+                ACE_TEXT (interface_identifier_string.c_str ())));
+    return;
+  } // end IF
+  ACE_DEBUG ((LM_ERROR,
+              ACE_TEXT ("set local SAP: %s...\n"),
+              ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->localSAP).c_str ())));
 
   // retrieve buffer
   spin_button_p =

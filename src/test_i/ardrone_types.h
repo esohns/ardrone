@@ -37,16 +37,16 @@
 
 #include "ardrone_defines.h"
 
-enum ARDrone_MessageType
+enum ARDrone_MessageType : int
 {
   ARDRONE_MESSAGE_INVALID = -1,
-  ARDRONE_MESSAGE_SENSOR_DATA,
+  ARDRONE_MESSAGE_SENSOR_DATA = ACE_Message_Block::MB_PROTO,
   ARDRONE_MESSAGE_VIDEO_FRAME,
   ///////////////////////////////////////
   ARDRONE_MESSAGE_MAX
 };
 
-enum ARDrone_Event
+enum ARDrone_Event : int
 {
   ARDRONE_EVENT_INVALID = -1,
   ARDRONE_EVENT_CONNECT,

@@ -27,10 +27,10 @@
 
 #include "stream_common.h"
 #include "stream_control_message.h"
-#include "stream_message_base.h"
+#include "stream_data_message_base.h"
 #include "stream_messageallocatorheap_base.h"
 
-//#include "ardrone_sessionmessage.h"
+#include "ardrone_common.h"
 #include "ardrone_types.h"
 
 // forward declaration(s)
@@ -44,9 +44,10 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
 class ARDrone_Message
- : public Stream_MessageBase_T<struct ARDrone_AllocatorConfiguration,
-                               enum ARDrone_MessageType,
-                               int>
+ : public Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   struct ARDrone_DirectShow_MessageData,
+                                   int>
  //: public Stream_DataMessageBase_T<ardrone_MessageType>
 {
   // enable access to specific private ctors
@@ -84,9 +85,10 @@ class ARDrone_Message
   ARDrone_Message (const ARDrone_Message&);
 
  private:
-  typedef Stream_MessageBase_T<struct ARDrone_AllocatorConfiguration,
-                               enum ARDrone_MessageType,
-                               int> inherited;
+  typedef Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   struct ARDrone_DirectShow_MessageData,
+                                   int> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message& operator= (const ARDrone_Message&))

@@ -41,7 +41,7 @@
 #include "ardrone_stream_common.h"
 
 template <typename SourceModuleType>
-class ARDrone_Stream_T
+class ARDrone_VideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         enum Stream_ControlType,
@@ -59,8 +59,8 @@ class ARDrone_Stream_T
                         ARDrone_SessionMessage>
 {
  public:
-  ARDrone_Stream_T ();
-  virtual ~ARDrone_Stream_T ();
+  ARDrone_VideoStream_T ();
+  virtual ~ARDrone_VideoStream_T ();
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -93,8 +93,8 @@ class ARDrone_Stream_T
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Stream_T (const ARDrone_Stream_T&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Stream_T& operator= (const ARDrone_Stream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T (const ARDrone_VideoStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T& operator= (const ARDrone_VideoStream_T&))
 
   // *TODO*: re-consider this API
   void ping ();
@@ -105,12 +105,132 @@ class ARDrone_Stream_T
 #endif
 };
 
-// include template definition
-#include "ardrone_stream.inl"
+//typedef ARDrone_VideoStream_T<ARDrone_Module_NetSource_Module> ARDrone_Stream_t;
+typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchNetSource_Module> ARDrone_AsynchStream_t;
 
 //////////////////////////////////////////
 
-typedef ARDrone_Stream_T<ARDrone_Module_NetSource_Module> ARDrone_Stream_t;
-typedef ARDrone_Stream_T<ARDrone_Module_AsynchNetSource_Module> ARDrone_AsynchStream_t;
+class ARDrone_NavDataStream
+ : public Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage>
+{
+ public:
+  ARDrone_NavDataStream ();
+  virtual ~ARDrone_NavDataStream ();
+
+  // implement (part of) Stream_IStreamControlBase
+  virtual bool load (Stream_ModuleList_t&, // return value: module list
+                     bool&);               // return value: delete modules ?
+
+  // implement Common_IInitialize_T
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
+                           bool = true,                               // setup pipeline ?
+                           bool = true);                              // reset session data ?
+
+  // implement Common_IStatistic_T
+  // *NOTE*: these delegate to runtimeStatistic_
+  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual void report () const;
+
+ private:
+  typedef Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream& operator= (const ARDrone_NavDataStream&))
+
+  // *TODO*: re-consider this API
+  void ping ();
+};
+
+//////////////////////////////////////////
+
+class ARDrone_MAVLinkStream
+ : public Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage>
+{
+ public:
+  ARDrone_MAVLinkStream ();
+  virtual ~ARDrone_MAVLinkStream ();
+
+  // implement (part of) Stream_IStreamControlBase
+  virtual bool load (Stream_ModuleList_t&, // return value: module list
+                     bool&);               // return value: delete modules ?
+
+  // implement Common_IInitialize_T
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
+                           bool = true,                               // setup pipeline ?
+                           bool = true);                              // reset session data ?
+
+  // implement Common_IStatistic_T
+  // *NOTE*: these delegate to runtimeStatistic_
+  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual void report () const;
+
+ private:
+  typedef Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream (const ARDrone_MAVLinkStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream& operator= (const ARDrone_MAVLinkStream&))
+
+  // *TODO*: re-consider this API
+  void ping ();
+};
+
+// include template definition
+#include "ardrone_stream.inl"
 
 #endif

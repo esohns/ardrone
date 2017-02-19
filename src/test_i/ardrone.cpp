@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #if defined (ENABLE_NLS)
@@ -185,6 +186,10 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-a [IPv4]    : ARDrone address (dotted decimal)")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-b           : buffer size (bytes) [")
+            << ARDRONE_MESSAGE_BUFFER_SIZE
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-c           : show console [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
@@ -237,8 +242,9 @@ do_printUsage (const std::string& programName_in)
 
 bool
 do_processArguments (int argc_in,
-                     ACE_TCHAR** argv_in, // cannot be const...
+                     ACE_TCHAR** argv_in, // cannot be 'const'
                      ACE_INET_Addr& address_out,
+                     unsigned int& bufferSize_out,
                      bool& showConsole_out,
                      //bool& debugScanner_out,
                      bool& fullScreen_out,
@@ -269,6 +275,7 @@ do_processArguments (int argc_in,
 
   // initialize results
   address_out.reset ();
+  bufferSize_out              = ARDRONE_MESSAGE_BUFFER_SIZE;
   showConsole_out             = false;
   //debugScanner_out            = STREAM_DECODER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
@@ -292,9 +299,9 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:cflmp:rtu::v"),
+                               ACE_TEXT ("a:b:cflmp:rtu::v"),
 #else
-                               ACE_TEXT ("a:cflp:rtu::v"),
+                               ACE_TEXT ("a:b:cflp:rtu::v"),
 #endif
                                1,                          // skip command name
                                1,                          // report parsing errors
@@ -325,6 +332,14 @@ do_processArguments (int argc_in,
                       ACE_TEXT (argument_parser.opt_arg ())));
           return false;
         } // end IF
+        break;
+      }
+      case 'b':
+      {
+        converter.clear ();
+        converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+        converter << ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
+        converter >> bufferSize_out;
         break;
       }
       case 'c':
@@ -713,8 +728,7 @@ continue_:
     video_info_p->bmiHeader.biHeight = -rectangle_s.height;
     video_info_p->bmiHeader.biWidth = rectangle_s.width;
   } // end IF
-  video_info_p->bmiHeader.biSizeImage =
-    DIBSIZE (video_info_p->bmiHeader);
+  video_info_p->bmiHeader.biSizeImage = DIBSIZE (video_info_p->bmiHeader);
   //video_info_p->bmiHeader.biXPelsPerMeter;
   //video_info_p->bmiHeader.biYPelsPerMeter;
   //video_info_p->bmiHeader.biClrUsed;
@@ -831,6 +845,7 @@ void
 do_work (int argc_in,
          ACE_TCHAR** argv_in,
          const ACE_INET_Addr& address_in,
+         unsigned int bufferSize_in,
          //bool debugScanner_in,
          bool fullScreen_in,
          bool useReactor_in,
@@ -873,8 +888,13 @@ do_work (int argc_in,
   ACE_ASSERT (connectionManager_p);
   connectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
 
-  ARDrone_Stream_t stream;
-  ARDrone_AsynchStream_t asynch_stream;
+  //ARDrone_Stream_t video_stream;
+  ARDrone_AsynchStream_t asynch_video_stream;
+  ARDrone_MAVLinkStream mavlink_stream;
+  // *TODO*: apparently, some drones use flashed firmware that uses MAVLink
+  //         communication instead of the 'NavData' as documented in the
+  //         developer guide
+  ARDrone_NavDataStream navdata_stream;
   ACE_ASSERT (CBData_in.configuration);
   ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
   //ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER2));
@@ -883,19 +903,21 @@ do_work (int argc_in,
   //ACE_ASSERT (video_info_p);
 
   // ******************* socket configuration data ****************************
-  CBData_in.configuration->socketConfiguration.address = address_in;
-  CBData_in.configuration->socketConfiguration.bufferSize =
-    ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE;
+  CBData_in.configuration->socketHandlerConfiguration.socketConfiguration.address =
+    address_in;
+  CBData_in.configuration->socketHandlerConfiguration.socketConfiguration.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   //  configuration.socketConfiguration.useLoopbackDevice = false;
 
+  CBData_in.configuration->socketHandlerConfiguration.connectionConfiguration =
+    &CBData_in.configuration->connectionConfiguration;
   CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
     &message_allocator;
-  //CBData_in.configuration->socketHandlerConfiguration.PDUSize =
-  //  ARDRONE_FRAME_BUFFER_SIZE;
-  CBData_in.configuration->socketHandlerConfiguration.socketConfiguration =
-    &CBData_in.configuration->socketConfiguration;
+  CBData_in.configuration->socketHandlerConfiguration.PDUSize =
+      std::max (bufferSize_in,
+                static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
   CBData_in.configuration->socketHandlerConfiguration.statisticReportingInterval =
-    ARDRONE_STATISTICS_REPORTING_INTERVAL;
+    ARDRONE_STATISTIC_REPORTING_INTERVAL;
   CBData_in.configuration->socketHandlerConfiguration.userData =
     CBData_in.configuration->userData;
 
@@ -907,6 +929,10 @@ do_work (int argc_in,
     CBData_in.configuration->userData;
 
   // ******************** stream configuration data ***************************
+  CBData_in.configuration->allocatorConfiguration.defaultBufferSize =
+      std::max (bufferSize_in,
+                static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->directShowFilterConfiguration.pinConfiguration =
     &CBData_in.configuration->directShowPinConfiguration;
@@ -932,6 +958,8 @@ do_work (int argc_in,
   //  debugScanner_in;
   CBData_in.configuration->moduleHandlerConfiguration.fullScreen =
     fullScreen_in;
+  CBData_in.configuration->moduleHandlerConfiguration.parserConfiguration =
+    &CBData_in.configuration->parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->moduleHandlerConfiguration.filterConfiguration =
     &CBData_in.configuration->directShowFilterConfiguration;
@@ -941,24 +969,24 @@ do_work (int argc_in,
       &CBData_in.lock;
 #endif
   CBData_in.configuration->moduleHandlerConfiguration.socketConfiguration =
-    &CBData_in.configuration->socketConfiguration;
+    &CBData_in.configuration->socketHandlerConfiguration.socketConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.socketHandlerConfiguration =
     &CBData_in.configuration->socketHandlerConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.height =
     ARDRONE_DEFAULT_VIDEO_HEIGHT;
   CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.width =
     ARDRONE_DEFAULT_VIDEO_WIDTH;
-  CBData_in.configuration->moduleHandlerConfiguration.stream = &stream;
-  if (!useReactor_in)
-    CBData_in.configuration->moduleHandlerConfiguration.stream = &asynch_stream;
+  //CBData_in.configuration->moduleHandlerConfiguration.videoStream =
+  //  &video_stream;
   CBData_in.configuration->moduleHandlerConfiguration.subscriber =
     &event_handler;
   //CBData_in.configuration->moduleHandlerConfiguration.useYYScanBuffer = false;
+  if (!useReactor_in)
+    CBData_in.configuration->moduleHandlerConfiguration.stream =
+      &asynch_video_stream;
 
   CBData_in.configuration->streamConfiguration.messageAllocator =
     &message_allocator;
-  //CBData_in.configuration->streamConfiguration.bufferSize =
-  //  ARDRONE_FRAME_BUFFER_SIZE;
   CBData_in.configuration->streamConfiguration.notificationStrategy = NULL;
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
@@ -966,12 +994,14 @@ do_work (int argc_in,
   CBData_in.configuration->streamConfiguration.moduleHandlerConfiguration =
     &CBData_in.configuration->moduleHandlerConfiguration;
   CBData_in.configuration->streamConfiguration.statisticReportingInterval =
-    ARDRONE_STATISTICS_REPORTING_INTERVAL;
+    ARDRONE_STATISTIC_REPORTING_INTERVAL;
   CBData_in.configuration->streamConfiguration.printFinalReport = false;
   CBData_in.configuration->streamConfiguration.userData =
     CBData_in.configuration->userData;
 
-  CBData_in.stream = CBData_in.configuration->moduleHandlerConfiguration.stream;
+  CBData_in.MAVLinkStream = &mavlink_stream;
+  CBData_in.NavDataStream = &navdata_stream;
+  CBData_in.videoStream = &asynch_video_stream;
 
   // step2: initialize connection manager
   struct ARDrone_ConnectionConfiguration configuration_2 =
@@ -1009,7 +1039,8 @@ do_work (int argc_in,
   CBData_in.configuration->signalHandlerConfiguration.consoleMode =
     interfaceDefinitionFile_in.empty ();
   CBData_in.configuration->signalHandlerConfiguration.peerAddress = address_in;
-  CBData_in.configuration->signalHandlerConfiguration.useReactor = useReactor_in;
+  CBData_in.configuration->signalHandlerConfiguration.useReactor =
+    useReactor_in;
   if (!signalHandler_in.initialize (CBData_in.configuration->signalHandlerConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1073,7 +1104,8 @@ do_work (int argc_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step6b: initialize worker(s)
-  thread_data.numberOfDispatchThreads = 1;
+  thread_data.numberOfDispatchThreads =
+    NET_CLIENT_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
   thread_data.proactorType = proactor_type;
   thread_data.reactorType = reactor_type;
   thread_data.useReactor = useReactor_in;
@@ -1096,24 +1128,40 @@ do_work (int argc_in,
 
   if (interfaceDefinitionFile_in.empty ())
   {
-    // initialize processing stream
-    if (!CBData_in.configuration->moduleHandlerConfiguration.stream->initialize (CBData_in.configuration->streamConfiguration))
+    // initialize processing streams
+    if (!mavlink_stream.initialize (CBData_in.configuration->streamConfiguration))
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize processing stream, returning\n")));
+                  ACE_TEXT ("failed to initialize MAVLink stream, returning\n")));
+      goto clean;
+    } // end IF
+    if (!asynch_video_stream.initialize (CBData_in.configuration->streamConfiguration))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize video stream, returning\n")));
       goto clean;
     } // end IF
 
-    CBData_in.configuration->moduleHandlerConfiguration.stream->start ();
-    if (!CBData_in.configuration->moduleHandlerConfiguration.stream->isRunning ())
+    mavlink_stream.start ();
+    if (!mavlink_stream.isRunning ())
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to start processing stream, returning\n")));
+                  ACE_TEXT ("failed to start MAVLink stream, returning\n")));
       goto clean;
     } // end IF
-    CBData_in.configuration->moduleHandlerConfiguration.stream->wait (true,
-                                                                      false,
-                                                                      false);
+    asynch_video_stream.start ();
+    if (!asynch_video_stream.isRunning ())
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to start video stream, returning\n")));
+      goto clean;
+    } // end IF
+    mavlink_stream.wait (true,
+                         false,
+                         false);
+    asynch_video_stream.wait (true,
+                              false,
+                              false);
   } // end ELSE
 
   // step8: dispatch GTK events
@@ -1157,6 +1205,7 @@ ACE_TMAIN (int argc_in,
   std::string path;
   std::string interface_definition_file;
   ACE_INET_Addr drone_address;
+  unsigned int buffer_size = ARDRONE_MESSAGE_BUFFER_SIZE;
   ACE_Sig_Set signal_set (0);
   ACE_Sig_Set ignored_signal_set (0);
   Common_SignalActions_t previous_signal_actions;
@@ -1266,6 +1315,7 @@ ACE_TMAIN (int argc_in,
   if (!do_processArguments (argc_in,
                             argv_in,
                             drone_address,
+                            buffer_size,
                             //debug_scanner,
                             show_console,
                             fullscreen_display,
@@ -1421,6 +1471,7 @@ ACE_TMAIN (int argc_in,
   do_work (argc_in,
             argv_in,
             drone_address,
+            buffer_size,
             //debug_scanner,
             fullscreen_display,
             use_reactor,

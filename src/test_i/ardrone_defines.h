@@ -94,20 +94,22 @@
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION           "information"
 
 // *** network-related ***
+#define ARDRONE_MAVLINK_PORT                               14550 // UDP (drone --> client)
 #define ARDRONE_CONTROL_CONFIGURATION_PORT                 5556 // UDP (client --> drone)
-#define ARDRONE_CONTROL_PORT                               5559 // TCP (client <--> drone)
+//#define ARDRONE_CONTROL_PORT                               5559 // TCP (client <--> drone)
 #define ARDRONE_NAVDATA_PORT                               5554 // UDP (drone --> client)
 #define ARDRONE_VIDEO_LIVE_PORT                            5555 // TCP (drone <--> client)
-#define ARDRONE_VIDEO_RECORDING_PORT                       5553 // TCP (drone <--> client)
+//#define ARDRONE_VIDEO_RECORDING_PORT                       5553 // TCP (drone <--> client)
 
-#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
+//#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
 // *** stream-related ***
-#define ARDRONE_FRAME_BUFFER_SIZE                          131070 // bytes
+//#define ARDRONE_MESSAGE_BUFFER_SIZE                        65535 // bytes
+#define ARDRONE_MESSAGE_BUFFER_SIZE                        131070 // bytes
 //#define ARDRONE_MAXIMUM_QUEUE_SLOTS                       STREAM_QUEUE_MAX_MESSAGES
 #define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES        std::numeric_limits<unsigned int>::max ()
 
-#define ARDRONE_STATISTICS_REPORTING_INTERVAL              0 // seconds [0 --> OFF]
+#define ARDRONE_STATISTIC_REPORTING_INTERVAL               0 // seconds [0 --> OFF]
 
 // *** device-related ***
 //#define ARDRONE_ACCELEROMETER_LSB_FACTOR_2                16384.0F // LSB/g
