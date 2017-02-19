@@ -188,7 +188,8 @@ next:
       ACE_OS::memcpy (buffer_p, message_block_p->rd_ptr (), bytes_to_copy);
       message_block_p->rd_ptr (bytes_to_copy);
       missing_bytes -= bytes_to_copy;
-      if (!missing_bytes) break;
+      if (!missing_bytes)
+        break;
       buffer_p += bytes_to_copy;
     } // end FOR
 //    header_ = *reinterpret_cast<parrot_video_encapsulation_t*> (buffer);
@@ -241,7 +242,8 @@ next:
   headerDecoded_ = false;
 
   // parse next frame ?
-  if (buffer_) goto next;
+  if (buffer_)
+    goto next;
 }
 
 template <ACE_SYNCH_DECL,

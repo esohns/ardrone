@@ -60,6 +60,13 @@ ARDrone_Message::~ARDrone_Message ()
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::~ARDrone_Message"));
 
   // *NOTE*: called just BEFORE 'this' is passed back to the allocator
+
+  // release media sample ?
+  if (inherited::data_.sample)
+  {
+    inherited::data_.sample->Release ();
+    inherited::data_.sample = NULL;
+  } // end IF
 }
 
 int

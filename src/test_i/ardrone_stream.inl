@@ -36,21 +36,21 @@
 #include "ardrone_stream_common.h"
 
 template <typename SourceModuleType>
-ARDrone_Stream_T<SourceModuleType>::ARDrone_Stream_T ()
- : inherited (ACE_TEXT_ALWAYS_CHAR ("ARDroneStream"))
+ARDrone_VideoStream_T<SourceModuleType>::ARDrone_VideoStream_T ()
+ : inherited (ACE_TEXT_ALWAYS_CHAR ("ARDroneVideoStream"))
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
  , graphBuilder_ (NULL)
  , mediaSession_ (NULL)
 #endif
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::ARDrone_Stream_T"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ARDrone_VideoStream_T"));
 
 }
 
 template <typename SourceModuleType>
-ARDrone_Stream_T<SourceModuleType>::~ARDrone_Stream_T ()
+ARDrone_VideoStream_T<SourceModuleType>::~ARDrone_VideoStream_T ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::~ARDrone_Stream_T"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::~ARDrone_VideoStream_T"));
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   HRESULT result = E_FAIL;
@@ -76,10 +76,10 @@ ARDrone_Stream_T<SourceModuleType>::~ARDrone_Stream_T ()
 
 template <typename SourceModuleType>
 bool
-ARDrone_Stream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
+ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                                           bool& delete_out)
 {
-  STREAM_TRACE (ACE_TEXT ("ARDrone_Stream_T::load"));
+  STREAM_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::load"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::configuration_);
@@ -124,20 +124,20 @@ ARDrone_Stream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_H264NALDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("H264NALDecoder"),
-                                                        NULL,
-                                                        false),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
   //ACE_NEW_RETURN (module_p,
-  //                ARDrone_Module_PaVEDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
-  //                                                   NULL,
-  //                                                   false),
+  //                ARDrone_Module_H264NALDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("H264NALDecoder"),
+  //                                                      NULL,
+  //                                                      false),
   //                false);
   //modules_out.push_back (module_p);
   //module_p = NULL;
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_PaVEDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
+                                                     NULL,
+                                                     false),
+                  false);
+  modules_out.push_back (module_p);
+  module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
                                                          NULL,
@@ -159,11 +159,11 @@ ARDrone_Stream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
 
 template <typename SourceModuleType>
 bool
-ARDrone_Stream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguration& configuration_in,
+ARDrone_VideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguration& configuration_in,
                                                 bool setupPipeline_in,
                                                 bool resetSessionData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::initialize"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::initialize"));
 
   if (inherited::isInitialized_)
   {
@@ -320,7 +320,7 @@ ARDrone_Stream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguratio
   } // end IF
 #endif
 
-  // ***************************** Statistics **********************************
+  // ***************************** Statistic **********************************
 //  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
 //    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (statistic_.writer ());
 //  if (!statistic_impl_p)
@@ -882,9 +882,9 @@ error:
 
 template <typename SourceModuleType>
 void
-ARDrone_Stream_T<SourceModuleType>::ping ()
+ARDrone_VideoStream_T<SourceModuleType>::ping ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::ping"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ping"));
 
 //  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
 //  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
@@ -896,7 +896,7 @@ ARDrone_Stream_T<SourceModuleType>::ping ()
 //    return;
 //  } // end IF
 
-//  // delegate to this module...
+//  // delegate to this module
 //  protocolHandler_impl->handleTimeout (NULL);
 
   ACE_ASSERT (false);
@@ -906,9 +906,9 @@ ARDrone_Stream_T<SourceModuleType>::ping ()
 
 template <typename SourceModuleType>
 bool
-ARDrone_Stream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::collect"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::collect"));
 
   int result = -1;
   ARDrone_SessionData& session_data_r =
@@ -972,9 +972,9 @@ ARDrone_Stream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_ou
 
 template <typename SourceModuleType>
 void
-ARDrone_Stream_T<SourceModuleType>::report () const
+ARDrone_VideoStream_T<SourceModuleType>::report () const
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Stream_T::report"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::report"));
 
   ACE_ASSERT (inherited::state_.currentSessionData);
 

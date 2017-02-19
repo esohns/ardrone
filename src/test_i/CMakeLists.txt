@@ -162,9 +162,10 @@ if (UNIX)
 elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/minimal)
  include_directories ("$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
  # *TODO*: repair pkgconfig support
 # gtk
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/include/atk-1.0)
@@ -192,6 +193,7 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/vis)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/client_server)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/3rd_party/bison)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/gettext)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../include)
 endif ()
@@ -210,12 +212,22 @@ set (ardrone_EXE_SRCS
      ardrone_macros.h
      ardrone_message.cpp
      ardrone_message.h
+     ardrone_mavlink_scanner.cpp
+     ardrone_mavlink_scanner.h
      ardrone_module_eventhandler.cpp
      ardrone_module_eventhandler.h
+     ardrone_module_mavlink_decoder.cpp
+     ardrone_module_mavlink_decoder.h
+     ardrone_module_mavlink_decoder.inl
+     ardrone_module_navdata_decoder.cpp
+     ardrone_module_navdata_decoder.h
+     ardrone_module_navdata_decoder.inl
      ardrone_module_pave_decoder.cpp
      ardrone_module_pave_decoder.h
      ardrone_module_pave_decoder.inl
      ardrone_modules_common.h
+     ardrone_navdata_scanner.cpp
+     ardrone_navdata_scanner.h
      ardrone_network.h
      ardrone_opengl.cpp
      ardrone_opengl.h
@@ -230,9 +242,15 @@ set (ardrone_EXE_SRCS
      ardrone_types.h
      stdafx.cpp
      stdafx.h)
+set (ardrone_SCRIPTS
+     scripts/mavlink_scanner.l
+     scripts/navdata_scanner.l)
 
 set (EXECUTABLE ardrone)
-add_executable (${EXECUTABLE} ${ardrone_EXE_SRCS} etc/ardrone.glade)
+add_executable (${EXECUTABLE}
+                ${ardrone_EXE_SRCS}
+                ${ardrone_SCRIPTS}
+                etc/ardrone.glade)
 
 if (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Debug))
  # *NOTE*: DirectShow uses 'DEBUG'
@@ -296,7 +314,10 @@ install (TARGETS ${EXECUTABLE}
          EXPORT ${PROJECT_NAME}Targets
          RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
          COMPONENT dev)
-install (FILES etc/ardrone.glade
+install (FILES
+         etc/ardrone.glade
+         scripts/mavlink_scanner.l
+         scripts/navdata_scanner.l
          DESTINATION etc/lib${PROJECT_NAME}/ardrone COMPONENT config)
 
 ##########################################

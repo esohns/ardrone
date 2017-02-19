@@ -43,6 +43,7 @@
 
 #include "net_configuration.h"
 
+#include "ardrone_defines.h"
 #include "ardrone_network.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
@@ -56,7 +57,7 @@ struct ARDrone_AllocatorConfiguration
   inline ARDrone_AllocatorConfiguration ()
    : Stream_AllocatorConfiguration ()
   {
-    defaultBufferSize = ARDRONE_FRAME_BUFFER_SIZE;
+    defaultBufferSize = ARDRONE_MESSAGE_BUFFER_SIZE;
 
     // *NOTE*: facilitate (message block) data buffers to be scanned with
     //         (f)lexs' yy_scan_buffer() method, and support 'padding' in ffmpeg
@@ -116,10 +117,11 @@ struct ARDrone_Configuration
 {
   inline ARDrone_Configuration ()
    : signalHandlerConfiguration ()
-   , socketConfiguration ()
+   , listenerConfiguration ()
    , socketHandlerConfiguration ()
    , connectionConfiguration ()
    , allocatorConfiguration ()
+   , parserConfiguration ()
    , moduleConfiguration ()
    , moduleHandlerConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -132,11 +134,12 @@ struct ARDrone_Configuration
 
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
-  struct Net_SocketConfiguration                                socketConfiguration;
+  struct Net_ListenerConfiguration                              listenerConfiguration;
   struct ARDrone_SocketHandlerConfiguration                     socketHandlerConfiguration;
   struct ARDrone_ConnectionConfiguration                        connectionConfiguration;
 
   struct ARDrone_AllocatorConfiguration                         allocatorConfiguration;
+  struct Common_ParserConfiguration                             parserConfiguration;
   struct Stream_ModuleConfiguration                             moduleConfiguration;
   struct ARDrone_ModuleHandlerConfiguration                     moduleHandlerConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -174,6 +177,9 @@ struct ARDrone_GtkCBData
   , contextIdInformation (0)
   , eventStack ()
   , frameCounter (0)
+  , localSAP ()
+  , MAVLinkStream (NULL)
+  , NavDataStream (NULL)
   , messageQueue ()
 #if defined (GTKGL_SUPPORT)
   , openGLAxesListId (0)
@@ -186,10 +192,10 @@ struct ARDrone_GtkCBData
   , pixelBuffer (NULL)
 #endif
   , progressData (NULL)
-  , stream (NULL)
   //, temperature ()
   //, temperatureIndex (-1)
   , timeStamp (ACE_Time_Value::zero)
+  , videoStream (NULL)
  {
 #if defined (GTKGL_SUPPORT)
    resetCamera ();
@@ -212,6 +218,10 @@ struct ARDrone_GtkCBData
  guint                           contextIdInformation; // status bar context
  ARDrone_Events_t                eventStack;
  unsigned int                    frameCounter;
+ // *TODO*: let the user choose a NIC instead
+ ACE_INET_Addr                   localSAP;
+ ARDrone_StreamBase_t*           MAVLinkStream;
+ ARDrone_StreamBase_t*           NavDataStream;
  ARDrone_Messages_t              messageQueue;
 #if defined (GTKGL_SUPPORT)
  GLuint                          openGLAxesListId;
@@ -224,10 +234,10 @@ struct ARDrone_GtkCBData
  GdkPixbuf*                      pixelBuffer;
 #endif
  struct ARDrone_GtkProgressData* progressData;
- ARDrone_StreamBase_t*           stream;
  //gfloat                temperature[ARDRONE_TEMPERATURE_BUFFER_SIZE * 2];
  //int                   temperatureIndex;
  ACE_Time_Value                  timeStamp;
+ ARDrone_StreamBase_t*           videoStream;
 };
 
 struct ARDrone_ThreadData

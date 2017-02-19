@@ -1,19 +1,22 @@
-﻿/*  I2C kernel module driver for the Olimex MOD-MPU6050 UEXT module
-    (see https://www.olimex.com/Products/Modules/Sensors/MOD-MPU6050/open-source-hardware,
-         http://www.invensense.com/mems/gyro/mpu6050.html)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+﻿/***************************************************************************
+*   Copyright (C) 2009 by Erik Sohns   *
+*   erik.sohns@web.de   *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************/
 
 #ifndef ARDRONE_NETWORK_H
 #define ARDRONE_NETWORK_H
@@ -53,7 +56,7 @@
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
-//#include "ardrone_stream_common.h"
+#include "ardrone_defines.h"
 #include "ardrone_types.h"
 
 // forward declarations
@@ -84,12 +87,15 @@ struct ARDrone_SocketHandlerConfiguration
 {
   inline ARDrone_SocketHandlerConfiguration ()
    : Net_SocketHandlerConfiguration ()
+   , connectionConfiguration (NULL)
    , userData (NULL)
   {
-    PDUSize = ARDRONE_FRAME_BUFFER_SIZE;
+    PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
   };
 
-  struct ARDrone_UserData* userData;
+  struct ARDrone_ConnectionConfiguration* connectionConfiguration;
+
+  struct ARDrone_UserData*                userData;
 };
 
 struct ARDrone_Configuration;
@@ -151,16 +157,16 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       ARDrone_ConnectionManager_t,
                                       struct ARDrone_UserData> ARDrone_NetStream_t;
 
-typedef Net_StreamTCPSocketBase_T<Net_TCPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration,
-                                                         ACE_SOCK_STREAM>,
-                                  ACE_INET_Addr,
-                                  struct ARDrone_ConnectionConfiguration,
-                                  struct ARDrone_ConnectionState,
-                                  ARDrone_RuntimeStatistic_t,
-                                  ARDrone_NetStream_t,
-                                  struct ARDrone_UserData,
-                                  struct Stream_ModuleConfiguration,
-                                  struct ARDrone_ModuleHandlerConfiguration> ARDrone_TCPHandler_t;
+//typedef Net_StreamTCPSocketBase_T<Net_TCPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration,
+//                                                         ACE_SOCK_STREAM>,
+//                                  ACE_INET_Addr,
+//                                  struct ARDrone_ConnectionConfiguration,
+//                                  struct ARDrone_ConnectionState,
+//                                  ARDrone_RuntimeStatistic_t,
+//                                  ARDrone_NetStream_t,
+//                                  struct ARDrone_UserData,
+//                                  struct Stream_ModuleConfiguration,
+//                                  struct ARDrone_ModuleHandlerConfiguration> ARDrone_TCPHandler_t;
 typedef Net_StreamAsynchTCPSocketBase_T<Net_AsynchTCPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration>,
                                         ACE_INET_Addr,
                                         struct ARDrone_ConnectionConfiguration,
@@ -171,17 +177,17 @@ typedef Net_StreamAsynchTCPSocketBase_T<Net_AsynchTCPSocketHandler_T<struct ARDr
                                         struct Stream_ModuleConfiguration,
                                         struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchTCPHandler_t;
 
-typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
-                                                         struct ARDrone_SocketHandlerConfiguration>,
-                                  ACE_INET_Addr,
-                                  struct ARDrone_ConnectionConfiguration,
-                                  struct ARDrone_ConnectionState,
-                                  ARDrone_RuntimeStatistic_t,
-                                  struct ARDrone_SocketHandlerConfiguration,
-                                  ARDrone_NetStream_t,
-                                  struct ARDrone_UserData,
-                                  struct Stream_ModuleConfiguration,
-                                  struct ARDrone_ModuleHandlerConfiguration> ARDrone_UDPHandler_t;
+//typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
+//                                                         struct ARDrone_SocketHandlerConfiguration>,
+//                                  ACE_INET_Addr,
+//                                  struct ARDrone_ConnectionConfiguration,
+//                                  struct ARDrone_ConnectionState,
+//                                  ARDrone_RuntimeStatistic_t,
+//                                  struct ARDrone_SocketHandlerConfiguration,
+//                                  ARDrone_NetStream_t,
+//                                  struct ARDrone_UserData,
+//                                  struct Stream_ModuleConfiguration,
+//                                  struct ARDrone_ModuleHandlerConfiguration> ARDrone_UDPHandler_t;
 typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration>,
                                         Net_SOCK_Dgram,
                                         ACE_INET_Addr,
@@ -197,36 +203,36 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<struct ARDr
 typedef Net_IConnector_T<ACE_INET_Addr,
                          struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
 
-typedef Net_Client_Connector_T<Net_TCPConnectionBase_T<ARDrone_TCPHandler_t,
-                                                       struct ARDrone_ConnectionConfiguration,
-                                                       struct ARDrone_ConnectionState,
-                                                       ARDrone_RuntimeStatistic_t,
-                                                       struct ARDrone_SocketHandlerConfiguration,
-                                                       ARDrone_NetStream_t,
-                                                       struct ARDrone_UserData>,
-                               ACE_SOCK_CONNECTOR,
-                               ACE_INET_Addr,
-                               struct ARDrone_ConnectionConfiguration,
-                               struct ARDrone_ConnectionState,
-                               ARDrone_RuntimeStatistic_t,
-                               struct ARDrone_SocketHandlerConfiguration,
-                               ARDrone_NetStream_t,
-                               struct ARDrone_UserData> ARDrone_TCPConnector_t;
-typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<ARDrone_UDPHandler_t,
-                                                       struct ARDrone_ConnectionConfiguration,
-                                                       struct ARDrone_ConnectionState,
-                                                       ARDrone_RuntimeStatistic_t,
-                                                       struct ARDrone_SocketHandlerConfiguration,
-                                                       ARDrone_NetStream_t,
-                                                       struct ARDrone_UserData>,
-                               ACE_SOCK_CONNECTOR,
-                               ACE_INET_Addr,
-                               struct ARDrone_ConnectionConfiguration,
-                               struct ARDrone_ConnectionState,
-                               ARDrone_RuntimeStatistic_t,
-                               struct ARDrone_SocketHandlerConfiguration,
-                               ARDrone_NetStream_t,
-                               struct ARDrone_UserData> ARDrone_UDPConnector_t;
+//typedef Net_Client_Connector_T<Net_TCPConnectionBase_T<ARDrone_TCPHandler_t,
+//                                                       struct ARDrone_ConnectionConfiguration,
+//                                                       struct ARDrone_ConnectionState,
+//                                                       ARDrone_RuntimeStatistic_t,
+//                                                       struct ARDrone_SocketHandlerConfiguration,
+//                                                       ARDrone_NetStream_t,
+//                                                       struct ARDrone_UserData>,
+//                               ACE_SOCK_CONNECTOR,
+//                               ACE_INET_Addr,
+//                               struct ARDrone_ConnectionConfiguration,
+//                               struct ARDrone_ConnectionState,
+//                               ARDrone_RuntimeStatistic_t,
+//                               struct ARDrone_SocketHandlerConfiguration,
+//                               ARDrone_NetStream_t,
+//                               struct ARDrone_UserData> ARDrone_TCPConnector_t;
+//typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<ARDrone_UDPHandler_t,
+//                                                       struct ARDrone_ConnectionConfiguration,
+//                                                       struct ARDrone_ConnectionState,
+//                                                       ARDrone_RuntimeStatistic_t,
+//                                                       struct ARDrone_SocketHandlerConfiguration,
+//                                                       ARDrone_NetStream_t,
+//                                                       struct ARDrone_UserData>,
+//                               ACE_SOCK_CONNECTOR,
+//                               ACE_INET_Addr,
+//                               struct ARDrone_ConnectionConfiguration,
+//                               struct ARDrone_ConnectionState,
+//                               ARDrone_RuntimeStatistic_t,
+//                               struct ARDrone_SocketHandlerConfiguration,
+//                               ARDrone_NetStream_t,
+//                               struct ARDrone_UserData> ARDrone_UDPConnector_t;
 
 typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<ARDrone_AsynchTCPHandler_t,
                                                                    struct ARDrone_ConnectionConfiguration,

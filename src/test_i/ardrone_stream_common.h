@@ -292,6 +292,8 @@ struct ARDrone_ModuleHandlerConfiguration
    , targetFileName ()
    , useYYScanBuffer (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
   {
+    concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     format =
       static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
@@ -344,7 +346,7 @@ struct ARDrone_ModuleHandlerConfiguration
   struct Net_SocketConfiguration*                socketConfiguration;
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration;
   struct _cairo_rectangle_int                    sourceFormat;
-  ARDrone_StreamBase_t*                          stream;
+  Stream_IStream*                                stream;
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
   std::string                                    targetFileName;
