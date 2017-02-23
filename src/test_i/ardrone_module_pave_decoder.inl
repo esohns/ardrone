@@ -39,12 +39,18 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
  : inherited ()
  , allocator_ (NULL)
  , buffer_ (NULL)
-// , header_ ()
+ , header_ ()
  , headerDecoded_ (false)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::ARDrone_Module_PaVEDecoder_T"));
 
-//  ACE_OS::memset (&header_, 0, sizeof (parrot_video_encapsulation_t));
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_OS::memset (&header_,
+                  0,
+                  sizeof (struct ARDrone_ParrotVideoEncapsulation_Header));
+#else
+  ACE_OS::memset (&header_, 0, sizeof (struct parrot_video_encapsulation_t));
+#endif
 }
 
 template <ACE_SYNCH_DECL,
@@ -83,7 +89,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                             ControlMessageType,
                             DataMessageType,
                             SessionMessageType,
-                            SessionDataContainerType>::initialize (const ConfigurationType& configuration_in)
+                            SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
+                                                                   Stream_IAllocator* allocator_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::initialize"));
 
@@ -94,21 +101,17 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
   if (inherited::isInitialized_)
   {
-    ACE_DEBUG ((LM_WARNING,
-                ACE_TEXT ("re-initializing...\n")));
-
-    //allocator_ = NULL;
+    allocator_ = NULL;
     if (buffer_)
       buffer_->release ();
     buffer_ = NULL;
-
-    inherited::isInitialized_ = false;
   } // end IF
 
   // *TODO*: remove type inferences
-  allocator_ = configuration_in.streamConfiguration->messageAllocator;
+  allocator_ = allocator_in;
 
-  return inherited::initialize (configuration_in);
+  return inherited::initialize (configuration_in,
+                                allocator_in);
 }
 
 template <ACE_SYNCH_DECL,
@@ -142,7 +145,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   passMessageDownstream_out = false;
 
   // sanity check(s)
-  ACE_ASSERT (inherited::isInitialized_);
+  //ACE_ASSERT (inherited::isInitialized_);
 
   // form a chain of buffers
   if (buffer_)
@@ -160,68 +163,100 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   else
     buffer_ = message_inout;
 
+  unsigned int buffered_bytes, missing_bytes, bytes_to_copy;
 next:
-  unsigned int buffered_bytes = buffer_->total_length ();
+  buffered_bytes = buffer_->total_length ();
   message_block_p = buffer_;
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  missing_bytes =
+    sizeof (struct ARDrone_ParrotVideoEncapsulation_Header);
+#else
+  missing_bytes = sizeof (struct parrot_video_encapsulation_t);
+#endif
   if (!headerDecoded_)
   {
     // PaVE header has not been received yet
 
     // --> wait for more data ?
-//    if (buffered_bytes < sizeof (parrot_video_encapsulation_t))
-//      return; // done
+    if (buffered_bytes < missing_bytes)
+      return; // done
 
     // received a PaVE header --> decode
-//    char buffer[sizeof (parrot_video_encapsulation_t)];
-    char buffer[BUFSIZ];
-    char* buffer_p = buffer;
-    unsigned int missing_bytes = BUFSIZ;
-//    unsigned int missing_bytes = sizeof (parrot_video_encapsulation_t);
-    unsigned int bytes_to_copy;
+    char* buffer_p = reinterpret_cast<char*> (&header_);
+    skipped_bytes = 0;
     for (;
          message_block_p;
          message_block_p = message_block_p->cont ())
     {
       bytes_to_copy =
-        (missing_bytes < message_block_p->length () ? missing_bytes
-                                                    : message_block_p->length ());
+        ((missing_bytes - skipped_bytes) < message_block_p->length () ? (missing_bytes - skipped_bytes)
+                                                                      : message_block_p->length ());
       ACE_OS::memcpy (buffer_p, message_block_p->rd_ptr (), bytes_to_copy);
       message_block_p->rd_ptr (bytes_to_copy);
-      missing_bytes -= bytes_to_copy;
-      if (!missing_bytes)
+      skipped_bytes += bytes_to_copy;
+      if (skipped_bytes == missing_bytes)
         break;
       buffer_p += bytes_to_copy;
     } // end FOR
-//    header_ = *reinterpret_cast<parrot_video_encapsulation_t*> (buffer);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+    ACE_ASSERT (PAVE_CHECK (&header_));
+#endif
+
+    buffered_bytes -= missing_bytes;
+
+    headerDecoded_ = true;
   } // end IF
 
   // --> wait for more data ?
-//  if (buffered_bytes < header_.payload_size)
-//    return; // done
+  missing_bytes = header_.header_size - missing_bytes;
+  ACE_ASSERT (missing_bytes >= 0);
+  if (buffered_bytes < (missing_bytes + header_.payload_size))
+    return; // done
+
+  // skip over (undocumented) header bytes
+  skipped_bytes = 0;
+  for (;
+       message_block_p;
+       message_block_p = message_block_p->cont ())
+  {
+    bytes_to_copy =
+      (missing_bytes < message_block_p->length () ? missing_bytes
+                                                  : message_block_p->length ());
+    message_block_p->rd_ptr (bytes_to_copy);
+    skipped_bytes += bytes_to_copy;
+    if (skipped_bytes == missing_bytes)
+      break;
+  } // end FOR
+  buffered_bytes -= missing_bytes;
 
   // forward a H264 frame
 
-  if (buffered_bytes > BUFSIZ)
-//  if (buffered_bytes > header_.payload_size)
+  if (buffered_bytes > header_.payload_size)
   {
-    message_block_p = message_inout->duplicate ();
-    if (!message_block_p)
+    message_block_2 = message_block_p->duplicate ();
+    if (!message_block_2)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to MessageType::duplicate(): \"%m\", returning\n"),
                   inherited::mod_->name ()));
       return;
     } // end IF
-    message_inout->wr_ptr (message_inout->base () +
-                           (buffered_bytes - BUFSIZ));
-    message_block_p->rd_ptr (buffered_bytes - BUFSIZ);
-//    message_inout->wr_ptr (message_inout->base () +
-//                           (buffered_bytes - header_.payload_size));
-//    message_block_p->rd_ptr (buffered_bytes - header_.payload_size);
+
+    missing_bytes = header_.payload_size;
+    for (ACE_Message_Block* message_block_3 = buffer_;
+         message_block_3 != message_block_p;
+         message_block_3 = message_block_3->cont ())
+      missing_bytes -= message_block_3->length ();
+
+    message_block_p->length (missing_bytes);
+    message_block_p->cont (NULL);
+    message_block_2->rd_ptr (missing_bytes);
   } // end IF
   else
-    message_block_p = NULL;
-//  ACE_ASSERT (buffer_->total_length () == header_.payload_size);
+    message_block_2 = NULL;
+  ACE_ASSERT (buffer_->total_length () == header_.payload_size);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -230,13 +265,14 @@ next:
                 inherited::mod_->name ()));
 
     // clean up
-    message_block_p->release ();
+    if (message_block_2)
+      message_block_2->release ();
     buffer_->release ();
     buffer_ = NULL;
 
     return;
   } // end IF
-  buffer_ = message_block_p;
+  buffer_ = message_block_2;
 
   // reset header
   headerDecoded_ = false;

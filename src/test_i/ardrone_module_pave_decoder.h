@@ -27,11 +27,7 @@
 
 #include "stream_task_base_synch.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "ardrone_types.h"
-#else
-//#include "video_encapsulation.h"
-#endif
 
 // forward declaration(s)
 class ACE_Message_Block;
@@ -64,7 +60,8 @@ class ARDrone_Module_PaVEDecoder_T
   virtual ~ARDrone_Module_PaVEDecoder_T ();
 
   //// override (part of) Stream_IModuleHandler_T
-  virtual bool initialize (const ConfigurationType&);
+  virtual bool initialize (const ConfigurationType&,
+                           Stream_IAllocator*);
   //virtual const ConfigurationType& get () const;
 
   // implement (part of) Stream_ITaskBase
@@ -91,10 +88,14 @@ class ARDrone_Module_PaVEDecoder_T
   // helper methods
   DataMessageType* allocateMessage (unsigned int); // requested size
 
-  Stream_IAllocator*           allocator_;
-  ACE_Message_Block*           buffer_; // <-- continuation chain
-//  parrot_video_encapsulation_t header_;
-  bool                         headerDecoded_;
+  Stream_IAllocator*                             allocator_;
+  ACE_Message_Block*                             buffer_; // <-- continuation chain
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_ParrotVideoEncapsulation_Header header_;
+#else
+  struct parrot_video_encapsulation_t            header_;
+#endif
+  bool                                           headerDecoded_;
 };
 
 // include template definition

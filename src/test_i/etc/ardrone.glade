@@ -160,6 +160,7 @@
     <property name="icon">ardrone_small.png</property>
     <property name="type_hint">dialog</property>
     <property name="deletable">False</property>
+    <signal name="key-press-event" handler="dialog_main_key_press_event_cb" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="vbox_main">
         <property name="visible">True</property>
@@ -930,6 +931,7 @@
                         <property name="vexpand">True</property>
                         <signal name="draw" handler="drawingarea_draw_cb" swapped="no"/>
                         <signal name="configure-event" handler="drawingarea_configure_cb" swapped="no"/>
+                        <signal name="key-press-event" handler="drawing_area_key_press_event_cb" swapped="no"/>
                         <signal name="realize" handler="drawingarea_realize_cb" swapped="no"/>
                       </object>
                     </child>

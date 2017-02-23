@@ -95,7 +95,7 @@ if (UNIX)
 endif ()
 # *TODO*: repair WIN32 pkgconfig support
 
-find_package (Common ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
+find_package (Common 0.0.1 EXACT
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
@@ -106,7 +106,7 @@ if (NOT EXISTS ${Common_DIR})
 endif ()
 add_definitions (-DCOMMON_HAS_DLL)
 
-find_package (ACEStream ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
+find_package (ACEStream 0.0.1 EXACT
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
@@ -117,7 +117,7 @@ if (NOT EXISTS ${ACEStream_DIR})
 endif ()
 add_definitions (-DSTREAM_HAS_DLL)
 
-find_package (ACENetwork ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
+find_package (ACENetwork 0.0.1 EXACT
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
@@ -180,8 +180,8 @@ elseif (WIN32)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../freeglut/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/ui)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src)
@@ -310,15 +310,25 @@ target_link_libraries (${EXECUTABLE} ACENetwork)
 set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")
 cotire (${EXECUTABLE})
 
-install (TARGETS ${EXECUTABLE}
-         EXPORT ${PROJECT_NAME}Targets
-         RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-         COMPONENT dev)
+if (UNIX)
+ install (TARGETS ${EXECUTABLE}
+          EXPORT ${PROJECT_NAME}Targets
+          RUNTIME
+          DESTINATION "${INSTALL_BIN_DIR}"
+          COMPONENT bin)
+elseif (WIN32)
+ install (TARGETS ${EXECUTABLE}
+          EXPORT ${PROJECT_NAME}Targets
+          RUNTIME DESTINATION .
+          COMPONENT bin)
+endif ()
 install (FILES
          etc/ardrone.glade
+         DESTINATION etc COMPONENT config)
+install (FILES
          scripts/mavlink_scanner.l
          scripts/navdata_scanner.l
-         DESTINATION etc/lib${PROJECT_NAME}/ardrone COMPONENT config)
+         DESTINATION etc COMPONENT dev)
 
 ##########################################
 
