@@ -122,10 +122,10 @@
 //#define ARDRONE_DATA_RATE                                 100 // messages/s
 // *TODO*: apparently, the Microsoft H264 decoder cannot handle the 720P
 //         resolution
-#define ARDRONE_DEFAULT_VIDEO_WIDTH                        1280
-#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       720
-//#define ARDRONE_DEFAULT_VIDEO_WIDTH                        720
-//#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       480
+//#define ARDRONE_DEFAULT_VIDEO_WIDTH                        1280
+//#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       720
+#define ARDRONE_DEFAULT_VIDEO_WIDTH                        640
+#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       368
 
 // *** application-related ***
 //#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000

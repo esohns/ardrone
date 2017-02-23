@@ -3,9 +3,9 @@ cmake_minimum_required (VERSION 2.8)
 # options
 #set (CMAKE_VERBOSE_MAKEFILE ON)
 
-set (VERSION_MAJOR 0)
+set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
-set (VERSION_MICRO 1)
+set (VERSION_MICRO 0)
 set (VERSION_DEVEL devel)
 set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO})
 if (VERSION_DEVEL)
@@ -54,7 +54,7 @@ endforeach ()
 # (this registers the build-tree with a global CMake-registry)
 export (PACKAGE lib${PROJECT_NAME})
 
-# Create the libACEStreamConfig.cmake and libACEStreamConfigVersion.cmake files
+# Create the ardroneConfig.cmake and ardroneConfigVersion.cmake files
 file (RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
 # ... for the build tree
 set (CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
@@ -65,11 +65,12 @@ configure_file (${PROJECT_NAME}Config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FIL
 # ... for both
 configure_file (${PROJECT_NAME}ConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
 
-# Install the libACEStreamConfig.cmake and libACEStreamConfigVersion.cmake
+# Install the ardroneConfig.cmake and ardroneConfigVersion.cmake
 install (FILES
          "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
          "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
          DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
 # Install the export set for use with the install-tree
 install (EXPORT ${PROJECT_NAME}Targets
          DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
@@ -108,11 +109,11 @@ endif ()
 option (TRACING
         "enable tracing" OFF)
 if (TRACING)
- add_definitions (-DACESTREAM_NTRACE=0)
-#  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ACESTREAM_NTRACE=0)
+ add_definitions (-DARDRONE_NTRACE=0)
+#  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ARDRONE_NTRACE=0)
 else ()
- add_definitions (-DACESTREAM_NTRACE=1)
-#  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ACESTREAM_NTRACE=1)
+ add_definitions (-DARDRONE_NTRACE=1)
+#  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ARDRONE_NTRACE=1)
 endif ()
 
 option (VALGRIND_SUPPORT
@@ -167,13 +168,50 @@ list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cotire/CMake")
 include (cotire)
 set_directory_properties (PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
 
+################################################################################
+
+if (UNIX)
+ include (GNUInstallDirs)
+elseif (WIN32)
+ include (InstallRequiredSystemLibraries)
+endif ()
+
+################################################################################
+
 # build a CPack driven installer package
-include (InstallRequiredSystemLibraries)
 set (CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
 set (CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
 set (CPACK_PACKAGE_VERSION_PATCH ${VERSION_MICRO})
 set (CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
 set (CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_SOURCE_DIR}/README)
+
+# *NOTE*: this does not work on Win32 using the NSIS installer
+set (CPACK_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF)
+
+#set (CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+#set (CPACK_PACKAGE_INSTALL_DIRECTORY)
+set (CPACK_NSIS_MUI_ICON ${CMAKE_CURRENT_SOURCE_DIR}/src/test_i/etc/ardrone_small.ico)
+#set (CPACK_NSIS_MUI_UNIICON)
+#set (CPACK_NSIS_INSTALLER_MUI_ICON_CODE)
+#set (CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS)
+#set (CPACK_NSIS_EXTRA_INSTALL_COMMANDS)
+#set (CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS)
+#set (CPACK_NSIS_COMPRESSOR /SOLID zip)
+set (CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+#set (CPACK_NSIS_MODIFY_PATH)
+set (CPACK_NSIS_DISPLAY_NAME ${PROJECT_NAME})
+set (CPACK_NSIS_PACKAGE_NAME ${PROJECT_NAME})
+#set (CPACK_NSIS_INSTALLED_ICON_NAME )
+set (CPACK_NSIS_HELP_LINK http://www.github.org/esohns/ardrone)
+set (CPACK_NSIS_URL_INFO_ABOUT http://www.github.org/esohns/ardrone)
+set (CPACK_NSIS_CONTACT eriksohns@fastmail.net)
+#set (CPACK_NSIS_CREATE_ICONS_EXTRA)
+#set (CPACK_NSIS_DELETE_ICONS_EXTRA)
+#set (CPACK_NSIS_EXECUTABLES_DIRECTORY)
+#set (CPACK_NSIS_MUI_FINISHPAGE_RUN)
+#set (CPACK_NSIS_MENU_LINKS)
+
+set (CPACK_COMPONENTS_ALL bin config)
 
 include (CPack)
 
@@ -191,4 +229,19 @@ include (CreateLaunchers)
 #include (CTest)
 enable_testing ()
 
+################################################################################
+
 add_subdirectory (src)
+
+################################################################################
+
+add_custom_target (installer
+                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/src/test_i/ardrone.exe)
+
+#set (NSIS_PROJECT_FILE "${PROJECT_NAME}.nsi")
+add_custom_command (TARGET installer
+                    POST_BUILD
+                    COMMAND make_installer.bat ${CMAKE_BUILD_TYPE} ${NSIS_PROJECT_FILE}
+                    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/scripts"
+                    COMMENT "making installer..."
+                    VERBATIM)

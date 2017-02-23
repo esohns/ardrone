@@ -257,6 +257,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , connection (NULL)
    , connectionManager (NULL)
    , debugScanner (COMMON_PARSER_DEFAULT_LEX_TRACE)
+   , device ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , area ()
    , consoleMode (false)
@@ -314,6 +315,7 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_IConnection_t*                         connection;          // net source/IO module
   ARDrone_IConnectionManager_t*                  connectionManager;   // net IO module
   bool                                           debugScanner;        // H264 NAL bisector module
+  std::string                                    device;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagRECT                                 area;                // display module

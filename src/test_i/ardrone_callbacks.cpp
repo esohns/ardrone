@@ -114,6 +114,48 @@ monitor_enum_cb (HMONITOR monitor_in,
 
   return TRUE;
 };
+
+BOOL CALLBACK
+monitor_clip_cb (HMONITOR monitor_in,
+                 HDC      deviceContext_in,
+                 LPRECT   clippingArea_in,
+                 LPARAM   userData_in)
+{
+  STREAM_TRACE (ACE_TEXT ("::monitor_clip_cb"));
+
+  ACE_UNUSED_ARG (deviceContext_in);
+
+  // sanity check(s)
+  ACE_ASSERT (clippingArea_in);
+  ACE_ASSERT (userData_in);
+
+  struct ARDrone_GtkCBData* cb_data_p =
+    reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->configuration);
+
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof (MONITORINFOEX);
+  if (!GetMonitorInfo (monitor_in,
+                       &monitor_info))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+    return FALSE;
+  } // end IF
+
+  if (ACE_OS::strcmp (monitor_info.szDevice,
+                      cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()))
+    return TRUE;
+
+  cb_data_p->configuration->moduleHandlerConfiguration.area =
+    *clippingArea_in;
+
+  return TRUE;
+};
 #endif
 
 bool
@@ -523,10 +565,14 @@ stream_processing_function (void* arg_in)
     ACE_INET_Addr remote_SAP =
       data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address;
 
+    // *TODO*: bind to a specific interface
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
-      data_p->CBData->localSAP;
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_MAVLINK_PORT,
-                                                                                                           1);
+      ACE_INET_Addr (static_cast<u_short> (ARDRONE_MAVLINK_PORT),
+                     static_cast<ACE_UINT32> (INADDR_ANY));
+      //ACE_Addr::sap_any;
+      //data_p->CBData->localSAP;
+    //data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_MAVLINK_PORT,
+    //                                                                                                       1);
     stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
@@ -540,20 +586,22 @@ stream_processing_function (void* arg_in)
     } // end IF
 
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
-      data_p->CBData->localSAP;
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_NAVDATA_PORT,
-                                                                                                           1);
+      ACE_INET_Addr (static_cast<u_short> (ARDRONE_NAVDATA_PORT),
+                     static_cast<ACE_UINT32> (INADDR_ANY));
+      //data_p->CBData->localSAP;
+    //data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_NAVDATA_PORT,
+    //                                                                                                       1);
     stream_2 = data_p->CBData->NavDataStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->NavDataStream;
-    result_2 =
-      data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
+    //result_2 =
+    //  data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
 
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
       remote_SAP;
@@ -565,6 +613,7 @@ stream_processing_function (void* arg_in)
 
     const ARDrone_SessionData_t* session_data_container_p =
       data_p->CBData->videoStream->get ();
+    ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
     ACE_ASSERT (session_data_p);
@@ -593,7 +642,7 @@ stream_processing_function (void* arg_in)
 
   // *NOTE*: processing currently happens 'inline' (borrows calling thread)
   stream_p->start ();
-  stream_2->start ();
+  //stream_2->start ();
   stream_3->start ();
   //    if (!stream_p->isRunning ())
   //    {
@@ -602,7 +651,7 @@ stream_processing_function (void* arg_in)
   //      return;
   //    } // end IF
   stream_p->wait (true, false, false);
-  stream_2->wait (true, false, false);
+  //stream_2->wait (true, false, false);
   stream_3->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -772,6 +821,28 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_FILE_CHOOSER_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE)));
   ACE_ASSERT (file_chooser_button_p);
+  //struct _GValue property_s = G_VALUE_INIT;
+  //g_value_init (&property_s,
+  //              G_TYPE_POINTER);
+  //g_object_get_property (G_OBJECT (file_chooser_button_p),
+  //                       ACE_TEXT_ALWAYS_CHAR ("dialog"),
+  //                       &property_s);
+  //G_VALUE_HOLDS_POINTER (&property_s);
+  //GtkFileChooser* file_chooser_p = NULL;
+    //reinterpret_cast<GtkFileChooser*> (g_value_get_pointer (&property_s));
+  //g_object_get (G_OBJECT (file_chooser_button_p),
+  //              ACE_TEXT_ALWAYS_CHAR ("dialog"),
+  //              &file_chooser_p, NULL);
+  //ACE_ASSERT (file_chooser_p);
+  //ACE_ASSERT (GTK_IS_FILE_CHOOSER_DIALOG (file_chooser_p));
+  //GtkFileChooserDialog* file_chooser_dialog_p =
+  //  GTK_FILE_CHOOSER_DIALOG (file_chooser_p);
+  //ACE_ASSERT (file_chooser_dialog_p);
+  //GtkPlacesSidebar* places_sidebar_p = NULL;
+  //Common_UI_Tools::dump (GTK_WIDGET (file_chooser_dialog_p));
+  //[0].get_children ()[0].get_children ([0].get_children ()[0]
+  //  vbox.get_children ()[0].hide ()
+
   //GError* error_p = NULL;
   //GFile* file_p = NULL;
   gchar* filename_p = NULL;
@@ -1333,10 +1404,10 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
   //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
-  cb_data_p->configuration->moduleHandlerConfiguration.window =
-    static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+  cb_data_p->configuration->moduleHandlerConfiguration.window = NULL;
+    //static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+  //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
   cb_data_p->configuration->moduleHandlerConfiguration.window =
@@ -2115,6 +2186,58 @@ continue_:
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
   ACE_ASSERT (drawing_area_p);
+
+  combo_box_p =
+      GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION)));
+  ACE_ASSERT (combo_box_p);
+  if (!gtk_combo_box_get_active_iter (combo_box_p,
+                                      &iterator_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("no available display device, returning\n")));
+    return;
+  } // end IF
+  GtkListStore* list_store_p =
+      GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION)));
+  ACE_ASSERT (list_store_p);
+  GValue value = {0,};
+  gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                            &iterator_2,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                            0, &value);
+#else
+                            0, &value);
+#endif
+  ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
+  cb_data_p->configuration->moduleHandlerConfiguration.device =
+    g_value_get_string (&value);
+  g_value_unset (&value);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (!EnumDisplayMonitors (NULL,                                     // hdc
+                            NULL,                                     // lprcClip
+                            monitor_clip_cb,
+                            reinterpret_cast<LPARAM> (userData_in)))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to EnumDisplayMonitors(): \"%s\", returning\n"),
+                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+    return;
+  } // end IF
+#else
+#endif
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+              cb_data_p->configuration->moduleHandlerConfiguration.area.left,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.right,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.top,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.bottom,
+              (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
+               cb_data_p->configuration->moduleHandlerConfiguration.area.left),
+              (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
+               cb_data_p->configuration->moduleHandlerConfiguration.area.top)));
   struct _cairo_rectangle_int rectangle_s;
   if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
   {
@@ -2618,6 +2741,18 @@ refuse:
 }
 
 G_MODULE_EXPORT void
+places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
+                      GMountOperation* mountOperation_in,
+                      gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::places_save_mount_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+}
+
+G_MODULE_EXPORT void
 togglebutton_save_toggled_cb (GtkToggleButton* toggleButton_in,
                               gpointer userData_in)
 {
@@ -2734,94 +2869,79 @@ drawingarea_realize_cb (GtkWidget* widget_in,
   } // end IF
 }
 
-//G_MODULE_EXPORT gboolean
-//key_cb (GtkWidget* widget_in,
-//        GdkEventKey* event_in,
-//        gpointer userData_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("::key_cb"));
-//
-//  struct ARDrone_GtkCBData* cb_data_p =
-//      reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
-//
-//  // sanity check(s)
-//  ACE_ASSERT (event_in);
-//  ACE_ASSERT (cb_data_p);
-//
-//  switch (event_in->keyval)
-//  {
-//    case GDK_KEY_Left:
-//    {
-//      // *NOTE*: the camera moves on a circle in a plane perpendicular to the
-//      //         plane between the "view" and "up" directions. Therefore, the
-//      //         distance to the "target" remains constant
-//      // *NOTE*: camera positions are (discrete) positions on the circle
-//      //         perimeter
-//
-//      //// compute movement plane
-//      //glm::vec3 unit_vector = glm::cross (cb_data_p->openGLCamera.looking_at,
-//      //                                    cb_data_p->openGLCamera.up);
-//      ////unit_vector = glm::normalize (unit_vector);
-//
-//      //// compute distance factor
-//      //glm::vec3 direction =
-//      // cb_data_p->openGLCamera.looking_at - cb_data_p->openGLCamera.position;
-//      //GLfloat factor = glm::length (direction);
-//
-//      //// compute position on circle perimeter
-//      //cb_data_p->openGLCamera.angle -= ARDRONE_OPENGL_CAMERA_ROTATION_STEP;
-//      //GLfloat angle = cb_data_p->openGLCamera.angle * 360.0F;
-//
-//      //// compute camera position
-//      //glm::vec3 p, q, r;
-//      //p = cb_data_p->openGLCamera.position;
-//      //r = unit_vector;
-//      //r[0] = ::cos (angle);
-//      //r[1] = ::sin (angle);
-//      //r[2] = 0.0F;
-//      //r = glm::normalize (cb_data_p->openGLCamera.looking_at + r);
-//      //q = (r - p) * factor;
-//      //cb_data_p->openGLCamera.position = q;
-//
-//      //gluLookAt (cb_data_p->openGLCamera.position[0],
-//      //           cb_data_p->openGLCamera.position[1],
-//      //           cb_data_p->openGLCamera.position[2],
-//      //           cb_data_p->openGLCamera.looking_at[0],
-//      //           cb_data_p->openGLCamera.looking_at[1],
-//      //           cb_data_p->openGLCamera.looking_at[2],
-//      //           cb_data_p->openGLCamera.up[0],
-//      //           cb_data_p->openGLCamera.up[1],
-//      //           cb_data_p->openGLCamera.up[2]);
-//
-//      break;
-//    }
-//    case GDK_KEY_Right:
-//      break;
-//    //case GDK_KEY_Up:
-//    //  break;
-//    //case GDK_KEY_Down:
-//    //  break;
-//    //case GDK_KEY_c:
-//    //case GDK_KEY_C:
-//    //  break;
-//    //case GDK_KEY_d:
-//    //case GDK_KEY_D:
-//    //  break;
-//    case GDK_KEY_r:
-//    case GDK_KEY_R:
-//    {
-//      cb_data_p->resetCamera ();
-//
-//      gtk_widget_queue_draw (widget_in);
-//
-//      break;
-//    }
-//    default:
-//      return FALSE; // propagate
-//  } // end SWITCH
-//
-//  return TRUE; // done (do not propagate further)
-//}
+G_MODULE_EXPORT gboolean
+key_cb (GtkWidget* widget_in,
+        GdkEventKey* event_in,
+        gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::key_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (event_in);
+  ACE_ASSERT (cb_data_p);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  switch (event_in->keyval)
+  {
+    case GDK_KEY_Escape:
+    case GDK_KEY_f:
+    case GDK_KEY_F:
+    {
+      GtkCheckButton* check_button_p =
+        GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
+      ACE_ASSERT (check_button_p);
+      gboolean is_active_b =
+        gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                    !is_active_b);
+
+      // sanity check(s)
+      ACE_ASSERT (cb_data_p->videoStream);
+
+      const Stream_Module_t* module_p =
+        cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
+      if (!module_p)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to Stream_IStream::find(\"Display\"), aborting\n"),
+                    ACE_TEXT (cb_data_p->videoStream->name ().c_str ())));
+        return FALSE;
+      } // end IF
+      Stream_Module_Visualization_IFullscreen* ifullscreen_p =
+        dynamic_cast<Stream_Module_Visualization_IFullscreen*> (const_cast<Stream_Module_t*> (module_p)->writer ());
+      if (!ifullscreen_p)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("Display: failed to dynamic_cast<Stream_Module_Visualization_IFullscreen*>(0x%@), aborting\n"),
+                    const_cast<Stream_Module_t*> (module_p)->writer ()));
+        return FALSE;
+      } // end IF
+      try {
+        ifullscreen_p->toggle ();
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("Display: failed to Stream_Module_Visualization_IFullscreen::toggle(), aborting\n")));
+        return FALSE;
+      }
+
+      break;
+    }
+    default:
+      return FALSE; // propagate
+  } // end SWITCH
+
+  return TRUE; // done (do not propagate further)
+}
 
 //G_MODULE_EXPORT gboolean
 //motion_cb (GtkWidget* widget_in,
