@@ -107,6 +107,7 @@ class ARDrone_Module_NavDataDecoder_T
                    unsigned int); // buffer size
   void scan_end ();
 
+  Stream_IAllocator*      allocator_;
   ACE_Message_Block*      buffer_;
   bool                    isFirst_;
   yyscan_t                scannerState_;

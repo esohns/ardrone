@@ -61,20 +61,14 @@ ARDrone_Message::~ARDrone_Message ()
 
   // *NOTE*: called just BEFORE 'this' is passed back to the allocator
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   // release media sample ?
   if (inherited::data_.sample)
   {
     inherited::data_.sample->Release ();
     inherited::data_.sample = NULL;
   } // end IF
-}
-
-int
-ARDrone_Message::command () const
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::command"));
-
-  return 0;
+#endif
 }
 
 std::string
@@ -162,7 +156,7 @@ ARDrone_Message::clone (ACE_Message_Block::Message_Flags flags_in) const
   if (!result_p)
   {
     Stream_IAllocator* allocator_p =
-     dynamic_cast<Stream_IAllocator*> (inherited::message_block_allocator_);
+        dynamic_cast<Stream_IAllocator*> (inherited::message_block_allocator_);
     ACE_ASSERT (allocator_p);
     if (allocator_p->block ())
       ACE_DEBUG ((LM_CRITICAL,
@@ -248,7 +242,7 @@ ARDrone_Message::duplicate (void) const
   if (!message_p)
   {
     Stream_IAllocator* allocator_p =
-     dynamic_cast<Stream_IAllocator*> (inherited::message_block_allocator_);
+        dynamic_cast<Stream_IAllocator*> (inherited::message_block_allocator_);
     ACE_ASSERT (allocator_p);
     if (allocator_p->block ())
       ACE_DEBUG ((LM_CRITICAL,
@@ -280,4 +274,19 @@ ARDrone_Message::duplicate (void) const
   // *NOTE*: if 'this' is initialized, so is the "clone"
 
   return message_p;
+}
+
+void
+ARDrone_Message::dump_state (void) const
+{
+  STREAM_TRACE (ACE_TEXT ("ARDrone_Message::dump_state"));
+
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
+              inherited::id_,
+              inherited::data_.MAVLinkMessage.len,
+              inherited::data_.MAVLinkMessage.seq,
+              inherited::data_.MAVLinkMessage.msgid,
+              inherited::data_.MAVLinkMessage.compid,
+              inherited::data_.MAVLinkMessage.sysid));
 }

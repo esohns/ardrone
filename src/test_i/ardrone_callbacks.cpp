@@ -65,6 +65,8 @@
 #include "stream_dev_directshow_tools.h"
 #endif
 
+#include "stream_vis_common.h"
+
 #include "ardrone_common.h"
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
@@ -548,8 +550,9 @@ stream_processing_function (void* arg_in)
 
 //  GtkStatusbar* statusbar_p = NULL;
   Stream_IStreamControlBase* stream_p, *stream_2, *stream_3 = NULL;
-  unsigned short port_number = 0;
+//  unsigned short port_number = 0;
   std::ostringstream converter;
+  const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
   bool result_2 = false;
 //  guint context_id = 0;
@@ -594,14 +597,14 @@ stream_processing_function (void* arg_in)
     stream_2 = data_p->CBData->NavDataStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->NavDataStream;
-    //result_2 =
-    //  data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
+    result_2 =
+      data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
 
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
       remote_SAP;
@@ -611,7 +614,7 @@ stream_processing_function (void* arg_in)
     result_2 =
       data_p->CBData->videoStream->initialize (data_p->CBData->configuration->streamConfiguration);
 
-    const ARDrone_SessionData_t* session_data_container_p =
+    session_data_container_p =
       data_p->CBData->videoStream->get ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
@@ -641,8 +644,8 @@ stream_processing_function (void* arg_in)
   ACE_ASSERT (stream_p && stream_2 && stream_3);
 
   // *NOTE*: processing currently happens 'inline' (borrows calling thread)
-  stream_p->start ();
-  //stream_2->start ();
+//  stream_p->start ();
+//  stream_2->start ();
   stream_3->start ();
   //    if (!stream_p->isRunning ())
   //    {
@@ -650,8 +653,8 @@ stream_processing_function (void* arg_in)
   //                  ACE_TEXT ("failed to start stream, aborting\n")));
   //      return;
   //    } // end IF
-  stream_p->wait (true, false, false);
-  //stream_2->wait (true, false, false);
+//  stream_p->wait (true, false, false);
+//  stream_2->wait (true, false, false);
   stream_3->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -665,7 +668,10 @@ done:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
 #else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX,
+                      aGuard,
+                      *lock_p,
+                      std::numeric_limits<void*>::max ());
 #endif
 
     data_p->CBData->progressData->completedActions.insert (data_p->eventSourceID);
@@ -1961,8 +1967,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   {
     un_toggling_connect = false;
 
-    gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
-                                         GTK_STOCK_CONNECT);
+    gtk_action_set_stock_id (GTK_ACTION (toggleAction_in), GTK_STOCK_CONNECT);
     gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), true);
 
     return; // done
@@ -1989,6 +1994,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   {
     // stop stream
     cb_data_p->MAVLinkStream->stop (false, true);
+    cb_data_p->NavDataStream->stop (false, true);
     cb_data_p->videoStream->stop (false, true);
 
     return;
@@ -2230,6 +2236,7 @@ continue_:
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
               ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
               cb_data_p->configuration->moduleHandlerConfiguration.area.left,
               cb_data_p->configuration->moduleHandlerConfiguration.area.right,
               cb_data_p->configuration->moduleHandlerConfiguration.area.top,
@@ -2237,7 +2244,15 @@ continue_:
               (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
                cb_data_p->configuration->moduleHandlerConfiguration.area.left),
               (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
-               cb_data_p->configuration->moduleHandlerConfiguration.area.top)));
+               cb_data_p->configuration->moduleHandlerConfiguration.area.top)
+#else
+              cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.y,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.height,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.height));
+#endif
   struct _cairo_rectangle_int rectangle_s;
   if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
   {

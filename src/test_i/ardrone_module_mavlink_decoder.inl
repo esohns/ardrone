@@ -20,6 +20,8 @@
 
 #include <ace/Log_Msg.h>
 
+#include "stream_dec_defines.h"
+
 #include "ardrone_macros.h"
 
 template <ACE_SYNCH_DECL,
@@ -38,9 +40,9 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T ()
  : inherited ()
  , buffer_ (NULL)
+ , bufferState_ (NULL)
  , isFirst_ (true)
  , scannerState_ (NULL)
- , bufferState_ (NULL)
  , useYYScanBuffer_ (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::ARDrone_Module_MAVLinkDecoder_T"));
@@ -157,6 +159,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::handleDataMessage"));
 
   int result = -1;
+  ACE_Message_Block* message_block_p = NULL;
   bool do_scan_end = false;
 
   // initialize return value(s)
@@ -165,19 +168,30 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   //             as such
   passMessageDownstream_out = false;
 
-  // sanity check(s)
-  ACE_ASSERT (!buffer_);
-
-  buffer_ = message_inout;
-
-scan:
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (buffer_->capacity () - buffer_->length () >=
+  ACE_ASSERT (message_inout->capacity () - message_inout->length () >=
               STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE);
-  *(buffer_->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-  *(buffer_->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
+  *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
+  *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
+  // form a chain of buffers
+  if (buffer_)
+  {
+    message_block_p = buffer_->cont ();
+    if (message_block_p)
+    {
+      while (message_block_p->cont ()) // skip to end
+        message_block_p = message_block_p->cont ();
+    } // end IF
+    else
+      message_block_p = buffer_;
+    message_block_p->cont (message_inout); // chain the buffer
+  } // end IF
+  else
+    buffer_ = message_inout;
+
+scan:
   if (!scan_begin (buffer_->rd_ptr (),
                    buffer_->length ()))
   {
@@ -315,12 +329,20 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   // frame the MAVLink message data
   int result = -1;
   unsigned int remaining_bytes = record_in->len + MAVLINK_NUM_CHECKSUM_BYTES;
+  unsigned int remaining_bytes_2 = MAVLINK_NUM_HEADER_BYTES;
   unsigned int length = 0;
   unsigned int trailing_bytes_total, trailing_bytes = 0;
-  ACE_Message_Block* message_block_p = NULL;
+  ACE_Message_Block* message_block_p = buffer_;
   ACE_Message_Block* message_block_2 = NULL;
 
-  buffer_->rd_ptr (MAVLINK_NUM_HEADER_BYTES);
+  while (remaining_bytes_2)
+  { ACE_ASSERT (message_block_p);
+    length = message_block_p->length ();
+    length = (remaining_bytes_2 <= length ? remaining_bytes_2 : length);
+    message_block_p->rd_ptr (length);
+    message_block_p = message_block_p->cont ();
+    remaining_bytes_2 -= length;
+  } // end WHILE
 
   length = buffer_->total_length ();
   if (length > remaining_bytes)
@@ -333,7 +355,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
          message_block_2 = message_block_2->cont ())
     {
       length = message_block_2->length ();
-      length = (length >= remaining_bytes ? remaining_bytes 
+      length = (length >= remaining_bytes ? remaining_bytes
                                           : length);
       remaining_bytes -= length;
       if (!remaining_bytes)
@@ -354,7 +376,9 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_block_2->length (message_block_2->length () - trailing_bytes);
     message_block_2->cont (NULL);
-    ACE_ASSERT (buffer_->total_length () == (record_in->len + MAVLINK_NUM_CHECKSUM_BYTES));
+    ACE_ASSERT (buffer_->total_length () ==
+                static_cast<unsigned int> (record_in->len +
+                                           MAVLINK_NUM_CHECKSUM_BYTES));
     message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
     ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
   } // end IF
@@ -367,9 +391,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                 inherited::mod_->name ()));
     // clean up
     buffer_->release ();
+    buffer_ = NULL;
 
     return;
   } // end IF
+  buffer_ = NULL;
 
   if (message_block_p)
   {
@@ -545,8 +571,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_p = NULL;
   bool done = false;
   SessionMessageType* session_message_p = NULL;
-  enum Stream_SessionMessageType session_message_type =
-      STREAM_SESSION_MESSAGE_INVALID;
+//  enum Stream_SessionMessageType session_message_type =
+//      STREAM_SESSION_MESSAGE_INVALID;
   bool is_data = false;
   bool stop_processing = false;
 

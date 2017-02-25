@@ -34,15 +34,6 @@
 
 #include "net_iparser.h"
 
-struct ARDrone_MessageData
-{
-  inline ARDrone_MessageData ()
-   : MAVLinkMessage ()
-  {};
-
-  struct __mavlink_message MAVLinkMessage;
-};
-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_MessageData
  : ARDrone_MessageData
@@ -74,16 +65,10 @@ typedef Stream_DataBase_T<struct ARDrone_MediaFoundation_MessageData> ARDrone_Me
 struct ARDrone_MessageData
 {
   inline ARDrone_MessageData ()
-   : device (-1)
-   , index (0)
-   , method (MODULE_DEV_CAM_V4L_DEFAULT_IO_METHOD)
-   , release (false)
+   : MAVLinkMessage ()
   {};
 
-  int         device; // (capture) device file descriptor
-  __u32       index;  // 'index' field of v4l2_buffer
-  v4l2_memory method;
-  bool        release;
+  struct __mavlink_message MAVLinkMessage;
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 #endif

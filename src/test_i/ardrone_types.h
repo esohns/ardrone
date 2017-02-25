@@ -27,7 +27,7 @@
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#include <ARDroneLib/Soft/Common/video_encapsulation.h>
+#include <video_encapsulation.h>
 #endif
 
 #include <ace/Global_Macros.h>

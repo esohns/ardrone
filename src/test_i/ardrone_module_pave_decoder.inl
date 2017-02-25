@@ -49,7 +49,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                   0,
                   sizeof (struct ARDrone_ParrotVideoEncapsulation_Header));
 #else
-  ACE_OS::memset (&header_, 0, sizeof (struct parrot_video_encapsulation_t));
+  ACE_OS::memset (&header_, 0, sizeof (parrot_video_encapsulation_t));
 #endif
 }
 
@@ -135,7 +135,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
   int result = -1;
   ACE_Message_Block* message_block_p, *message_block_2 = NULL;
-  unsigned int skipped_bytes = 0;
+  unsigned int skipped_bytes, trailing_bytes = 0;
   unsigned int length = 0;
 
   // initialize return value(s)
@@ -172,7 +172,7 @@ next:
   missing_bytes =
     sizeof (struct ARDrone_ParrotVideoEncapsulation_Header);
 #else
-  missing_bytes = sizeof (struct parrot_video_encapsulation_t);
+  missing_bytes = sizeof (parrot_video_encapsulation_t);
 #endif
   if (!headerDecoded_)
   {
@@ -201,7 +201,7 @@ next:
     } // end FOR
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-    ACE_ASSERT (PAVE_CHECK (&header_));
+    ACE_ASSERT (PAVE_CHECK (header_.signature));
 #endif
 
     buffered_bytes -= missing_bytes;
@@ -235,6 +235,23 @@ next:
 
   if (buffered_bytes > header_.payload_size)
   {
+    missing_bytes = header_.payload_size;
+    trailing_bytes = 0;
+    for (ACE_Message_Block* message_block_3 = buffer_;
+         missing_bytes;
+         message_block_3 = message_block_3->cont ())
+    {
+      length = message_block_3->length ();
+      length = (missing_bytes <= length ? missing_bytes : length);
+      if (missing_bytes <= length)
+      {
+        message_block_p = message_block_3;
+        trailing_bytes = message_block_3->length () - missing_bytes;
+        break;
+      } // end IF
+      missing_bytes -= length;
+    } // end FOR
+
     message_block_2 = message_block_p->duplicate ();
     if (!message_block_2)
     {
@@ -243,16 +260,13 @@ next:
                   inherited::mod_->name ()));
       return;
     } // end IF
-
-    missing_bytes = header_.payload_size;
-    for (ACE_Message_Block* message_block_3 = buffer_;
-         message_block_3 != message_block_p;
-         message_block_3 = message_block_3->cont ())
-      missing_bytes -= message_block_3->length ();
-
-    message_block_p->length (missing_bytes);
     message_block_p->cont (NULL);
-    message_block_2->rd_ptr (missing_bytes);
+
+    if (trailing_bytes)
+    {
+      message_block_p->length (length);
+      message_block_2->rd_ptr (length);
+    } // end IF
   } // end IF
   else
     message_block_2 = NULL;
