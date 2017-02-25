@@ -93,7 +93,7 @@ class ARDrone_Module_PaVEDecoder_T
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_ParrotVideoEncapsulation_Header header_;
 #else
-  struct parrot_video_encapsulation_t            header_;
+  parrot_video_encapsulation_t                   header_;
 #endif
   bool                                           headerDecoded_;
 };

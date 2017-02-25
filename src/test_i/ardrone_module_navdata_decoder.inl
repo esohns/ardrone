@@ -20,8 +20,9 @@
 
 #include <ace/Log_Msg.h>
 
-#include "ardrone_macros.h"
+#include "stream_dec_defines.h"
 
+#include "ardrone_macros.h"
 #include "ardrone_navdata_scanner.h"
 
 template <ACE_SYNCH_DECL,

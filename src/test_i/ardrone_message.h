@@ -46,7 +46,11 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
 class ARDrone_Message
  : public Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                                    struct ARDrone_DirectShow_MessageData,
+#else
+                                   struct ARDrone_MessageData,
+#endif
                                    int>
  //: public Stream_DataMessageBase_T<ardrone_MessageType>
 {
@@ -61,7 +65,7 @@ class ARDrone_Message
   ARDrone_Message (unsigned int);
   virtual ~ARDrone_Message ();
 
-  virtual int command () const; // return value: message type
+  inline virtual int command () const { return 0; }; // return value: message type
   static std::string CommandType2String (int);
 
   // overrides from ACE_Message_Block
@@ -70,6 +74,8 @@ class ARDrone_Message
   virtual ACE_Message_Block* clone (ACE_Message_Block::Message_Flags = 0) const;
   // create a "shallow" copy that references the current block(s) of data
   virtual ACE_Message_Block* duplicate (void) const;
+
+  virtual void dump_state (void) const;
 
  protected:
   // ctor to be used by clone() and derived classes
@@ -87,7 +93,11 @@ class ARDrone_Message
  private:
   typedef Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                                    struct ARDrone_DirectShow_MessageData,
+#else
+                                   struct ARDrone_MessageData,
+#endif
                                    int> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message ())
