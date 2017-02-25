@@ -1962,17 +1962,6 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
 {
   STREAM_TRACE (ACE_TEXT ("::toggleaction_connect_toggled_cb"));
 
-  // handle untoggle --> PLAY
-  if (un_toggling_connect)
-  {
-    un_toggling_connect = false;
-
-    gtk_action_set_stock_id (GTK_ACTION (toggleAction_in), GTK_STOCK_CONNECT);
-    gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), true);
-
-    return; // done
-  } // end IF
-
   // --> user pressed connect/disconnect
 
   struct ARDrone_GtkCBData* cb_data_p =
@@ -1989,6 +1978,32 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  // handle untoggle --> PLAY
+  if (un_toggling_connect)
+  {
+    un_toggling_connect = false;
+
+    gtk_action_set_stock_id (GTK_ACTION (toggleAction_in), GTK_STOCK_CONNECT);
+    gtk_action_set_sensitive (GTK_ACTION (toggleAction_in), true);
+
+    // re-toggle
+    guint result =
+        g_signal_handlers_block_by_func (G_OBJECT (toggleAction_in),
+                                         (gpointer)toggleaction_connect_toggled_cb,
+                                         userData_in);
+    ACE_ASSERT (result);
+    GtkToggleButton* toggle_button_p =
+        GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_CONNECT)));
+    ACE_ASSERT (toggle_button_p);
+    gtk_toggle_button_set_active (toggle_button_p, FALSE);
+    g_signal_handlers_unblock_by_func (G_OBJECT (toggleAction_in),
+                                       (gpointer)toggleaction_connect_toggled_cb,
+                                       userData_in);
+
+    return; // done
+  } // end IF
 
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
