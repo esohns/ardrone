@@ -131,4 +131,29 @@ struct ARDrone_UserData
   struct ARDrone_ConnectionConfiguration* connectionConfiguration;
 };
 
+enum ARDrone_VideoMode : int
+{
+  ARDRONE_VIDEOMODE_INVALID = -1,
+  ARDRONE_VIDEOMODE_360P,
+  ARDRONE_VIDEOMODE_720P,
+  ///////////////////////////////////////
+  ARDRONE_VIDEOMODE_MAX
+};
+
+class ARDrone_IController
+{
+ public:
+  virtual ~ARDrone_IController () {};
+
+  virtual void trim () = 0;
+
+  virtual void takeoff () = 0;
+  virtual void land () = 0;
+
+  virtual void set (ARDrone_VideoMode) = 0;
+
+  // callbacks
+  virtual void messageCB () = 0;
+};
+
 #endif // #ifndef ARDRONE_TYPES_H

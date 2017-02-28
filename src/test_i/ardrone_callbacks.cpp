@@ -138,10 +138,11 @@ monitor_clip_cb (HMONITOR monitor_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
 
-  MONITORINFOEX monitor_info;
-  monitor_info.cbSize = sizeof (MONITORINFOEX);
+  MONITORINFOEX monitor_info_ex_s;
+  ACE_OS::memset (&monitor_info_ex_s, 0, sizeof (MONITORINFOEX));
+  monitor_info_ex_s.cbSize = sizeof (MONITORINFOEX);
   if (!GetMonitorInfo (monitor_in,
-                       &monitor_info))
+                       &monitor_info_ex_s))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", aborting\n"),
@@ -149,7 +150,7 @@ monitor_clip_cb (HMONITOR monitor_in,
     return FALSE;
   } // end IF
 
-  if (ACE_OS::strcmp (monitor_info.szDevice,
+  if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
                       cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()))
     return TRUE;
 
@@ -179,6 +180,47 @@ load_display_devices (GtkListStore* listStore_in)
                 ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
     return false;
   } // end IF
+  //GdkDisplayManager* display_manager_p = gdk_display_manager_get ();
+  //ACE_ASSERT (display_manager_p);
+  //GSList* list_p = gdk_display_manager_list_displays (display_manager_p);
+  //ACE_ASSERT (list_p);
+
+  //GdkDisplay* display_p = NULL;
+  //int number_of_monitors = 0;
+  //GdkMonitor* monitor_p = NULL;
+  //GtkTreeIter iterator;
+  //for (GSList* list_2 = list_p;
+  //     list_2;
+  //     list_2 = list_2->next)
+  //{
+  //  display_p = GDK_DISPLAY (list_2->data);
+  //  ACE_ASSERT (display_p);
+
+  //  ACE_DEBUG ((LM_DEBUG,
+  //              ACE_TEXT ("found display: \"%s\"...\n"),
+  //              ACE_TEXT (gdk_display_get_name (display_p))));
+
+  //  number_of_monitors = gdk_display_get_n_monitors (display_p);
+  //  for (int i = 0;
+  //       i < number_of_monitors;
+  //       ++i)
+  //  {
+  //    monitor_p = gdk_display_get_monitor (display_p,
+  //                                         i);
+  //    ACE_ASSERT (monitor_p);
+
+  //    ACE_DEBUG ((LM_DEBUG,
+  //                ACE_TEXT ("found monitor: \"%s\"...\n"),
+  //                ACE_TEXT (gdk_monitor_get_model (monitor_p))));
+
+  //    gtk_list_store_append (listStore_in, &iterator);
+  //    gtk_list_store_set (listStore_in, &iterator,
+  //                        0, gdk_monitor_get_model (monitor_p),
+  //                        -1);
+  //  } // end FOR
+  //} // end FOR
+
+  //g_slist_free (list_p);
 #else
   int result = -1;
   // *TODO*: this should work on most Xorg systems, but is really a bad idea:
@@ -292,6 +334,40 @@ load_display_devices (GtkListStore* listStore_in)
                         -1);
   } while (!converter.fail ());
 #endif
+
+  return true;
+}
+
+bool
+load_display_formats (GtkListStore* listStore_in)
+{
+  STREAM_TRACE (ACE_TEXT ("::load_display_formats"));
+
+  // initialize result
+  gtk_list_store_clear (listStore_in);
+
+  int result = -1;
+  std::string format_string;
+  GtkTreeIter iterator;
+  do
+  { // *TODO*: this needs more work; use the selected device capabilities,
+    //         instead of static values
+    format_string = ACE_TEXT_ALWAYS_CHAR ("H264 360p");
+    gtk_list_store_append (listStore_in, &iterator);
+    gtk_list_store_set (listStore_in, &iterator,
+                        0, ACE_TEXT (format_string.c_str ()),
+                        1, ARDRONE_VIDEOMODE_360P,
+                        -1);
+
+    format_string = ACE_TEXT_ALWAYS_CHAR ("H264 720p");
+    gtk_list_store_append (listStore_in, &iterator);
+    gtk_list_store_set (listStore_in, &iterator,
+                        0, ACE_TEXT (format_string.c_str ()),
+                        1, ARDRONE_VIDEOMODE_720P,
+                        -1);
+
+    break;
+  } while (true);
 
   return true;
 }
@@ -614,8 +690,7 @@ stream_processing_function (void* arg_in)
     result_2 =
       data_p->CBData->videoStream->initialize (data_p->CBData->configuration->streamConfiguration);
 
-    session_data_container_p =
-      data_p->CBData->videoStream->get ();
+    session_data_container_p = data_p->CBData->videoStream->get ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
@@ -644,8 +719,8 @@ stream_processing_function (void* arg_in)
   ACE_ASSERT (stream_p && stream_2 && stream_3);
 
   // *NOTE*: processing currently happens 'inline' (borrows calling thread)
-//  stream_p->start ();
-//  stream_2->start ();
+  //stream_p->start ();
+  //stream_2->start ();
   stream_3->start ();
   //    if (!stream_p->isRunning ())
   //    {
@@ -653,8 +728,8 @@ stream_processing_function (void* arg_in)
   //                  ACE_TEXT ("failed to start stream, aborting\n")));
   //      return;
   //    } // end IF
-//  stream_p->wait (true, false, false);
-//  stream_2->wait (true, false, false);
+  stream_p->wait (true, false, false);
+  //stream_2->wait (true, false, false);
   stream_3->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -734,7 +809,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 
   GtkListStore* list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION)));
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
   gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (list_store_p),
                                         1, GTK_SORT_DESCENDING);
@@ -746,11 +821,46 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end IF
   GtkComboBox* combo_box_p =
     GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION)));
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
   ACE_ASSERT (combo_box_p);
   //gtk_combo_box_set_model (combo_box_p,
   //                         GTK_TREE_MODEL (list_store_p));
   GtkCellRenderer* cell_renderer_p = gtk_cell_renderer_text_new ();
+  if (!cell_renderer_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to gtk_cell_renderer_text_new(), aborting\n")));
+    return G_SOURCE_REMOVE;
+  } // end IF
+  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_box_p), cell_renderer_p,
+                              true);
+  // *NOTE*: cell_renderer_p does not need to be g_object_unref()ed because it
+  //         is GInitiallyUnowned and the floating reference has been
+  //         passed to combo_box_p by the gtk_cell_layout_pack_start() call
+  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_box_p), cell_renderer_p,
+                                  //"cell-background", 0,
+                                  //"text", 1,
+                                  "text", 0,
+                                  NULL);
+  list_store_p =
+    GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+  ACE_ASSERT (list_store_p);
+  gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (list_store_p),
+                                        1, GTK_SORT_ASCENDING);
+  if (!load_display_formats (list_store_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::load_display_formats(), aborting\n")));
+    return G_SOURCE_REMOVE;
+  } // end IF
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
+  ACE_ASSERT (combo_box_p);
+  //gtk_combo_box_set_model (combo_box_p,
+  //                         GTK_TREE_MODEL (list_store_p));
+  cell_renderer_p = gtk_cell_renderer_text_new ();
   if (!cell_renderer_p)
   {
     ACE_DEBUG ((LM_CRITICAL,
@@ -1410,10 +1520,10 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
   //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
-  cb_data_p->configuration->moduleHandlerConfiguration.window = NULL;
-    //static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+  cb_data_p->configuration->moduleHandlerConfiguration.window =
+    static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
-  //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
   cb_data_p->configuration->moduleHandlerConfiguration.window =
@@ -1426,10 +1536,11 @@ idle_initialize_ui_cb (gpointer userData_in)
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
   ACE_ASSERT (toggle_action_p);
+
   gint n_rows = 0;
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION)));
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
   n_rows = 1;
 //    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
@@ -1437,13 +1548,31 @@ idle_initialize_ui_cb (gpointer userData_in)
   {
     combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
     ACE_ASSERT (combo_box_p);
     gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
     gtk_combo_box_set_active (combo_box_p, 0);
   } // end IF
   else
     gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
+  list_store_p =
+    GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+  ACE_ASSERT (list_store_p);
+  n_rows = 1;
+//    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
+  if (n_rows)
+  {
+    combo_box_p =
+      GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
+    ACE_ASSERT (combo_box_p);
+    gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
+    gtk_combo_box_set_active (combo_box_p, 0);
+  } // end IF
+  else
+    gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
+
   GtkAction* action_p =
       GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CUT)));
@@ -1591,9 +1720,20 @@ idle_session_end_cb (gpointer userData_in)
   //gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
   gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), false);
 
-  // untoggle the connect button
+  // update widgets
   un_toggling_connect = true;
   gtk_action_activate (GTK_ACTION (toggle_action_p));
+
+  GtkAction* action_p =
+    GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_TRIM)));
+  ACE_ASSERT (toggle_action_p);
+  gtk_action_set_sensitive (action_p, false);
+  action_p =
+    GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
+  ACE_ASSERT (action_p);
+  gtk_action_set_sensitive (action_p, false);
 
   return G_SOURCE_REMOVE;
 }
@@ -1613,11 +1753,22 @@ idle_session_start_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+  // update widgets
   GtkToggleAction* toggle_action_p =
     GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
   ACE_ASSERT (toggle_action_p);
   gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), true);
+  GtkAction* action_p =
+    GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_TRIM)));
+  ACE_ASSERT (toggle_action_p);
+  gtk_action_set_sensitive (action_p, true);
+  action_p =
+    GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
+  ACE_ASSERT (action_p);
+  gtk_action_set_sensitive (action_p, true);
 
   return G_SOURCE_REMOVE;
 }
@@ -2210,7 +2361,7 @@ continue_:
 
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
   ACE_ASSERT (combo_box_p);
   if (!gtk_combo_box_get_active_iter (combo_box_p,
                                       &iterator_2))
@@ -2221,7 +2372,7 @@ continue_:
   } // end IF
   GtkListStore* list_store_p =
       GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION)));
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
   GValue value = {0,};
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
@@ -2247,65 +2398,147 @@ continue_:
     return;
   } // end IF
 #else
-#endif
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
-              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-              cb_data_p->configuration->moduleHandlerConfiguration.area.left,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.right,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.top,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.bottom,
-              (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
-               cb_data_p->configuration->moduleHandlerConfiguration.area.left),
-              (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
-               cb_data_p->configuration->moduleHandlerConfiguration.area.top)
-#else
-              cb_data_p->configuration->moduleHandlerConfiguration.area.x,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.y,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.height,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.height));
-#endif
-  struct _cairo_rectangle_int rectangle_s;
-  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+  GdkDisplayManager* display_manager_p = gdk_display_manager_get ();
+  ACE_ASSERT (display_manager_p);
+  GSList* list_p = gdk_display_manager_list_displays (display_manager_p);
+  ACE_ASSERT (list_p);
+
+  GdkDisplay* display_p = NULL;
+  int number_of_monitors = 0;
+#if GTK_CHECK_VERSION (3,22,0)
+  GdkMonitor* monitor_p = NULL;
+  for (GSList* list_2 = list_p;
+       list_2;
+       list_2 = list_2->next)
   {
-    GdkDisplay* display_p =
-      gdk_display_manager_get_default_display (gdk_display_manager_get ());
+    display_p = GDK_DISPLAY (list_2->data);
     ACE_ASSERT (display_p);
-#if GTK_CHECK_VERSION (3,22,0)
-    GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
-    ACE_ASSERT (monitor_p);
+    gdk_display_get_name ()
+    number_of_monitors = gdk_display_get_n_monitors (display_p);
+    for (int i = 0;
+         i < number_of_monitors;
+         ++i)
+    {
+      monitor_p = gdk_display_get_monitor (display_p,
+                                           i);
+      ACE_ASSERT (monitor_p);
+
+      if (!ACE_OS::strcmp (gdk_monitor_get_model (monitor_p),
+                           cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()))
+        break;
+    } // end FOR
+  } // end FOR
+  if (!monitor_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
+                ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
+    return;
+  } // end IF
 #else
-    GdkScreen* screen_p = gdk_display_get_default_screen (display_p);
+  int number_of_screens = 0;
+  number_of_screens = gdk_display_get_n_screens (display_p);
+  GdkScreen* screen_p = NULL;
+  bool device_found = false;
+  for (int i = 0;
+       i < number_of_screens;
+       ++i)
+  {
+    screen_p = gdk_display_get_screen (display_p,
+                                       i);
     ACE_ASSERT (screen_p);
-#endif /* GTK_CHECK_VERSION (3,22,0) */
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    gdk_monitor_get_geometry (monitor_p,
-                              &rectangle_s);
-    cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-      rectangle_s.y + rectangle_s.height;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-      rectangle_s.x;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-      rectangle_s.x + rectangle_s.width;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-      rectangle_s.y;
-#else
-#if GTK_CHECK_VERSION (3,22,0)
-    gdk_monitor_get_geometry (monitor_p,
-                              &cb_data_p->configuration->moduleHandlerConfiguration.area);
-#else
-    gdk_screen_get_monitor_geometry(screen_p,
-                                    0,
-                                    &cb_data_p->configuration->moduleHandlerConfiguration.area);
+    number_of_monitors = gdk_screen_get_n_monitors (screen_p);
+    for (int j = 0;
+         j < number_of_monitors;
+         ++j)
+    {
+      if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, j)),
+                           ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())))
+      {
+        device_found = true;
+        break;
+      } // end IF
+    } // end FOR
+    if (device_found)
+      break;
+    screen_p = NULL;
+  } // end FOR
+  if (!screen_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
+                ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
+    return;
+  } // end IF
 #endif /* GTK_CHECK_VERSION (3,22,0) */
 #endif
 
+  combo_box_p =
+      GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
+  ACE_ASSERT (combo_box_p);
+  if (!gtk_combo_box_get_active_iter (combo_box_p,
+                                      &iterator_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("no available display format, returning\n")));
+    return;
+  } // end IF
+  list_store_p =
+      GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+  ACE_ASSERT (list_store_p);
+  value = {0,};
+  gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                            &iterator_2,
+                            1, &value);
+  ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
+  switch (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)))
+  {
+    case ARDRONE_VIDEOMODE_360P:
+    { // *TODO*: use ffmpeg to determine the format resolution
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
+        640;
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height =
+        368;
+      break;
+    }
+    case ARDRONE_VIDEOMODE_720P:
+    {
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
+        1280;
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height =
+        720;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown display format (was: %d), returning\n"),
+                  g_value_get_int (&value)));
+
+      // clean up
+      g_value_unset (&value);
+
+      return;
+    }
+  } // end SWITCH
+  g_value_unset (&value);
+
+  struct _cairo_rectangle_int rectangle_s;
+  gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
+                             &rectangle_s);
+  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+  {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
-    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
+    //video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
+    //video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
+    video_info_header_p->bmiHeader.biHeight =
+      -(cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
+        cb_data_p->configuration->moduleHandlerConfiguration.area.top);
+    video_info_header_p->bmiHeader.biWidth =
+      (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
+       cb_data_p->configuration->moduleHandlerConfiguration.area.left);
     video_info_header_p->bmiHeader.biSizeImage =
       DIBSIZE (video_info_header_p->bmiHeader);
 
@@ -2327,16 +2560,106 @@ continue_:
   else
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
-                               &rectangle_s);
-    cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-      rectangle_s.y + rectangle_s.height;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-      rectangle_s.x;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-      rectangle_s.x + rectangle_s.width;
-    cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-      rectangle_s.y;
+    // *NOTE*: if the chosen display device screen area contains the drawing
+    //         area, use it; otherwise open a new window
+    DWORD flags = MONITOR_DEFAULTTONULL;
+    HMONITOR monitor_h =
+      MonitorFromWindow (cb_data_p->configuration->moduleHandlerConfiguration.window,
+                         flags);
+    if (!monitor_h)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to MonitorFromWindow(): \"%s\", returning\n"),
+                  ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+      return;
+    } // end IF
+    MONITORINFOEX monitor_info_ex_s;
+    ACE_OS::memset (&monitor_info_ex_s, 0, sizeof (MONITORINFOEX));
+    monitor_info_ex_s.cbSize = sizeof (MONITORINFOEX);
+    if (!GetMonitorInfo (monitor_h,
+                         reinterpret_cast<struct tagMONITORINFO*> (&monitor_info_ex_s)))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", returning\n"),
+                  ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+      return;
+    } // end IF
+    if (ACE_OS::strcmp (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str (),
+                        monitor_info_ex_s.szDevice))
+    {
+      DWORD window_style = (WS_OVERLAPPED     |
+                            WS_CAPTION        |
+                            (WS_CLIPSIBLINGS  |
+                             WS_CLIPCHILDREN) |
+                            WS_SYSMENU        |
+                            //WS_THICKFRAME     |
+                            WS_MINIMIZEBOX    |
+                            WS_VISIBLE/*
+                            WS_MAXIMIZEBOX*/);
+      DWORD window_style_ex = (WS_EX_APPWINDOW |
+                               WS_EX_WINDOWEDGE);
+
+      // *NOTE*: center the window on the display device
+      unsigned int delta_x =
+       abs (abs (cb_data_p->configuration->moduleHandlerConfiguration.area.left) -
+            rectangle_s.width) / 2;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.left =
+        (cb_data_p->configuration->moduleHandlerConfiguration.area.left +
+         delta_x);
+      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+        (cb_data_p->configuration->moduleHandlerConfiguration.area.left +
+         rectangle_s.width);
+      unsigned int delta_y =
+        abs (abs (cb_data_p->configuration->moduleHandlerConfiguration.area.top) -
+             rectangle_s.height) / 2;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.top =
+        (cb_data_p->configuration->moduleHandlerConfiguration.area.top +
+         delta_y);
+      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+        (cb_data_p->configuration->moduleHandlerConfiguration.area.top +
+         rectangle_s.height);
+
+      cb_data_p->configuration->moduleHandlerConfiguration.window =
+        CreateWindowEx (window_style_ex,               // dwExStyle
+                        ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpClassName
+                        ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpWindowName
+                        window_style,                  // dwStyle
+                        cb_data_p->configuration->moduleHandlerConfiguration.area.left, // x
+                        cb_data_p->configuration->moduleHandlerConfiguration.area.top,  // y
+                        rectangle_s.width,             // nWidth
+                        rectangle_s.height,            // nHeight
+                        //parent_window_handle,          // hWndParent
+                        NULL,
+                        NULL,                          // hMenu
+                        GetModuleHandle (NULL),        // hInstance
+                        NULL);                         // lpParam
+      if (!cb_data_p->configuration->moduleHandlerConfiguration.window)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to CreateWindow(): \"%s\", aborting\n"),
+                    ACE_TEXT (Common_Tools::error2String (::GetLastError ()).c_str ())));
+        goto error;
+      } // end IF
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("opened window (size: %ux%u, handle: 0x%@)...\n"),
+                  rectangle_s.width, rectangle_s.height,
+                  cb_data_p->configuration->moduleHandlerConfiguration.window));
+    } // end IF
+    else
+    {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+        rectangle_s.y + rectangle_s.height;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.left =
+        rectangle_s.x;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+        rectangle_s.x + rectangle_s.width;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.top =
+        rectangle_s.y;
+#else
+      cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
+#endif
+    } // end ELSE
 
     video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
     video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
@@ -2352,6 +2675,29 @@ continue_:
                                &cb_data_p->configuration->moduleHandlerConfiguration.area);
 #endif
   } // end ELSE
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+              cb_data_p->configuration->moduleHandlerConfiguration.area.left,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.right,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.top,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.bottom,
+              (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
+               cb_data_p->configuration->moduleHandlerConfiguration.area.left),
+              (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
+               cb_data_p->configuration->moduleHandlerConfiguration.area.top)));
+#else
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+              cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.y,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.height,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
+              cb_data_p->configuration->moduleHandlerConfiguration.area.height));
+#endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -2599,7 +2945,8 @@ entry_address_delete_text_cb (GtkEditable* editable_in,
     address_string.erase (startPosition_in,
                           (endPosition_in - startPosition_in));
 
-  if (!Net_Common_Tools::matchIPAddress (address_string)) goto refuse;
+  if (!Net_Common_Tools::matchIPAddress (address_string))
+    goto refuse;
 
   // delete
   num_handlers =
@@ -2669,7 +3016,8 @@ entry_address_insert_text_cb (GtkEditable* editable_in,
                              newText_in,
                              newTextLength_in);
 
-    if (!Net_Common_Tools::matchIPAddress (address_string)) goto refuse;
+    if (!Net_Common_Tools::matchIPAddress (address_string))
+      goto refuse;
 
     goto accept;
   } // end IF
@@ -2700,19 +3048,22 @@ entry_address_insert_text_cb (GtkEditable* editable_in,
                            ((end_position == std::string::npos) ? std::string::npos
                                                                 : (end_position - start_position)));
 
-    if (group_string.empty ()) goto accept; // group (currently) empty
+    if (group_string.empty ())
+      goto accept; // group (currently) empty
     converter << group_string;
     converter >> group;
     insert_position = *(gint*)position_inout - start_position;
     if (*newText_in == '0')
-      if (!group || !insert_position) goto refuse; // refuse leading 0s
+      if (!group || !insert_position)
+        goto refuse; // refuse leading 0s
 
     group_string.insert (insert_position, 1, *newText_in);
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));
     converter.clear ();
     converter << group_string;
     converter >> group;
-    if (group > 255) goto refuse; // refuse groups > 255
+    if (group > 255)
+      goto refuse; // refuse groups > 255
   } // end IF
   else
   {
@@ -2724,25 +3075,29 @@ entry_address_insert_text_cb (GtkEditable* editable_in,
     {
       if (::isdigit (entry_string[--position]))
         group_string.insert (0, 1, entry_string[position]);
-      else break;
+      else
+        break;
     } // end WHILE
     converter << group_string;
     converter >> group;
-    if (group > 255) goto refuse; // refuse groups > 255
+    if (group > 255)
+      goto refuse; // refuse groups > 255
     group_string.clear ();
     position = insert_position;
     do
     {
       if (::isdigit (entry_string[position]))
         group_string.push_back (entry_string[position]);
-      else break;
+      else
+        break;
       ++position;
     } while (true);
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));
     converter.clear ();
     converter << group_string;
     converter >> group;
-    if (group > 255) goto refuse; // refuse groups > 255
+    if (group > 255)
+      goto refuse; // refuse groups > 255
 
     if (std::count (entry_string.begin (), entry_string.end (), '.') > 3)
       goto refuse; // refuse more than 3 '.'

@@ -141,6 +141,7 @@ if (UNIX)
  include_directories (/usr/share/gettext)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/minimal)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACE)
  include_directories (${PKG_CAP_INCLUDE_DIRS})
@@ -168,6 +169,8 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/minimal)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
  include_directories ("$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
  # *TODO*: repair pkgconfig support
@@ -218,6 +221,9 @@ set (ardrone_EXE_SRCS
      ardrone_message.h
      ardrone_mavlink_scanner.cpp
      ardrone_mavlink_scanner.h
+     ardrone_module_controller.cpp
+     ardrone_module_controller.h
+     ardrone_module_controller.inl
      ardrone_module_eventhandler.cpp
      ardrone_module_eventhandler.h
      ardrone_module_mavlink_decoder.cpp
@@ -260,6 +266,8 @@ if (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Debug))
  # *NOTE*: DirectShow uses 'DEBUG'
  add_definitions (-DDEBUG)
 endif ()
+
+add_definitions (-DFFMPEG_SUPPORT)
 
 #add_dependencies (${ACESTREAM_TARGET_NAME} ACE)
 #add_dependencies (${PROJECT_NAME} Common)
