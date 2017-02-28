@@ -54,13 +54,15 @@
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE            "action_calibrate"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CUT                  "action_cut"
+#define ARDRONE_UI_WIDGET_NAME_ACTION_TRIM                 "action_trim"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                "button_about"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_CLEAR                "button_clear"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_QUIT                 "button_quit"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN      "checkbutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH          "checkbutton_asynch"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE            "checkbutton_save"
-#define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DESTINATION        "combobox_destination"
+#define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE     "combobox_display_device"
+#define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT     "combobox_display_format"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT        "combobox_save_format"
 //#define ARDRONE_UI_WIDGET_NAME_CURVE                      "curve"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT                "dialog_about"
@@ -71,7 +73,8 @@
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS               "frame_options"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE          "frame_save_options"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO           "drawing_area"
-#define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DESTINATION       "liststore_destination"
+#define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE    "liststore_display_device"
+#define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT    "liststore_display_format"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT       "liststore_save_format"
 #define ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR                "progress_bar"
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS      "spinbutton_connections"
@@ -102,6 +105,17 @@
 //#define ARDRONE_VIDEO_RECORDING_PORT                       5553 // TCP (drone <--> client)
 
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
+
+// *** protocol-related ***
+#define ARDRONE_PROTOCOL_AT_PREFIX_STRING                  "AT*"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING          "CONFIG"
+#define ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING           "FTRIM"
+#define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH         1024 // #characters
+
+#define ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING           "video"
+#define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING "video_codec"
+
+
 
 // *** stream-related ***
 //#define ARDRONE_MESSAGE_BUFFER_SIZE                        65535 // bytes

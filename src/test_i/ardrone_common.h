@@ -34,6 +34,16 @@
 
 #include "net_iparser.h"
 
+struct ARDrone_MessageData
+{
+  inline ARDrone_MessageData ()
+   : MAVLinkMessage ()
+  {};
+
+  struct __mavlink_message MAVLinkMessage;
+};
+typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_MessageData
  : ARDrone_MessageData
@@ -61,16 +71,6 @@ struct ARDrone_MediaFoundation_MessageData
   LONGLONG   sampleTime;
 };
 typedef Stream_DataBase_T<struct ARDrone_MediaFoundation_MessageData> ARDrone_MediaFoundation_MessageData_t;
-#else
-struct ARDrone_MessageData
-{
-  inline ARDrone_MessageData ()
-   : MAVLinkMessage ()
-  {};
-
-  struct __mavlink_message MAVLinkMessage;
-};
-typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 #endif
 
 class ARDrone_MAVLink_IParser

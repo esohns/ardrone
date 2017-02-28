@@ -15,7 +15,7 @@
     </child>
     <child>
       <object class="GtkAction" id="action_calibrate">
-        <property name="label" translatable="yes">Calibrate</property>
+        <property name="label" translatable="yes">Calibrate Sensors</property>
         <property name="short_label" translatable="yes">Calibrate</property>
         <property name="stock_id">gtk-execute</property>
         <property name="hide_if_empty">False</property>
@@ -33,6 +33,16 @@
         <signal name="activate" handler="action_cut_activate_cb" swapped="no"/>
       </object>
       <accelerator key="c"/>
+    </child>
+    <child>
+      <object class="GtkAction" id="action_trim">
+        <property name="label" translatable="yes">Trim Gyroscope</property>
+        <property name="short_label" translatable="yes">Trim</property>
+        <property name="stock_id">gtk-execute</property>
+        <property name="sensitive">False</property>
+        <signal name="activate" handler="action_trim_activate_cb" swapped="no"/>
+      </object>
+      <accelerator key="t"/>
     </child>
   </object>
   <object class="GtkAdjustment" id="adjustment_buffersize">
@@ -107,9 +117,6 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkEntryCompletion" id="entrycompletion_address">
-    <property name="inline_completion">True</property>
   </object>
   <object class="GtkFileChooserDialog" id="filechooserdialog_save">
     <property name="can_focus">False</property>
@@ -222,6 +229,27 @@
                                   </packing>
                                 </child>
                                 <child>
+                                  <object class="GtkButton" id="button_trim">
+                                    <property name="related_action">action_trim</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="can_default">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">trim</property>
+                                    <property name="relief">half</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="use_stock">True</property>
+                                    <property name="focus_on_click">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkButton" id="button_calibrate">
                                     <property name="related_action">action_calibrate</property>
                                     <property name="visible">True</property>
@@ -239,7 +267,7 @@
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">True</property>
-                                    <property name="position">1</property>
+                                    <property name="position">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -260,7 +288,7 @@
                                   <packing>
                                     <property name="expand">True</property>
                                     <property name="fill">True</property>
-                                    <property name="position">2</property>
+                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>
@@ -430,26 +458,53 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkFrame" id="frame_destination">
+                                  <object class="GtkFrame" id="frame_display">
                                     <property name="can_focus">False</property>
                                     <property name="label_xalign">0</property>
                                     <property name="label_yalign">0</property>
                                     <child>
-                                      <object class="GtkAlignment" id="alignment_destination">
+                                      <object class="GtkAlignment" id="alignment_display">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <property name="xalign">0</property>
                                         <property name="yalign">0</property>
                                         <child>
-                                          <object class="GtkComboBox" id="combobox_destination">
+                                          <object class="GtkVBox" id="vbox_display">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="has_tooltip">True</property>
-                                            <property name="tooltip_text" translatable="yes">display device</property>
-                                            <property name="model">liststore_destination</property>
-                                            <property name="has_frame">False</property>
-                                            <property name="focus_on_click">False</property>
-                                            <signal name="changed" handler="combobox_destination_changed_cb" swapped="no"/>
+                                            <property name="homogeneous">True</property>
+                                            <child>
+                                              <object class="GtkComboBox" id="combobox_display_format">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="has_tooltip">True</property>
+                                                <property name="tooltip_text" translatable="yes">display format</property>
+                                                <property name="model">liststore_display_format</property>
+                                                <property name="has_frame">False</property>
+                                                <property name="focus_on_click">False</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">True</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkComboBox" id="combobox_display_device">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="has_tooltip">True</property>
+                                                <property name="tooltip_text" translatable="yes">display device</property>
+                                                <property name="model">liststore_display_device</property>
+                                                <property name="has_frame">False</property>
+                                                <property name="focus_on_click">False</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">True</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
                                           </object>
                                         </child>
                                       </object>
@@ -1070,10 +1125,21 @@
       <action-widget response="0">button_quit</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkListStore" id="liststore_destination">
+  <object class="GtkEntryCompletion" id="entrycompletion_address">
+    <property name="inline_completion">True</property>
+  </object>
+  <object class="GtkListStore" id="liststore_display_device">
     <columns>
       <!-- column-name text -->
       <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_display_format">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkListStore" id="liststore_save_format">

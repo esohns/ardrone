@@ -77,7 +77,7 @@ ARDrone_VideoStream_T<SourceModuleType>::~ARDrone_VideoStream_T ()
 template <typename SourceModuleType>
 bool
 ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
-                                          bool& delete_out)
+                                               bool& delete_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::load"));
 
@@ -124,13 +124,6 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  //ACE_NEW_RETURN (module_p,
-  //                ARDrone_Module_H264NALDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("H264NALDecoder"),
-  //                                                      NULL,
-  //                                                      false),
-  //                false);
-  //modules_out.push_back (module_p);
-  //module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_PaVEDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
                                                      NULL,
@@ -160,8 +153,8 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
 template <typename SourceModuleType>
 bool
 ARDrone_VideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguration& configuration_in,
-                                                bool setupPipeline_in,
-                                                bool resetSessionData_in)
+                                                     bool setupPipeline_in,
+                                                     bool resetSessionData_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::initialize"));
 

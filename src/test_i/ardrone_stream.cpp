@@ -64,7 +64,7 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AsynchUDPNetTarget_Module (ACE_TEXT_ALWAYS_CHAR ("NetNavDataTarget"),
+                  ARDrone_Module_AsynchUDPNetTarget_Module (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
                                                             NULL,
                                                             false),
                   false);
