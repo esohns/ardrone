@@ -306,7 +306,7 @@ load_display_devices (GtkListStore* listStore_in)
   std::istringstream converter;
   char buffer [BUFSIZ];
   std::string regex_string =
-      ACE_TEXT_ALWAYS_CHAR ("^(.+) (?:connected) (.+) (.+) \\((?:(.+)\\w*)+\\) ([[:digit:]]+)mm x ([[:digit:]]+)mm$");
+      ACE_TEXT_ALWAYS_CHAR ("^(.+) (?:connected)(?: primary)? (.+) \\((?:(.+)\\w*)+\\) ([[:digit:]]+)mm x ([[:digit:]]+)mm$");
   std::regex regex (regex_string);
   std::smatch match_results;
   converter.str (display_records_string);
@@ -346,7 +346,6 @@ load_display_formats (GtkListStore* listStore_in)
   // initialize result
   gtk_list_store_clear (listStore_in);
 
-  int result = -1;
   std::string format_string;
   GtkTreeIter iterator;
   do
@@ -626,7 +625,8 @@ stream_processing_function (void* arg_in)
 
 //  GtkStatusbar* statusbar_p = NULL;
   Stream_IStreamControlBase* stream_p, *stream_2, *stream_3 = NULL;
-//  unsigned short port_number = 0;
+  Stream_ModuleHandlerConfigurationsIterator_t iterator_3;
+  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
@@ -640,18 +640,14 @@ stream_processing_function (void* arg_in)
 //    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
 //#endif
 
-    // retrieve stream handles
-    ACE_INET_Addr remote_SAP =
-      data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address;
-
+    // configure streams and retrieve stream handles
+    Net_SocketConfigurationIterator_t iterator_2 =
+        data_p->CBData->configuration->socketConfigurations.begin ();
     // *TODO*: bind to a specific interface
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
-      ACE_INET_Addr (static_cast<u_short> (ARDRONE_MAVLINK_PORT),
-                     static_cast<ACE_UINT32> (INADDR_ANY));
-      //ACE_Addr::sap_any;
-      //data_p->CBData->localSAP;
-    //data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_MAVLINK_PORT,
-    //                                                                                                       1);
+    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
     stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
@@ -663,13 +659,25 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
+//    stream_p->start ();
 
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
-      ACE_INET_Addr (static_cast<u_short> (ARDRONE_NAVDATA_PORT),
-                     static_cast<ACE_UINT32> (INADDR_ANY));
-      //data_p->CBData->localSAP;
-    //data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_NAVDATA_PORT,
-    //                                                                                                       1);
+    ++iterator_2;
+    // *TODO*: bind to a specific interface
+    data_p->CBData->configuration->listenerConfiguration.address =
+        (*iterator_2).address;
+    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
+    ++iterator_2;
+    iterator_3 =
+        data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"));
+    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+    configuration_p =
+          const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> ((*iterator_3).second));
+    ACE_ASSERT (configuration_p);
+    configuration_p->socketConfiguration = &*iterator_2;
+    ACE_ASSERT (configuration_p->socketHandlerConfiguration);
+    configuration_p->socketHandlerConfiguration->socketConfiguration =
+        &*iterator_2;
     stream_2 = data_p->CBData->NavDataStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->NavDataStream;
@@ -681,14 +689,27 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
+    stream_2->start ();
 
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration.address =
-      remote_SAP;
+    ++iterator_2;
+    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
+    ACE_ASSERT (data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration);
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration->writeOnly =
+        false;
     stream_3 = data_p->CBData->videoStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->videoStream;
     result_2 =
       data_p->CBData->videoStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize video stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
 
     session_data_container_p = data_p->CBData->videoStream->get ();
     ACE_ASSERT (session_data_container_p);
@@ -710,18 +731,10 @@ stream_processing_function (void* arg_in)
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
 //  } // end lock scope
-  if (!result_2)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize video stream: \"%m\", aborting\n")));
-    goto done;
-  } // end IF
-  ACE_ASSERT (stream_p && stream_2 && stream_3);
+//    stream_3->start ();
 
-  // *NOTE*: processing currently happens 'inline' (borrows calling thread)
-  //stream_p->start ();
-  //stream_2->start ();
-  stream_3->start ();
+    ACE_ASSERT (stream_p && stream_2 && stream_3);
+
   //    if (!stream_p->isRunning ())
   //    {
   //      ACE_DEBUG ((LM_ERROR,
@@ -729,7 +742,7 @@ stream_processing_function (void* arg_in)
   //      return;
   //    } // end IF
   stream_p->wait (true, false, false);
-  //stream_2->wait (true, false, false);
+  stream_2->wait (true, false, false);
   stream_3->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -771,6 +784,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
+  ACE_ASSERT (!cb_data_p->configuration->socketConfigurations.empty ());
   //ACE_ASSERT (cb_data_p->MAVLinkStream);
   //ACE_ASSERT (cb_data_p->videoStream);
 
@@ -794,7 +808,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address,
+                      Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address,
                                                           true).c_str ());
 
   GtkSpinButton* spin_button_p =
@@ -961,6 +975,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 
   //GError* error_p = NULL;
   //GFile* file_p = NULL;
+  struct _GString* string_p = NULL;
   gchar* filename_p = NULL;
   if (!cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.empty ())
   {
@@ -984,8 +999,10 @@ idle_initialize_ui_cb (gpointer userData_in)
     //  data_p->configuration->moduleHandlerConfiguration.targetFileName;
     //if (!gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (file_chooser_button_p),
     //                                              file_uri.c_str ()))
-    filename_p =
-      Common_UI_Tools::Locale2UTF8 (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName);
+    string_p =
+      g_string_new (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ());
+    filename_p = string_p->str;
+      //Common_UI_Tools::Locale2UTF8 (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName);
     if (!gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (file_chooser_button_p),
                                         filename_p))
     {
@@ -994,10 +1011,12 @@ idle_initialize_ui_cb (gpointer userData_in)
                   ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ())));
 
       // clean up
+      g_string_free (string_p, FALSE);
       g_free (filename_p);
 
       return G_SOURCE_REMOVE;
     } // end IF
+    g_string_free (string_p, FALSE);
     g_free (filename_p);
 
     //if (!gtk_file_chooser_select_file (GTK_FILE_CHOOSER (file_chooser_dialog_p),
@@ -1023,8 +1042,9 @@ idle_initialize_ui_cb (gpointer userData_in)
     //  g_file_new_for_path (Common_File_Tools::getTempDirectory ().c_str ());
     //ACE_ASSERT (file_p);
 
-    filename_p =
-      Common_UI_Tools::Locale2UTF8 (Common_File_Tools::getTempDirectory ());
+    string_p = g_string_new (Common_File_Tools::getTempDirectory ().c_str ());
+    filename_p = string_p->str;
+      //Common_UI_Tools::Locale2UTF8 (Common_File_Tools::getTempDirectory ());
     if (!gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (file_chooser_button_p),
                                         filename_p))
     {
@@ -1033,10 +1053,12 @@ idle_initialize_ui_cb (gpointer userData_in)
                   ACE_TEXT (Common_File_Tools::getTempDirectory ().c_str ())));
 
       // clean up
+      g_string_free (string_p, FALSE);
       g_free (filename_p);
 
       return G_SOURCE_REMOVE;
     } // end IF
+    g_string_free (string_p, FALSE);
     g_free (filename_p);
     //g_object_unref (file_p);
   } // end ELSE
@@ -2186,6 +2208,18 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_Thread_Manager* thread_manager_p = NULL;
   int result = -1;
   Stream_IStreamControlBase* stream_p = NULL;
+  std::string interface_identifier_string;
+  GdkDisplayManager* display_manager_p = NULL;
+  GSList* list_p = NULL;
+  GdkDisplay* display_p = NULL;
+  int number_of_monitors = 0;
+  int number_of_screens = 0;
+  GdkScreen* screen_p = NULL;
+  bool device_found = false;
+  GValue value = G_VALUE_INIT;
+  GtkListStore* list_store_p = NULL;
+  GtkDrawingArea* drawing_area_p = NULL;
+  GtkCheckButton* check_button_p = NULL;
 
   // update configuration
 
@@ -2205,24 +2239,23 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
   result =
-      cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address.set (address_string.c_str (),
-                                                                                            AF_INET);
+      cb_data_p->configuration->socketConfigurations.back ().address.set (address_string.c_str (),
+                                                                          AF_INET);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", returning\n"),
                 ACE_TEXT (address_string.c_str ())));
-    return;
+    goto error;
   } // end IF
   // *TODO*: verify the given address
-  std::string interface_identifier_string;
-  if (!Net_Common_Tools::IPAddress2Interface (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address,
+  if (!Net_Common_Tools::IPAddress2Interface (cb_data_p->configuration->socketConfigurations.back ().address,
                                               interface_identifier_string))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
-                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketHandlerConfiguration.socketConfiguration.address).c_str ())));
-    return;
+                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
+    goto error;
   } // end IF
   if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
                                               cb_data_p->localSAP))
@@ -2230,7 +2263,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
                 ACE_TEXT (interface_identifier_string.c_str ())));
-    return;
+    goto error;
   } // end IF
   ACE_DEBUG ((LM_ERROR,
               ACE_TEXT ("set local SAP: %s...\n"),
@@ -2245,7 +2278,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
 
   // set fullscreen ?
-  GtkCheckButton* check_button_p =
+  check_button_p =
       GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
   ACE_ASSERT (check_button_p);
@@ -2273,8 +2306,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!URI_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gtk_file_chooser_get_uri(), aborting\n")));
-    return;
+                ACE_TEXT ("failed to gtk_file_chooser_get_uri(), returning\n")));
+    goto error;
   } // end IF
   directory_p = g_filename_from_uri (URI_p,
                                      &hostname_p,
@@ -2283,13 +2316,13 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!directory_p)
   { ACE_ASSERT (error_p);
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", aborting\n"),
+                ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", returning\n"),
                 ACE_TEXT (error_p->message)));
 
     // clean up
     g_error_free (error_p);
 
-    return;
+    goto error;
   } // end IF
   ACE_ASSERT (!hostname_p);
   cb_data_p->configuration->moduleHandlerConfiguration.targetFileName =
@@ -2338,7 +2371,7 @@ continue_:
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to CLSIDFromString(): \"%s\", returning\n"),
                   ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-      return;
+      goto error;
     } // end IF
 #else
 #endif
@@ -2354,7 +2387,7 @@ continue_:
   struct tagVIDEOINFOHEADER* video_info_header_p =
     reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.format->pbFormat);
 #endif
-  GtkDrawingArea* drawing_area_p =
+  drawing_area_p =
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
   ACE_ASSERT (drawing_area_p);
@@ -2368,13 +2401,12 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("no available display device, returning\n")));
-    return;
+    goto error;
   } // end IF
-  GtkListStore* list_store_p =
+  list_store_p =
       GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
-  GValue value = {0,};
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2395,16 +2427,13 @@ continue_:
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to EnumDisplayMonitors(): \"%s\", returning\n"),
                 ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
-    return;
+    goto error;
   } // end IF
 #else
-  GdkDisplayManager* display_manager_p = gdk_display_manager_get ();
+  display_manager_p = gdk_display_manager_get ();
   ACE_ASSERT (display_manager_p);
-  GSList* list_p = gdk_display_manager_list_displays (display_manager_p);
+  list_p = gdk_display_manager_list_displays (display_manager_p);
   ACE_ASSERT (list_p);
-
-  GdkDisplay* display_p = NULL;
-  int number_of_monitors = 0;
 #if GTK_CHECK_VERSION (3,22,0)
   GdkMonitor* monitor_p = NULL;
   for (GSList* list_2 = list_p;
@@ -2413,7 +2442,6 @@ continue_:
   {
     display_p = GDK_DISPLAY (list_2->data);
     ACE_ASSERT (display_p);
-    gdk_display_get_name ()
     number_of_monitors = gdk_display_get_n_monitors (display_p);
     for (int i = 0;
          i < number_of_monitors;
@@ -2433,42 +2461,46 @@ continue_:
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
                 ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
-    return;
+    goto error;
   } // end IF
 #else
-  int number_of_screens = 0;
-  number_of_screens = gdk_display_get_n_screens (display_p);
-  GdkScreen* screen_p = NULL;
-  bool device_found = false;
-  for (int i = 0;
-       i < number_of_screens;
-       ++i)
+  for (GSList* list_2 = list_p;
+       list_2;
+       list_2 = list_2->next)
   {
-    screen_p = gdk_display_get_screen (display_p,
-                                       i);
-    ACE_ASSERT (screen_p);
-    number_of_monitors = gdk_screen_get_n_monitors (screen_p);
-    for (int j = 0;
-         j < number_of_monitors;
-         ++j)
+    display_p = GDK_DISPLAY (list_2->data);
+    ACE_ASSERT (display_p);
+    number_of_screens = gdk_display_get_n_screens (display_p);
+    for (int i = 0;
+         i < number_of_screens;
+         ++i)
     {
-      if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, j)),
-                           ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())))
+      screen_p = gdk_display_get_screen (display_p,
+                                         i);
+      ACE_ASSERT (screen_p);
+      number_of_monitors = gdk_screen_get_n_monitors (screen_p);
+      for (int j = 0;
+           j < number_of_monitors;
+           ++j)
       {
-        device_found = true;
+        if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, j)),
+                             ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())))
+        {
+          device_found = true;
+          break;
+        } // end IF
+      } // end FOR
+      if (device_found)
         break;
-      } // end IF
+      screen_p = NULL;
     } // end FOR
-    if (device_found)
-      break;
-    screen_p = NULL;
   } // end FOR
   if (!screen_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
                 ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
-    return;
+    goto error;
   } // end IF
 #endif /* GTK_CHECK_VERSION (3,22,0) */
 #endif
@@ -2482,7 +2514,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("no available display format, returning\n")));
-    return;
+    goto error;
   } // end IF
   list_store_p =
       GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -2520,7 +2552,7 @@ continue_:
       // clean up
       g_value_unset (&value);
 
-      return;
+      goto error;
     }
   } // end SWITCH
   g_value_unset (&value);
@@ -2571,7 +2603,7 @@ continue_:
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to MonitorFromWindow(): \"%s\", returning\n"),
                   ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
-      return;
+      goto error;
     } // end IF
     MONITORINFOEX monitor_info_ex_s;
     ACE_OS::memset (&monitor_info_ex_s, 0, sizeof (MONITORINFOEX));
@@ -2582,7 +2614,7 @@ continue_:
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", returning\n"),
                   ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
-      return;
+      goto error;
     } // end IF
     if (ACE_OS::strcmp (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str (),
                         monitor_info_ex_s.szDevice))
@@ -2636,7 +2668,7 @@ continue_:
       if (!cb_data_p->configuration->moduleHandlerConfiguration.window)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to CreateWindow(): \"%s\", aborting\n"),
+                    ACE_TEXT ("failed to CreateWindow(): \"%s\", returning\n"),
                     ACE_TEXT (Common_Tools::error2String (::GetLastError ()).c_str ())));
         goto error;
       } // end IF
@@ -2722,7 +2754,7 @@ continue_:
   { // *NOTE*: most probable reason: window is not mapped
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), returning\n")));
-    return;
+    goto error;
   } // end IF
   cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
     cb_data_p->pixelBuffer;
@@ -2863,14 +2895,16 @@ error:
   gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), false);
 
   if (stop_progress_reporting)
-  {
-    ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
 
     cb_data_p->progressData->completedActions.insert (cb_data_p->progressData->eventSourceID);
   } // end IF
 
   if (thread_data_p)
     delete thread_data_p;
+
+  un_toggling_connect = true;
+  gtk_action_activate (GTK_ACTION (toggleAction_in));
 }
 
 G_MODULE_EXPORT void

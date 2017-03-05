@@ -3,6 +3,7 @@
 
 ; Includes
 ;!include "FileFunc.nsh"
+!include "StrFunc.nsh"
 ;--------------------------------
 
 !define PROGRAM "ardrone"
@@ -53,6 +54,7 @@ LicenseData "..\LICENSE"
 ; Options
 AutoCloseWindow true
 Icon "..\src\test_i\etc\ardrone_small.ico"
+SetCompressor /SOLID /FINAL lzma
 XPStyle on
 
 ;--------------------------------
@@ -93,28 +95,53 @@ File "D:\projects\ffmpeg\libavutil\avutil-55.dll"
 File "D:\projects\ffmpeg\libswresample\swresample-2.dll"
 File "D:\projects\ffmpeg\libswscale\swscale-4.dll"
 
-File "D:\projects\gtk\gtk\Win32\debug\bin\atk-1.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\cairo.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\cairo-gobject.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\epoxy-0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\fontconfig.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gdk_pixbuf-2.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gio-2.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\glib-2.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gmodule-2.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gobject-2.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gdk-3-3.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\gtk-3-3.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\harfbuzz.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\iconv.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\intl.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\libpng16.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\libxml2.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\pango-1.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\pangocairo-1.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\pangoft2-1.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\pangowin32-1.0.dll"
-File "D:\projects\gtk\gtk\Win32\debug\bin\zlib1.dll"
+!if ${release} == "Debug"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\atk-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\cairo.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\cairo-gobject.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\epoxy-0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\fontconfig.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gdk_pixbuf-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gio-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\glib-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gmodule-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gobject-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gdk-3-3.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\gtk-3-3.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\harfbuzz.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\iconv.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\intl.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\libpng16.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\libxml2.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\pango-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\pangocairo-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\pangoft2-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\pangowin32-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\debug\bin\zlib1.dll"
+!else
+ File "D:\projects\gtk\gtk\Win32\release\bin\atk-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\cairo.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\cairo-gobject.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\epoxy-0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\fontconfig.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gdk_pixbuf-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gio-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\glib-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gmodule-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gobject-2.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gdk-3-3.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\gtk-3-3.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\harfbuzz.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\iconv.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\intl.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\libpng16.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\libxml2.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\pango-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\pangocairo-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\pangoft2-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\pangowin32-1.0.dll"
+ File "D:\projects\gtk\gtk\Win32\release\bin\zlib1.dll"
+!endif
 
 ;File "D:\projects\libglade\bin\libglade-2.0-0.dll"
 
@@ -134,6 +161,11 @@ SetOutPath $INSTDIR\${CONFIGURATION_SUBDIR}
 File "..\src\test_i\etc\ardrone.glade"
 
 ; set output path to the installation directory
+SetOutPath $INSTDIR\${CONFIGURATION_SUBDIR}\gtk3.0
+
+File "..\src\test_i\etc\settings.ini"
+
+; set output path to the installation directory
 SetOutPath $INSTDIR\share\glib-2.0\schemas
 
 ; Config - GIO schemas
@@ -141,6 +173,12 @@ File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\gschemas.compiled"
 File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.ColorChooser.gschema.xml"
 File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.Debug.gschema.xml"
 File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.FileChooser.gschema.xml"
+
+; set output path to the installation directory
+SetOutPath $INSTDIR\share\themes\hicolor
+
+; Config - icon themes
+File "G:\software\Development\hicolor-icon-theme-0.15\index.theme"
 
 ; Write the installation path into the registry
 WriteRegStr HKLM SOFTWARE\${PROGRAM} "Install_Dir" "$INSTDIR"

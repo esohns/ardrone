@@ -118,6 +118,7 @@ struct ARDrone_Configuration
   inline ARDrone_Configuration ()
    : signalHandlerConfiguration ()
    , listenerConfiguration ()
+   , socketConfigurations ()
    , socketHandlerConfiguration ()
    , connectionConfiguration ()
    , allocatorConfiguration ()
@@ -135,6 +136,7 @@ struct ARDrone_Configuration
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
   struct Net_ListenerConfiguration                              listenerConfiguration;
+  Net_SocketConfigurationStack_t                                socketConfigurations;
   struct ARDrone_SocketHandlerConfiguration                     socketHandlerConfiguration;
   struct ARDrone_ConnectionConfiguration                        connectionConfiguration;
 

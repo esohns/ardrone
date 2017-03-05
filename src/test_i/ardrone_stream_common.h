@@ -345,8 +345,8 @@ struct ARDrone_ModuleHandlerConfiguration
   bool                                           printProgressDot;
   bool                                           pushStatisticMessages;
 
-  struct Net_SocketConfiguration*                socketConfiguration;
-  struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration;
+  struct Net_SocketConfiguration*                socketConfiguration;        // net source module
+  struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
   struct _cairo_rectangle_int                    sourceFormat;
   Stream_IStream*                                stream;
   ARDrone_Notification_t*                        subscriber;
