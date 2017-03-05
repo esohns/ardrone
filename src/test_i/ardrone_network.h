@@ -62,6 +62,15 @@
 // forward declarations
 class ARDrone_Message;
 class ARDrone_SessionMessage;
+struct ARDrone_ConnectionConfiguration;
+struct ARDrone_ConnectionState;
+typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
+struct ARDrone_UserData;
+typedef Net_IConnectionManager_T<ACE_INET_Addr,
+                                 struct ARDrone_ConnectionConfiguration,
+                                 struct ARDrone_ConnectionState,
+                                 ARDrone_RuntimeStatistic_t,
+                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 
 struct ARDrone_StreamConfiguration;
 struct ARDrone_SocketHandlerConfiguration;
@@ -70,11 +79,13 @@ struct ARDrone_ConnectionConfiguration
 {
   inline ARDrone_ConnectionConfiguration ()
    : Net_ConnectionConfiguration ()
+   , connectionManager (NULL)
    , streamConfiguration (NULL)
    , socketHandlerConfiguration (NULL)
    , userData (NULL)
   {};
 
+  ARDrone_IConnectionManager_t*              connectionManager;
   struct ARDrone_StreamConfiguration*        streamConfiguration;
   struct ARDrone_SocketHandlerConfiguration* socketHandlerConfiguration;
 
@@ -99,7 +110,6 @@ struct ARDrone_SocketHandlerConfiguration
 };
 
 struct ARDrone_Configuration;
-typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
 struct ARDrone_ConnectionState
  : Net_ConnectionState
 {
@@ -122,11 +132,6 @@ typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
                           struct ARDrone_ConnectionState,
                           ARDrone_RuntimeStatistic_t> ARDrone_IConnection_t;
-typedef Net_IConnectionManager_T<ACE_INET_Addr,
-                                 struct ARDrone_ConnectionConfiguration,
-                                 struct ARDrone_ConnectionState,
-                                 ARDrone_RuntimeStatistic_t,
-                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 
 typedef Net_Connection_Manager_T<ACE_INET_Addr,
                                  struct ARDrone_ConnectionConfiguration,

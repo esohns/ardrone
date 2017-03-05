@@ -860,6 +860,7 @@ do_work (int argc_in,
   ARDRONE_TRACE (ACE_TEXT ("::do_work"));
 
   int result = false;
+  std::string interface_identifier_string;
 
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration);
@@ -903,11 +904,50 @@ do_work (int argc_in,
   //ACE_ASSERT (video_info_p);
 
   // ******************* socket configuration data ****************************
-  CBData_in.configuration->socketHandlerConfiguration.socketConfiguration.address =
-    address_in;
-  CBData_in.configuration->socketHandlerConfiguration.socketConfiguration.bufferSize =
-    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  //  configuration.socketConfiguration.useLoopbackDevice = false;
+  struct Net_SocketConfiguration socket_configuration;
+  socket_configuration.bufferSize = NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  result = socket_configuration.address.set (static_cast<u_short> (ARDRONE_MAVLINK_PORT),
+                                             static_cast<ACE_UINT32> (INADDR_ANY),
+                                             1,
+                                             0);
+  ACE_ASSERT (!result);
+  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+  result = socket_configuration.address.set (static_cast<u_short> (ARDRONE_NAVDATA_PORT),
+                                             static_cast<ACE_UINT32> (INADDR_ANY),
+                                             1,
+                                             0);
+  ACE_ASSERT (!result);
+  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+//  // *TODO*: verify the given address
+//  if (!Net_Common_Tools::IPAddress2Interface (address_in,
+//                                              interface_identifier_string))
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
+//                ACE_TEXT (Net_Common_Tools::IPAddress2String (address_in).c_str ())));
+//    goto error;
+//  } // end IF
+//  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
+//                                              CBData_in.localSAP))
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
+//                ACE_TEXT (interface_identifier_string.c_str ())));
+//    goto error;
+//  } // end IF
+//  ACE_DEBUG ((LM_ERROR,
+//              ACE_TEXT ("set local SAP: %s...\n"),
+//              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
+  socket_configuration.address = address_in;
+  socket_configuration.address.set_port_number (ARDRONE_NAVDATA_PORT,
+                                                1);
+  socket_configuration.writeOnly = true;
+  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+  socket_configuration.address = address_in;
+  socket_configuration.writeOnly = false;
+  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+//  CBData_in.configuration->socketHandlerConfiguration->socketConfiguration =
+//      &socket_configuration;
 
   CBData_in.configuration->socketHandlerConfiguration.connectionConfiguration =
     &CBData_in.configuration->connectionConfiguration;
@@ -921,6 +961,8 @@ do_work (int argc_in,
   CBData_in.configuration->socketHandlerConfiguration.userData =
     CBData_in.configuration->userData;
 
+  CBData_in.configuration->connectionConfiguration.connectionManager =
+    connectionManager_p;
   CBData_in.configuration->connectionConfiguration.socketHandlerConfiguration =
       &CBData_in.configuration->socketHandlerConfiguration;
   CBData_in.configuration->connectionConfiguration.streamConfiguration =
@@ -968,8 +1010,8 @@ do_work (int argc_in,
   CBData_in.configuration->moduleHandlerConfiguration.pixelBufferLock =
       &CBData_in.lock;
 #endif
-  CBData_in.configuration->moduleHandlerConfiguration.socketConfiguration =
-    &CBData_in.configuration->socketHandlerConfiguration.socketConfiguration;
+//  CBData_in.configuration->moduleHandlerConfiguration.socketConfiguration =
+//    CBData_in.configuration->socketHandlerConfiguration->socketConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.socketHandlerConfiguration =
     &CBData_in.configuration->socketHandlerConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.height =
@@ -984,6 +1026,17 @@ do_work (int argc_in,
   if (!useReactor_in)
     CBData_in.configuration->moduleHandlerConfiguration.stream =
       &asynch_video_stream;
+  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
+
+  struct ARDrone_SocketHandlerConfiguration navdatatarget_sockethandlerconfiguration =
+      CBData_in.configuration->socketHandlerConfiguration;
+  struct ARDrone_ModuleHandlerConfiguration navdatatarget_modulehandlerconfiguration =
+      CBData_in.configuration->moduleHandlerConfiguration;
+  navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
+      &navdatatarget_sockethandlerconfiguration;
+  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
+                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
 
   CBData_in.configuration->streamConfiguration.messageAllocator =
     &message_allocator;
@@ -1128,6 +1181,27 @@ do_work (int argc_in,
 
   if (interfaceDefinitionFile_in.empty ())
   {
+//    // *TODO*: verify the given address
+//    if (!Net_Common_Tools::IPAddress2Interface (cb_data_p->configuration->socketConfigurations.back ().address,
+//                                                interface_identifier_string))
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
+//                  ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
+//      goto error;
+//    } // end IF
+//    if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
+//                                                cb_data_p->localSAP))
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
+//                  ACE_TEXT (interface_identifier_string.c_str ())));
+//      goto error;
+//    } // end IF
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("set local SAP: %s...\n"),
+//                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->localSAP).c_str ())));
+
     // initialize processing streams
     if (!mavlink_stream.initialize (CBData_in.configuration->streamConfiguration))
     {

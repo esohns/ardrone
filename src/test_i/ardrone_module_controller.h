@@ -48,6 +48,7 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename SessionDataContainerType,
           ////////////////////////////////
+          typename HandlerConfigurationType, // socket-
           typename ConnectionManagerType,
           typename ConnectorType>
 class ARDrone_Module_Controller_T
@@ -58,6 +59,7 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
+                                     HandlerConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType>
  , public ARDrone_IController
@@ -93,6 +95,7 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
+                                     HandlerConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;
 
@@ -107,6 +110,7 @@ class ARDrone_Module_Controller_T
                                       DataMessageType,
                                       SessionMessageType,
                                       SessionDataContainerType,
+                                      HandlerConfigurationType,
                                       ConnectionManagerType,
                                       ConnectorType> OWN_TYPE_T;
 

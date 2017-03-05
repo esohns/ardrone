@@ -21,6 +21,7 @@ if (UNIX)
                 DOC "searching for ${ACE_LIB_FILE} (system paths)")
  endif ()
 elseif (WIN32)
+ unset (LIB_FILE_SUFFIX)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   set (LIB_FILE_SUFFIX d)
  endif ()
@@ -38,6 +39,10 @@ else ()
  message (STATUS "Found ACE library \"${ACE_LIBRARY}\"")
 endif ()
 add_definitions (-DACE_HAS_DLL)
+
+if (WIN32)
+ set (DIRECTSHOW_BASECLASSES_DIRECTORY "$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
+endif ()
 
 include (FindOpenGL)
 if (NOT OPENGL_FOUND)
@@ -60,6 +65,7 @@ if (UNIX)
  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
                DOC "searching for ${GLUT_LIB_FILE} (system paths)")
 elseif (WIN32)
+ unset (LIB_FILE_SUFFIX)
  set (GLUT_LIB_FILE freeglut)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   set (LIB_FILE_SUFFIX d)
@@ -260,9 +266,11 @@ set (EXECUTABLE ardrone)
 add_executable (${EXECUTABLE}
                 ${ardrone_EXE_SRCS}
                 ${ardrone_SCRIPTS}
-                etc/ardrone.glade)
+                etc/ardrone.glade
+                etc/settings.ini)
 
 if (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Debug))
+ add_definitions (-D_UCRT_HEAP_MISMATCH_DETECTION)
  # *NOTE*: DirectShow uses 'DEBUG'
  add_definitions (-DDEBUG)
 endif ()
@@ -292,6 +300,12 @@ if (UNIX)
 elseif (WIN32)
  target_link_libraries (${EXECUTABLE} ntdll.lib)
  target_link_libraries (${EXECUTABLE} evr.lib)
+ link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE})
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbasd.lib)
+ else ()
+  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbase.lib)
+ endif ()
 # *TODO*: repair WIN32 pkgconfig support
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gio-2.0.lib)
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/glib-2.0.lib)
@@ -338,6 +352,9 @@ install (FILES
          etc/ardrone.glade
          DESTINATION etc COMPONENT config)
 install (FILES
+         etc/settings.ini
+         DESTINATION etc/gtk-3.0 COMPONENT config)
+install (FILES
          scripts/mavlink_scanner.l
          scripts/navdata_scanner.l
          DESTINATION etc COMPONENT dev)
@@ -346,7 +363,7 @@ install (FILES
 
 if (UNIX)
  create_target_launcher (${EXECUTABLE}
-                         ARGS "-a 127.0.0.1 -l -p 5555 -t"
+                         ARGS "-l -p 5555 -t"
 #                         FORWARD_ARGS
                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib
                                               ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin
@@ -359,7 +376,7 @@ if (UNIX)
                          ENVIRONMENT foo=bar)
 elseif (WIN32)
  create_target_launcher (${EXECUTABLE}
-                         ARGS "-a 127.0.0.1 -c -l -p 5555 -t"
+                         ARGS "-c -l -p 5555 -t"
 #                        FORWARD_ARGS
                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
 #                                              ${PROJECT_SOURCE_DIR}/../openssl/bin

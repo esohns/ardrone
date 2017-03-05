@@ -33,6 +33,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 ACE_Atomic_Op<ACE_SYNCH_MUTEX, unsigned long>
@@ -43,6 +44,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::currentID = 1;
 
@@ -53,6 +55,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
@@ -62,6 +65,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::ARDrone_Module_Controller_T ()
  : inherited ()
@@ -77,6 +81,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
@@ -86,6 +91,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::~ARDrone_Module_Controller_T ()
 {
@@ -100,6 +106,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 bool
@@ -110,6 +117,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::initialize (const ConfigurationType& configuration_in,
                                                         Stream_IAllocator* allocator_in)
@@ -131,6 +139,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -141,6 +150,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::handleDataMessage (DataMessageType*& message_inout,
                                                                bool& passMessageDownstream_out)
@@ -158,6 +168,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -168,6 +179,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::handleSessionMessage (SessionMessageType*& message_inout,
                                                                   bool& passMessageDownstream_out)
@@ -248,6 +260,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 bool
@@ -258,6 +271,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::sendATCommand (const std::string& commandString_in)
 {
@@ -315,6 +329,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -325,6 +340,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::trim ()
 {
@@ -358,6 +374,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -368,6 +385,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::takeoff ()
 {
@@ -384,6 +402,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -394,6 +413,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::land ()
 {
@@ -410,6 +430,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -420,6 +441,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::set (ARDrone_VideoMode videoMode_in)
 {
@@ -485,6 +507,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType,
+          typename HandlerConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 void
@@ -495,6 +518,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             DataMessageType,
                             SessionMessageType,
                             SessionDataContainerType,
+                            HandlerConfigurationType,
                             ConnectionManagerType,
                             ConnectorType>::messageCB ()
 {
