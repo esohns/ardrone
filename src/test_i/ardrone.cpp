@@ -998,6 +998,7 @@ do_work (int argc_in,
 #endif
   //CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
   //  debugScanner_in;
+  CBData_in.configuration->moduleHandlerConfiguration.demultiplex = true;
   CBData_in.configuration->moduleHandlerConfiguration.fullScreen =
     fullScreen_in;
   CBData_in.configuration->moduleHandlerConfiguration.parserConfiguration =
@@ -1022,6 +1023,10 @@ do_work (int argc_in,
   //  &video_stream;
   CBData_in.configuration->moduleHandlerConfiguration.subscriber =
     &event_handler;
+  CBData_in.configuration->moduleHandlerConfiguration.subscribers =
+    &CBData_in.configuration->streamSubscribers;
+  CBData_in.configuration->moduleHandlerConfiguration.subscribersLock =
+    &CBData_in.configuration->streamSubscribersLock;
   //CBData_in.configuration->moduleHandlerConfiguration.useYYScanBuffer = false;
   if (!useReactor_in)
     CBData_in.configuration->moduleHandlerConfiguration.stream =
@@ -1036,11 +1041,10 @@ do_work (int argc_in,
   navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
       &navdatatarget_sockethandlerconfiguration;
   CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
-                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
+                                                                                                   &navdatatarget_modulehandlerconfiguration));
 
   CBData_in.configuration->streamConfiguration.messageAllocator =
     &message_allocator;
-  CBData_in.configuration->streamConfiguration.notificationStrategy = NULL;
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
     &CBData_in.configuration->moduleConfiguration;

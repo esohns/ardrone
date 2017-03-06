@@ -25,7 +25,8 @@
 #include "ardrone_modules_common.h"
 
 ARDrone_NavDataStream::ARDrone_NavDataStream ()
- : inherited (ACE_TEXT_ALWAYS_CHAR ("ARDroneNavDataStream"))
+ : inherited (ACE_TEXT_ALWAYS_CHAR ("NavDataStream"))
+ , inherited2 ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::ARDrone_NavDataStream"));
 
@@ -123,33 +124,18 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
   // - push them onto the stream (tail-first)
-  ARDrone_SessionData& session_data_r =
-    const_cast<ARDrone_SessionData&> (inherited::sessionData_->get ());
+  struct ARDrone_SessionData& session_data_r =
+    const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   session_data_r.sessionID = configuration_in.sessionID;
   //  ACE_ASSERT (configuration_in.moduleConfiguration);
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
+  ACE_ASSERT (configuration_in.moduleHandlerConfiguration);
+  ACE_ASSERT (configuration_in.moduleHandlerConfiguration->subscribers);
+  configuration_in.moduleHandlerConfiguration->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
 
   Stream_Module_t* module_p = NULL;
-
-  // ***************************** Statistic **********************************
-//  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-//    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (statistic_.writer ());
-//  if (!statistic_impl_p)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<ARDrone_Module_RuntimeStatistic> failed, aborting\n")));
-//    return false;
-//  } // end IF
-//  if (!statistic_impl_p->initialize (configuration_in.statisticReportingInterval,
-//                                     configuration_in.messageAllocator))
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-//                statistic_.name ()));
-//    return false;
-//  } // end IF
 
   // ******************************** Source ***********************************
   module_p =
@@ -800,7 +786,7 @@ ARDrone_NavDataStream::report () const
 //////////////////////////////////////////
 
 ARDrone_MAVLinkStream::ARDrone_MAVLinkStream ()
- : inherited (ACE_TEXT_ALWAYS_CHAR ("ARDroneMAVLinkStream"))
+ : inherited (ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream"))
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ARDrone_MAVLinkStream"));
 

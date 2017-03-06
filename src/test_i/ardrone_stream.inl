@@ -37,7 +37,7 @@
 
 template <typename SourceModuleType>
 ARDrone_VideoStream_T<SourceModuleType>::ARDrone_VideoStream_T ()
- : inherited (ACE_TEXT_ALWAYS_CHAR ("ARDroneVideoStream"))
+ : inherited (ACE_TEXT_ALWAYS_CHAR ("LiveVideoStream"))
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
  , graphBuilder_ (NULL)
  , mediaSession_ (NULL)

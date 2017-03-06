@@ -34,6 +34,7 @@
 
 #include "stream_base.h"
 #include "stream_common.h"
+#include "stream_session_base.h"
 #include "stream_statemachine_control.h"
 
 #include "ardrone_message.h"
@@ -126,6 +127,11 @@ class ARDrone_NavDataStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
+ , public Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage>
 {
  public:
   ARDrone_NavDataStream ();
@@ -161,6 +167,11 @@ class ARDrone_NavDataStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+  typedef Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage> inherited2;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream& operator= (const ARDrone_NavDataStream&))
