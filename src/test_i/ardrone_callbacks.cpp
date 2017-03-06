@@ -643,6 +643,9 @@ stream_processing_function (void* arg_in)
     // configure streams and retrieve stream handles
     Net_SocketConfigurationIterator_t iterator_2 =
         data_p->CBData->configuration->socketConfigurations.begin ();
+    Stream_ISession* session_p = NULL;
+    ACE_Time_Value session_start_timeout (5, 0);
+
     // *TODO*: bind to a specific interface
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
@@ -663,9 +666,9 @@ stream_processing_function (void* arg_in)
 
     ++iterator_2;
     // *TODO*: bind to a specific interface
-    data_p->CBData->configuration->listenerConfiguration.address =
-        (*iterator_2).address;
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
+        &*iterator_2;
+    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
     ++iterator_2;
     iterator_3 =
@@ -690,6 +693,11 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     stream_2->start ();
+    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
+    ACE_ASSERT (session_p);
+    // *IMPORTANT NOTE*: race condition here --> add timeout
+    session_p->wait (false,
+                     &session_start_timeout);
 
     ++iterator_2;
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =

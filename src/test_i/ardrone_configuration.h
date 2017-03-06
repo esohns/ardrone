@@ -130,6 +130,8 @@ struct ARDrone_Configuration
    , directShowPinConfiguration ()
 #endif
    , streamConfiguration ()
+   , streamSubscribers ()
+   , streamSubscribersLock ()
    , userData (NULL)
   {};
 
@@ -149,6 +151,8 @@ struct ARDrone_Configuration
   struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration directShowPinConfiguration;
 #endif
   struct ARDrone_StreamConfiguration                            streamConfiguration;
+  ARDrone_Subscribers_t                                         streamSubscribers;
+  ACE_SYNCH_RECURSIVE_MUTEX                                     streamSubscribersLock;
 
   struct ARDrone_UserData*                                      userData;
 };

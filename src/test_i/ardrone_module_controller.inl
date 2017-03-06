@@ -192,19 +192,16 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   // sanity check(s)
   ACE_ASSERT (inherited::isInitialized_);
 
+  // set up connection
   inherited::handleSessionMessage (message_inout,
                                    passMessageDownstream_out);
 
   // sanity check(s)
-  ACE_ASSERT (message_inout);
-  ACE_ASSERT (passMessageDownstream_out);
+  if (!message_inout || !passMessageDownstream_out)
+    return;
 
   switch (message_inout->type ())
   {
-    case STREAM_SESSION_MESSAGE_BEGIN:
-    {
-      break;
-    }
     case STREAM_SESSION_MESSAGE_CONNECT:
     {
       // *TODO*: this needs more work
