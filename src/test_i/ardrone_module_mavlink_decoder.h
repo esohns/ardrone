@@ -77,8 +77,8 @@ class ARDrone_Module_MAVLinkDecoder_T
   inline virtual struct __mavlink_message& current () { ACE_ASSERT (buffer_); return const_cast<struct __mavlink_message&> (buffer_->get ().MAVLinkMessage); };
   inline virtual bool hasFinished () const { return true; };
   virtual void record (struct __mavlink_message*&); // record handle
-  virtual bool initialize (const struct Common_ParserConfiguration&);
-  virtual void dump_state () const;
+  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
+  inline virtual void dump_state () const {};
   inline virtual void error (const yy::location&,
                              const std::string& string_in) { error (string_in); };
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };

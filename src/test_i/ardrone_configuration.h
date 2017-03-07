@@ -45,11 +45,15 @@
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
+#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 // forward declarations
-class ARDrone_Message;
+class ARDrone_MAVLinkMessage;
+//class ARDrone_MAVLinkStream;
+class ARDrone_NavDataMessage;
+//class ARDrone_NavDataStream;
 
 struct ARDrone_AllocatorConfiguration
  : Stream_AllocatorConfiguration
@@ -159,8 +163,10 @@ struct ARDrone_Configuration
 
 //////////////////////////////////////////
 
-typedef std::deque<ARDrone_Message*> ARDrone_Messages_t;
-typedef ARDrone_Messages_t::const_iterator ARDrone_MessagesIterator_t;
+typedef std::deque<ARDrone_MAVLinkMessage*> ARDrone_MAVLinkMessages_t;
+typedef ARDrone_MAVLinkMessages_t::const_iterator ARDrone_MAVLinkMessagesIterator_t;
+typedef std::deque<ARDrone_NavDataMessage*> ARDrone_NavDataMessages_t;
+typedef ARDrone_NavDataMessages_t::const_iterator ARDrone_NavDataMessagesIterator_t;
 
 struct ARDrone_GtkProgressData
  : Common_UI_GTK_ProgressData
@@ -173,6 +179,21 @@ struct ARDrone_GtkProgressData
   Stream_Statistic statistic;
 };
 
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      enum Stream_ControlType,
+                      enum Stream_SessionMessageType,
+                      enum Stream_StateMachine_ControlState,
+                      struct ARDrone_StreamState,
+                      struct ARDrone_StreamConfiguration,
+                      ARDrone_RuntimeStatistic_t,
+                      struct Stream_ModuleConfiguration,
+                      struct ARDrone_ModuleHandlerConfiguration,
+                      struct ARDrone_SessionData,
+                      ARDrone_StreamSessionData_t,
+                      ARDrone_ControlMessage_t,
+                      ARDrone_LiveVideoMessage,
+                      ARDrone_SessionMessage> ARDrone_LiveVideoStreamBase_t;
 struct ARDrone_GtkCBData
  : Common_UI_GTKState
 {
@@ -183,10 +204,15 @@ struct ARDrone_GtkCBData
   , contextIdInformation (0)
   , eventStack ()
   , frameCounter (0)
+  , liveVideoMessageAllocator (NULL)
+  , liveVideoStream (NULL)
   , localSAP ()
+  , MAVLinkMessageAllocator (NULL)
+  , MAVLinkMessages ()
   , MAVLinkStream (NULL)
+  , NavDataMessageAllocator (NULL)
+  , NavDataMessages ()
   , NavDataStream (NULL)
-  , messageQueue ()
 #if defined (GTKGL_SUPPORT)
   , openGLAxesListId (0)
   , openGLCamera ()
@@ -201,7 +227,6 @@ struct ARDrone_GtkCBData
   //, temperature ()
   //, temperatureIndex (-1)
   , timeStamp (ACE_Time_Value::zero)
-  , videoStream (NULL)
  {
 #if defined (GTKGL_SUPPORT)
    resetCamera ();
@@ -216,34 +241,38 @@ struct ARDrone_GtkCBData
  };
 #endif
 
- struct ARDrone_Configuration*   configuration;
+ struct ARDrone_Configuration*        configuration;
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
- guint                           contextIdData; // status bar context
- guint                           contextIdInformation; // status bar context
- ARDrone_Events_t                eventStack;
- unsigned int                    frameCounter;
+ guint                                contextIdData; // status bar context
+ guint                                contextIdInformation; // status bar context
+ ARDrone_Events_t                     eventStack;
+ unsigned int                         frameCounter;
+ ARDrone_LiveVideoMessageAllocator_t* liveVideoMessageAllocator;
+ ARDrone_LiveVideoStreamBase_t*       liveVideoStream;
  // *TODO*: let the user choose a NIC instead
- ACE_INET_Addr                   localSAP;
- ARDrone_StreamBase_t*           MAVLinkStream;
- ARDrone_StreamBase_t*           NavDataStream;
- ARDrone_Messages_t              messageQueue;
+ ACE_INET_Addr                        localSAP;
+ ARDrone_MAVLinkMessageAllocator_t*   MAVLinkMessageAllocator;
+ ARDrone_MAVLinkMessages_t            MAVLinkMessages;
+ ARDrone_MAVLinkStream*               MAVLinkStream;
+ ARDrone_NavDataMessageAllocator_t*   NavDataMessageAllocator;
+ ARDrone_NavDataMessages_t            NavDataMessages;
+ ARDrone_NavDataStream*               NavDataStream;
 #if defined (GTKGL_SUPPORT)
- GLuint                          openGLAxesListId;
- struct ARDrone_Camera           openGLCamera;
- guint                           openGLRefreshId;
- bool                            openGLDoubleBuffered;
+ GLuint                               openGLAxesListId;
+ struct ARDrone_Camera                openGLCamera;
+ guint                                openGLRefreshId;
+ bool                                 openGLDoubleBuffered;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
- GdkPixbuf*                      pixelBuffer;
+ GdkPixbuf*                           pixelBuffer;
 #endif
- struct ARDrone_GtkProgressData* progressData;
+ struct ARDrone_GtkProgressData*      progressData;
  //gfloat                temperature[ARDRONE_TEMPERATURE_BUFFER_SIZE * 2];
  //int                   temperatureIndex;
- ACE_Time_Value                  timeStamp;
- ARDrone_StreamBase_t*           videoStream;
+ ACE_Time_Value                       timeStamp;
 };
 
 struct ARDrone_ThreadData

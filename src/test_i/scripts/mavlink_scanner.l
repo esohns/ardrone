@@ -40,7 +40,7 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
            --> use --noline and (manually) remove '#line's introduced by %top */
 /* %option ansi-definitions ansi-prototypes */
 /* *IMPORTANT NOTE*: 'read' requires 'unistd'(.h) */
-%option reentrant pointer prefix="ARDrone_MAVLink_Scanner_" nomain nounistd
+%option reentrant pointer prefix="ARDrone_MAVLink_Scanner_" nomain
 /* *TODO*: find out why 'read' does not compile (on Linux, flex 2.5.39) */
 %option align read full
 %option backup debug perf-report perf-report verbose warn
@@ -174,7 +174,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_MAVLink_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  Common_IScanner* iscanner_p =
+  ARDrone_MAVLink_IParser* iscanner_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
 
   // sanity check(s)

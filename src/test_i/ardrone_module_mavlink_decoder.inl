@@ -196,7 +196,7 @@ scan:
                    buffer_->length ()))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Decoder_H264_NAL_Decoder_T::scan_begin(), aborting\n")));
+                ACE_TEXT ("failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n")));
     goto error;
   } // end IF
   do_scan_end = true;
@@ -403,47 +403,47 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     ACE_ASSERT (buffer_);
   } // end IF
 }
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-bool
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::initialize (const struct Common_ParserConfiguration& configuration_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::initialize"));
+//template <ACE_SYNCH_DECL,
+//          typename TimePolicyType,
+//          typename ConfigurationType,
+//          typename ControlMessageType,
+//          typename DataMessageType,
+//          typename SessionMessageType,
+//          typename SessionDataContainerType>
+//bool
+//ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
+//                                TimePolicyType,
+//                                ConfigurationType,
+//                                ControlMessageType,
+//                                DataMessageType,
+//                                SessionMessageType,
+//                                SessionDataContainerType>::initialize (const struct Common_ParserConfiguration& configuration_in)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::initialize"));
 
-  ACE_UNUSED_ARG (configuration_in);
+//  ACE_UNUSED_ARG (configuration_in);
 
-  return true;
-}
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-void
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::dump_state () const
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::dump_state"));
+//  return true;
+//}
+//template <ACE_SYNCH_DECL,
+//          typename TimePolicyType,
+//          typename ConfigurationType,
+//          typename ControlMessageType,
+//          typename DataMessageType,
+//          typename SessionMessageType,
+//          typename SessionDataContainerType>
+//void
+//ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
+//                                TimePolicyType,
+//                                ConfigurationType,
+//                                ControlMessageType,
+//                                DataMessageType,
+//                                SessionMessageType,
+//                                SessionDataContainerType>::dump_state () const
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::dump_state"));
 
-}
+//}
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,

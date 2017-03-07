@@ -874,23 +874,29 @@ do_work (int argc_in,
                                                            true);
 
   Stream_AllocatorHeap_T<struct ARDrone_AllocatorConfiguration> heap_allocator;
-  ARDrone_MessageAllocator_t message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                &heap_allocator,
-                                                true); // block
   if (!heap_allocator.initialize (CBData_in.configuration->allocatorConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize message allocator, returning\n")));
     return;
   } // end IF
+  ARDrone_MAVLinkMessageAllocator_t mavlink_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+                                                               &heap_allocator,
+                                                               true); // block
+  ARDrone_NavDataMessageAllocator_t navdata_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+                                                               &heap_allocator,
+                                                               true); // block
+  ARDrone_LiveVideoMessageAllocator_t livevideo_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+                                                                   &heap_allocator,
+                                                                   true); // block
 
   ARDrone_ConnectionManager_t* connectionManager_p =
     ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connectionManager_p);
   connectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
 
-  //ARDrone_Stream_t video_stream;
-  ARDrone_AsynchStream_t asynch_video_stream;
+//  ARDrone_LiveVideoStream_t video_stream;
+  ARDrone_AsynchLiveVideoStream_t asynch_video_stream;
   ARDrone_MAVLinkStream mavlink_stream;
   // *TODO*: apparently, some drones use flashed firmware that uses MAVLink
   //         communication instead of the 'NavData' as documented in the
@@ -951,8 +957,8 @@ do_work (int argc_in,
 
   CBData_in.configuration->socketHandlerConfiguration.connectionConfiguration =
     &CBData_in.configuration->connectionConfiguration;
-  CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
-    &message_allocator;
+//  CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
+//    &message_allocator;
   CBData_in.configuration->socketHandlerConfiguration.PDUSize =
       std::max (bufferSize_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
@@ -1019,7 +1025,7 @@ do_work (int argc_in,
     ARDRONE_DEFAULT_VIDEO_HEIGHT;
   CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.width =
     ARDRONE_DEFAULT_VIDEO_WIDTH;
-  //CBData_in.configuration->moduleHandlerConfiguration.videoStream =
+  //CBData_in.configuration->moduleHandlerConfiguration.stream =
   //  &video_stream;
   CBData_in.configuration->moduleHandlerConfiguration.subscriber =
     &event_handler;
@@ -1028,9 +1034,11 @@ do_work (int argc_in,
   CBData_in.configuration->moduleHandlerConfiguration.subscribersLock =
     &CBData_in.configuration->streamSubscribersLock;
   //CBData_in.configuration->moduleHandlerConfiguration.useYYScanBuffer = false;
-  if (!useReactor_in)
+  if (useReactor_in);
+//    CBData_in.configuration->moduleHandlerConfiguration.stream = &video_stream;
+  else
     CBData_in.configuration->moduleHandlerConfiguration.stream =
-      &asynch_video_stream;
+        &asynch_video_stream;
   CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
                                                                                                    &CBData_in.configuration->moduleHandlerConfiguration));
 
@@ -1043,8 +1051,8 @@ do_work (int argc_in,
   CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
                                                                                                    &navdatatarget_modulehandlerconfiguration));
 
-  CBData_in.configuration->streamConfiguration.messageAllocator =
-    &message_allocator;
+//  CBData_in.configuration->streamConfiguration.messageAllocator =
+//    &message_allocator;
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
     &CBData_in.configuration->moduleConfiguration;
@@ -1056,9 +1064,12 @@ do_work (int argc_in,
   CBData_in.configuration->streamConfiguration.userData =
     CBData_in.configuration->userData;
 
+  if (useReactor_in);
+//    CBData_in.liveVideoStream = &video_stream;
+  else
+    CBData_in.liveVideoStream = &asynch_video_stream;
   CBData_in.MAVLinkStream = &mavlink_stream;
   CBData_in.NavDataStream = &navdata_stream;
-  CBData_in.videoStream = &asynch_video_stream;
 
   // step2: initialize connection manager
   struct ARDrone_ConnectionConfiguration configuration_2 =

@@ -36,16 +36,12 @@
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
-//// forward declaration(s)
-//class ARDrone_SessionMessage;
-//class ARDrone_Message;
-
 class ARDrone_Module_EventHandler
  : public Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
                                          Common_TimePolicy_t,
                                          struct ARDrone_ModuleHandlerConfiguration,
                                          ARDrone_ControlMessage_t,
-                                         ARDrone_Message,
+                                         ACE_Message_Block,
                                          ARDrone_SessionMessage,
                                          Stream_SessionId_t,
                                          struct ARDrone_SessionData>
@@ -63,7 +59,7 @@ class ARDrone_Module_EventHandler
                                          Common_TimePolicy_t,
                                          struct ARDrone_ModuleHandlerConfiguration,
                                          ARDrone_ControlMessage_t,
-                                         ARDrone_Message,
+                                         ACE_Message_Block,
                                          ARDrone_SessionMessage,
                                          Stream_SessionId_t,
                                          struct ARDrone_SessionData> inherited;

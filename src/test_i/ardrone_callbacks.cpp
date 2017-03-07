@@ -644,13 +644,17 @@ stream_processing_function (void* arg_in)
     Net_SocketConfigurationIterator_t iterator_2 =
         data_p->CBData->configuration->socketConfigurations.begin ();
     Stream_ISession* session_p = NULL;
-    ACE_Time_Value session_start_timeout (5, 0);
+    ACE_Time_Value session_start_timeout = COMMON_TIME_NOW + ACE_Time_Value (5, 0);
 
     // *TODO*: bind to a specific interface
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
+    data_p->CBData->configuration->socketHandlerConfiguration.messageAllocator =
+        data_p->CBData->MAVLinkMessageAllocator;
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
+    data_p->CBData->configuration->streamConfiguration.messageAllocator =
+        data_p->CBData->MAVLinkMessageAllocator;
     stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
@@ -679,9 +683,14 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (configuration_p);
     configuration_p->socketConfiguration = &*iterator_2;
     ACE_ASSERT (configuration_p->socketHandlerConfiguration);
+    configuration_p->socketHandlerConfiguration->messageAllocator =
+        data_p->CBData->NavDataMessageAllocator;
     configuration_p->socketHandlerConfiguration->socketConfiguration =
         &*iterator_2;
+    configuration_p->streamConfiguration->messageAllocator =
+        data_p->CBData->NavDataMessageAllocator;
     stream_2 = data_p->CBData->NavDataStream;
+    configuration_p->stream = data_p->CBData->NavDataStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->NavDataStream;
     result_2 =
@@ -702,16 +711,20 @@ stream_processing_function (void* arg_in)
     ++iterator_2;
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
+    data_p->CBData->configuration->socketHandlerConfiguration.messageAllocator =
+        data_p->CBData->liveVideoMessageAllocator;
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
     ACE_ASSERT (data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration);
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration->writeOnly =
         false;
-    stream_3 = data_p->CBData->videoStream;
+    data_p->CBData->configuration->streamConfiguration.messageAllocator =
+        data_p->CBData->liveVideoMessageAllocator;
+    stream_3 = data_p->CBData->liveVideoStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->videoStream;
+      data_p->CBData->liveVideoStream;
     result_2 =
-      data_p->CBData->videoStream->initialize (data_p->CBData->configuration->streamConfiguration);
+      data_p->CBData->liveVideoStream->initialize (data_p->CBData->configuration->streamConfiguration);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -719,7 +732,7 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = data_p->CBData->videoStream->get ();
+    session_data_container_p = data_p->CBData->liveVideoStream->get ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
@@ -794,7 +807,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (!cb_data_p->configuration->socketConfigurations.empty ());
   //ACE_ASSERT (cb_data_p->MAVLinkStream);
-  //ACE_ASSERT (cb_data_p->videoStream);
+  //ACE_ASSERT (cb_data_p->liveVideoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -1661,15 +1674,26 @@ idle_finalize_ui_cb (gpointer userData_in)
   // synch access
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, G_SOURCE_REMOVE);
 
-    unsigned int num_messages = cb_data_p->messageQueue.size ();
-    while (!cb_data_p->messageQueue.empty ())
+    unsigned int num_messages = cb_data_p->MAVLinkMessages.size ();
+    while (!cb_data_p->MAVLinkMessages.empty ())
     {
-      cb_data_p->messageQueue.front ()->release ();
-      cb_data_p->messageQueue.pop_front ();
+      cb_data_p->MAVLinkMessages.front ()->release ();
+      cb_data_p->MAVLinkMessages.pop_front ();
     } // end WHILE
     if (num_messages)
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("flushed %u messages\n"),
+                  ACE_TEXT ("flushed %u MAVLink messages\n"),
+                  num_messages));
+
+    num_messages = cb_data_p->NavDataMessages.size ();
+    while (!cb_data_p->NavDataMessages.empty ())
+    {
+      cb_data_p->NavDataMessages.front ()->release ();
+      cb_data_p->NavDataMessages.pop_front ();
+    } // end WHILE
+    if (num_messages)
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("flushed %u NavData messages\n"),
                   num_messages));
   } // end lock scope
 
@@ -1898,22 +1922,6 @@ idle_update_info_display_cb (gpointer userData_in)
         is_session_message = true;
         break;
       }
-      case ARDRONE_EVENT_MESSAGE:
-      {
-        spin_button_p =
-          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATA)));
-        ACE_ASSERT (spin_button_p);
-        gtk_spin_button_set_value (spin_button_p,
-                                   static_cast<gdouble> (data_p->progressData->statistic.bytes));
-
-        spin_button_p =
-            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES)));
-        ACE_ASSERT (spin_button_p);
-
-        break;
-      }
       case ARDRONE_EVENT_DISCONNECT:
       {
         spin_button_p =
@@ -1930,6 +1938,22 @@ idle_update_info_display_cb (gpointer userData_in)
         ACE_ASSERT (spin_button_p);
 
         is_session_message = true;
+        break;
+      }
+      case ARDRONE_EVENT_MESSAGE:
+      {
+        spin_button_p =
+          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATA)));
+        ACE_ASSERT (spin_button_p);
+        gtk_spin_button_set_value (spin_button_p,
+                                   static_cast<gdouble> (data_p->progressData->statistic.bytes));
+
+        spin_button_p =
+            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES)));
+        ACE_ASSERT (spin_button_p);
+
         break;
       }
       case ARDRONE_EVENT_SESSION_MESSAGE:
@@ -2153,7 +2177,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (cb_data_p->progressData);
   ACE_ASSERT (cb_data_p->MAVLinkStream);
-  ACE_ASSERT (cb_data_p->videoStream);
+  ACE_ASSERT (cb_data_p->liveVideoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -2191,7 +2215,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     // stop stream
     cb_data_p->MAVLinkStream->stop (false, true);
     cb_data_p->NavDataStream->stop (false, true);
-    cb_data_p->videoStream->stop (false, true);
+    cb_data_p->liveVideoStream->stop (false, true);
 
     return;
   } // end IF
@@ -3333,15 +3357,15 @@ key_cb (GtkWidget* widget_in,
                                     !is_active_b);
 
       // sanity check(s)
-      ACE_ASSERT (cb_data_p->videoStream);
+      ACE_ASSERT (cb_data_p->liveVideoStream);
 
       const Stream_Module_t* module_p =
-        cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
+        cb_data_p->liveVideoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
       if (!module_p)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_IStream::find(\"Display\"), aborting\n"),
-                    ACE_TEXT (cb_data_p->videoStream->name ().c_str ())));
+                    ACE_TEXT (cb_data_p->liveVideoStream->name ().c_str ())));
         return FALSE;
       } // end IF
       Stream_Module_Visualization_IFullscreen* ifullscreen_p =

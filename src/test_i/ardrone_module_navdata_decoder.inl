@@ -189,7 +189,7 @@ scan:
                    message_block_p->length () - offset))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Decoder_H264_NAL_Decoder_T::scan_begin(), aborting\n")));
+                ACE_TEXT ("failed to ARDrone_Module_NavDataDecoder_T::scan_begin(), aborting\n")));
     goto error;
   } // end IF
   do_scan_end = true;
@@ -203,7 +203,8 @@ scan:
 
   // parse data fragment
   try {
-    result = ARDrone_NavData_Scanner_lex (scannerState_);
+    result = ARDrone_NavData_Scanner_lex (scannerState_,
+                                          this);
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in yylex(), continuing\n")));
@@ -216,124 +217,20 @@ scan:
       // *NOTE*: most probable reason: connection
       //         has been closed --> session end
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("failed to bisect H264 NAL units (result was: %d), aborting\n"),
+                  ACE_TEXT ("%s: failed to parse NavData messages (result was: %d), aborting\n"),
+                  inherited::mod_->name (),
                   result));
       goto error;
     }
     default:
     {
-      // frame the NAL unit
-      unsigned int remaining_bytes = result + offset;
-      unsigned int length = 0;
-      unsigned int trailing_bytes = 0;
-      message_block_p = buffer_;
-
-      if (isFirst_)
-      {
-        isFirst_ = false;
-
-        while (remaining_bytes)
-        {
-          length = message_block_p->length ();
-          if (length > remaining_bytes)
-          {
-            trailing_bytes = length - remaining_bytes;
-            length = remaining_bytes;
-          } // end IF
-          remaining_bytes -= length;
-          message_block_p->rd_ptr (length); // discard this data
-          if (remaining_bytes)
-          {
-            message_block_p = message_block_p->cont ();
-            ACE_ASSERT (message_block_p);
-          } // end IF
-        } // end WHILE
-
-        // clean up
-        scan_end ();
-        do_scan_end = false;
-
-        if (trailing_bytes)
-        {
-          offset = 3;
-          goto scan;
-        } // end IF
-
-        break;
-      } // end IF
-
-      while (remaining_bytes)
-      {
-        length = message_block_p->length ();
-        if (length > remaining_bytes)
-        {
-          trailing_bytes = length - remaining_bytes;
-          length = remaining_bytes;
-        } // end IF
-        remaining_bytes -= length;
-        if (remaining_bytes)
-        {
-          message_block_p = message_block_p->cont ();
-          ACE_ASSERT (message_block_p);
-        } // end IF
-      } // end WHILE
-
-      if (trailing_bytes)
-      {
-        message_block_2 = message_block_p->duplicate ();
-        if (!message_block_2)
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: failed to DataMessageType::duplicate(): \"%m\", returning\n"),
-                      inherited::mod_->name ()));
-          goto error;
-        } // end IF
-
-        message_block_p->length (message_block_p->length () - trailing_bytes);
-        length = message_block_p->length ();
-        message_block_2->rd_ptr (message_block_p->length ());
-      } // end IF
-      else
-        message_block_2 = NULL;
-
-      result = inherited::put_next (buffer_, NULL);
-      if (result == -1)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ACE_Task_T::put_next(): \"%m\", returning\n"),
-                    inherited::mod_->name ()));
-        goto error;
-      } // end IF
-      buffer_ = message_block_2;
-
       // clean up
       scan_end ();
       do_scan_end = false;
 
-      if (trailing_bytes)
-      {
-        message_block_p = buffer_;
-        remaining_bytes = 3;
-        do
-        {
-          length = message_block_p->length ();
-          if (length > remaining_bytes)
-            break;
-          remaining_bytes -= length;
-          if (remaining_bytes)
-          {
-            message_block_p = message_block_p->cont ();
-            if (!message_block_p)
-              break;
-          } // end IF
-        } while (true);
-
-        if (!message_block_p)
-          break;
-        else
-          offset = remaining_bytes;
+      // more data ?
+      if (buffer_)
         goto scan;
-      } // end IF
 
       break;
     }
@@ -380,6 +277,94 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     default:
       break;
   } // end SWITCH
+}
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType>
+void
+ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
+                                TimePolicyType,
+                                ConfigurationType,
+                                ControlMessageType,
+                                DataMessageType,
+                                SessionMessageType,
+                                SessionDataContainerType>::record (struct _navdata_t*& record_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::record"));
+
+  // sanity check(s)
+  ACE_ASSERT (buffer_);
+  ACE_ASSERT (record_in);
+
+  // frame the NavData message data
+  int result = -1;
+  unsigned int remaining_bytes = sizeof (struct _navdata_t);
+  unsigned int length = 0;
+  unsigned int trailing_bytes_total, trailing_bytes = 0;
+  ACE_Message_Block* message_block_p = buffer_;
+  ACE_Message_Block* message_block_2 = NULL;
+
+  length = buffer_->total_length ();
+  if (length > remaining_bytes)
+  {
+    trailing_bytes_total = length - remaining_bytes;
+
+    message_block_2 = buffer_;
+    for (;
+         message_block_2;
+         message_block_2 = message_block_2->cont ())
+    {
+      length = message_block_2->length ();
+      length = (length >= remaining_bytes ? remaining_bytes
+                                          : length);
+      remaining_bytes -= length;
+      if (!remaining_bytes)
+      {
+        trailing_bytes = message_block_2->length () - length;
+        break;
+      } // end IF
+    } // end FOR
+    ACE_ASSERT (trailing_bytes);
+
+    message_block_p = message_block_2->duplicate ();
+    if (!message_block_p)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to DataMessageType::duplicate(): \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+      return;
+    } // end IF
+    message_block_2->length (message_block_2->length () - trailing_bytes);
+    message_block_2->cont (NULL);
+    ACE_ASSERT (buffer_->total_length () == sizeof (struct _navdata_t));
+    message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
+    ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
+  } // end IF
+
+  result = inherited::put_next (buffer_, NULL);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Task_T::put_next(): \"%m\", returning\n"),
+                inherited::mod_->name ()));
+    // clean up
+    buffer_->release ();
+    buffer_ = NULL;
+
+    return;
+  } // end IF
+  buffer_ = NULL;
+
+  if (message_block_p)
+  {
+    buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
+    ACE_ASSERT (buffer_);
+  } // end IF
 }
 
 template <ACE_SYNCH_DECL,

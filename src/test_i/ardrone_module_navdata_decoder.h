@@ -28,9 +28,9 @@
 
 #include "stream_task_base_synch.h"
 
+#include "ardrone_common.h"
 #include "ardrone_types.h"
-
-#include "stream_dec_h264_nal_bisector.h"
+#include "ardrone_navdata_scanner.h"
 
 // forward declaration(s)
 class ACE_Message_Block;
@@ -57,7 +57,7 @@ class ARDrone_Module_NavDataDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  struct Stream_UserData>
- , public Common_IScanner
+ , public ARDrone_NavData_IParser
 {
  public:
   ARDrone_Module_NavDataDecoder_T ();
@@ -74,13 +74,30 @@ class ARDrone_Module_NavDataDecoder_T
   virtual void handleSessionMessage (SessionMessageType*&, // session message handle
                                      bool&);               // return value: pass message downstream ?
 
-  // implement Common_IScanner
+  // implement ARDrone_NavData_IParser
+  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->get ().NavDataMessage); };
+  inline virtual bool hasFinished () const { return true; };
+  virtual void record (struct _navdata_t*&); // record handle
+  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
+  inline virtual void dump_state () const {};
+  inline virtual void error (const yy::location&,
+                             const std::string& string_in) { error (string_in); };
+  inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
+
+  // *NOTE*: this is the C interface (not needed by C++ scanners)
+  inline virtual void debug (yyscan_t, bool) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual bool initialize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
+  inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
+  inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual void set (ARDrone_NavData_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+
   inline virtual ACE_Message_Block* buffer () { return buffer_; };
-  inline virtual bool debugScanner () const { return Stream_Decoder_H264_NAL_Bisector_get_debug (scannerState_); };
+  inline virtual bool debugScanner () const { return ARDrone_NavData_Scanner_get_debug (scannerState_); };
   inline virtual bool isBlocking () const { return true; };
   virtual void error (const std::string&);
-  inline virtual void offset (unsigned int offset_in) { Stream_Decoder_H264_NAL_Bisector_set_column (offset_in, scannerState_); };
-  inline virtual unsigned int offset () const { return Stream_Decoder_H264_NAL_Bisector_get_column (scannerState_); };
+  inline virtual void offset (unsigned int offset_in) { ARDrone_NavData_Scanner_set_column (offset_in, scannerState_); };
+  inline virtual unsigned int offset () const { return ARDrone_NavData_Scanner_get_column (scannerState_); };
   // *IMPORTANT NOTE*: when the parser detects a frame end, it inserts a new
   //                   buffer to the continuation and passes 'true'
   //                   --> separate the current frame from the next
@@ -108,7 +125,7 @@ class ARDrone_Module_NavDataDecoder_T
   void scan_end ();
 
   Stream_IAllocator*      allocator_;
-  ACE_Message_Block*      buffer_;
+  DataMessageType*        buffer_;
   bool                    isFirst_;
   yyscan_t                scannerState_;
   //std::string             scannerTables_;

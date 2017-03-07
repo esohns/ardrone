@@ -2,6 +2,7 @@
 #define ARDrone_MAVLink_Scanner_HEADER_H 1
 #define ARDrone_MAVLink_Scanner_IN_HEADER 1
 
+#line 2 "./../scripts/mavlink_scanner.l"
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 typedef void* yyscan_t;
@@ -274,16 +275,16 @@ typedef void* yyscan_t;
 
 
 
-///* For convenience, these vars (plus the bison vars far below)
-//   are macros in the reentrant scanner. */
-//#define yyin yyg->yyin_r
-//#define yyout yyg->yyout_r
-//#define yyextra yyg->yyextra_r
-//#define yyleng yyg->yyleng_r
-//#define yytext yyg->yytext_r
-//#define yylineno (YY_CURRENT_BUFFER_LVALUE->yy_bs_lineno)
-//#define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
-//#define yy_flex_debug yyg->yy_flex_debug_r
+/* For convenience, these vars (plus the bison vars far below)
+   are macros in the reentrant scanner. */
+#define yyin yyg->yyin_r
+#define yyout yyg->yyout_r
+#define yyextra yyg->yyextra_r
+#define yyleng yyg->yyleng_r
+#define yytext yyg->yytext_r
+#define yylineno (YY_CURRENT_BUFFER_LVALUE->yy_bs_lineno)
+#define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
+#define yy_flex_debug yyg->yy_flex_debug_r
 
 
 
@@ -383,7 +384,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-
+    
 
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
@@ -701,5 +702,6 @@ extern int ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner);
 
 
 
+#line 705 "ardrone_mavlink_scanner.h"
 #undef ARDrone_MAVLink_Scanner_IN_HEADER
 #endif /* ARDrone_MAVLink_Scanner_HEADER_H */

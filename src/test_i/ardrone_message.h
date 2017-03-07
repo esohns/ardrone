@@ -43,27 +43,130 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
-class ARDrone_Message
+class ARDrone_MAVLinkMessage
  : public Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                                   struct ARDrone_DirectShow_MessageData,
-#else
-                                   struct ARDrone_MessageData,
-#endif
+                                   struct ARDrone_MAVLinkMessageData,
                                    int>
- //: public Stream_DataMessageBase_T<ardrone_MessageType>
 {
   // enable access to specific private ctors
   friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                                  struct ARDrone_AllocatorConfiguration,
                                                  ARDrone_ControlMessage_t,
-                                                 ARDrone_Message,
+                                                 ARDrone_MAVLinkMessage,
                                                  ARDrone_SessionMessage>;
 
  public:
-  ARDrone_Message (unsigned int);
-  virtual ~ARDrone_Message ();
+  ARDrone_MAVLinkMessage (unsigned int);
+  virtual ~ARDrone_MAVLinkMessage ();
+
+  inline virtual int command () const { return 0; }; // return value: message type
+  static std::string CommandType2String (int);
+
+  // overrides from ACE_Message_Block
+  // *NOTE*: these use the allocator (if any)
+  // create a "shallow" copy that references the current block(s) of data
+  virtual ACE_Message_Block* duplicate (void) const;
+
+  virtual void dump_state (void) const;
+
+ protected:
+  // ctor to be used by clone() and derived classes
+  // *NOTE*: clone()ing and passing the new data block --> "deep" copy
+  // *NOTE*: fire-and-forget the first argument (i.e. does NOT increment the
+  //         data block reference count)
+  ARDrone_MAVLinkMessage (ACE_Data_Block*, // data block handle
+                          ACE_Allocator*,  // message allocator
+                          bool = true);    // increment running message counter ?
+
+  // copy ctor to be used by duplicate() and derived classes. Increments the
+  // reference count of the current data block --> "shallow" copy
+  ARDrone_MAVLinkMessage (const ARDrone_MAVLinkMessage&);
+
+ private:
+  typedef Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   struct ARDrone_MAVLinkMessageData,
+                                   int> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkMessage ())
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkMessage& operator= (const ARDrone_MAVLinkMessage&))
+};
+
+//////////////////////////////////////////
+
+class ARDrone_NavDataMessage
+ : public Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   struct ARDrone_NavDataMessageData,
+                                   int>
+{
+  // enable access to specific private ctors
+  friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                                 struct ARDrone_AllocatorConfiguration,
+                                                 ARDrone_ControlMessage_t,
+                                                 ARDrone_NavDataMessage,
+                                                 ARDrone_SessionMessage>;
+
+ public:
+  ARDrone_NavDataMessage (unsigned int);
+  virtual ~ARDrone_NavDataMessage ();
+
+  inline virtual int command () const { return 0; }; // return value: message type
+  static std::string CommandType2String (int);
+
+  // overrides from ACE_Message_Block
+  // *NOTE*: these use the allocator (if any)
+  // create a "shallow" copy that references the current block(s) of data
+  virtual ACE_Message_Block* duplicate (void) const;
+
+  virtual void dump_state (void) const;
+
+ protected:
+  // ctor to be used by clone() and derived classes
+  // *NOTE*: clone()ing and passing the new data block --> "deep" copy
+  // *NOTE*: fire-and-forget the first argument (i.e. does NOT increment the
+  //         data block reference count)
+  ARDrone_NavDataMessage (ACE_Data_Block*, // data block handle
+                          ACE_Allocator*,  // message allocator
+                          bool = true);    // increment running message counter ?
+
+  // copy ctor to be used by duplicate() and derived classes. Increments the
+  // reference count of the current data block --> "shallow" copy
+  ARDrone_NavDataMessage (const ARDrone_NavDataMessage&);
+
+ private:
+  typedef Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   struct ARDrone_NavDataMessageData,
+                                   int> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataMessage ())
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataMessage& operator= (const ARDrone_NavDataMessage&))
+};
+
+//////////////////////////////////////////
+
+class ARDrone_LiveVideoMessage
+ : public Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                                   struct ARDrone_DirectShow_LiveVideoMessageData,
+#else
+                                   struct ARDrone_LiveVideoMessageData,
+#endif
+                                   int>
+{
+  // enable access to specific private ctors
+  friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                                 struct ARDrone_AllocatorConfiguration,
+                                                 ARDrone_ControlMessage_t,
+                                                 ARDrone_LiveVideoMessage,
+                                                 ARDrone_SessionMessage>;
+
+ public:
+  ARDrone_LiveVideoMessage (unsigned int);
+  virtual ~ARDrone_LiveVideoMessage ();
 
   inline virtual int command () const { return 0; }; // return value: message type
   static std::string CommandType2String (int);
@@ -82,26 +185,26 @@ class ARDrone_Message
   // *NOTE*: clone()ing and passing the new data block --> "deep" copy
   // *NOTE*: fire-and-forget the first argument (i.e. does NOT increment the
   //         data block reference count)
-  ARDrone_Message (ACE_Data_Block*, // data block handle
-                   ACE_Allocator*,  // message allocator
-                   bool = true);    // increment running message counter ?
+  ARDrone_LiveVideoMessage (ACE_Data_Block*, // data block handle
+                            ACE_Allocator*,  // message allocator
+                            bool = true);    // increment running message counter ?
 
   // copy ctor to be used by duplicate() and derived classes. Increments the
   // reference count of the current data block --> "shallow" copy
-  ARDrone_Message (const ARDrone_Message&);
+  ARDrone_LiveVideoMessage (const ARDrone_LiveVideoMessage&);
 
  private:
   typedef Stream_DataMessageBase_T<struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                                   struct ARDrone_DirectShow_MessageData,
+                                   struct ARDrone_DirectShow_LiveVideoMessageData,
 #else
-                                   struct ARDrone_MessageData,
+                                   struct ARDrone_LiveVideoMessageData,
 #endif
                                    int> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Message ())
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Message& operator= (const ARDrone_Message&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoMessage ())
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoMessage& operator= (const ARDrone_LiveVideoMessage&))
 };
 
 #endif

@@ -1,34 +1,34 @@
 %top{
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
+#ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+#define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 typedef void* yyscan_t;
 #endif
 
-#define YY_DECL                                  \
-int                                              \
-ARDrone_NavData_Scanner_lex (yyscan_t yyscanner)
+class ARDrone_NavData_IParser;
+
+#define YY_DECL                                                   \
+int                                                               \
+ARDrone_NavData_Scanner_lex (yyscan_t yyscanner,                  \
+                             ARDrone_NavData_IParser* iparser_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
-class Common_IScanner;
-
 void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
-//#define FLEXINT_H
-
 #define YY_NO_UNISTD_H
+
+//#define FLEXINT_H
 }
 
 %{
-#include <regex>
+//#include <regex>
 
-#include <ace/ace_wchar.h>
+//#include <ace/ace_wchar.h>
 #include <ace/Log_Msg.h>
-#include <ace/Message_Block.h>
-#include <ace/OS_Memory.h>
+//#include <ace/Message_Block.h>
+//#include <ace/OS_Memory.h>
 
-#include "common_iscanner.h"
-
+#include "ardrone_common.h"
 #include "ardrone_macros.h"
 %}
 
@@ -40,37 +40,117 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
            --> use --noline and (manually) remove '#line's introduced by %top */
 /* %option ansi-definitions ansi-prototypes */
 /* *IMPORTANT NOTE*: 'read' requires 'unistd'(.h) */
-%option reentrant pointer prefix="ARDrone_NavData_Scanner_" nomain nounistd
+%option reentrant pointer prefix="ARDrone_NavData_Scanner_" nomain
 /* *TODO*: find out why 'read' does not compile (on Linux, flex 2.5.39) */
 %option align read full
 %option backup debug perf-report perf-report verbose warn
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="Common_IScanner*"
-%option noinput nounput noyymore
+%option extra-type="ARDrone_NavData_IParser*"
+%option nounistd nounput noyymore
 
-CHAR                   [\x00-\xFF]
-START_CODE             \x00\x00\x01
-NAL_UNIT_DIVIDER       \x00{START_CODE}
+OCTET                  [\x00-\xFF]
+HEADER                 \x55\x66\x77\x88
 
+%s                     state
+%s                     sequence
+%s                     vision
+%s                     option_id
+%s                     option_size
+%s                     option_data
 %s                     end_of_frame
 
 %% /* end of definitions */
 
 %{
-unsigned int offset = 0;
+  // sanity check(s)
+  ACE_ASSERT (iparser_in);
+
+  struct _navdata_t& message_r = iparser_in->current ();
+
+  std::stringstream converter;
+  struct _navdata_option_t option;
 %}
 
 <INITIAL>{
-{NAL_UNIT_DIVIDER}     {
-                         /* undo the effects of YY_DO_BEFORE_ACTION */
-                         *yy_cp = yyg->yy_hold_char;
-                         return offset + 1; }
+{HEADER} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+           converter.clear ();
+           converter << yytext;
+           converter >> message_r.header;
+
+           BEGIN (state);
+         }
 } // end <INITIAL>
+<state>{
+{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             converter >> message_r.ardrone_state;
+
+             BEGIN (sequence);
+           }
+} // end <state>
+<sequence>{
+{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             converter >> message_r.sequence;
+
+             BEGIN (vision);
+           }
+} // end <sequence>
+<vision>{
+{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             converter >> message_r.vision_defined;
+
+             ACE_OS::memset (&option, 0, sizeof (struct _navdata_option_t));
+             BEGIN (option_id);
+           }
+} // end <vision>
+<option_id>{
+{OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             converter >> option.tag;
+
+             BEGIN (option_size);
+           }
+} // end <option_id>
+<option_size>{
+{OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             converter >> option.size;
+
+             BEGIN (option_data);
+           }
+} // end <option_size>
+<option_data>{
+{OCTET} { yyless (0);
+
+          // skip ahead message_r.len bytes
+          /* undo the effects of YY_DO_BEFORE_ACTION */
+          *yy_cp = yyg->yy_hold_char;
+
+          char c = 0;
+          for (unsigned int i = 0;
+               i < option.size;
+               ++i)
+            c = yyinput (yyscanner);
+          ACE_UNUSED_ARG (c);
+
+          ACE_Message_Block* message_block_p = iparser_in->buffer ();
+
+
+          BEGIN (option_id);
+        }
+} // end <option_data>
 <<EOF>>                { return -1; }
-<*>{CHAR}              { /* *TODO*: use (?s:.) ? */
-                         ++offset; }
+<*>{OCTET}             { /* *TODO*: use (?s:.) ? */
+                         yyterminate (); }
 
 %% /* end of rules */
 
@@ -84,7 +164,7 @@ ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_NavData_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  Common_IScanner* iscanner_p =
+  ARDrone_NavData_IParser* iscanner_p =
     ARDrone_NavData_Scanner_get_extra (yyscanner);
 
   // sanity check(s)
