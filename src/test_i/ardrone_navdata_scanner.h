@@ -453,7 +453,7 @@ void ARDrone_NavData_Scanner_free ( void * , yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define state 1
-#define sequence 2
+#define _sequence 2
 #define vision 3
 #define option_id 4
 #define option_size 5
@@ -697,7 +697,6 @@ extern int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner);
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
-
 
 #undef ARDrone_NavData_Scanner_IN_HEADER
 #endif /* ARDrone_NavData_Scanner_HEADER_H */

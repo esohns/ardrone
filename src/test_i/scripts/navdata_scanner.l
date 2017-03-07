@@ -54,7 +54,7 @@ OCTET                  [\x00-\xFF]
 HEADER                 \x55\x66\x77\x88
 
 %s                     state
-%s                     sequence
+%s                     _sequence
 %s                     vision
 %s                     option_id
 %s                     option_size
@@ -77,7 +77,9 @@ HEADER                 \x55\x66\x77\x88
 {HEADER} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
            converter.clear ();
            converter << yytext;
-           converter >> message_r.header;
+           uint32_t message_header;
+           converter >> message_header;
+           message_r.header = message_header;
 
            BEGIN (state);
          }
@@ -86,16 +88,20 @@ HEADER                 \x55\x66\x77\x88
 {OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.ardrone_state;
+             uint32_t ardrone_state;
+             converter >> ardrone_state;
+             message_r.ardrone_state = ardrone_state;
 
-             BEGIN (sequence);
+             BEGIN (_sequence);
            }
 } // end <state>
-<sequence>{
+<_sequence>{
 {OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.sequence;
+             uint32_t sequence;
+             converter >> sequence;
+             message_r.sequence = sequence;
 
              BEGIN (vision);
            }
@@ -104,7 +110,9 @@ HEADER                 \x55\x66\x77\x88
 {OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.vision_defined;
+             uint32_t vision_flags;
+             converter >> vision_flags;
+             message_r.vision_defined = vision_flags;
 
              ACE_OS::memset (&option, 0, sizeof (struct _navdata_option_t));
              BEGIN (option_id);

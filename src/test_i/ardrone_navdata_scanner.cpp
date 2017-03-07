@@ -1900,7 +1900,7 @@ static const yy_state_type yy_NUL_trans[40] =
 
 static const flex_int32_t yy_rule_linenum[9] =
     {   0,
-       78,   87,   96,  105,  115,  124,  133,  153
+       78,   89,  100,  111,  123,  132,  141,  161
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1926,7 +1926,6 @@ static const flex_int32_t yy_rule_linenum[9] =
            --> use --noline and (manually) remove '#line's introduced by %top */
 /* %option ansi-definitions ansi-prototypes */
 /* *IMPORTANT NOTE*: 'read' requires 'unistd'(.h) */
-#define YY_NO_UNISTD_H 1
 /* *TODO*: find out why 'read' does not compile (on Linux, flex 2.5.39) */
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
@@ -1944,7 +1943,7 @@ static const flex_int32_t yy_rule_linenum[9] =
 
 #define INITIAL 0
 #define state 1
-#define sequence 2
+#define _sequence 2
 #define vision 3
 #define option_id 4
 #define option_size 5
@@ -2445,7 +2444,9 @@ YY_RULE_SETUP
 { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
            converter.clear ();
            converter << yytext;
-           converter >> message_r.header;
+           uint32_t message_header;
+           converter >> message_header;
+           message_r.header = message_header;
 
            BEGIN (state);
          }
@@ -2458,9 +2459,11 @@ YY_RULE_SETUP
 { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.ardrone_state;
+             uint32_t ardrone_state;
+             converter >> ardrone_state;
+             message_r.ardrone_state = ardrone_state;
 
-             BEGIN (sequence);
+             BEGIN (_sequence);
            }
   YY_BREAK
 // end <state>
@@ -2471,7 +2474,9 @@ YY_RULE_SETUP
 { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.sequence;
+             uint32_t sequence;
+             converter >> sequence;
+             message_r.sequence = sequence;
 
              BEGIN (vision);
            }
@@ -2484,7 +2489,9 @@ YY_RULE_SETUP
 { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> message_r.vision_defined;
+             uint32_t vision_flags;
+             converter >> vision_flags;
+             message_r.vision_defined = vision_flags;
 
              ACE_OS::memset (&option, 0, sizeof (struct _navdata_option_t));
              BEGIN (option_id);
@@ -2543,7 +2550,7 @@ YY_RULE_SETUP
 // end <option_data>
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(state):
-case YY_STATE_EOF(sequence):
+case YY_STATE_EOF(_sequence):
 case YY_STATE_EOF(vision):
 case YY_STATE_EOF(option_id):
 case YY_STATE_EOF(option_size):

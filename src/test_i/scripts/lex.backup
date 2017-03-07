@@ -1,0 +1,49 @@
+State #26 is non-accepting -
+ associated rule line numbers:
+	78
+ out-transitions: [ w ]
+ jam-transitions: EOF [ \000-v  x-\377 ]
+
+State #27 is non-accepting -
+ associated rule line numbers:
+	89
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+State #28 is non-accepting -
+ associated rule line numbers:
+	100
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+State #29 is non-accepting -
+ associated rule line numbers:
+	111
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+State #32 is non-accepting -
+ associated rule line numbers:
+	78
+ out-transitions: [ \210 ]
+ jam-transitions: EOF [ \000-\207  \211-\377 ]
+
+State #33 is non-accepting -
+ associated rule line numbers:
+	89
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+State #34 is non-accepting -
+ associated rule line numbers:
+	100
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+State #35 is non-accepting -
+ associated rule line numbers:
+	111
+ out-transitions: [ \000-\377 ]
+ jam-transitions: EOF []
+
+8 backing up (non-accepting) states.
