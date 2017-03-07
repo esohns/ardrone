@@ -1609,7 +1609,6 @@ static const flex_int32_t yy_rule_linenum[10] =
            --> use --noline and (manually) remove '#line's introduced by %top */
 /* %option ansi-definitions ansi-prototypes */
 /* *IMPORTANT NOTE*: 'read' requires 'unistd'(.h) */
-#define YY_NO_UNISTD_H 1
 /* *TODO*: find out why 'read' does not compile (on Linux, flex 2.5.39) */
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
