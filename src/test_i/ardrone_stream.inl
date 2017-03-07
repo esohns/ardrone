@@ -36,21 +36,21 @@
 #include "ardrone_stream_common.h"
 
 template <typename SourceModuleType>
-ARDrone_VideoStream_T<SourceModuleType>::ARDrone_VideoStream_T ()
+ARDrone_LiveVideoStream_T<SourceModuleType>::ARDrone_LiveVideoStream_T ()
  : inherited (ACE_TEXT_ALWAYS_CHAR ("LiveVideoStream"))
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
  , graphBuilder_ (NULL)
  , mediaSession_ (NULL)
 #endif
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ARDrone_VideoStream_T"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::ARDrone_LiveVideoStream_T"));
 
 }
 
 template <typename SourceModuleType>
-ARDrone_VideoStream_T<SourceModuleType>::~ARDrone_VideoStream_T ()
+ARDrone_LiveVideoStream_T<SourceModuleType>::~ARDrone_LiveVideoStream_T ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::~ARDrone_VideoStream_T"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::~ARDrone_LiveVideoStream_T"));
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   HRESULT result = E_FAIL;
@@ -76,10 +76,10 @@ ARDrone_VideoStream_T<SourceModuleType>::~ARDrone_VideoStream_T ()
 
 template <typename SourceModuleType>
 bool
-ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
+ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                                                bool& delete_out)
 {
-  STREAM_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::load"));
+  STREAM_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::load"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::configuration_);
@@ -87,9 +87,9 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   Stream_Module_t* module_p = NULL;
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-                                                    NULL,
-                                                    false),
+                  ARDrone_Module_LiveVideoFileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+                                                             NULL,
+                                                             false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -132,14 +132,14 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
+                  ARDrone_Module_LiveVideoStatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                                                                  NULL,
+                                                                  false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  SourceModuleType (ACE_TEXT_ALWAYS_CHAR ("NetCamSource"),
+                  SourceModuleType (ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource"),
                                     NULL,
                                     false),
                   false);
@@ -152,11 +152,11 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
 
 template <typename SourceModuleType>
 bool
-ARDrone_VideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguration& configuration_in,
-                                                     bool setupPipeline_in,
-                                                     bool resetSessionData_in)
+ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamConfiguration& configuration_in,
+                                                         bool setupPipeline_in,
+                                                         bool resetSessionData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::initialize"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::initialize"));
 
   if (inherited::isInitialized_)
   {
@@ -875,9 +875,9 @@ error:
 
 template <typename SourceModuleType>
 void
-ARDrone_VideoStream_T<SourceModuleType>::ping ()
+ARDrone_LiveVideoStream_T<SourceModuleType>::ping ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ping"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::ping"));
 
 //  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
 //  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
@@ -899,9 +899,9 @@ ARDrone_VideoStream_T<SourceModuleType>::ping ()
 
 template <typename SourceModuleType>
 bool
-ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_LiveVideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::collect"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::collect"));
 
   int result = -1;
   ARDrone_SessionData& session_data_r =
@@ -915,12 +915,12 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& da
                 ACE_TEXT ("StatisticReport")));
     return false;
   } // end IF
-  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (module_p->writer ());
+  ARDrone_Module_Statistic_LiveVideoWriterTask_t* statistic_impl_p =
+    dynamic_cast<ARDrone_Module_Statistic_LiveVideoWriterTask_t*> (module_p->writer ());
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_LiveVideoWriterTask_t> failed, aborting\n")));
     return false;
   } // end IF
 
@@ -965,9 +965,9 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& da
 
 template <typename SourceModuleType>
 void
-ARDrone_VideoStream_T<SourceModuleType>::report () const
+ARDrone_LiveVideoStream_T<SourceModuleType>::report () const
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::report"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::report"));
 
   ACE_ASSERT (inherited::state_.currentSessionData);
 

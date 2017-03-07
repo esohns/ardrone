@@ -59,7 +59,9 @@ extern "C"
 //#include "ardrone_stream.h"
 
 // forward declarations
-class ARDrone_Message;
+class ARDrone_MAVLinkMessage;
+class ARDrone_NavDataMessage;
+class ARDrone_LiveVideoMessage;
 class ARDrone_SessionMessage;
 
 struct ARDrone_UserData;
@@ -201,15 +203,25 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
 typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                           struct ARDrone_AllocatorConfiguration,
                                           ARDrone_ControlMessage_t,
-                                          ARDrone_Message,
-                                          ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
+                                          ARDrone_MAVLinkMessage,
+                                          ARDrone_SessionMessage> ARDrone_MAVLinkMessageAllocator_t;
+typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                          struct ARDrone_AllocatorConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_NavDataMessage,
+                                          ARDrone_SessionMessage> ARDrone_NavDataMessageAllocator_t;
+typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                          struct ARDrone_AllocatorConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_LiveVideoMessage,
+                                          ARDrone_SessionMessage> ARDrone_LiveVideoMessageAllocator_t;
 
 typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
 
 typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     struct ARDrone_SessionData,
                                     enum Stream_SessionMessageType,
-                                    ARDrone_Message,
+                                    ACE_Message_Block,
                                     ARDrone_SessionMessage> ARDrone_Notification_t;
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
@@ -231,21 +243,21 @@ struct ARDrone_StreamState;
 struct ARDrone_StreamConfiguration;
 struct ARDrone_ModuleHandlerConfiguration;
 struct ARDrone_SocketHandlerConfiguration;
-typedef Stream_Base_T<ACE_MT_SYNCH,
-                      Common_TimePolicy_t,
-                      enum Stream_ControlType,
-                      enum Stream_SessionMessageType,
-                      enum Stream_StateMachine_ControlState,
-                      struct ARDrone_StreamState,
-                      struct ARDrone_StreamConfiguration,
-                      ARDrone_RuntimeStatistic_t,
-                      struct Stream_ModuleConfiguration,
-                      struct ARDrone_ModuleHandlerConfiguration,
-                      struct ARDrone_SessionData,
-                      ARDrone_StreamSessionData_t,
-                      ARDrone_ControlMessage_t,
-                      ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_StreamBase_t;
+//typedef Stream_Base_T<ACE_MT_SYNCH,
+//                      Common_TimePolicy_t,
+//                      enum Stream_ControlType,
+//                      enum Stream_SessionMessageType,
+//                      enum Stream_StateMachine_ControlState,
+//                      struct ARDrone_StreamState,
+//                      struct ARDrone_StreamConfiguration,
+//                      ARDrone_RuntimeStatistic_t,
+//                      struct Stream_ModuleConfiguration,
+//                      struct ARDrone_ModuleHandlerConfiguration,
+//                      struct ARDrone_SessionData,
+//                      ARDrone_StreamSessionData_t,
+//                      ARDrone_ControlMessage_t,
+//                      ARDrone_LiveVideoMessage,
+//                      ARDrone_SessionMessage> ARDrone_LiveVideoStreamBase_t;
 struct ARDrone_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {

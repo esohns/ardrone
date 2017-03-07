@@ -51,23 +51,23 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   Stream_Module_t* module_p = NULL;
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-                                                    NULL,
-                                                    false),
+                  ARDrone_Module_NavDataFileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+                                                           NULL,
+                                                           false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
-                                              NULL,
-                                              false),
+                  ARDrone_Module_NavDataDump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
+                                                     NULL,
+                                                     false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AsynchUDPNetTarget_Module (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
-                                                            NULL,
-                                                            false),
+                  ARDrone_Module_AsynchNavDataTarget_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
+                                                             NULL,
+                                                             false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -79,16 +79,16 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
+                  ARDrone_Module_NavDataStatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                                                                NULL,
+                                                                false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AsynchUDPNetSource_Module (ACE_TEXT_ALWAYS_CHAR ("NetNavDataSource"),
-                                                            NULL,
-                                                            false),
+                  ARDrone_Module_AsynchNavDataSource_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
+                                                             NULL,
+                                                             false),
                   false);
   modules_out.push_back (module_p);
 
@@ -139,21 +139,21 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NetNavDataSource")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource")));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("NetNavDataSource")));
+                ACE_TEXT ("NavDataSource")));
     return false;
   } // end IF
 
-  ARDrone_Module_AsynchUDPNetSource* sourceWriter_impl_p =
-    dynamic_cast<ARDrone_Module_AsynchUDPNetSource*> (module_p->writer ());
+  ARDrone_Module_AsynchNavDataSource* sourceWriter_impl_p =
+    dynamic_cast<ARDrone_Module_AsynchNavDataSource*> (module_p->writer ());
   if (!sourceWriter_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchUDPNetSource*> failed, aborting\n")));
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchNavDataSource> failed, aborting\n")));
     return false;
   } // end IF
 
@@ -719,12 +719,12 @@ ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
                 ACE_TEXT ("StatisticReport")));
     return false;
   } // end IF
-  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (module_p->writer ());
+  ARDrone_Module_Statistic_NavDataWriterTask_t* statistic_impl_p =
+    dynamic_cast<ARDrone_Module_Statistic_NavDataWriterTask_t*> (module_p->writer ());
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_NavDataWriterTask_t> failed, aborting\n")));
     return false;
   } // end IF
 
@@ -811,16 +811,16 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
   Stream_Module_t* module_p = NULL;
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-                                                    NULL,
-                                                    false),
+                  ARDrone_Module_MAVLinkFileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+                                                           NULL,
+                                                           false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
-                                              NULL,
-                                              false),
+                  ARDrone_Module_MAVLinkDump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
+                                                     NULL,
+                                                     false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -832,16 +832,16 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
+                  ARDrone_Module_MAVLinkStatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                                                                NULL,
+                                                                false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AsynchUDPNetSource_Module (ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkSource"),
-                                                            NULL,
-                                                            false),
+                  ARDrone_Module_AsynchMAVLinkSource_Module (ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkSource"),
+                                                             NULL,
+                                                             false),
                   false);
   modules_out.push_back (module_p);
 
@@ -909,21 +909,21 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkSource")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("NetMAVLinkSource")));
+                ACE_TEXT ("MAVLinkSource")));
     return false;
   } // end IF
 
-  ARDrone_Module_AsynchUDPNetSource* sourceWriter_impl_p =
-    dynamic_cast<ARDrone_Module_AsynchUDPNetSource*> (module_p->writer ());
+  ARDrone_Module_AsynchMAVLinkSource* sourceWriter_impl_p =
+    dynamic_cast<ARDrone_Module_AsynchMAVLinkSource*> (module_p->writer ());
   if (!sourceWriter_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchUDPNetSource*> failed, aborting\n")));
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchMAVLinkSource> failed, aborting\n")));
     return false;
   } // end IF
 
@@ -1489,12 +1489,12 @@ ARDrone_MAVLinkStream::collect (ARDrone_RuntimeStatistic_t& data_out)
                 ACE_TEXT ("StatisticReport")));
     return false;
   } // end IF
-  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (module_p->writer ());
+  ARDrone_Module_Statistic_MAVLinkWriterTask_t* statistic_impl_p =
+    dynamic_cast<ARDrone_Module_Statistic_MAVLinkWriterTask_t*> (module_p->writer ());
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_MAVLinkWriterTask_t> failed, aborting\n")));
     return false;
   } // end IF
 

@@ -1,3 +1,4 @@
+#line 2 "./../scripts/mavlink_scanner.l"
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 typedef void* yyscan_t;
@@ -372,7 +373,7 @@ typedef size_t yy_size_t;
     
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE ARDrone_MAVLink_Scanner_lex.
+     *       existing scanners that call yyless() from OUTSIDE ARDrone_MAVLink_Scanner_lex. 
      *       One obvious solution it to make yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-yylineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
@@ -454,7 +455,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-
+    
 
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
@@ -2077,7 +2078,7 @@ yy_find_action:
 			int yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
-					
+					   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -2670,7 +2671,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 /* %% [19.0] update BOL and yylineno */
 	if ( c == '\n' )
-		
+		   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -2997,10 +2998,10 @@ static void ARDrone_MAVLink_Scanner_ensure_buffer_stack (yyscan_t yyscanner)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in ARDrone_MAVLink_Scanner_ensure_buffer_stack()" );
-
-
+								  
+		
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-
+				
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -3035,7 +3036,7 @@ static void ARDrone_MAVLink_Scanner_ensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object.
+ * @return the newly allocated buffer state object. 
  */
 YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
@@ -3196,7 +3197,7 @@ YY_EXTRA_TYPE ARDrone_MAVLink_Scanner_get_extra  (yyscan_t yyscanner)
 int ARDrone_MAVLink_Scanner_get_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
     
         if (! YY_CURRENT_BUFFER)
             return 0;
@@ -3213,7 +3214,7 @@ int ARDrone_MAVLink_Scanner_get_lineno  (yyscan_t yyscanner)
 int ARDrone_MAVLink_Scanner_get_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
     
         if (! YY_CURRENT_BUFFER)
             return 0;
@@ -3411,20 +3412,20 @@ int ARDrone_MAVLink_Scanner_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_
         errno = EINVAL;
         return 1;
     }
-
+	
     *ptr_yy_globals = (yyscan_t) ARDrone_MAVLink_Scanner_alloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-
+	
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-
+    
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-
+    
     ARDrone_MAVLink_Scanner_set_extra (yy_user_defined, *ptr_yy_globals);
-
+    
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -3605,7 +3606,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_MAVLink_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  Common_IScanner* iscanner_p =
+  ARDrone_MAVLink_IParser* iscanner_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
 
   // sanity check(s)

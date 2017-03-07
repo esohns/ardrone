@@ -10,6 +10,9 @@
 #include <windows.h>
 #endif
 
+//#define min
+//#define max
+
 // System Library Header Files
 #include <ace/OS.h>
 #include <ace/ACE.h>

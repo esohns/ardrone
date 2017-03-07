@@ -42,7 +42,7 @@
 #include "ardrone_stream_common.h"
 
 template <typename SourceModuleType>
-class ARDrone_VideoStream_T
+class ARDrone_LiveVideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         enum Stream_ControlType,
@@ -56,12 +56,12 @@ class ARDrone_VideoStream_T
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_LiveVideoMessage,
                         ARDrone_SessionMessage>
 {
  public:
-  ARDrone_VideoStream_T ();
-  virtual ~ARDrone_VideoStream_T ();
+  ARDrone_LiveVideoStream_T ();
+  virtual ~ARDrone_LiveVideoStream_T ();
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -91,11 +91,11 @@ class ARDrone_VideoStream_T
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_LiveVideoMessage,
                         ARDrone_SessionMessage> inherited;
 
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T (const ARDrone_VideoStream_T&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T& operator= (const ARDrone_VideoStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoStream_T (const ARDrone_LiveVideoStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoStream_T& operator= (const ARDrone_LiveVideoStream_T&))
 
   // *TODO*: re-consider this API
   void ping ();
@@ -106,8 +106,8 @@ class ARDrone_VideoStream_T
 #endif
 };
 
-//typedef ARDrone_VideoStream_T<ARDrone_Module_NetSource_Module> ARDrone_Stream_t;
-typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchNetSource_Module> ARDrone_AsynchStream_t;
+//typedef ARDrone_LiveVideoStream_T<ARDrone_Module_NetSource_Module> ARDrone_LiveVideoStream_t;
+typedef ARDrone_LiveVideoStream_T<ARDrone_Module_AsynchLiveVideoSource_Module> ARDrone_AsynchLiveVideoStream_t;
 
 //////////////////////////////////////////
 
@@ -125,12 +125,12 @@ class ARDrone_NavDataStream
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_NavDataMessage,
                         ARDrone_SessionMessage>
  , public Stream_SessionBase_T<Stream_SessionId_t,
                                struct ARDrone_SessionData,
                                enum Stream_SessionMessageType,
-                               ARDrone_Message,
+                               ARDrone_NavDataMessage,
                                ARDrone_SessionMessage>
 {
  public:
@@ -165,12 +165,12 @@ class ARDrone_NavDataStream
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_NavDataMessage,
                         ARDrone_SessionMessage> inherited;
   typedef Stream_SessionBase_T<Stream_SessionId_t,
                                struct ARDrone_SessionData,
                                enum Stream_SessionMessageType,
-                               ARDrone_Message,
+                               ARDrone_NavDataMessage,
                                ARDrone_SessionMessage> inherited2;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
@@ -196,7 +196,7 @@ class ARDrone_MAVLinkStream
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_MAVLinkMessage,
                         ARDrone_SessionMessage>
 {
  public:
@@ -231,7 +231,7 @@ class ARDrone_MAVLinkStream
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
-                        ARDrone_Message,
+                        ARDrone_MAVLinkMessage,
                         ARDrone_SessionMessage> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream (const ARDrone_MAVLinkStream&))

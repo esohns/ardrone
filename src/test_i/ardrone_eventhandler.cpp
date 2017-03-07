@@ -68,22 +68,50 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
       return;
     } // end IF
     GtkCBData_->eventSourceIds.insert (event_source_id);
-
-    GtkCBData_->eventStack.push_back (ARDRONE_EVENT_CONNECT);
   } // end lock scope
 }
 
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const Stream_SessionMessageType& sessionMessage_in)
+                              const enum Stream_SessionMessageType& sessionMessage_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
 }
 
+//void
+//ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
+//                              const ARDrone_MAVLinkMessage& message_in)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
+
+//  // sanity check(s)
+//  ACE_ASSERT (GtkCBData_);
+//  //ACE_ASSERT (GtkCBData_->progressData);
+
+//  ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+
+//  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
+//  GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
+//}
+//void
+//ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
+//                              const ARDrone_NavDataMessage& message_in)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
+
+//  // sanity check(s)
+//  ACE_ASSERT (GtkCBData_);
+//  //ACE_ASSERT (GtkCBData_->progressData);
+
+//  ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+
+//  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
+//  GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
+//}
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const ARDrone_Message& message_in)
+                              const ACE_Message_Block& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
@@ -96,6 +124,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
   GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
   guint event_source_id = g_idle_add (idle_update_video_display_cb,
                                       GtkCBData_);
   if (event_source_id == 0)
@@ -104,6 +134,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                 ACE_TEXT ("failed to g_idle_add(idle_update_video_display_cb): \"%m\", returning\n")));
     return;
   } // end IF
+#endif
 }
 
 void
@@ -122,13 +153,13 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   enum ARDrone_Event event = ARDRONE_EVENT_INVALID;
   switch (message_in.type ())
   {
-    case STREAM_SESSION_MESSAGE_ABORT:
+    case STREAM_SESSION_MESSAGE_CONNECT:
+      event = ARDRONE_EVENT_CONNECT; break;
     case STREAM_SESSION_MESSAGE_DISCONNECT:
+      event = ARDRONE_EVENT_DISCONNECT; break;
+    case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
-    {
-      event = ARDRONE_EVENT_SESSION_MESSAGE;
-      break;
-    }
+      event = ARDRONE_EVENT_SESSION_MESSAGE; break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
       const ARDrone_StreamSessionData_t& session_data_container_r =

@@ -28,49 +28,63 @@
 
 #include <mavlink.h>
 
+#include <navdata_common.h>
+
 #include <ace/config-lite.h>
 
 #include "stream_data_base.h"
 
 #include "net_iparser.h"
 
-struct ARDrone_MessageData
+struct ARDrone_MAVLinkMessageData
 {
-  inline ARDrone_MessageData ()
+  inline ARDrone_MAVLinkMessageData ()
    : MAVLinkMessage ()
   {};
 
   struct __mavlink_message MAVLinkMessage;
 };
-typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
+typedef Stream_DataBase_T<struct ARDrone_MAVLinkMessageData> ARDrone_MAVLinkMessageData_t;
+struct ARDrone_NavDataMessageData
+{
+  inline ARDrone_NavDataMessageData ()
+   : NavDataMessage ()
+  {};
+
+  struct _navdata_t NavDataMessage;
+};
+typedef Stream_DataBase_T<struct ARDrone_NavDataMessageData> ARDrone_NavDataMessageData_t;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct ARDrone_DirectShow_MessageData
- : ARDrone_MessageData
+struct ARDrone_DirectShow_LiveVideoMessageData
 {
-  inline ARDrone_DirectShow_MessageData ()
-   : ARDrone_MessageData ()
-   , sample (NULL)
+  inline ARDrone_DirectShow_LiveVideoMessageData ()
+   : sample (NULL)
    , sampleTime (0)
   {};
 
   IMediaSample* sample;
   double        sampleTime;
 };
-typedef Stream_DataBase_T<struct ARDrone_DirectShow_MessageData> ARDrone_DirectShow_MessageData_t;
-struct ARDrone_MediaFoundation_MessageData
- : ARDrone_MessageData
+typedef Stream_DataBase_T<struct ARDrone_DirectShow_LiveVideoMessageData> ARDrone_DirectShow_LiveVideoMessageData_t;
+struct ARDrone_MediaFoundation_LiveVideoMessageData
 {
-  inline ARDrone_MediaFoundation_MessageData ()
-   : ARDrone_MessageData ()
-   , sample (NULL)
+  inline ARDrone_MediaFoundation_LiveVideoMessageData ()
+   : sample (NULL)
    , sampleTime (0)
   {};
 
   IMFSample* sample;
   LONGLONG   sampleTime;
 };
-typedef Stream_DataBase_T<struct ARDrone_MediaFoundation_MessageData> ARDrone_MediaFoundation_MessageData_t;
+typedef Stream_DataBase_T<struct ARDrone_MediaFoundation_LiveVideoMessageData> ARDrone_MediaFoundation_LiveVideoMessageData_t;
+#else
+struct ARDrone_LiveVideoMessageData
+{
+  inline ARDrone_LiveVideoMessageData ()
+  {};
+};
+typedef Stream_DataBase_T<struct ARDrone_LiveVideoMessageData> ARDrone_LiveVideoMessageData_t;
 #endif
 
 class ARDrone_MAVLink_IParser
@@ -86,10 +100,21 @@ class ARDrone_MAVLink_IParser
   using IPARSER_T::error;
 
   inline virtual ~ARDrone_MAVLink_IParser () {};
+};
 
-  //////////////////////////////////////////
-  //// callbacks
-  //virtual void encoding (const std::string&) = 0; // encoding
+class ARDrone_NavData_IParser
+ : public Net_IRecordParser_T<struct Common_ParserConfiguration,
+                              struct _navdata_t>
+ , public Net_IScanner_T<ARDrone_NavData_IParser>
+{
+ public:
+  // convenient types
+  typedef Net_IRecordParser_T<struct Common_ParserConfiguration,
+                              struct _navdata_t> IPARSER_T;
+
+  using IPARSER_T::error;
+
+  inline virtual ~ARDrone_NavData_IParser () {};
 };
 
 //////////////////////////////////////////

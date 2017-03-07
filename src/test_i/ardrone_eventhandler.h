@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef ardrone_EVENTHANDLER_H
-#define ardrone_EVENTHANDLER_H
+#ifndef ARDRONE_EVENTHANDLER_H
+#define ARDRONE_EVENTHANDLER_H
 
 #include <ace/Global_Macros.h>
 
@@ -46,17 +46,15 @@ class ARDrone_EventHandler
   // implement Stream_ISessionDataNotify_T
   virtual void start (Stream_SessionId_t,          // session id
                       const ARDrone_SessionData&); // session data
-  virtual void notify (Stream_SessionId_t,                // session id
-                       const Stream_SessionMessageType&); // event (state/status change, ...)
-  virtual void notify (Stream_SessionId_t,      // session id
-                       const ARDrone_Message&); // data
+  virtual void notify (Stream_SessionId_t,                     // session id
+                       const enum Stream_SessionMessageType&); // event (state/status change, ...)
+  virtual void notify (Stream_SessionId_t,        // session id
+                       const ACE_Message_Block&); // data
   virtual void notify (Stream_SessionId_t,             // session id
                        const ARDrone_SessionMessage&); // session message
   virtual void end (Stream_SessionId_t); // session id
 
  private:
-  typedef ARDrone_Notification_t inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler (const ARDrone_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler& operator= (const ARDrone_EventHandler&))
