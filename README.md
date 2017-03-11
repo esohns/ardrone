@@ -1,4 +1,4 @@
 ardrone
 =======
 
-code for the Brother AiRScouter competition
+code for the Brother AiRScouter developer competition
