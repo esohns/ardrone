@@ -69,61 +69,57 @@ V09_START_CODE         \x55
   // sanity check(s)
   ACE_ASSERT (iparser_in);
 
-  struct __mavlink_message& message_r = iparser_in->current ();
-
-  std::stringstream converter;
+  struct __mavlink_message* message_p = NULL;
 %}
 
 <INITIAL>{
-{V09_START_CODE}|{V10_START_CODE} { BEGIN (length); }
+{V09_START_CODE}|{V10_START_CODE} { message_p = &iparser_in->current ();
+
+                                    BEGIN (length); }
 } // end <INITIAL>
 <length>{
-{OCTET}                           { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-                                    converter.clear ();
-                                    converter << yytext;
-                                    converter >> message_r.len;
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    message_p->len =
+                                      *reinterpret_cast<uint8_t*> (yytext);
 
                                     BEGIN (sequence);
                                   }
 } // end <length>
 <sequence>{
-{OCTET}                           { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-                                    converter.clear ();
-                                    converter << yytext;
-                                    converter >> message_r.seq;
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    message_p->seq =
+                                      *reinterpret_cast<uint8_t*> (yytext);
 
                                     BEGIN (system_id);
                                   }
 } // end <sequence>
 <system_id>{
-{OCTET}                           { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-                                    converter.clear ();
-                                    converter << yytext;
-                                    converter >> message_r.sysid;
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    message_p->sysid =
+                                      *reinterpret_cast<uint8_t*> (yytext);
 
                                     BEGIN (component_id);
                                   }
 } // end <system_id>
 <component_id>{
-{OCTET}                           { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-                                    converter.clear ();
-                                    converter << yytext;
-                                    converter >> message_r.compid;
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    message_p->compid =
+                                      *reinterpret_cast<uint8_t*> (yytext);
 
                                     BEGIN (message_id);
                                   }
 } // end <component_id>
 <message_id>{
-{OCTET}                           { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-                                    converter.clear ();
-                                    converter << yytext;
-                                    converter >> message_r.msgid;
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    message_p->msgid =
+                                      *reinterpret_cast<uint8_t*> (yytext);
 
                                     BEGIN (data);
                                   }
 } // end <message_id>
 <data>{
-{OCTET}                           { yyless (0);
+{OCTET}                           { ACE_ASSERT (message_p);
+                                    yyless (0);
 
                                     // skip ahead message_r.len bytes
                                     /* undo the effects of YY_DO_BEFORE_ACTION */
@@ -131,7 +127,7 @@ V09_START_CODE         \x55
 
                                     char c = 0;
                                     for (unsigned int i = 0;
-                                         i < message_r.len;
+                                         i < message_p->len;
                                          ++i)
                                       c = yyinput (yyscanner);
                                     ACE_UNUSED_ARG (c);
@@ -140,25 +136,26 @@ V09_START_CODE         \x55
                                   }
 } // end <data>
 <_checksum>{
-{OCTET}{2}                        { ACE_ASSERT (yyleng == 2);
-                                    message_r.checksum =
+{OCTET}{2}                        { ACE_ASSERT (message_p);
+                                    ACE_ASSERT (yyleng == sizeof (uint16_t));
+                                    message_p->checksum =
                                       *reinterpret_cast<uint16_t*> (yytext);
                                     // *TODO*: validate checksum
 
-                                    BEGIN (INITIAL);
-
-                                    struct __mavlink_message* message_p = &message_r;
+                                    struct __mavlink_message* message_2 =
+                                        message_p;
                                     try {
-                                      iparser_in->record (message_p);
+                                      iparser_in->record (message_2);
                                     } catch (...) {
                                       ACE_DEBUG ((LM_ERROR,
                                                   ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
                                       yyterminate ();
                                     }
-                                    return 0;
+
+                                    BEGIN (INITIAL);
                                   }
 } // end <checksum>
-<<EOF>>                { return -1; }
+<<EOF>>                { return 0; }
 <*>{OCTET}             { /* *TODO*: use (?s:.) ? */
                          yyterminate (); }
 

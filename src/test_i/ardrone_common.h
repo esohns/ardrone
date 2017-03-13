@@ -36,56 +36,51 @@
 
 #include "net_iparser.h"
 
-struct ARDrone_MAVLinkMessageData
+typedef std::vector<unsigned int> ARDrone_NavDataMessageOptionOffsets_t;
+typedef ARDrone_NavDataMessageOptionOffsets_t::const_iterator ARDrone_NavDataMessageOptionOffsetsIterator_t;
+struct ARDrone_MessageData
 {
-  inline ARDrone_MAVLinkMessageData ()
+  inline ARDrone_MessageData ()
    : MAVLinkMessage ()
-  {};
-
-  struct __mavlink_message MAVLinkMessage;
-};
-typedef Stream_DataBase_T<struct ARDrone_MAVLinkMessageData> ARDrone_MAVLinkMessageData_t;
-struct ARDrone_NavDataMessageData
-{
-  inline ARDrone_NavDataMessageData ()
-   : NavDataMessage ()
-  {};
-
-  struct _navdata_t NavDataMessage;
-};
-typedef Stream_DataBase_T<struct ARDrone_NavDataMessageData> ARDrone_NavDataMessageData_t;
-
+//   , NavDataMessage ()
+   , NavDataMessageOptionOffsets ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct ARDrone_DirectShow_LiveVideoMessageData
-{
-  inline ARDrone_DirectShow_LiveVideoMessageData ()
-   : sample (NULL)
-   , sampleTime (0)
-  {};
-
-  IMediaSample* sample;
-  double        sampleTime;
-};
-typedef Stream_DataBase_T<struct ARDrone_DirectShow_LiveVideoMessageData> ARDrone_DirectShow_LiveVideoMessageData_t;
-struct ARDrone_MediaFoundation_LiveVideoMessageData
-{
-  inline ARDrone_MediaFoundation_LiveVideoMessageData ()
-   : sample (NULL)
-   , sampleTime (0)
-  {};
-
-  IMFSample* sample;
-  LONGLONG   sampleTime;
-};
-typedef Stream_DataBase_T<struct ARDrone_MediaFoundation_LiveVideoMessageData> ARDrone_MediaFoundation_LiveVideoMessageData_t;
-#else
-struct ARDrone_LiveVideoMessageData
-{
-  inline ARDrone_LiveVideoMessageData ()
-  {};
-};
-typedef Stream_DataBase_T<struct ARDrone_LiveVideoMessageData> ARDrone_LiveVideoMessageData_t;
+   , sample (NULL)
+   , sampleTime (0.0)
+//   , sampleTime (0)
 #endif
+  {
+    ACE_OS::memset (&MAVLinkMessage, 0, sizeof (struct __mavlink_message));
+    ACE_OS::memset (&NavDataMessage, 0, sizeof (struct _navdata_t));
+  };
+  inline ~ARDrone_MessageData ()
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    if (sample)
+    {
+      sample->Release ();
+      sample = NULL;
+    } // end IF
+#endif
+  };
+  inline void operator+= (struct ARDrone_MessageData rhs_in)
+  { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+
+  union
+  {
+    struct __mavlink_message            MAVLinkMessage;
+    // *IMPORTANT NOTES*: the options are not parsed; use the offsets
+    struct _navdata_t                   NavDataMessage;
+  };
+  ARDrone_NavDataMessageOptionOffsets_t NavDataMessageOptionOffsets;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  IMediaSample*                         sample;
+  double                                sampleTime;
+//  IMFSample*                            sample;
+//  LONGLONG                              sampleTime;
+#endif
+};
+typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
 class ARDrone_MAVLink_IParser
  : public Net_IRecordParser_T<struct Common_ParserConfiguration,
@@ -115,6 +110,8 @@ class ARDrone_NavData_IParser
   using IPARSER_T::error;
 
   inline virtual ~ARDrone_NavData_IParser () {};
+
+  virtual void addOption (unsigned int) = 0; // offset
 };
 
 //////////////////////////////////////////

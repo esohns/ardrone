@@ -284,6 +284,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
+  message_p->set (ARDRONE_MESSAGE_ATCOMMANDMESSAGE);
   int result = message_p->copy (commandString_in.c_str (),
                                 commandString_in.size ());
   if (result == -1)

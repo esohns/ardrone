@@ -48,8 +48,8 @@ class ARDrone_EventHandler
                       const ARDrone_SessionData&); // session data
   virtual void notify (Stream_SessionId_t,                     // session id
                        const enum Stream_SessionMessageType&); // event (state/status change, ...)
-  virtual void notify (Stream_SessionId_t,        // session id
-                       const ACE_Message_Block&); // data
+  virtual void notify (Stream_SessionId_t,      // session id
+                       const ARDrone_Message&); // data
   virtual void notify (Stream_SessionId_t,             // session id
                        const ARDrone_SessionMessage&); // session message
   virtual void end (Stream_SessionId_t); // session id

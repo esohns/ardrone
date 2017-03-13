@@ -111,7 +111,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 //}
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const ACE_Message_Block& message_in)
+                              const ARDrone_Message& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
@@ -119,20 +119,40 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   ACE_ASSERT (GtkCBData_);
   //ACE_ASSERT (GtkCBData_->progressData);
 
+  bool refresh_display = false;
+
   ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
-  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
-  GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
+  switch (message_in.type ())
+  {
+    case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
+      break; // do not count outbound messages
+    case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
+      refresh_display = true;
+    case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+    case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+      GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE); break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown message type (was: %d), returning\n"),
+                  message_in.type ()));
+      return;
+    }
+  } // end SWITCH
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  guint event_source_id = g_idle_add (idle_update_video_display_cb,
-                                      GtkCBData_);
-  if (event_source_id == 0)
+  if (refresh_display)
   {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to g_idle_add(idle_update_video_display_cb): \"%m\", returning\n")));
-    return;
+    guint event_source_id = g_idle_add (idle_update_video_display_cb,
+                                        GtkCBData_);
+    if (event_source_id == 0)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_idle_add(idle_update_video_display_cb): \"%m\", returning\n")));
+      return;
+    } // end IF
   } // end IF
 #endif
 }

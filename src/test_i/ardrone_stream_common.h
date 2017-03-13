@@ -203,25 +203,15 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
 typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                           struct ARDrone_AllocatorConfiguration,
                                           ARDrone_ControlMessage_t,
-                                          ARDrone_MAVLinkMessage,
-                                          ARDrone_SessionMessage> ARDrone_MAVLinkMessageAllocator_t;
-typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
-                                          struct ARDrone_AllocatorConfiguration,
-                                          ARDrone_ControlMessage_t,
-                                          ARDrone_NavDataMessage,
-                                          ARDrone_SessionMessage> ARDrone_NavDataMessageAllocator_t;
-typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
-                                          struct ARDrone_AllocatorConfiguration,
-                                          ARDrone_ControlMessage_t,
-                                          ARDrone_LiveVideoMessage,
-                                          ARDrone_SessionMessage> ARDrone_LiveVideoMessageAllocator_t;
+                                          ARDrone_Message,
+                                          ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
 
 typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
 
 typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     struct ARDrone_SessionData,
                                     enum Stream_SessionMessageType,
-                                    ACE_Message_Block,
+                                    ARDrone_Message,
                                     ARDrone_SessionMessage> ARDrone_Notification_t;
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
@@ -305,7 +295,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , targetFileName ()
    , useYYScanBuffer (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
   {
-    concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
+    concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     format =

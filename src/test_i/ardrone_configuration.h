@@ -163,10 +163,8 @@ struct ARDrone_Configuration
 
 //////////////////////////////////////////
 
-typedef std::deque<ARDrone_MAVLinkMessage*> ARDrone_MAVLinkMessages_t;
-typedef ARDrone_MAVLinkMessages_t::const_iterator ARDrone_MAVLinkMessagesIterator_t;
-typedef std::deque<ARDrone_NavDataMessage*> ARDrone_NavDataMessages_t;
-typedef ARDrone_NavDataMessages_t::const_iterator ARDrone_NavDataMessagesIterator_t;
+typedef std::deque<ARDrone_Message*> ARDrone_Messages_t;
+typedef ARDrone_Messages_t::const_iterator ARDrone_MessagesIterator_t;
 
 struct ARDrone_GtkProgressData
  : Common_UI_GTK_ProgressData
@@ -192,8 +190,8 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       struct ARDrone_SessionData,
                       ARDrone_StreamSessionData_t,
                       ARDrone_ControlMessage_t,
-                      ARDrone_LiveVideoMessage,
-                      ARDrone_SessionMessage> ARDrone_LiveVideoStreamBase_t;
+                      ARDrone_Message,
+                      ARDrone_SessionMessage> ARDrone_StreamBase_t;
 struct ARDrone_GtkCBData
  : Common_UI_GTKState
 {
@@ -204,14 +202,11 @@ struct ARDrone_GtkCBData
   , contextIdInformation (0)
   , eventStack ()
   , frameCounter (0)
-  , liveVideoMessageAllocator (NULL)
   , liveVideoStream (NULL)
   , localSAP ()
-  , MAVLinkMessageAllocator (NULL)
-  , MAVLinkMessages ()
   , MAVLinkStream (NULL)
-  , NavDataMessageAllocator (NULL)
-  , NavDataMessages ()
+  , messages ()
+  , messageAllocator (NULL)
   , NavDataStream (NULL)
 #if defined (GTKGL_SUPPORT)
   , openGLAxesListId (0)
@@ -249,15 +244,12 @@ struct ARDrone_GtkCBData
  guint                                contextIdInformation; // status bar context
  ARDrone_Events_t                     eventStack;
  unsigned int                         frameCounter;
- ARDrone_LiveVideoMessageAllocator_t* liveVideoMessageAllocator;
- ARDrone_LiveVideoStreamBase_t*       liveVideoStream;
+ ARDrone_StreamBase_t*                liveVideoStream;
  // *TODO*: let the user choose a NIC instead
  ACE_INET_Addr                        localSAP;
- ARDrone_MAVLinkMessageAllocator_t*   MAVLinkMessageAllocator;
- ARDrone_MAVLinkMessages_t            MAVLinkMessages;
  ARDrone_MAVLinkStream*               MAVLinkStream;
- ARDrone_NavDataMessageAllocator_t*   NavDataMessageAllocator;
- ARDrone_NavDataMessages_t            NavDataMessages;
+ ARDrone_Messages_t                   messages;
+ ARDrone_MessageAllocator_t*          messageAllocator;
  ARDrone_NavDataStream*               NavDataStream;
 #if defined (GTKGL_SUPPORT)
  GLuint                               openGLAxesListId;
