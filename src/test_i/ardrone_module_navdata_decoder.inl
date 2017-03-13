@@ -134,6 +134,9 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   // *TODO*: remove type inferences
   allocator_ = configuration_in.streamConfiguration->messageAllocator;
+  // trace ?
+  ARDrone_NavData_Scanner_set_debug (configuration_in.debugScanner,
+                                     scannerState_);
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
@@ -160,7 +163,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   int result = -1;
   ACE_Message_Block* message_block_p = NULL;
-  ACE_Message_Block* message_block_2 = NULL;
+//  ACE_Message_Block* message_block_2 = NULL;
   bool do_scan_end = false;
   unsigned int offset = (isFirst_ ? 0 : 3);
 
@@ -293,58 +296,92 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::record (struct _navdata_t*& record_in)
+                                SessionDataContainerType>::record (struct _navdata_t*& record_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::record"));
 
   // sanity check(s)
   ACE_ASSERT (buffer_);
-  ACE_ASSERT (record_in);
+  ACE_ASSERT (record_inout);
+  ACE_ASSERT (record_inout->options[0].size);
 
   // frame the NavData message data
   int result = -1;
-  unsigned int remaining_bytes = sizeof (struct _navdata_t);
-  unsigned int length = 0;
-  unsigned int trailing_bytes_total, trailing_bytes = 0;
-  ACE_Message_Block* message_block_p = buffer_;
-  ACE_Message_Block* message_block_2 = NULL;
+//  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+//  typename DataMessageType::DATA_T* message_data_container_p = NULL;
+  unsigned int missing_bytes = sizeof (struct _navdata_t);
 
-  length = buffer_->total_length ();
-  if (length > remaining_bytes)
+  for (struct _navdata_option_t* options_p = record_inout->options;
+       options_p;
+       options_p += options_p->size)
   {
-    trailing_bytes_total = length - remaining_bytes;
+    missing_bytes += options_p->size;
+    if (options_p->tag == NAVDATA_CKS_TAG)
+      break;
+  } // end FOR
 
-    message_block_2 = buffer_;
-    for (;
-         message_block_2;
-         message_block_2 = message_block_2->cont ())
+  ACE_ASSERT (buffer_->total_length () >= missing_bytes);
+  unsigned int trailing_bytes = 0;
+  unsigned int length = 0;
+  unsigned int bytes_to_skip = 0;
+  ACE_Message_Block* message_block_p = NULL;
+  ACE_Message_Block* message_block_2 = NULL;
+  for (message_block_2 = buffer_;
+       message_block_2;
+       message_block_2 = message_block_2->next ())
+  {
+    length = message_block_2->length ();
+    bytes_to_skip = (length >= missing_bytes ? missing_bytes : length);
+    missing_bytes -= bytes_to_skip;
+    if (!missing_bytes)
     {
-      length = message_block_2->length ();
-      length = (length >= remaining_bytes ? remaining_bytes
-                                          : length);
-      remaining_bytes -= length;
-      if (!remaining_bytes)
-      {
-        trailing_bytes = message_block_2->length () - length;
-        break;
-      } // end IF
-    } // end FOR
-    ACE_ASSERT (trailing_bytes);
-
+      trailing_bytes = length - bytes_to_skip;
+      break;
+    } // end IF
+  } // end FOR
+  if (trailing_bytes)
+  {
+    ACE_ASSERT (message_block_2);
+    ACE_ASSERT (trailing_bytes < length);
     message_block_p = message_block_2->duplicate ();
     if (!message_block_p)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to DataMessageType::duplicate(): \"%m\", returning\n"),
                   inherited::mod_->name ()));
-      return;
+      goto error;
     } // end IF
-    message_block_2->length (message_block_2->length () - trailing_bytes);
-    message_block_2->cont (NULL);
-    ACE_ASSERT (buffer_->total_length () == sizeof (struct _navdata_t));
-    message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
-    ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
+    message_block_2->length (length - trailing_bytes);
+    message_block_2->cont (message_block_p);
+    message_block_p->rd_ptr (length - trailing_bytes);
   } // end IF
+
+//  ACE_NEW_NORETURN (message_data_p,
+//                    typename DataMessageType::DATA_T::DATA_T ());
+//  if (!message_data_p)
+//  {
+//    ACE_DEBUG ((LM_CRITICAL,
+//                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+//                inherited::mod_->name ()));
+//    goto error;
+//  } // end IF
+//  message_data_p->NavDataMessage = record_inout;
+//  record_inout = NULL;
+//  ACE_NEW_NORETURN (message_data_container_p,
+//                    typename DataMessageType::DATA_T (message_data_p));
+//  if (!message_data_container_p)
+//  {
+//    ACE_DEBUG ((LM_CRITICAL,
+//                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+//                inherited::mod_->name ()));
+//    goto error;
+//  } // end IF
+//  message_data_p = NULL;
+
+//  // *TODO*: initialize the whole continuation
+//  buffer_->initialize (message_data_container_p,
+//                       NULL);
+//  message_data_container_p = NULL;
 
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
@@ -352,11 +389,12 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to ACE_Task_T::put_next(): \"%m\", returning\n"),
                 inherited::mod_->name ()));
+
     // clean up
     buffer_->release ();
     buffer_ = NULL;
 
-    return;
+    goto error;
   } // end IF
   buffer_ = NULL;
 
@@ -364,6 +402,19 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   {
     buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
     ACE_ASSERT (buffer_);
+  } // end IF
+
+  return;
+
+error:
+//  if (message_data_p)
+//    delete message_data_p;
+//  if (message_data_container_p)
+//    message_data_container_p->decrease ();
+  if (record_inout)
+  {
+    delete record_inout;
+    record_inout = NULL;
   } // end IF
 }
 
@@ -387,7 +438,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   // *NOTE*: the output format has been "adjusted" to fit in with bison error-reporting
   ACE_DEBUG ((LM_ERROR,
-              ACE_TEXT ("\": \"%s\"...\n"),
+              ACE_TEXT ("%s: failed to parse message: \"%s\"...\n"),
+              inherited::mod_->name (),
               ACE_TEXT (message_in.c_str ())));
 //   ACE_DEBUG((LM_ERROR,
 //              ACE_TEXT("failed to parse \"%s\": \"%s\"...\n"),
@@ -494,8 +546,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_p = NULL;
   bool done = false;
   SessionMessageType* session_message_p = NULL;
-  enum Stream_SessionMessageType session_message_type =
-      STREAM_SESSION_MESSAGE_INVALID;
+//  enum Stream_SessionMessageType session_message_type =
+//      STREAM_SESSION_MESSAGE_INVALID;
   bool is_data = false;
   bool stop_processing = false;
 

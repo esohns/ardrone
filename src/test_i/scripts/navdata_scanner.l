@@ -70,22 +70,25 @@ HEADER                 \x55\x66\x77\x88
   struct _navdata_t& message_r = iparser_in->current ();
 
   std::stringstream converter;
-  struct _navdata_option_t option;
+  static unsigned int option_offset = 0;
+  struct _navdata_option_t current_option_s;
 %}
 
 <INITIAL>{
-{HEADER} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-           converter.clear ();
-           converter << yytext;
-           uint32_t message_header;
-           converter >> message_header;
-           message_r.header = message_header;
+{HEADER}   { option_offset = yyleng;
+             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+             converter.clear ();
+             converter << yytext;
+             uint32_t message_header;
+             converter >> message_header;
+             message_r.header = message_header;
 
-           BEGIN (state);
-         }
+             BEGIN (state);
+           }
 } // end <INITIAL>
 <state>{
-{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+{OCTET}{4} { option_offset += yyleng;
+             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
              uint32_t ardrone_state;
@@ -96,7 +99,8 @@ HEADER                 \x55\x66\x77\x88
            }
 } // end <state>
 <_sequence>{
-{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+{OCTET}{4} { option_offset += yyleng;
+             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
              uint32_t sequence;
@@ -107,14 +111,15 @@ HEADER                 \x55\x66\x77\x88
            }
 } // end <sequence>
 <vision>{
-{OCTET}{4} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+{OCTET}{4} { option_offset += yyleng;
+             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
              uint32_t vision_flags;
              converter >> vision_flags;
              message_r.vision_defined = vision_flags;
 
-             ACE_OS::memset (&option, 0, sizeof (struct _navdata_option_t));
+             ACE_OS::memset (&current_option_s, 0, sizeof (struct _navdata_option_t));
              BEGIN (option_id);
            }
 } // end <vision>
@@ -122,7 +127,16 @@ HEADER                 \x55\x66\x77\x88
 {OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> option.tag;
+             converter >> current_option_s.tag;
+
+             try {
+               iparser_in->addOption (option_offset);
+             } catch (...) {
+               ACE_DEBUG ((LM_ERROR,
+                           ACE_TEXT ("failed to ARDrone_NavData_IParser::addOption(%u), aborting\n"),
+                           option_offset));
+               yyterminate ();
+             }
 
              BEGIN (option_size);
            }
@@ -131,30 +145,56 @@ HEADER                 \x55\x66\x77\x88
 {OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
              converter.clear ();
              converter << yytext;
-             converter >> option.size;
+             converter >> current_option_s.size;
+
+//            // *TODO*: iff there is only ever a single option (as the header
+//            //         definition implies), framing the message accordingly
+//            //         would be preferable
+//            ACE_ASSERT (!message_r.options[0].data);
+//            ACE_NEW_NORETURN (message_r.options[0].data,
+//                              uint8_t[message_r.options[0].size]);
+//            message_r.options[0].data =
+//                (uint8_t[])new (std::nothrow) uint8_t[message_r.options[0].size];
+//            if (!message_r.options[0].data)
+//            {
+//              ACE_DEBUG ((LM_CRITICAL,
+//                          ACE_TEXT ("failed to allocate memory (%u byte(s)): \"%m\", aborting\n"),
+//                          message_r.options[0].size));
+//              yyterminate ();
+//            } // end IF
+             option_offset += current_option_s.size;
 
              BEGIN (option_data);
            }
 } // end <option_size>
 <option_data>{
-{OCTET} { yyless (0);
+{OCTET}    { yyless (0);
 
-          // skip ahead message_r.len bytes
-          /* undo the effects of YY_DO_BEFORE_ACTION */
-          *yy_cp = yyg->yy_hold_char;
+             // skip ahead message_r.len bytes
+             /* undo the effects of YY_DO_BEFORE_ACTION */
+             *yy_cp = yyg->yy_hold_char;
 
-          char c = 0;
-          for (unsigned int i = 0;
-               i < option.size;
-               ++i)
-            c = yyinput (yyscanner);
-          ACE_UNUSED_ARG (c);
+             char c = 0;
+             for (unsigned int i = 0;
+                  i < current_option_s.size;
+                  ++i)
+               c = yyinput (yyscanner);
+             ACE_UNUSED_ARG (c);
 
-          ACE_Message_Block* message_block_p = iparser_in->buffer ();
+             struct _navdata_t* message_p = &message_r;
+             try {
+               iparser_in->record (message_p);
+             } catch (...) {
+               ACE_DEBUG ((LM_ERROR,
+                           ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+               yyterminate ();
+             }
 
-
-          BEGIN (option_id);
-        }
+             if (current_option_s.tag != NAVDATA_CKS_TAG)
+               BEGIN (option_id);
+             else
+               return 0;
+           }
 } // end <option_data>
 <<EOF>>                { return -1; }
 <*>{OCTET}             { /* *TODO*: use (?s:.) ? */

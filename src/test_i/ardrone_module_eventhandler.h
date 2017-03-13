@@ -41,7 +41,7 @@ class ARDrone_Module_EventHandler
                                          Common_TimePolicy_t,
                                          struct ARDrone_ModuleHandlerConfiguration,
                                          ARDrone_ControlMessage_t,
-                                         ACE_Message_Block,
+                                         ARDrone_Message,
                                          ARDrone_SessionMessage,
                                          Stream_SessionId_t,
                                          struct ARDrone_SessionData>
@@ -59,7 +59,7 @@ class ARDrone_Module_EventHandler
                                          Common_TimePolicy_t,
                                          struct ARDrone_ModuleHandlerConfiguration,
                                          ARDrone_ControlMessage_t,
-                                         ACE_Message_Block,
+                                         ARDrone_Message,
                                          ARDrone_SessionMessage,
                                          Stream_SessionId_t,
                                          struct ARDrone_SessionData> inherited;

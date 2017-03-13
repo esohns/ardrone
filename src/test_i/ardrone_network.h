@@ -60,9 +60,7 @@
 #include "ardrone_types.h"
 
 // forward declarations
-class ARDrone_MAVLinkMessage;
-class ARDrone_NavDataMessage;
-class ARDrone_LiveVideoMessage;
+class ARDrone_Message;
 class ARDrone_SessionMessage;
 struct ARDrone_ConnectionConfiguration;
 struct ARDrone_ConnectionState;
@@ -158,47 +156,11 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct ARDrone_SessionData,
                                       ARDrone_StreamSessionData_t,
                                       ARDrone_ControlMessage_t,
-                                      ARDrone_MAVLinkMessage,
+                                      ARDrone_Message,
                                       ARDrone_SessionMessage,
                                       ACE_INET_Addr,
                                       ARDrone_ConnectionManager_t,
-                                      struct ARDrone_UserData> ARDrone_MAVLinkStream_t;
-typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
-                                      Common_TimePolicy_t,
-                                      enum Stream_ControlType,
-                                      enum Stream_SessionMessageType,
-                                      enum Stream_StateMachine_ControlState,
-                                      struct ARDrone_StreamState,
-                                      struct ARDrone_StreamConfiguration,
-                                      ARDrone_RuntimeStatistic_t,
-                                      struct Stream_ModuleConfiguration,
-                                      struct ARDrone_ModuleHandlerConfiguration,
-                                      struct ARDrone_SessionData,
-                                      ARDrone_StreamSessionData_t,
-                                      ARDrone_ControlMessage_t,
-                                      ARDrone_NavDataMessage,
-                                      ARDrone_SessionMessage,
-                                      ACE_INET_Addr,
-                                      ARDrone_ConnectionManager_t,
-                                      struct ARDrone_UserData> ARDrone_NavDataStream_t;
-typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
-                                      Common_TimePolicy_t,
-                                      enum Stream_ControlType,
-                                      enum Stream_SessionMessageType,
-                                      enum Stream_StateMachine_ControlState,
-                                      struct ARDrone_StreamState,
-                                      struct ARDrone_StreamConfiguration,
-                                      ARDrone_RuntimeStatistic_t,
-                                      struct Stream_ModuleConfiguration,
-                                      struct ARDrone_ModuleHandlerConfiguration,
-                                      struct ARDrone_SessionData,
-                                      ARDrone_StreamSessionData_t,
-                                      ARDrone_ControlMessage_t,
-                                      ARDrone_LiveVideoMessage,
-                                      ARDrone_SessionMessage,
-                                      ACE_INET_Addr,
-                                      ARDrone_ConnectionManager_t,
-                                      struct ARDrone_UserData> ARDrone_LiveVideoStream_t;
+                                      struct ARDrone_UserData> ARDrone_NetStream_t;
 
 //typedef Net_StreamTCPSocketBase_T<Net_TCPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration,
 //                                                         ACE_SOCK_STREAM>,
@@ -215,10 +177,10 @@ typedef Net_StreamAsynchTCPSocketBase_T<Net_AsynchTCPSocketHandler_T<struct ARDr
                                         struct ARDrone_ConnectionConfiguration,
                                         struct ARDrone_ConnectionState,
                                         ARDrone_RuntimeStatistic_t,
-                                        ARDrone_LiveVideoStream_t,
+                                        ARDrone_NetStream_t,
                                         struct ARDrone_UserData,
                                         struct Stream_ModuleConfiguration,
-                                        struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchLiveVideoHandler_t;
+                                        struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchTCPHandler_t;
 
 //typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
 //                                                         struct ARDrone_SocketHandlerConfiguration>,
@@ -238,21 +200,10 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<struct ARDr
                                         struct ARDrone_ConnectionState,
                                         ARDrone_RuntimeStatistic_t,
                                         struct ARDrone_SocketHandlerConfiguration,
-                                        ARDrone_MAVLinkStream_t,
+                                        ARDrone_NetStream_t,
                                         struct ARDrone_UserData,
                                         struct Stream_ModuleConfiguration,
-                                        struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchMAVLinkHandler_t;
-typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration>,
-                                        Net_SOCK_Dgram,
-                                        ACE_INET_Addr,
-                                        struct ARDrone_ConnectionConfiguration,
-                                        struct ARDrone_ConnectionState,
-                                        ARDrone_RuntimeStatistic_t,
-                                        struct ARDrone_SocketHandlerConfiguration,
-                                        ARDrone_NavDataStream_t,
-                                        struct ARDrone_UserData,
-                                        struct Stream_ModuleConfiguration,
-                                        struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchNavDataHandler_t;
+                                        struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchUDPHandler_t;
 
 typedef Net_IConnector_T<ACE_INET_Addr,
                          struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
@@ -288,48 +239,34 @@ typedef Net_IConnector_T<ACE_INET_Addr,
 //                               ARDrone_NetStream_t,
 //                               struct ARDrone_UserData> ARDrone_UDPConnector_t;
 
-typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<ARDrone_AsynchLiveVideoHandler_t,
+typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<ARDrone_AsynchTCPHandler_t,
                                                                    struct ARDrone_ConnectionConfiguration,
                                                                    struct ARDrone_ConnectionState,
                                                                    ARDrone_RuntimeStatistic_t,
                                                                    struct ARDrone_SocketHandlerConfiguration,
-                                                                   ARDrone_LiveVideoStream_t,
+                                                                   ARDrone_NetStream_t,
                                                                    struct ARDrone_UserData>,
                                      ACE_INET_Addr,
                                      struct ARDrone_ConnectionConfiguration,
                                      struct ARDrone_ConnectionState,
                                      ARDrone_RuntimeStatistic_t,
                                      struct ARDrone_SocketHandlerConfiguration,
-                                     ARDrone_LiveVideoStream_t,
-                                     struct ARDrone_UserData> ARDrone_AsynchLiveVideoConnector_t;
-typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<ARDrone_AsynchMAVLinkHandler_t,
+                                     ARDrone_NetStream_t,
+                                     struct ARDrone_UserData> ARDrone_AsynchTCPConnector_t;
+typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<ARDrone_AsynchUDPHandler_t,
                                                                    struct ARDrone_ConnectionConfiguration,
                                                                    struct ARDrone_ConnectionState,
                                                                    ARDrone_RuntimeStatistic_t,
                                                                    struct ARDrone_SocketHandlerConfiguration,
-                                                                   ARDrone_MAVLinkStream_t,
+                                                                   ARDrone_NetStream_t,
                                                                    struct ARDrone_UserData>,
                                      ACE_INET_Addr,
                                      struct ARDrone_ConnectionConfiguration,
                                      struct ARDrone_ConnectionState,
                                      ARDrone_RuntimeStatistic_t,
                                      struct ARDrone_SocketHandlerConfiguration,
-                                     ARDrone_MAVLinkStream_t,
-                                     struct ARDrone_UserData> ARDrone_AsynchMAVLinkConnector_t;
-typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<ARDrone_AsynchNavDataHandler_t,
-                                                                   struct ARDrone_ConnectionConfiguration,
-                                                                   struct ARDrone_ConnectionState,
-                                                                   ARDrone_RuntimeStatistic_t,
-                                                                   struct ARDrone_SocketHandlerConfiguration,
-                                                                   ARDrone_NavDataStream_t,
-                                                                   struct ARDrone_UserData>,
-                                     ACE_INET_Addr,
-                                     struct ARDrone_ConnectionConfiguration,
-                                     struct ARDrone_ConnectionState,
-                                     ARDrone_RuntimeStatistic_t,
-                                     struct ARDrone_SocketHandlerConfiguration,
-                                     ARDrone_NavDataStream_t,
-                                     struct ARDrone_UserData> ARDrone_AsynchNavDataConnector_t;
+                                     ARDrone_NetStream_t,
+                                     struct ARDrone_UserData> ARDrone_AsynchUDPConnector_t;
 
 typedef ACE_Singleton<ARDrone_ConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_CONNECTIONMANAGER_SINGLETON;

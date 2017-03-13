@@ -271,6 +271,7 @@ next:
   else
     message_block_2 = NULL;
   ACE_ASSERT (buffer_->total_length () == header_.payload_size);
+  buffer_->set (ARDRONE_MESSAGE_LIVEVIDEOFRAME);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -286,7 +287,13 @@ next:
 
     return;
   } // end IF
-  buffer_ = message_block_2;
+  if (message_block_2)
+  {
+    buffer_ = dynamic_cast<DataMessageType*> (message_block_2);
+    ACE_ASSERT (buffer_);
+  } // end IF
+  else
+    buffer_ = NULL;
 
   // reset header
   headerDecoded_ = false;

@@ -74,7 +74,7 @@ class ARDrone_Module_MAVLinkDecoder_T
                                      bool&);               // return value: pass message downstream ?
 
   // implement ARDrone_MAVLink_IParser
-  inline virtual struct __mavlink_message& current () { ACE_ASSERT (buffer_); return const_cast<struct __mavlink_message&> (buffer_->get ().MAVLinkMessage); };
+  inline virtual struct __mavlink_message& current () { ACE_ASSERT (buffer_); return const_cast<struct __mavlink_message&> (buffer_->get ().get ().MAVLinkMessage); };
   inline virtual bool hasFinished () const { return true; };
   virtual void record (struct __mavlink_message*&); // record handle
   inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
@@ -117,6 +117,9 @@ class ARDrone_Module_MAVLinkDecoder_T
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T (const ARDrone_Module_MAVLinkDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T& operator= (const ARDrone_Module_MAVLinkDecoder_T&))
+
+  // override some ACE_Task_T methods
+  int svc (void);
 
   // helper methods
   bool scan_begin (const char*,   // buffer handle

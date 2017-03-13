@@ -166,16 +166,6 @@ do_printUsage (const std::string& programName_in)
 
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
-#if defined (DEBUG_DEBUGGER)
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
-#endif // #ifdef DEBUG_DEBUGGER
 
   std::cout << ACE_TEXT_ALWAYS_CHAR ("usage: ")
             << programName_in
@@ -190,14 +180,16 @@ do_printUsage (const std::string& programName_in)
             << ARDRONE_MESSAGE_BUFFER_SIZE
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-c           : show console [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
-  //std::cout << ACE_TEXT_ALWAYS_CHAR ("-d           : debug flex [")
-  //          << STREAM_DECODER_DEFAULT_LEX_TRACE
-  //          << ACE_TEXT_ALWAYS_CHAR ("])")
-  //          << std::endl;
+#endif
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d           : debug (f)lex [")
+            << STREAM_DECODER_DEFAULT_LEX_TRACE
+            << ACE_TEXT_ALWAYS_CHAR ("])")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-f           : fullscreen display [")
             << ARDRONE_DEFAULT_VIDEO_FULLSCREEN
             << ACE_TEXT_ALWAYS_CHAR ("])")
@@ -245,8 +237,10 @@ do_processArguments (int argc_in,
                      ACE_TCHAR** argv_in, // cannot be 'const'
                      ACE_INET_Addr& address_out,
                      unsigned int& bufferSize_out,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& showConsole_out,
-                     //bool& debugScanner_out,
+#endif
+                     bool& debugScanner_out,
                      bool& fullScreen_out,
                      bool& logToFile_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -262,22 +256,14 @@ do_processArguments (int argc_in,
 
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
-#if defined (DEBUG_DEBUGGER)
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
-#endif // #ifdef DEBUG_DEBUGGER
 
   // initialize results
   address_out.reset ();
   bufferSize_out              = ARDRONE_MESSAGE_BUFFER_SIZE;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out             = false;
-  //debugScanner_out            = STREAM_DECODER_DEFAULT_LEX_TRACE;
+#endif
+  debugScanner_out            = STREAM_DECODER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -299,9 +285,9 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:b:cflmp:rtu::v"),
+                               ACE_TEXT ("a:b:cdflmp:rtu::v"),
 #else
-                               ACE_TEXT ("a:b:cflp:rtu::v"),
+                               ACE_TEXT ("a:b:dflp:rtu::v"),
 #endif
                                1,                          // skip command name
                                1,                          // report parsing errors
@@ -342,16 +328,18 @@ do_processArguments (int argc_in,
         converter >> bufferSize_out;
         break;
       }
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
       case 'c':
       {
         showConsole_out = true;
         break;
       }
-      //case 'd':
-      //{
-      //  debugScanner_out = true;
-      //  break;
-      //}
+#endif
+      case 'd':
+      {
+        debugScanner_out = true;
+        break;
+      }
       case 'f':
       {
         fullScreen_out = true;
@@ -846,7 +834,7 @@ do_work (int argc_in,
          ACE_TCHAR** argv_in,
          const ACE_INET_Addr& address_in,
          unsigned int bufferSize_in,
-         //bool debugScanner_in,
+         bool debugScanner_in,
          bool fullScreen_in,
          bool useReactor_in,
          const std::string& interfaceDefinitionFile_in,
@@ -854,7 +842,9 @@ do_work (int argc_in,
          const ACE_Sig_Set& signalSet_in,
          const ACE_Sig_Set& ignoredSignalSet_in,
          Common_SignalActions_t& previousSignalActions_inout,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
          bool showConsole_in,
+#endif
          ARDrone_SignalHandler& signalHandler_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_work"));
@@ -880,15 +870,9 @@ do_work (int argc_in,
                 ACE_TEXT ("failed to initialize message allocator, returning\n")));
     return;
   } // end IF
-  ARDrone_MAVLinkMessageAllocator_t mavlink_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                               &heap_allocator,
-                                                               true); // block
-  ARDrone_NavDataMessageAllocator_t navdata_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                               &heap_allocator,
-                                                               true); // block
-  ARDrone_LiveVideoMessageAllocator_t livevideo_message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
-                                                                   &heap_allocator,
-                                                                   true); // block
+  ARDrone_MessageAllocator_t message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
+                                                &heap_allocator,
+                                                true); // block
 
   ARDrone_ConnectionManager_t* connectionManager_p =
     ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
@@ -912,16 +896,18 @@ do_work (int argc_in,
   // ******************* socket configuration data ****************************
   struct Net_SocketConfiguration socket_configuration;
   socket_configuration.bufferSize = NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  result = socket_configuration.address.set (static_cast<u_short> (ARDRONE_MAVLINK_PORT),
-                                             static_cast<ACE_UINT32> (INADDR_ANY),
-                                             1,
-                                             0);
+  result =
+    socket_configuration.address.set (static_cast<u_short> (ARDRONE_MAVLINK_PORT),
+                                      static_cast<ACE_UINT32> (INADDR_ANY),
+                                      1,
+                                      0);
   ACE_ASSERT (!result);
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
-  result = socket_configuration.address.set (static_cast<u_short> (ARDRONE_NAVDATA_PORT),
-                                             static_cast<ACE_UINT32> (INADDR_ANY),
-                                             1,
-                                             0);
+  result =
+    socket_configuration.address.set (static_cast<u_short> (ARDRONE_NAVDATA_PORT),
+                                      static_cast<ACE_UINT32> (INADDR_ANY),
+                                      1,
+                                      0);
   ACE_ASSERT (!result);
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
 //  // *TODO*: verify the given address
@@ -957,8 +943,8 @@ do_work (int argc_in,
 
   CBData_in.configuration->socketHandlerConfiguration.connectionConfiguration =
     &CBData_in.configuration->connectionConfiguration;
-//  CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
-//    &message_allocator;
+  CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
+    &message_allocator;
   CBData_in.configuration->socketHandlerConfiguration.PDUSize =
       std::max (bufferSize_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
@@ -1002,8 +988,8 @@ do_work (int argc_in,
   CBData_in.configuration->moduleHandlerConfiguration.consoleMode =
     interfaceDefinitionFile_in.empty ();
 #endif
-  //CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
-  //  debugScanner_in;
+  CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
+    debugScanner_in;
   CBData_in.configuration->moduleHandlerConfiguration.demultiplex = true;
   CBData_in.configuration->moduleHandlerConfiguration.fullScreen =
     fullScreen_in;
@@ -1048,11 +1034,11 @@ do_work (int argc_in,
       CBData_in.configuration->moduleHandlerConfiguration;
   navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
       &navdatatarget_sockethandlerconfiguration;
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"),
+  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavDataController"),
                                                                                                    &navdatatarget_modulehandlerconfiguration));
 
-//  CBData_in.configuration->streamConfiguration.messageAllocator =
-//    &message_allocator;
+  CBData_in.configuration->streamConfiguration.messageAllocator =
+    &message_allocator;
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
     &CBData_in.configuration->moduleConfiguration;
@@ -1346,8 +1332,10 @@ ACE_TMAIN (int argc_in,
 
   bool log_to_file            = false;
   bool use_reactor            = NET_EVENT_USE_REACTOR;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool show_console           = false;
-  //bool debug_scanner         = STREAM_DECODER_DEFAULT_LEX_TRACE;
+#endif
+  bool debug_scanner          = STREAM_DECODER_DEFAULT_LEX_TRACE;
   bool fullscreen_display     = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   unsigned short port_number  = ARDRONE_VIDEO_LIVE_PORT;
   bool trace_information      = false;
@@ -1365,16 +1353,6 @@ ACE_TMAIN (int argc_in,
 
   // step1: process commandline options, if any
   configuration_path = Common_File_Tools::getWorkingDirectory ();
-#if defined (DEBUG_DEBUGGER)
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("..");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("src");
-//  configuration_path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-//  configuration_path += ACE_TEXT_ALWAYS_CHAR ("test_i");
-#endif // #ifdef DEBUG_DEBUGGER
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool use_mediafoundation   =
@@ -1405,8 +1383,10 @@ ACE_TMAIN (int argc_in,
                             argv_in,
                             drone_address,
                             buffer_size,
-                            //debug_scanner,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                             show_console,
+#endif
+                            debug_scanner,
                             fullscreen_display,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1561,7 +1541,7 @@ ACE_TMAIN (int argc_in,
             argv_in,
             drone_address,
             buffer_size,
-            //debug_scanner,
+            debug_scanner,
             fullscreen_display,
             use_reactor,
             interface_definition_file,
@@ -1571,7 +1551,9 @@ ACE_TMAIN (int argc_in,
             signal_set,
             ignored_signal_set,
             previous_signal_actions,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
             show_console,
+#endif
             signal_handler);
 
   // debug info

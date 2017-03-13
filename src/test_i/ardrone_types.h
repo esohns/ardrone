@@ -45,8 +45,10 @@
 enum ARDrone_MessageType : int
 {
   ARDRONE_MESSAGE_INVALID = -1,
-  ARDRONE_MESSAGE_SENSOR_DATA = ACE_Message_Block::MB_PROTO,
-  ARDRONE_MESSAGE_VIDEO_FRAME,
+  ARDRONE_MESSAGE_ATCOMMANDMESSAGE = ACE_Message_Block::MB_PROTO,
+  ARDRONE_MESSAGE_LIVEVIDEOFRAME,
+  ARDRONE_MESSAGE_MAVLINKMESSAGE,
+  ARDRONE_MESSAGE_NAVDATAMESSAGE,
   ///////////////////////////////////////
   ARDRONE_MESSAGE_MAX
 };
@@ -74,17 +76,17 @@ typedef ARDrone_Events_t::const_iterator ARDrone_EventsIterator_t;
 //  gfloat gz_bias;
 //};
 
-struct ARDrone_Camera
-{
-  //glm::vec3 position;
-  //glm::vec3 looking_at;
-  //glm::vec3 up;
+//struct ARDrone_Camera
+//{
+//  //glm::vec3 position;
+//  //glm::vec3 looking_at;
+//  //glm::vec3 up;
 
-  float zoom;
-  glm::vec3 rotation;
-  glm::vec3 translation;
-  int last[2];
-};
+//  float zoom;
+//  glm::vec3 rotation;
+//  glm::vec3 translation;
+//  int last[2];
+//};
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 __pragma (pack (push, 1))

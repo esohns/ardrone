@@ -371,225 +371,29 @@ load_display_formats (GtkListStore* listStore_in)
   return true;
 }
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct less_guid
-{
-  bool operator () (const struct _GUID& lhs_in,
-                    const struct _GUID& rhs_in) const
-  {
-    //ACE_ASSERT (lhs_in.Data2 == rhs_in.Data2);
-    //ACE_ASSERT (lhs_in.Data3 == rhs_in.Data3);
-    //ACE_ASSERT (*(long long*)lhs_in.Data4 == *(long long*)rhs_in.Data4);
-    return (lhs_in.Data1 < rhs_in.Data1);
-  }
-};
-
-//bool
-//load_formats (IAMStreamConfig* IAMStreamConfig_in,
-//              GtkListStore* listStore_in)
-//{
-//  STREAM_TRACE (ACE_TEXT ("::load_formats"));
-//
-//  // sanity check(s)
-//  ACE_ASSERT (IAMStreamConfig_in);
-//  ACE_ASSERT (listStore_in);
-//
-//  // initialize result
-//  gtk_list_store_clear (listStore_in);
-//
-//  HRESULT result = E_FAIL;
-//  int count = 0, size = 0;
-//  std::set<struct _GUID, less_guid> GUIDs;
-//  result = IAMStreamConfig_in->GetNumberOfCapabilities (&count, &size);
-//  if (FAILED (result))
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to IAMStreamConfig::GetNumberOfCapabilities(): \"%s\", aborting\n"),
-//                ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-//    return false;
-//  } // end IF
-//  struct _AMMediaType* media_type_p = NULL;
-//  struct _AUDIO_STREAM_CONFIG_CAPS capabilities;
-//  struct tagWAVEFORMATEX* waveformatex_p = NULL;
-//  for (int i = 0; i < count; ++i)
-//  {
-//    media_type_p = NULL;
-//    result = IAMStreamConfig_in->GetStreamCaps (i,
-//                                                &media_type_p,
-//                                                (BYTE*)&capabilities);
-//    if (FAILED (result))
-//    {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("failed to IAMStreamConfig::GetStreamCaps(%d): \"%s\", aborting\n"),
-//                  i,
-//                  ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-//      return false;
-//    } // end IF
-//    ACE_ASSERT (media_type_p);
-//    if (media_type_p->formattype != FORMAT_WaveFormatEx)
-//    {
-//      Stream_Module_Device_Tools::deleteMediaType (media_type_p);
-//      continue;
-//    } // end IF
-//
-//    // *NOTE*: FORMAT_VideoInfo2 types do not work with the Video Renderer
-//    //         directly --> insert the Overlay Mixer
-//    GUIDs.insert (media_type_p->subtype);
-//
-//    Stream_Module_Device_Tools::deleteMediaType (media_type_p);
-//  } // end FOR
-//
-//  std::string media_subtype_string;
-//  std::string GUID_stdstring;
-//  GtkTreeIter iterator;
-//  OLECHAR GUID_string[CHARS_IN_GUID];
-//  ACE_OS::memset (GUID_string, 0, sizeof (GUID_string));
-//  for (std::set<GUID, less_guid>::const_iterator iterator_2 = GUIDs.begin ();
-//       iterator_2 != GUIDs.end ();
-//       ++iterator_2)
-//  {
-//    int result_2 = StringFromGUID2 (*iterator_2,
-//                                    GUID_string, CHARS_IN_GUID);
-//    ACE_ASSERT (result_2 == CHARS_IN_GUID);
-//    GUID_stdstring =
-//      ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (GUID_string));
-//    gtk_list_store_append (listStore_in, &iterator);
-//    media_subtype_string =
-//      Stream_Module_Device_Tools::mediaSubTypeToString (*iterator_2);
-//    gtk_list_store_set (listStore_in, &iterator,
-//                        0, media_subtype_string.c_str (),
-//                        1, GUID_stdstring.c_str (),
-//                        -1);
-//  } // end FOR
-//
-//  return true;
-//}
 bool
-//load_formats (IMFSourceReader* IMFSourceReader_in,
-load_formats (IMFMediaSource* IMFMediaSource_in,
-              GtkListStore* listStore_in)
+load_save_formats (GtkListStore* listStore_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::load_formats"));
-
-  // sanity check(s)
-  //ACE_ASSERT (IMFSourceReader_in);
-  ACE_ASSERT (IMFMediaSource_in);
-  ACE_ASSERT (listStore_in);
+  STREAM_TRACE (ACE_TEXT ("::load_save_formats"));
 
   // initialize result
   gtk_list_store_clear (listStore_in);
 
-  HRESULT result = S_OK;
-  //int count = 0, size = 0;
-  std::set<struct _GUID, less_guid> GUIDs;
-  IMFPresentationDescriptor* presentation_descriptor_p = NULL;
-  result =
-    IMFMediaSource_in->CreatePresentationDescriptor (&presentation_descriptor_p);
-  if (FAILED (result))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to IMFMediaSource::CreatePresentationDescriptor(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-    return false;
-  } // end IF
-  IMFStreamDescriptor* stream_descriptor_p = NULL;
-  BOOL is_selected = FALSE;
-  result =
-    presentation_descriptor_p->GetStreamDescriptorByIndex (0,
-                                                           &is_selected,
-                                                           &stream_descriptor_p);
-  if (FAILED (result))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to IMFPresentationDescriptor::GetStreamDescriptor(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-
-    // clean up
-    presentation_descriptor_p->Release ();
-
-    return false;
-  } // end IF
-  ACE_ASSERT (is_selected);
-  presentation_descriptor_p->Release ();
-  presentation_descriptor_p = NULL;
-  IMFMediaTypeHandler* media_type_handler_p = NULL;
-  result = stream_descriptor_p->GetMediaTypeHandler (&media_type_handler_p);
-  if (FAILED (result))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to IMFStreamDescriptor::GetMediaTypeHandler(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-
-    // clean up
-    stream_descriptor_p->Release ();
-
-    return false;
-  } // end IF
-  stream_descriptor_p->Release ();
-  stream_descriptor_p = NULL;
-
-  DWORD count = 0;
-  IMFMediaType* media_type_p = NULL;
-  struct _GUID GUID_s = { 0 };
-
-  result = media_type_handler_p->GetMediaTypeCount (&count);
-  ACE_ASSERT (SUCCEEDED (result));
-  for (DWORD i = 0; i < count; ++i)
-  {
-    media_type_p = NULL;
-    result =
-      //IMFSourceReader_in->GetNativeMediaType (MF_SOURCE_READER_FIRST_VIDEO_STREAM,
-      //                                        i,
-      //                                        &media_type_p);
-      media_type_handler_p->GetMediaTypeByIndex (i,
-                                                 &media_type_p);
-    if (FAILED (result))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to IMFMediaType::GetGUID(MF_MT_SUBTYPE): \"%s\", aborting\n"),
-                  ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-
-      // clean up
-      media_type_handler_p->Release ();
-      media_type_p->Release ();
-
-      return false;
-    } // end IF
-
-    result = media_type_p->GetGUID (MF_MT_SUBTYPE, &GUID_s);
-    if (FAILED (result))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to IMFMediaType::GetGUID(MF_MT_SUBTYPE): \"%s\", aborting\n"),
-                  ACE_TEXT (Common_Tools::error2String (result).c_str ())));
-
-      // clean up
-      media_type_handler_p->Release ();
-      media_type_p->Release ();
-
-      return false;
-    } // end IF
-
-    GUIDs.insert (GUID_s);
-    media_type_p->Release ();
-  } // end FOR
-  media_type_handler_p->Release ();
-
+  std::string format_string;
   GtkTreeIter iterator;
-  for (std::set<struct _GUID, less_guid>::const_iterator iterator_2 = GUIDs.begin ();
-       iterator_2 != GUIDs.end ();
-       ++iterator_2)
-  {
+  do
+  { // *TODO*: this needs more work; use the selected device capabilities,
+    //         instead of static values
+    format_string = ACE_TEXT_ALWAYS_CHAR ("AVI");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, Stream_Module_Decoder_Tools::mediaSubTypeToString (*iterator_2, false).c_str (),
-                        1, Stream_Module_Decoder_Tools::GUIDToString (*iterator_2).c_str (),
+                        0, ACE_TEXT (format_string.c_str ()),
                         -1);
-  } // end FOR
+    break;
+  } while (true);
 
   return true;
 }
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -644,17 +448,14 @@ stream_processing_function (void* arg_in)
     Net_SocketConfigurationIterator_t iterator_2 =
         data_p->CBData->configuration->socketConfigurations.begin ();
     Stream_ISession* session_p = NULL;
-    ACE_Time_Value session_start_timeout = COMMON_TIME_NOW + ACE_Time_Value (5, 0);
+    ACE_Time_Value session_start_timeout =
+        COMMON_TIME_NOW + ACE_Time_Value (5, 0);
 
     // *TODO*: bind to a specific interface
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
-    data_p->CBData->configuration->socketHandlerConfiguration.messageAllocator =
-        data_p->CBData->MAVLinkMessageAllocator;
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
-    data_p->CBData->configuration->streamConfiguration.messageAllocator =
-        data_p->CBData->MAVLinkMessageAllocator;
     stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
@@ -666,7 +467,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-//    stream_p->start ();
+    stream_p->start ();
 
     ++iterator_2;
     // *TODO*: bind to a specific interface
@@ -676,19 +477,15 @@ stream_processing_function (void* arg_in)
         &*iterator_2;
     ++iterator_2;
     iterator_3 =
-        data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NetControlTarget"));
+        data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataController"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
     configuration_p =
           const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> ((*iterator_3).second));
     ACE_ASSERT (configuration_p);
     configuration_p->socketConfiguration = &*iterator_2;
     ACE_ASSERT (configuration_p->socketHandlerConfiguration);
-    configuration_p->socketHandlerConfiguration->messageAllocator =
-        data_p->CBData->NavDataMessageAllocator;
     configuration_p->socketHandlerConfiguration->socketConfiguration =
         &*iterator_2;
-    configuration_p->streamConfiguration->messageAllocator =
-        data_p->CBData->NavDataMessageAllocator;
     stream_2 = data_p->CBData->NavDataStream;
     configuration_p->stream = data_p->CBData->NavDataStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
@@ -711,15 +508,11 @@ stream_processing_function (void* arg_in)
     ++iterator_2;
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
-    data_p->CBData->configuration->socketHandlerConfiguration.messageAllocator =
-        data_p->CBData->liveVideoMessageAllocator;
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
     ACE_ASSERT (data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration);
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration->writeOnly =
         false;
-    data_p->CBData->configuration->streamConfiguration.messageAllocator =
-        data_p->CBData->liveVideoMessageAllocator;
     stream_3 = data_p->CBData->liveVideoStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->liveVideoStream;
@@ -752,7 +545,7 @@ stream_processing_function (void* arg_in)
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
 //  } // end lock scope
-//    stream_3->start ();
+    stream_3->start ();
 
     ACE_ASSERT (stream_p && stream_2 && stream_3);
 
@@ -937,13 +730,13 @@ idle_initialize_ui_cb (gpointer userData_in)
   //              ACE_TEXT ("dynamic_cast<ARDrone_Module_Display*> failed, aborting\n")));
   //  return G_SOURCE_REMOVE;
   //} // end IF
-  //if (!load_formats (media_source_p,
-  //                   list_store_p))
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to ::load_formats(), aborting\n")));
-  //  return G_SOURCE_REMOVE;
-  //} // end IF
+  if (!load_save_formats (//media_source_p,
+                          list_store_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::load_save_formats(), aborting\n")));
+    return G_SOURCE_REMOVE;
+  } // end IF
   combo_box_p =
     GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT)));
@@ -1674,26 +1467,15 @@ idle_finalize_ui_cb (gpointer userData_in)
   // synch access
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, G_SOURCE_REMOVE);
 
-    unsigned int num_messages = cb_data_p->MAVLinkMessages.size ();
-    while (!cb_data_p->MAVLinkMessages.empty ())
+    unsigned int num_messages = cb_data_p->messages.size ();
+    while (!cb_data_p->messages.empty ())
     {
-      cb_data_p->MAVLinkMessages.front ()->release ();
-      cb_data_p->MAVLinkMessages.pop_front ();
+      cb_data_p->messages.front ()->release ();
+      cb_data_p->messages.pop_front ();
     } // end WHILE
     if (num_messages)
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("flushed %u MAVLink messages\n"),
-                  num_messages));
-
-    num_messages = cb_data_p->NavDataMessages.size ();
-    while (!cb_data_p->NavDataMessages.empty ())
-    {
-      cb_data_p->NavDataMessages.front ()->release ();
-      cb_data_p->NavDataMessages.pop_front ();
-    } // end WHILE
-    if (num_messages)
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("flushed %u NavData messages\n"),
+                  ACE_TEXT ("flushed %u message(s)\n"),
                   num_messages));
   } // end lock scope
 
@@ -2239,7 +2021,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   const char* thread_name_p = NULL;
   ACE_Thread_Manager* thread_manager_p = NULL;
   int result = -1;
-  Stream_IStreamControlBase* stream_p = NULL;
+//  Stream_IStreamControlBase* stream_p = NULL;
   std::string interface_identifier_string;
   GdkDisplayManager* display_manager_p = NULL;
   GSList* list_p = NULL;
@@ -2940,6 +2722,19 @@ error:
 }
 
 G_MODULE_EXPORT void
+action_trim_activate_cb (GtkAction* action_in,
+                         gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::action_trim_activate_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+}
+
+G_MODULE_EXPORT void
 action_calibrate_activate_cb (GtkAction* action_in,
                               gpointer userData_in)
 {
@@ -3198,8 +2993,8 @@ places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::places_save_mount_cb"));
 
-  struct ARDrone_GtkCBData* cb_data_p =
-      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+//  struct ARDrone_GtkCBData* cb_data_p =
+//      static_cast<struct ARDrone_GtkCBData*> (userData_in);
 
 }
 
@@ -3353,11 +3148,22 @@ key_cb (GtkWidget* widget_in,
       ACE_ASSERT (check_button_p);
       gboolean is_active_b =
         gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
+
+      if (event_in->keyval == GDK_KEY_Escape)
+      {
+        if (is_active_b)
+          goto continue_;
+        break; // <-- not in fullscreen mode, nothing to do
+      } // end IF
+
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
                                     !is_active_b);
 
+continue_:
       // sanity check(s)
       ACE_ASSERT (cb_data_p->liveVideoStream);
+      if (!cb_data_p->liveVideoStream->isRunning ())
+        break;
 
       const Stream_Module_t* module_p =
         cb_data_p->liveVideoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
@@ -3393,6 +3199,24 @@ key_cb (GtkWidget* widget_in,
 
   return TRUE; // done (do not propagate further)
 }
+gboolean
+drawingarea_key_press_event_cb (GtkWidget* widget_in,
+                                GdkEventKey* event_in,
+                                gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_key_press_event_cb"));
+
+  return key_cb (widget_in, event_in, userData_in);
+};
+gboolean
+dialog_main_key_press_event_cb (GtkWidget* widget_in,
+                                GdkEventKey* event_in,
+                                gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::dialog_main_key_press_event_cb"));
+
+  return key_cb (widget_in, event_in, userData_in);
+};
 
 //G_MODULE_EXPORT gboolean
 //motion_cb (GtkWidget* widget_in,
