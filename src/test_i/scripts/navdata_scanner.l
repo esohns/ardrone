@@ -21,7 +21,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 }
 
 %{
-//#include <regex>
+#include <sstream>
 
 //#include <ace/ace_wchar.h>
 #include <ace/Log_Msg.h>

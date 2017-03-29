@@ -106,7 +106,7 @@ class ARDrone_LiveVideoStream_T
 #endif
 };
 
-//typedef ARDrone_LiveVideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_LiveVideoStream_t;
+typedef ARDrone_LiveVideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_LiveVideoStream_t;
 typedef ARDrone_LiveVideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchLiveVideoStream_t;
 
 //////////////////////////////////////////
@@ -198,6 +198,11 @@ class ARDrone_MAVLinkStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
+ , public Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage>
 {
  public:
   ARDrone_MAVLinkStream ();

@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_sessionmessage.h"
 
 #include "ace/Malloc_Base.h"

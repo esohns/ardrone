@@ -196,13 +196,21 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
   session_data_r.sessionID = configuration_in.sessionID;
   //  ACE_ASSERT (configuration_in.moduleConfiguration);
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
+  Stream_ModuleHandlerConfigurationsIterator_t iterator =
+    const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
+  struct ARDrone_ModuleHandlerConfiguration* configuration_p =
+    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+  ACE_ASSERT (configuration_p);
 
   // ---------------------------------------------------------------------------
+
+  Stream_Module_t* module_p = NULL;
 
   // ---------------------------------------------------------------------------
 
   // ******************* Display Handler ***************************************
-  Stream_Module_t* module_p =
+  module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("Display")));
   if (!module_p)
   {
@@ -240,8 +248,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
 
   // sanity check(s)
   // *TODO*: remove type inference
-  ACE_ASSERT (configuration_in.moduleHandlerConfiguration);
-  ACE_ASSERT (configuration_in.moduleHandlerConfiguration->format);
+  ACE_ASSERT (configuration_p->format);
 
   if (configuration_in.useMediaFoundation)
   {
@@ -313,24 +320,6 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
   } // end IF
 #endif
 
-  // ***************************** Statistic **********************************
-//  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-//    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (statistic_.writer ());
-//  if (!statistic_impl_p)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<ARDrone_Module_RuntimeStatistic> failed, aborting\n")));
-//    return false;
-//  } // end IF
-//  if (!statistic_impl_p->initialize (configuration_in.statisticReportingInterval,
-//                                     configuration_in.messageAllocator))
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-//                statistic_.name ()));
-//    return false;
-//  } // end IF
-
   // ******************************** Source ***********************************
   module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource")));
@@ -350,14 +339,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
                 ACE_TEXT ("dynamic_cast<SourceModuleType::WRITER_T> failed, aborting\n")));
     return false;
   } // end IF
-
-  if (!sourceWriter_impl_p->initialize (inherited::state_))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-                module_p->name ()));
-    return false;
-  } // end IF
+  sourceWriter_impl_p->set (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -817,7 +799,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
   if (session_data_r.format)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
   ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_in.moduleHandlerConfiguration->format,
+  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
                                                              session_data_r.format))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -902,6 +884,9 @@ bool
 ARDrone_LiveVideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::collect"));
+
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
 
   int result = -1;
   ARDrone_SessionData& session_data_r =

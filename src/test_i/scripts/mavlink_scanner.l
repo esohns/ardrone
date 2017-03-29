@@ -140,7 +140,9 @@ V09_START_CODE         \x55
                                     ACE_ASSERT (yyleng == sizeof (uint16_t));
                                     message_p->checksum =
                                       *reinterpret_cast<uint16_t*> (yytext);
-                                    // *TODO*: validate checksum
+                                    if (ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN)
+                                      message_p->checksum =
+                                          ACE_SWAP_WORD (message_p->checksum);
 
                                     struct __mavlink_message* message_2 =
                                         message_p;

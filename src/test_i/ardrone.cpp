@@ -43,24 +43,21 @@ extern "C"
 }
 #endif /* __cplusplus */
 
-#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
-#include <valgrind/memcheck.h>
-#endif
-
-#include <ace/ACE.h>
-#include <ace/Get_Opt.h>
+#include "ace/ACE.h"
+#include "ace/Get_Opt.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <ace/Init_ACE.h>
+#include "ace/Init_ACE.h"
 #endif
-#include <ace/Log_Msg.h>
-#include <ace/OS.h>
-#include <ace/OS_main.h>
+#include "ace/Log_Msg.h"
+#include "ace/OS.h"
+#include "ace/OS_main.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#include <ace/POSIX_Proactor.h>
+#include "ace/POSIX_Proactor.h"
 #endif
-#include <ace/Profile_Timer.h>
-#include <ace/Time_Value.h>
+#include "ace/Profile_Timer.h"
+#include "ace/Synch.h"
+#include "ace/Time_Value.h"
 
 #ifdef HAVE_CONFIG_H
 #include "ardrone_config.h"
@@ -470,7 +467,7 @@ do_initializeSignals (bool useReactor_in,
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
-      ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", returning\n")));
+                ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", returning\n")));
     return;
   } // end IF
   // *NOTE*: cannot handle some signals --> registration fails for these...
@@ -525,7 +522,7 @@ do_initializeSignals (bool useReactor_in,
   // *NOTE*: valgrind uses SIGRT32 (--> SIGRTMAX ?) and apparently will not work
   // if the application installs its own handler (see documentation)
   if (RUNNING_ON_VALGRIND)
-    signals_inout.sig_del (SIGRTMAX);     // 64
+    signals_out.sig_del (SIGRTMAX);     // 64
 #endif
 }
 
@@ -874,12 +871,12 @@ do_work (int argc_in,
                                                 &heap_allocator,
                                                 true); // block
 
-  ARDrone_ConnectionManager_t* connectionManager_p =
+  ARDrone_ConnectionManager_t* connection_manager_p =
     ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
-  ACE_ASSERT (connectionManager_p);
-  connectionManager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  ACE_ASSERT (connection_manager_p);
+  connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
 
-//  ARDrone_LiveVideoStream_t video_stream;
+  ARDrone_LiveVideoStream_t video_stream;
   ARDrone_AsynchLiveVideoStream_t asynch_video_stream;
   ARDrone_MAVLinkStream mavlink_stream;
   // *TODO*: apparently, some drones use flashed firmware that uses MAVLink
@@ -954,7 +951,7 @@ do_work (int argc_in,
     CBData_in.configuration->userData;
 
   CBData_in.configuration->connectionConfiguration.connectionManager =
-    connectionManager_p;
+    connection_manager_p;
   CBData_in.configuration->connectionConfiguration.socketHandlerConfiguration =
       &CBData_in.configuration->socketHandlerConfiguration;
   CBData_in.configuration->connectionConfiguration.streamConfiguration =
@@ -983,7 +980,7 @@ do_work (int argc_in,
     &CBData_in.configuration->streamConfiguration;
 
   CBData_in.configuration->moduleHandlerConfiguration.connectionManager =
-    connectionManager_p;
+    connection_manager_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->moduleHandlerConfiguration.consoleMode =
     interfaceDefinitionFile_in.empty ();
@@ -1025,8 +1022,6 @@ do_work (int argc_in,
   else
     CBData_in.configuration->moduleHandlerConfiguration.stream =
         &asynch_video_stream;
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
 
   struct ARDrone_SocketHandlerConfiguration navdatatarget_sockethandlerconfiguration =
       CBData_in.configuration->socketHandlerConfiguration;
@@ -1034,24 +1029,25 @@ do_work (int argc_in,
       CBData_in.configuration->moduleHandlerConfiguration;
   navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
       &navdatatarget_sockethandlerconfiguration;
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavDataController"),
-                                                                                                   &navdatatarget_modulehandlerconfiguration));
 
+  CBData_in.configuration->streamConfiguration.initialize = &event_handler;
   CBData_in.configuration->streamConfiguration.messageAllocator =
     &message_allocator;
+  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
+  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                                                                                                   &navdatatarget_modulehandlerconfiguration));
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
     &CBData_in.configuration->moduleConfiguration;
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfiguration =
-    &CBData_in.configuration->moduleHandlerConfiguration;
   CBData_in.configuration->streamConfiguration.statisticReportingInterval =
     ARDRONE_STATISTIC_REPORTING_INTERVAL;
   CBData_in.configuration->streamConfiguration.printFinalReport = false;
   CBData_in.configuration->streamConfiguration.userData =
     CBData_in.configuration->userData;
 
-  if (useReactor_in);
-//    CBData_in.liveVideoStream = &video_stream;
+  if (useReactor_in)
+    CBData_in.liveVideoStream = &video_stream;
   else
     CBData_in.liveVideoStream = &asynch_video_stream;
   CBData_in.MAVLinkStream = &mavlink_stream;
@@ -1061,7 +1057,7 @@ do_work (int argc_in,
   struct ARDrone_ConnectionConfiguration configuration_2 =
     CBData_in.configuration->connectionConfiguration;
   //configuration_2.streamConfiguration->module = NULL;
-  connectionManager_p->set (configuration_2,
+  connection_manager_p->set (configuration_2,
                             CBData_in.configuration->userData); // passed to all handlers
 
   Common_Timer_Manager_t* timer_manager_p =
@@ -1090,8 +1086,8 @@ do_work (int argc_in,
   } // end IF
 
   // step4: initialize signal handling
-  CBData_in.configuration->signalHandlerConfiguration.consoleMode =
-    interfaceDefinitionFile_in.empty ();
+  CBData_in.configuration->signalHandlerConfiguration.hasUI =
+    !interfaceDefinitionFile_in.empty ();
   CBData_in.configuration->signalHandlerConfiguration.peerAddress = address_in;
   CBData_in.configuration->signalHandlerConfiguration.useReactor =
     useReactor_in;
@@ -1116,8 +1112,7 @@ do_work (int argc_in,
   timer_manager_p->start ();
 
   // step1a: start GTK event loop ?
-  gtk_manager_p =
-      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+  gtk_manager_p = ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   if (!interfaceDefinitionFile_in.empty ())
   {
@@ -1159,7 +1154,7 @@ do_work (int argc_in,
 
   // step6b: initialize worker(s)
   thread_data.numberOfDispatchThreads =
-    NET_CLIENT_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
+    ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
   thread_data.proactorType = proactor_type;
   thread_data.reactorType = reactor_type;
   thread_data.useReactor = useReactor_in;
@@ -1204,10 +1199,17 @@ do_work (int argc_in,
 //                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->localSAP).c_str ())));
 
     // initialize processing streams
+    Stream_IStreamControlBase* istream_control_p = &mavlink_stream;
     if (!mavlink_stream.initialize (CBData_in.configuration->streamConfiguration))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to initialize MAVLink stream, returning\n")));
+      goto clean;
+    } // end IF
+    if (!navdata_stream.initialize (CBData_in.configuration->streamConfiguration))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream, returning\n")));
       goto clean;
     } // end IF
     if (!asynch_video_stream.initialize (CBData_in.configuration->streamConfiguration))
@@ -1217,11 +1219,19 @@ do_work (int argc_in,
       goto clean;
     } // end IF
 
-    mavlink_stream.start ();
-    if (!mavlink_stream.isRunning ())
+    istream_control_p->start ();
+    if (!istream_control_p->isRunning ())
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to start MAVLink stream, returning\n")));
+      goto clean;
+    } // end IF
+    istream_control_p = &navdata_stream;
+    istream_control_p->start ();
+    if (!istream_control_p->isRunning ())
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to start NavData stream, returning\n")));
       goto clean;
     } // end IF
     asynch_video_stream.start ();
@@ -1231,20 +1241,24 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to start video stream, returning\n")));
       goto clean;
     } // end IF
-    mavlink_stream.wait (true,
-                         false,
-                         false);
+
+    istream_control_p = &mavlink_stream;
+    istream_control_p->wait (true,
+                             false,
+                             false);
+    istream_control_p = &navdata_stream;
+    istream_control_p->wait (true,
+                             false,
+                             false);
     asynch_video_stream.wait (true,
                               false,
                               false);
-  } // end ELSE
-
-  // step8: dispatch GTK events
-  if (!interfaceDefinitionFile_in.empty ())
+  } // end IF
+  else
     gtk_manager_p->wait ();
 
-  Common_Tools::dispatchEvents (useReactor_in,
-                                group_id);
+  //Common_Tools::dispatchEvents (useReactor_in,
+  //                              group_id);
 
   // step9: clean up
 //  result = event_handler_module.close ();
@@ -1256,6 +1270,12 @@ do_work (int argc_in,
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
 
+  // clean up
+  connection_manager_p->stop ();
+  Common_Tools::finalizeEventDispatch (useReactor_in,
+                                       !useReactor_in,
+                                       group_id);
+  connection_manager_p->wait ();
   timer_manager_p->stop ();
 
   return;
@@ -1538,26 +1558,26 @@ ACE_TMAIN (int argc_in,
   // step9: run program
   timer.start ();
   do_work (argc_in,
-            argv_in,
-            drone_address,
-            buffer_size,
-            debug_scanner,
-            fullscreen_display,
-            use_reactor,
-            interface_definition_file,
-            ////////////////////////////
-            gtk_cb_data,
-            ////////////////////////////
-            signal_set,
-            ignored_signal_set,
-            previous_signal_actions,
+           argv_in,
+           drone_address,
+           buffer_size,
+           debug_scanner,
+           fullscreen_display,
+           use_reactor,
+           interface_definition_file,
+           ///////////////////////////////
+           gtk_cb_data,
+           ///////////////////////////////
+           signal_set,
+           ignored_signal_set,
+           previous_signal_actions,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-            show_console,
+           show_console,
 #endif
-            signal_handler);
+           signal_handler);
+  timer.stop ();
 
   // debug info
-  timer.stop ();
   timer.elapsed_time (working_time);
   Common_Tools::period2String (working_time,
                                working_time_string);
@@ -1566,8 +1586,9 @@ ACE_TMAIN (int argc_in,
               ACE_TEXT (working_time_string.c_str ())));
 
 done:
-  // debug info
   process_profile.stop ();
+
+  // debug info
   ACE_Profile_Timer::ACE_Elapsed_Time elapsed_time;
   elapsed_time.real_time = 0.0;
   elapsed_time.user_time = 0.0;
@@ -1600,7 +1621,6 @@ done:
                                user_time_string);
   Common_Tools::period2String (system_time,
                                system_time_string);
-  // debug info
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT (" --> Process Profile <--\nreal time = %A seconds\nuser time = %A seconds\nsystem time = %A seconds\n --> Resource Usage <--\nuser time used: %s\nsystem time used: %s\n"),

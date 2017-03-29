@@ -32,6 +32,8 @@
 #endif
 #endif /* GTKGL_SUPPORT */
 
+#include <gtk/gtk.h>
+
 #include <ace/Singleton.h>
 #include <ace/Synch_Traits.h>
 
@@ -106,13 +108,11 @@ struct ARDrone_SignalHandlerConfiguration
  inline ARDrone_SignalHandlerConfiguration ()
   : Common_SignalHandlerConfiguration ()
   , actionTimerID (-1)
-  , consoleMode (false)
   , interfaceHandle (NULL)
   , peerAddress ()
   {};
 
   long                  actionTimerID;
-  bool                  consoleMode;
   ARDrone_IConnector_t* interfaceHandle;
   ACE_INET_Addr         peerAddress;
 };

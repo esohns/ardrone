@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_module_eventhandler.h"
 
 #include "ace/Log_Msg.h"

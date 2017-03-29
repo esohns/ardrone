@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_stream.h"
 
 #include "ardrone_configuration.h"
@@ -43,27 +44,26 @@ bool
 ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
                              bool& delete_out)
 {
-  STREAM_TRACE (ACE_TEXT ("ARDrone_NavDataStream::load"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::load"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::configuration_);
 
   Stream_Module_t* module_p = NULL;
-  module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_NavDataController_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataController"),
-                                                           NULL,
-                                                           false),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+                  ARDrone_Module_Controller_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
                                                     NULL,
                                                     false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
+//  ACE_NEW_RETURN (module_p,
+//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+//                                                    NULL,
+//                                                    false),
+//                  false);
+//  modules_out.push_back (module_p);
+//  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
@@ -128,12 +128,18 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
   // - push them onto the stream (tail-first)
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+  session_data_r.isNavData = true;
   session_data_r.sessionID = configuration_in.sessionID;
   //  ACE_ASSERT (configuration_in.moduleConfiguration);
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
-  ACE_ASSERT (configuration_in.moduleHandlerConfiguration);
-  ACE_ASSERT (configuration_in.moduleHandlerConfiguration->subscribers);
-  configuration_in.moduleHandlerConfiguration->subscribers->push_back (this);
+  Stream_ModuleHandlerConfigurationsIterator_t iterator =
+      const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
+  struct ARDrone_ModuleHandlerConfiguration* configuration_p =
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+  ACE_ASSERT (configuration_p);
+  ACE_ASSERT (configuration_p->subscribers);
+  configuration_p->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
 
@@ -158,27 +164,49 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
                 ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n")));
     return false;
   } // end IF
-
-  if (!sourceWriter_impl_p->initialize (inherited::state_))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-                module_p->name ()));
-    return false;
-  } // end IF
+  sourceWriter_impl_p->set (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
   // --> set the argument that is passed along
   module_p->arg (inherited::sessionData_);
 
+  // **************************** Controller ***********************************
+  module_p =
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("Controller")));
+  if (!module_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT ("Controller")));
+    return false;
+  } // end IF
+
+  ARDrone_IController* icontroller_p =
+    dynamic_cast<ARDrone_IController*> (module_p->writer ());
+  if (!icontroller_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("dynamic_cast<ARDrone_IController> failed, aborting\n")));
+    return false;
+  } // end IF
+
+  ACE_ASSERT (configuration_in.initialize);
+  if (!configuration_in.initialize->initialize (icontroller_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize event handler, aborting\n")));
+    return false;
+  } // end IF
+
   // -------------------------------------------------------------
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_ASSERT (configuration_p->format);
   if (session_data_r.format)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
   ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_in.moduleHandlerConfiguration->format,
+  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
                                                              session_data_r.format))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -263,8 +291,8 @@ ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::collect"));
 
   int result = -1;
-  ARDrone_SessionData& session_data_r =
-      const_cast<ARDrone_SessionData&> (inherited::sessionData_->get ());
+  struct ARDrone_SessionData& session_data_r =
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)
@@ -305,7 +333,7 @@ ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in Common_IStatistic_T::collect(), continuing\n")));
   }
-  if (!result)
+  if (!result_2)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
   else
@@ -364,14 +392,13 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
   ACE_ASSERT (inherited::configuration_);
 
   Stream_Module_t* module_p = NULL;
-  module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-                                                    NULL,
-                                                    false),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
+//  ACE_NEW_RETURN (module_p,
+//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
+//                                                    NULL,
+//                                                    false),
+//                  false);
+//  modules_out.push_back (module_p);
+//  module_p = NULL;
 //#if defined (_DEBUG)
 //  ACE_NEW_RETURN (module_p,
 //                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
@@ -436,9 +463,15 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
   // - push them onto the stream (tail-first)
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  session_data_r.sessionID = configuration_in.sessionID;
-  //  ACE_ASSERT (configuration_in.moduleConfiguration);
-  //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
+  //session_data_r.sessionID = configuration_in.sessionID;
+  Stream_ModuleHandlerConfigurationsIterator_t iterator =
+      const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
+  struct ARDrone_ModuleHandlerConfiguration* configuration_p =
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+  ACE_ASSERT (configuration_p);
+  ACE_ASSERT (configuration_p->subscribers);
+  configuration_p->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
 
@@ -483,14 +516,7 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
                 ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n")));
     return false;
   } // end IF
-
-  if (!sourceWriter_impl_p->initialize (inherited::state_))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-                module_p->name ()));
-    return false;
-  } // end IF
+  sourceWriter_impl_p->set (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -500,10 +526,11 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
   // -------------------------------------------------------------
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_ASSERT (configuration_p->format);
   if (session_data_r.format)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
   ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_in.moduleHandlerConfiguration->format,
+  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
                                                              session_data_r.format))
   {
     ACE_DEBUG ((LM_ERROR,

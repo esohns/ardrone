@@ -1582,7 +1582,7 @@ static const yy_state_type yy_NUL_trans[30] =
 
 static const flex_int32_t yy_rule_linenum[10] =
     {   0,
-       77,   82,   90,   98,  106,  114,  122,  140,  160
+       77,   82,   90,   98,  106,  114,  122,  140,  162
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2202,7 +2202,9 @@ YY_RULE_SETUP
                                     ACE_ASSERT (yyleng == sizeof (uint16_t));
                                     message_p->checksum =
                                       *reinterpret_cast<uint16_t*> (yytext);
-                                    // *TODO*: validate checksum
+                                    if (ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN)
+                                      message_p->checksum =
+                                          ACE_SWAP_WORD (message_p->checksum);
 
                                     struct __mavlink_message* message_2 =
                                         message_p;

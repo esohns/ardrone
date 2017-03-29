@@ -99,67 +99,38 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
 }
 
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType,
-          typename HandlerConfigurationType,
-          typename ConnectionManagerType,
-          typename ConnectorType>
-bool
-ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType,
-                            HandlerConfigurationType,
-                            ConnectionManagerType,
-                            ConnectorType>::initialize (const ConfigurationType& configuration_in,
-                                                        Stream_IAllocator* allocator_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::initialize"));
+//template <ACE_SYNCH_DECL,
+//          typename TimePolicyType,
+//          typename ConfigurationType,
+//          typename ControlMessageType,
+//          typename DataMessageType,
+//          typename SessionMessageType,
+//          typename SessionDataContainerType,
+//          typename HandlerConfigurationType,
+//          typename ConnectionManagerType,
+//          typename ConnectorType>
+//bool
+//ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+//                            TimePolicyType,
+//                            ConfigurationType,
+//                            ControlMessageType,
+//                            DataMessageType,
+//                            SessionMessageType,
+//                            SessionDataContainerType,
+//                            HandlerConfigurationType,
+//                            ConnectionManagerType,
+//                            ConnectorType>::initialize (const ConfigurationType& configuration_in,
+//                                                        Stream_IAllocator* allocator_in)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::initialize"));
 
-  if (inherited::isInitialized_)
-  {
-  } // end IF
+//  if (inherited::isInitialized_)
+//  {
+//  } // end IF
 
-  return inherited::initialize (configuration_in,
-                                allocator_in);
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType,
-          typename HandlerConfigurationType,
-          typename ConnectionManagerType,
-          typename ConnectorType>
-void
-ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType,
-                            HandlerConfigurationType,
-                            ConnectionManagerType,
-                            ConnectorType>::handleDataMessage (DataMessageType*& message_inout,
-                                                               bool& passMessageDownstream_out)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::handleDataMessage"));
-
-  inherited::handleDataMessage (message_inout,
-                                passMessageDownstream_out);
-}
+//  return inherited::initialize (configuration_in,
+//                                allocator_in);
+//}
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
@@ -204,35 +175,35 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   {
     case STREAM_SESSION_MESSAGE_CONNECT:
     {
-      // *TODO*: this needs more work
-      // *TODO*: remove type inference
-      enum ARDrone_VideoMode video_mode = ARDRONE_VIDEOMODE_INVALID;
-      switch (inherited::configuration_->sourceFormat.height)
-      {
-        case 368:
-          video_mode = ARDRONE_VIDEOMODE_360P;
-          break;
-        case 720:
-          video_mode = ARDRONE_VIDEOMODE_720P;
-          break;
-        default:
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: invalid/unknown device video mode (resolution/height was: %d), aborting\n"),
-                      inherited::mod_->name (),
-                      inherited::configuration_->sourceFormat.height));
-          goto error;
-        }
-      } // end SWITCH
-      try {
-        set (video_mode);
-      } catch (...) {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ARDrone_IController::set(%d), aborting\n"),
-                    inherited::mod_->name (),
-                    video_mode));
-        goto error;
-      }
+//      // *TODO*: this needs more work
+//      // *TODO*: remove type inference
+//      enum ARDrone_VideoMode video_mode = ARDRONE_VIDEOMODE_INVALID;
+//      switch (inherited::configuration_->sourceFormat.height)
+//      {
+//        case 368:
+//          video_mode = ARDRONE_VIDEOMODE_360P;
+//          break;
+//        case 720:
+//          video_mode = ARDRONE_VIDEOMODE_720P;
+//          break;
+//        default:
+//        {
+//          ACE_DEBUG ((LM_ERROR,
+//                      ACE_TEXT ("%s: invalid/unknown device video mode (resolution/height was: %d), aborting\n"),
+//                      inherited::mod_->name (),
+//                      inherited::configuration_->sourceFormat.height));
+//          goto error;
+//        }
+//      } // end SWITCH
+//      try {
+//        set (video_mode);
+//      } catch (...) {
+//        ACE_DEBUG ((LM_ERROR,
+//                    ACE_TEXT ("%s: failed to ARDrone_IController::set(%d), aborting\n"),
+//                    inherited::mod_->name (),
+//                    video_mode));
+//        goto error;
+//      }
 
       goto continue_;
 
@@ -497,32 +468,4 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
                 inherited::mod_->name (),
                 ACE_TEXT (command_string.c_str ())));
-}
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType,
-          typename HandlerConfigurationType,
-          typename ConnectionManagerType,
-          typename ConnectorType>
-void
-ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType,
-                            HandlerConfigurationType,
-                            ConnectionManagerType,
-                            ConnectorType>::messageCB ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::messageCB"));
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
 }

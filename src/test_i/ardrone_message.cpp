@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_message.h"
 
 #include "ace/Malloc_Base.h"
@@ -52,6 +53,7 @@ ARDrone_Message::ARDrone_Message (ACE_Data_Block* dataBlock_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::ARDrone_Message"));
 
+  inherited::type_ = ARDRONE_MESSAGE_LIVEVIDEOFRAME;
 }
 
 // *NOTE*: this is implicitly invoked by duplicate()

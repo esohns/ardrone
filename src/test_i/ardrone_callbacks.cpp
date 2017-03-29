@@ -42,9 +42,10 @@
 #include <mfidl.h>
 #endif
 
-#include <ace/Log_Msg.h>
-#include <ace/Process.h>
-#include <ace/Process_Manager.h>
+#include "ace/Log_Msg.h"
+#include "ace/Process.h"
+#include "ace/Process_Manager.h"
+#include "ace/Synch.h"
 
 #include <gmodule.h>
 
@@ -66,6 +67,10 @@
 #endif
 
 #include "stream_vis_common.h"
+
+#ifdef HAVE_CONFIG_H
+#include "ardrone_config.h"
+#endif
 
 #include "ardrone_common.h"
 #include "ardrone_configuration.h"
@@ -349,8 +354,8 @@ load_display_formats (GtkListStore* listStore_in)
   std::string format_string;
   GtkTreeIter iterator;
   do
-  { // *TODO*: this needs more work; use the selected device capabilities,
-    //         instead of static values
+  { // *TODO*: this needs more work; support the device capabilities exposed
+    //         through the API, instead of static values
     format_string = ACE_TEXT_ALWAYS_CHAR ("H264 360p");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
@@ -382,12 +387,19 @@ load_save_formats (GtkListStore* listStore_in)
   std::string format_string;
   GtkTreeIter iterator;
   do
-  { // *TODO*: this needs more work; use the selected device capabilities,
-    //         instead of static values
-    format_string = ACE_TEXT_ALWAYS_CHAR ("AVI");
+  { // *TODO*: this needs more work; support the device capabilities exposed
+    //         through the API, instead of static values
+    // *TODO*: define/activate a 'save-to-file' subpipeline (use a multiplexer)
+    //         and forward(/encapsulate) the byte-stream as default format
+    format_string = ACE_TEXT_ALWAYS_CHAR ("RGB");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
                         0, ACE_TEXT (format_string.c_str ()),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                        1, ACE_TEXT (Stream_Module_Decoder_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
+#else
+                        2 , AV_PIX_FMT_RGB24,
+#endif
                         -1);
     break;
   } while (true);
@@ -434,6 +446,7 @@ stream_processing_function (void* arg_in)
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
+  std::string logfile_name_string;
   bool result_2 = false;
 //  guint context_id = 0;
 
@@ -454,6 +467,11 @@ stream_processing_function (void* arg_in)
     // *TODO*: bind to a specific interface
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
         &*iterator_2;
+    logfile_name_string =
+        data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName;
+    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
     data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
         &*iterator_2;
     stream_p = data_p->CBData->MAVLinkStream;
@@ -468,6 +486,13 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     stream_p->start ();
+    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
+    ACE_ASSERT (session_p);
+    // *IMPORTANT NOTE*: race condition here --> add timeout
+    session_p->wait (false,
+                     &session_start_timeout);
+    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+        logfile_name_string;
 
     ++iterator_2;
     // *TODO*: bind to a specific interface
@@ -477,7 +502,7 @@ stream_processing_function (void* arg_in)
         &*iterator_2;
     ++iterator_2;
     iterator_3 =
-        data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataController"));
+        data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
     configuration_p =
           const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> ((*iterator_3).second));
@@ -486,10 +511,11 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (configuration_p->socketHandlerConfiguration);
     configuration_p->socketHandlerConfiguration->socketConfiguration =
         &*iterator_2;
-    stream_2 = data_p->CBData->NavDataStream;
     configuration_p->stream = data_p->CBData->NavDataStream;
-    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->NavDataStream;
+    configuration_p->targetFileName =
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
+    stream_2 = data_p->CBData->NavDataStream;
     result_2 =
       data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
     if (!result_2)
@@ -498,7 +524,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-    stream_2->start ();
+//    stream_2->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -1349,7 +1375,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   //else
   //  cb_data_p->eventSourceIds.insert (cb_data_p->openGLRefreshId);
 
-  // step10: retrieve canvas coordinates, window handle and pixel buffer
+  // step8: retrieve canvas coordinates, window handle and pixel buffer
   GdkWindow* window_p = gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
   ACE_ASSERT (window_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1367,7 +1393,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #endif
 
-  // step6: activate some widgets
+  // step9: activate some widgets
   GtkToggleAction* toggle_action_p =
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
@@ -1438,7 +1464,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     GtkToggleButton* toggle_button_p =
           GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
-      ACE_ASSERT (toggle_button_p);
+    ACE_ASSERT (toggle_button_p);
     gtk_toggle_button_set_active (toggle_button_p,
                                   true);
     GtkFrame* frame_p =
@@ -1448,6 +1474,14 @@ idle_initialize_ui_cb (gpointer userData_in)
     gtk_widget_set_sensitive (GTK_WIDGET (frame_p),
                               true);
   } // end IF
+
+  ///* Get Icons shown on buttons */
+  //GtkSettings* settings_p = gtk_settings_get_default ();
+  //ACE_ASSERT (settings_p);
+  //gtk_settings_set_long_property (settings_p,
+  //                                ACE_TEXT_ALWAYS_CHAR ("gtk-button-images"),
+  //                                TRUE,
+  //                                ACE_TEXT_ALWAYS_CHAR ("main"));
 
   // one-shot action
   return G_SOURCE_REMOVE;
@@ -2167,12 +2201,12 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                               1, &value);
 #else
-                              0, &value);
+                              2, &value);
 #endif
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
     std::string format_string = g_value_get_string (&value);
     g_value_unset (&value);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
     HRESULT result = E_FAIL;
 #if defined (OLE2ANSI)
     result = CLSIDFromString (format_string.c_str (),
@@ -2188,6 +2222,10 @@ continue_:
       goto error;
     } // end IF
 #else
+    ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
+    cb_data_p->configuration->moduleHandlerConfiguration.format =
+      static_cast<enum AVPixelFormat> (g_value_get_int (&value));
+    g_value_unset (&value);
 #endif
   } // end IF
 
@@ -2223,11 +2261,7 @@ continue_:
   ACE_ASSERT (list_store_p);
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
                             0, &value);
-#else
-                            0, &value);
-#endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
   cb_data_p->configuration->moduleHandlerConfiguration.device =
     g_value_get_string (&value);
@@ -2309,6 +2343,7 @@ continue_:
       screen_p = NULL;
     } // end FOR
   } // end FOR
+  g_slist_free (list_p);
   if (!screen_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -3049,8 +3084,6 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 
   return TRUE;
 }
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
 G_MODULE_EXPORT gboolean
 drawingarea_draw_cb (GtkWidget* widget_in,
                      cairo_t* context_in,
@@ -3063,6 +3096,8 @@ drawingarea_draw_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
   if (!cb_data_p->pixelBuffer)
     return FALSE; // --> widget has not been realized yet
 
@@ -3085,10 +3120,10 @@ drawingarea_draw_cb (GtkWidget* widget_in,
     //                 GDK_RGB_DITHER_NONE, 0, 0);
     cairo_paint (context_in);
   } // end lock scope
+#endif
 
   return TRUE;
 }
-#endif
 G_MODULE_EXPORT void
 drawingarea_realize_cb (GtkWidget* widget_in,
                         gpointer userData_in)

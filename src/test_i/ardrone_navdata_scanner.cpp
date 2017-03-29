@@ -1911,7 +1911,7 @@ static const flex_int32_t yy_rule_linenum[9] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 
-//#include <regex>
+#include <sstream>
 
 //#include <ace/ace_wchar.h>
 #include <ace/Log_Msg.h>

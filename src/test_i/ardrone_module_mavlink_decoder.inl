@@ -20,6 +20,8 @@
 
 #include <ace/Log_Msg.h>
 
+#include "checksum.h"
+
 #include "stream_dec_defines.h"
 
 #include "ardrone_macros.h"
@@ -43,7 +45,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
  , bufferState_ (NULL)
  , isFirst_ (true)
  , scannerState_ (NULL)
- , useYYScanBuffer_ (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
+ , useYYScanBuffer_ (STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::ARDrone_Module_MAVLinkDecoder_T"));
 
@@ -127,7 +129,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
     isFirst_ = true;
 
-    useYYScanBuffer_ = STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER;
+    useYYScanBuffer_ = STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER;
   } // end IF
 
   ACE_ASSERT (inherited::msg_queue_);
@@ -310,6 +312,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+//  ACE_UINT16 checksum_i = 0;
+  uint16_t checksum_i = 0;
 
   while (remaining_bytes_2)
   { ACE_ASSERT (message_block_p);
@@ -331,8 +335,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
          message_block_2 = message_block_2->cont ())
     {
       length = message_block_2->length ();
-      length = (length >= remaining_bytes ? remaining_bytes
-                                          : length);
+      length = (length >= remaining_bytes ? remaining_bytes : length);
       remaining_bytes -= length;
       if (!remaining_bytes)
       {
@@ -358,6 +361,30 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
     ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
   } // end IF
+
+  // *TODO*: validate checksum
+//  checksum_i = ACE::crc_ccitt (buffer_->rd_ptr () - MAVLINK_CORE_HEADER_LEN,
+//                               record_inout->len + MAVLINK_CORE_HEADER_LEN,
+//                               0);
+//  checksum_i =
+//      crc_calculate (reinterpret_cast<uint8_t*> (buffer_->rd_ptr ()) - MAVLINK_CORE_HEADER_LEN,
+//                     record_inout->len + MAVLINK_CORE_HEADER_LEN);
+//  static const uint8_t mavlink_message_crcs[256] = MAVLINK_MESSAGE_CRCS;
+//#define MAVLINK_MESSAGE_CRC(msgid) mavlink_message_crcs[msgid]
+//  crc_accumulate (MAVLINK_MESSAGE_CRC (record_inout->msgid), &checksum_i);
+//  if (checksum_i != record_inout->checksum)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("%s: invalid checksum, continuing\n"),
+//                inherited::mod_->name ()));
+
+//    // clean up
+//    buffer_->release ();
+//    buffer_ = NULL;
+
+//    goto error;
+//  } // end IF
+
   buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
@@ -406,15 +433,17 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   return;
 
 error:
+  if (message_block_p)
+    message_block_p->release ();
   if (message_data_p)
     delete message_data_p;
   if (message_data_container_p)
     message_data_container_p->decrease ();
-  if (record_inout)
-  {
-    delete record_inout;
-    record_inout = NULL;
-  } // end IF
+//  if (record_inout)
+//  {
+//    delete record_inout;
+//    record_inout = NULL;
+//  } // end IF
 }
 //template <ACE_SYNCH_DECL,
 //          typename TimePolicyType,
