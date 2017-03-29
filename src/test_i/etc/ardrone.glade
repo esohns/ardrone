@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.6"/>
+  <!-- interface-requires gtk+ 3.6 -->
   <object class="GtkActionGroup" id="actiongroup">
     <property name="name">actions</property>
     <child>
@@ -214,6 +213,8 @@
       <column type="gchararray"/>
       <!-- column-name GUID -->
       <column type="gchararray"/>
+      <!-- column-name enum -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkDialog" id="dialog_main">
@@ -227,58 +228,6 @@
       <object class="GtkBox" id="vbox_main">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="hbuttonbox_main">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="homogeneous">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button_about">
-                <property name="label">gtk-about</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">show information</property>
-                <property name="relief">half</property>
-                <property name="use_stock">True</property>
-                <property name="focus_on_click">False</property>
-                <signal name="clicked" handler="button_about_clicked_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button_quit">
-                <property name="label">gtk-quit</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">quit</property>
-                <property name="relief">half</property>
-                <property name="use_stock">True</property>
-                <property name="focus_on_click">False</property>
-                <signal name="clicked" handler="button_quit_clicked_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">3</property>
-          </packing>
-        </child>
         <child>
           <object class="GtkHBox" id="hbox_main">
             <property name="visible">True</property>
@@ -463,8 +412,8 @@
                                                 <property name="placeholder_text">192.168.1.1</property>
                                                 <property name="completion">entrycompletion_address</property>
                                                 <property name="input_purpose">url</property>
-                                                <signal name="delete-text" handler="entry_address_delete_text_cb" swapped="no"/>
                                                 <signal name="insert-text" handler="entry_address_insert_text_cb" swapped="no"/>
+                                                <signal name="delete-text" handler="entry_address_delete_text_cb" swapped="no"/>
                                               </object>
                                               <packing>
                                                 <property name="expand">True</property>
@@ -768,7 +717,6 @@
                                                     <child>
                                                       <object class="GtkCheckButton" id="checkbutton_fullscreen">
                                                         <property name="label" translatable="yes">fullscreen</property>
-                                                        <property name="use_action_appearance">True</property>
                                                         <property name="related_action">toggleaction_fullscreen</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
@@ -823,7 +771,6 @@
                                                     <child>
                                                       <object class="GtkCheckButton" id="checkbutton_asynch">
                                                         <property name="label" translatable="yes">asynchronous</property>
-                                                        <property name="use_action_appearance">True</property>
                                                         <property name="related_action">toggleaction_asynchronous</property>
                                                         <property name="visible">True</property>
                                                         <property name="sensitive">False</property>
@@ -846,7 +793,6 @@
                                                     <child>
                                                       <object class="GtkCheckButton" id="checkbutton_save">
                                                         <property name="label" translatable="yes">save</property>
-                                                        <property name="use_action_appearance">True</property>
                                                         <property name="related_action">toggleaction_save</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
@@ -1101,8 +1047,8 @@
                         <property name="double_buffered">False</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
-                        <signal name="configure-event" handler="drawingarea_configure_cb" swapped="no"/>
                         <signal name="draw" handler="drawingarea_draw_cb" swapped="no"/>
+                        <signal name="configure-event" handler="drawingarea_configure_cb" swapped="no"/>
                         <signal name="key-press-event" handler="drawingarea_key_press_event_cb" swapped="no"/>
                         <signal name="realize" handler="drawingarea_realize_cb" swapped="no"/>
                       </object>
@@ -1160,6 +1106,58 @@
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">2</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="hbuttonbox_main">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="homogeneous">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_about">
+                <property name="label">gtk-about</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">show information</property>
+                <property name="relief">half</property>
+                <property name="use_stock">True</property>
+                <property name="focus_on_click">False</property>
+                <signal name="clicked" handler="button_about_clicked_cb" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_quit">
+                <property name="label">gtk-quit</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">quit</property>
+                <property name="relief">half</property>
+                <property name="use_stock">True</property>
+                <property name="focus_on_click">False</property>
+                <signal name="clicked" handler="button_quit_clicked_cb" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">3</property>
           </packing>
         </child>
       </object>

@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_signalhandler.h"
 
 #include "ace/Log_Msg.h"
@@ -146,7 +147,7 @@ ARDrone_SignalHandler::handle (int signal_in)
     } // end IF
 
     // step2: stop GTK event dispatch ?
-    if (!inherited::configuration_->consoleMode)
+    if (inherited::configuration_->hasUI)
       ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
                                                            false); // N/A
 

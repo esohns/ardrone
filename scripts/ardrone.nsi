@@ -174,11 +174,16 @@ File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.Co
 File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.Debug.gschema.xml"
 File "D:\projects\gtk\gtk\Win32\debug\share\glib-2.0\schemas\org.gtk.Settings.FileChooser.gschema.xml"
 
+; Config - icon themes
 ; set output path to the installation directory
 SetOutPath $INSTDIR\share\themes\hicolor
-
-; Config - icon themes
 File "G:\software\Development\hicolor-icon-theme-0.15\index.theme"
+SetOutPath $INSTDIR\share\themes
+File /r "D:\projects\gtk\build\Win32\debug\gtk3\gtk\theme\Adwaita"
+File /r "D:\projects\gtk\build\Win32\debug\gtk3\gtk\theme\win32"
+
+SetOutPath $INSTDIR\share\icons\Adwaita\22x22\actions
+
 
 ; Write the installation path into the registry
 WriteRegStr HKLM SOFTWARE\${PROGRAM} "Install_Dir" "$INSTDIR"

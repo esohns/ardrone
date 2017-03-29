@@ -44,7 +44,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
  , isFirst_ (true)
  , scannerState_ (NULL)
  , bufferState_ (NULL)
- , useYYScanBuffer_ (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
+ , useYYScanBuffer_ (STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::ARDrone_Module_NavDataDecoder_T"));
 
@@ -129,7 +129,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
     isFirst_ = true;
 
-    useYYScanBuffer_ = STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER;
+    useYYScanBuffer_ = STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER;
   } // end IF
 
   // *TODO*: remove type inferences

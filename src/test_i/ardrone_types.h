@@ -40,6 +40,7 @@
 #include "net_common.h"
 #include "net_iconnector.h"
 
+#include "ardrone_common.h"
 #include "ardrone_defines.h"
 
 enum ARDrone_MessageType : int
@@ -142,6 +143,18 @@ enum ARDrone_VideoMode : int
   ARDRONE_VIDEOMODE_MAX
 };
 
+class ARDrone_INotify
+{
+ public:
+  virtual ~ARDrone_INotify () {};
+
+  virtual void messageCB (const struct __mavlink_message&, // message record
+                          void*) = 0;                      // payload handle
+  virtual void messageCB (const struct _navdata_t&,                     // message record
+                          const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
+                          void*) = 0;                                   // payload handle
+};
+
 class ARDrone_IController
 {
  public:
@@ -153,9 +166,6 @@ class ARDrone_IController
   virtual void land () = 0;
 
   virtual void set (ARDrone_VideoMode) = 0;
-
-  // callbacks
-  virtual void messageCB () = 0;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H

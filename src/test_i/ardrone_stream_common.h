@@ -100,6 +100,7 @@ struct ARDrone_SessionData
    , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
+   , isNavData (false)
    , state (NULL)
    , targetFileName ()
    , userData (NULL)
@@ -189,6 +190,7 @@ struct ARDrone_SessionData
   unsigned int                    width;
 #endif
 
+  bool                            isNavData;
   struct ARDrone_StreamState*     state;
   std::string                     targetFileName;
 
@@ -206,7 +208,7 @@ typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                           ARDrone_Message,
                                           ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
 
-typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
+//typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
 
 typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     struct ARDrone_SessionData,
@@ -293,7 +295,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , subscriber (NULL)
    , subscribers (NULL)
    , targetFileName ()
-   , useYYScanBuffer (STREAM_DECODER_FLEX_DEFAULT_USE_YY_SCAN_BUFFER)
+   , useYYScanBuffer (STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
   {
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
 
@@ -311,12 +313,12 @@ struct ARDrone_ModuleHandlerConfiguration
     ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
   };
 
-  bool                                           block;               // H264 NAL bisector module
+  bool                                           block;               // H264 decoder module
   enum AVPixelFormat                             codecFormat;         // H264 decoder module
   enum AVCodecID                                 codecId;             // H264 decoder module
   ARDrone_IConnection_t*                         connection;          // net source/IO module
-  ARDrone_IConnectionManager_t*                  connectionManager;   // net IO module
-  bool                                           debugScanner;        // H264 NAL bisector module
+  ARDrone_IConnectionManager_t*                  connectionManager;   // IO module
+  bool                                           debugScanner;        // H264 decoder module
   std::string                                    device;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -342,10 +344,10 @@ struct ARDrone_ModuleHandlerConfiguration
   unsigned int                                   width;           // display module
   GdkWindow*                                     window;          // display module
 #endif
-  bool                                           fullScreen;
-  bool                                           inbound;
-  bool                                           printProgressDot;
-  bool                                           pushStatisticMessages;
+  bool                                           fullScreen;          // display module
+  bool                                           inbound;               // statistic/IO module
+  bool                                           printProgressDot; // file writer module
+  bool                                           pushStatisticMessages; // statistic module
 
   struct Net_SocketConfiguration*                socketConfiguration;        // net source module
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
@@ -354,21 +356,22 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
   std::string                                    targetFileName;
-  bool                                           useYYScanBuffer; // H264 NAL bisector module
+  bool                                           useYYScanBuffer; // H264 decoder module
 };
 
+typedef Common_IInitializeP_T<ARDrone_IController> ARDrone_IInitialize_t;
 struct ARDrone_StreamConfiguration
  : Stream_Configuration
 {
   inline ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
-   , moduleHandlerConfiguration (NULL)
+   , initialize (NULL)
    , userData (NULL)
   {};
 
-  struct ARDrone_ModuleHandlerConfiguration* moduleHandlerConfiguration;
+  ARDrone_IInitialize_t*   initialize;
 
-  struct ARDrone_UserData*                   userData;
+  struct ARDrone_UserData* userData;
 };
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H

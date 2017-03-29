@@ -21,6 +21,8 @@
 #ifndef ARDRONE_COMMON_H
 #define ARDRONE_COMMON_H
 
+#include <vector>
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <mfobjects.h>
 #include <strmif.h>
@@ -51,7 +53,7 @@ struct ARDrone_MessageData
 #endif
   {
     ACE_OS::memset (&MAVLinkMessage, 0, sizeof (struct __mavlink_message));
-    ACE_OS::memset (&NavDataMessage, 0, sizeof (struct _navdata_t));
+    //ACE_OS::memset (&NavDataMessage, 0, sizeof (struct _navdata_t));
   };
   inline ~ARDrone_MessageData ()
   {

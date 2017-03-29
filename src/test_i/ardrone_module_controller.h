@@ -68,14 +68,11 @@ class ARDrone_Module_Controller_T
   ARDrone_Module_Controller_T ();
   virtual ~ARDrone_Module_Controller_T ();
 
-  //// override (part of) Stream_IModuleHandler_T
-  virtual bool initialize (const ConfigurationType&,
-                           Stream_IAllocator*);
-  //virtual const ConfigurationType& get () const;
+//  // override (part of) Stream_IModuleHandler_T
+//  virtual bool initialize (const ConfigurationType&,
+//                           Stream_IAllocator*);
 
   // implement (part of) Stream_ITaskBase
-  virtual void handleDataMessage (DataMessageType*&, // data message handle
-                                  bool&);            // return value: pass message downstream ?
   virtual void handleSessionMessage (SessionMessageType*&, // session message handle
                                      bool&);               // return value: pass message downstream ?
 
@@ -84,8 +81,6 @@ class ARDrone_Module_Controller_T
   virtual void takeoff ();
   virtual void land ();
   virtual void set (ARDrone_VideoMode); // video mode
-  // callbacks
-  virtual void messageCB ();
 
  private:
   typedef Stream_Module_Net_Target_T<ACE_SYNCH_USE,

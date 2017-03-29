@@ -37,6 +37,8 @@ struct ARDrone_SessionData;
 
 class ARDrone_EventHandler
  : public ARDrone_Notification_t
+ , public ARDrone_INotify
+ , public Common_IInitializeP_T<ARDrone_IController>
 {
  public:
   ARDrone_EventHandler (struct ARDrone_GtkCBData*, // Gtk state
@@ -54,13 +56,26 @@ class ARDrone_EventHandler
                        const ARDrone_SessionMessage&); // session message
   virtual void end (Stream_SessionId_t); // session id
 
+  // implement ARDrone_INotify
+  virtual void messageCB (const struct __mavlink_message&, // message record
+                          void*);                          // payload handle
+  virtual void messageCB (const struct _navdata_t&,                     // message record
+                          const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
+                          void*);                                       // payload handle
+
+  // implement Common_IInitializeP_T
+  inline bool initialize (const ARDrone_IController* controller_in) { controller_ = const_cast<ARDrone_IController*> (controller_in); return true; };
+
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler (const ARDrone_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler& operator= (const ARDrone_EventHandler&))
 
   bool                      consoleMode_;
+  ARDrone_IController*      controller_;
   struct ARDrone_GtkCBData* GtkCBData_;
+  bool                      navDataSessionStarted_;
+  bool                      videoModeSet_;
 };
 
 #endif

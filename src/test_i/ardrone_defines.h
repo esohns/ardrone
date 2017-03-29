@@ -97,6 +97,7 @@
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION           "information"
 
 // *** network-related ***
+#define ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS         5
 #define ARDRONE_MAVLINK_PORT                               14550 // UDP (drone --> client)
 #define ARDRONE_CONTROL_CONFIGURATION_PORT                 5556 // UDP (client --> drone)
 //#define ARDRONE_CONTROL_PORT                               5559 // TCP (client <--> drone)
@@ -114,8 +115,6 @@
 
 #define ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING           "video"
 #define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING "video_codec"
-
-
 
 // *** stream-related ***
 //#define ARDRONE_MESSAGE_BUFFER_SIZE                        65535 // bytes
@@ -145,6 +144,8 @@
 //#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000
 #define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
+#define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"
+#define ARDRONE_NAVDATA_LOG_FILE_PREFIX                    "ardrone_navdata"
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.rgb"
 
 #endif // #ifndef ARDRONE_DEFINES_H

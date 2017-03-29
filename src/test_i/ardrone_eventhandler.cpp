@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_eventhandler.h"
 
 #include "ace/Guard_T.h"
@@ -34,7 +35,10 @@
 ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_in,
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
+ , controller_ (NULL)
  , GtkCBData_ (GtkCBData_in)
+ , navDataSessionStarted_ (false)
+ , videoModeSet_ (false)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
@@ -50,12 +54,15 @@ ARDrone_EventHandler::~ARDrone_EventHandler ()
 
 void
 ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
-                             const ARDrone_SessionData& sessionData_in)
+                             const struct ARDrone_SessionData& sessionData_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
+
+  if (sessionData_in.isNavData)
+    navDataSessionStarted_ = true;
 
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
@@ -117,21 +124,55 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
-  //ACE_ASSERT (GtkCBData_->progressData);
 
   bool refresh_display = false;
-
-  ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
   switch (message_in.type ())
   {
     case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
       break; // do not count outbound messages
     case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
+    {
       refresh_display = true;
+
+      break;
+    }
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+    {
+      const ARDrone_MessageData_t& data_container_r =
+          message_in.get ();
+      const struct ARDrone_MessageData& data_r =
+          data_container_r.get ();
+
+      try {
+        // *TODO*: remove type inference
+        messageCB (data_r.MAVLinkMessage,
+                   message_in.rd_ptr ());
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
+      }
+
+      break;
+    }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:
-      GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE); break;
+    {
+      const ARDrone_MessageData_t& data_container_r =
+          message_in.get ();
+      const struct ARDrone_MessageData& data_r =
+          data_container_r.get ();
+
+      try {
+        messageCB (data_r.NavDataMessage,
+                   data_r.NavDataMessageOptionOffsets,
+                   message_in.rd_ptr ());
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
+      }
+
+      break;
+    }
     default:
     {
       ACE_DEBUG ((LM_ERROR,
@@ -140,6 +181,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       return;
     }
   } // end SWITCH
+
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+
+    GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
+  } // end lock scope
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -179,6 +225,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       event = ARDRONE_EVENT_DISCONNECT; break;
     case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
+    case STREAM_SESSION_MESSAGE_UNLINK:
       event = ARDRONE_EVENT_SESSION_MESSAGE; break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
@@ -224,6 +271,9 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
+  navDataSessionStarted_ = false;
+  videoModeSet_ = false;
+
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
     GtkCBData_->eventStack.push_back (ARDRONE_EVENT_DISCONNECT);
@@ -238,4 +288,42 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
     } // end IF
     GtkCBData_->eventSourceIds.insert (event_source_id);
   } // end lock scope
+}
+
+void
+ARDrone_EventHandler::messageCB (const struct __mavlink_message& record_in,
+                                 void* payload_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::messageCB"));
+
+  ACE_UNUSED_ARG (record_in);
+  ACE_UNUSED_ARG (payload_in);
+
+  if (navDataSessionStarted_ && !videoModeSet_)
+  {
+    // sanity check(s)
+    ACE_ASSERT (controller_);
+
+    try {
+      controller_->set (ARDRONE_VIDEOMODE_720P);
+    } catch (...) {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in ARDrone_IController::set(%d), returning\n"),
+                  ARDRONE_VIDEOMODE_720P));
+      return;
+    }
+
+    videoModeSet_ = true;
+  } // end IF
+}
+void
+ARDrone_EventHandler::messageCB (const struct _navdata_t& record_in,
+                                 const ARDrone_NavDataMessageOptionOffsets_t& offsets_in,
+                                 void* payload_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::messageCB"));
+
+  ACE_ASSERT (false);
+  ACE_NOTSUP;
+  ACE_NOTREACHED (return;)
 }

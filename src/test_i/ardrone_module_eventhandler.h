@@ -72,7 +72,7 @@ class ARDrone_Module_EventHandler
 DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-                              ARDrone_IStreamNotify_t,                   // stream notification interface type
+                              Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_EventHandler);              // writer type
 
 #endif
