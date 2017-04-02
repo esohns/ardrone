@@ -256,7 +256,7 @@ struct ARDrone_ModuleHandlerConfiguration
   inline ARDrone_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
    , block (false)
-   , codecFormat (AV_PIX_FMT_YUV420P)
+   , codecFormat (AV_PIX_FMT_YUV420P) // codec output-
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
    , connectionManager (NULL)

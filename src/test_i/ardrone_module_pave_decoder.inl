@@ -189,9 +189,10 @@ next:
          message_block_p;
          message_block_p = message_block_p->cont ())
     {
+      length = message_block_p->length ();
       bytes_to_copy =
-        ((missing_bytes - skipped_bytes) < message_block_p->length () ? (missing_bytes - skipped_bytes)
-                                                                      : message_block_p->length ());
+        ((length < (missing_bytes - skipped_bytes)) ? length
+                                                    : (missing_bytes - skipped_bytes));
       ACE_OS::memcpy (buffer_p, message_block_p->rd_ptr (), bytes_to_copy);
       message_block_p->rd_ptr (bytes_to_copy);
       skipped_bytes += bytes_to_copy;
@@ -201,6 +202,9 @@ next:
     } // end FOR
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
+    // *WARNING*: the PAVE_CHECK macro is endian- (i.e. platform-)dependent and
+    //            therefore needs to be generated/compiled for each targeted
+    //            platform separately (see: video_encapsulation.h)
     ACE_ASSERT (PAVE_CHECK (header_.signature));
 #endif
 
@@ -221,9 +225,8 @@ next:
        message_block_p;
        message_block_p = message_block_p->cont ())
   {
-    bytes_to_copy =
-      (missing_bytes < message_block_p->length () ? missing_bytes
-                                                  : message_block_p->length ());
+    length = message_block_p->length ();
+    bytes_to_copy = ((length < missing_bytes) ? length : missing_bytes);
     message_block_p->rd_ptr (bytes_to_copy);
     skipped_bytes += bytes_to_copy;
     if (skipped_bytes == missing_bytes)

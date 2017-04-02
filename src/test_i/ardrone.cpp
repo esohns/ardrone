@@ -39,7 +39,9 @@
 #ifdef __cplusplus
 extern "C"
 {
+#include <libavcodec/avcodec.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/pixfmt.h>
 }
 #endif /* __cplusplus */
 

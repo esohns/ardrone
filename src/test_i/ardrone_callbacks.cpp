@@ -42,6 +42,14 @@
 #include <mfidl.h>
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#include <libavcodec/avcodec.h>
+#include <libavutil/pixfmt.h>
+}
+#endif /* __cplusplus */
+
 #include "ace/Log_Msg.h"
 #include "ace/Process.h"
 #include "ace/Process_Manager.h"
@@ -485,7 +493,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-    stream_p->start ();
+//    stream_p->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -3070,17 +3078,69 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::drawingarea_configure_cb"));
 
-  ACE_UNUSED_ARG (widget_in);
-  ACE_UNUSED_ARG (event_in);
-
   // sanity check(s)
+  ACE_ASSERT (widget_in);
+  ACE_ASSERT (event_in);
   ACE_ASSERT (userData_in);
 
   struct ARDrone_GtkCBData* cb_data_p =
       reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
 
   // sanity check(s)
+  ACE_ASSERT (gdk_event_get_event_type (event_in) == GDK_CONFIGURE);
   ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->configuration);
+
+  // *NOTE*: x,y members are relative to the parent window
+  //         --> no need to translate
+  cb_data_p->configuration->moduleHandlerConfiguration.area.x =
+      event_in->configure.x;
+  cb_data_p->configuration->moduleHandlerConfiguration.area.y =
+      event_in->configure.y;
+//  gdk_window_get_origin (gtk_widget_get_window (widget_in),
+//                         &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+//                         &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
+//  gtk_widget_translate_coordinates (widget_in,
+//                                    gtk_widget_get_toplevel (widget_in),
+//                                    0, 0,
+//                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+//                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
+  cb_data_p->configuration->moduleHandlerConfiguration.area.height =
+      event_in->configure.height;
+  cb_data_p->configuration->moduleHandlerConfiguration.area.width =
+      event_in->configure.width;
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
+
+    if (cb_data_p->pixelBuffer)
+    {
+      g_object_unref (cb_data_p->pixelBuffer);
+      cb_data_p->pixelBuffer = NULL;
+    } // end IF
+    cb_data_p->pixelBuffer =
+#if GTK_CHECK_VERSION (3,0,0)
+        gdk_pixbuf_get_from_window (gtk_widget_get_window (widget_in),
+                                    0, 0,
+                                    event_in->configure.width, event_in->configure.height);
+#else
+        gdk_pixbuf_get_from_drawable (NULL,
+                                      GDK_DRAWABLE (gtk_widget_get_window (widget_in)),
+                                      NULL,
+                                      0, 0,
+                                      0, 0, event_in->configure.width, event_in->configure.height);
+#endif
+    if (!cb_data_p->pixelBuffer)
+    { // *NOTE*: most probable reason: window is not mapped
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), aborting\n")));
+      return FALSE;
+    } // end IF
+    cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
+        cb_data_p->pixelBuffer;
+  } // end lock scope
+#endif
 
   return TRUE;
 }
