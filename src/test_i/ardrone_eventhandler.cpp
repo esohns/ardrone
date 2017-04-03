@@ -225,6 +225,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       event = ARDRONE_EVENT_DISCONNECT; break;
     case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
+      event = ARDRONE_EVENT_SESSION_MESSAGE; break;
+    case STREAM_SESSION_MESSAGE_RESIZE:
+      event = ARDRONE_EVENT_RESIZE; break;
     case STREAM_SESSION_MESSAGE_UNLINK:
       event = ARDRONE_EVENT_SESSION_MESSAGE; break;
     case STREAM_SESSION_MESSAGE_STATISTIC:

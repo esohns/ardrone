@@ -96,7 +96,7 @@ struct ARDrone_SessionData
    , session (NULL)
    , windowController (NULL)
 #else
-   , format (AV_PIX_FMT_RGB24)
+   , format (AV_PIX_FMT_RGBA)
    , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
@@ -277,7 +277,12 @@ struct ARDrone_ModuleHandlerConfiguration
    , windowController (NULL)
 #else
    , area ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
    , format (AV_PIX_FMT_RGB24)
+#else
+   // *NOTE*: GtkPixbuf native format is RGBA
+   , format (AV_PIX_FMT_RGBA)
+#endif
    , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)

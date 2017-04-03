@@ -406,7 +406,7 @@ load_save_formats (GtkListStore* listStore_in)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                         1, ACE_TEXT (Stream_Module_Decoder_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
 #else
-                        2 , AV_PIX_FMT_RGB24,
+                        2, AV_PIX_FMT_RGBA,
 #endif
                         -1);
     break;
@@ -1780,6 +1780,24 @@ idle_update_info_display_cb (gpointer userData_in)
 
         break;
       }
+      case ARDRONE_EVENT_RESIZE:
+      {
+        spin_button_p =
+            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
+        ACE_ASSERT (spin_button_p);
+
+        GtkDrawingArea* drawing_area_p =
+            GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+        ACE_ASSERT (drawing_area_p);
+        gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
+                                     data_p->configuration->moduleHandlerConfiguration.sourceFormat.width,
+                                     data_p->configuration->moduleHandlerConfiguration.sourceFormat.height);
+
+        is_session_message = true;
+        break;
+      }
       case ARDRONE_EVENT_SESSION_MESSAGE:
       {
         spin_button_p =
@@ -3139,6 +3157,19 @@ drawingarea_configure_cb (GtkWidget* widget_in,
     } // end IF
     cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
         cb_data_p->pixelBuffer;
+
+//    GHashTable* hash_table_p = gdk_pixbuf_get_options (cb_data_p->pixelBuffer);
+//    GHashTableIter iterator;
+//    g_hash_table_iter_init (&iterator, hash_table_p);
+//    gpointer key, value;
+//    for (unsigned int i = 0;
+//         g_hash_table_iter_next (iterator, &key, &value);
+//         ++i)
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("%u: \"\" --> \"\"\n"),
+//                  i,
+//                  static_cast<gchar*> (key),
+//                  static_cast<gchar*> (value)));
   } // end lock scope
 #endif
 
