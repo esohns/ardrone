@@ -97,7 +97,7 @@ monitor_enum_cb (HMONITOR monitor_in,
                  LPRECT   clippingArea_in,
                  LPARAM   CBData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::monitor_enum_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::monitor_enum_cb"));
 
   // sanity check(s)
   ACE_ASSERT (CBData_in);
@@ -136,7 +136,7 @@ monitor_clip_cb (HMONITOR monitor_in,
                  LPRECT   clippingArea_in,
                  LPARAM   userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::monitor_clip_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::monitor_clip_cb"));
 
   ACE_UNUSED_ARG (deviceContext_in);
 
@@ -177,7 +177,7 @@ monitor_clip_cb (HMONITOR monitor_in,
 bool
 load_display_devices (GtkListStore* listStore_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::load_display_devices"));
+  ARDRONE_TRACE (ACE_TEXT ("::load_display_devices"));
 
   // initialize result
   gtk_list_store_clear (listStore_in);
@@ -354,7 +354,7 @@ load_display_devices (GtkListStore* listStore_in)
 bool
 load_display_formats (GtkListStore* listStore_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::load_display_formats"));
+  ARDRONE_TRACE (ACE_TEXT ("::load_display_formats"));
 
   // initialize result
   gtk_list_store_clear (listStore_in);
@@ -387,7 +387,7 @@ load_display_formats (GtkListStore* listStore_in)
 bool
 load_save_formats (GtkListStore* listStore_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::load_save_formats"));
+  ARDRONE_TRACE (ACE_TEXT ("::load_save_formats"));
 
   // initialize result
   gtk_list_store_clear (listStore_in);
@@ -470,7 +470,7 @@ stream_processing_function (void* arg_in)
         data_p->CBData->configuration->socketConfigurations.begin ();
     Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
-        COMMON_TIME_NOW + ACE_Time_Value (5, 0);
+        COMMON_TIME_NOW + ACE_Time_Value (3, 0);
 
     // *TODO*: bind to a specific interface
     data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
@@ -493,9 +493,9 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-//    stream_p->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
+    stream_p->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
@@ -532,7 +532,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-//    stream_2->start ();
+    stream_2->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -579,7 +579,7 @@ stream_processing_function (void* arg_in)
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
 //  } // end lock scope
-    stream_3->start ();
+//    stream_3->start ();
 
     ACE_ASSERT (stream_p && stream_2 && stream_3);
 
@@ -1390,10 +1390,10 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
   //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
-  cb_data_p->configuration->moduleHandlerConfiguration.window =
-    static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+  cb_data_p->configuration->moduleHandlerConfiguration.window = NULL;
+    //static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+  //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
   cb_data_p->configuration->moduleHandlerConfiguration.window =
@@ -1791,9 +1791,27 @@ idle_update_info_display_cb (gpointer userData_in)
             GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
         ACE_ASSERT (drawing_area_p);
+        unsigned int height, width;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        // sanity check(s)
+        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration);
+        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration);
+        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format);
+
+        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_p =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->pbFormat);
+        height = video_info_header_p->bmiHeader.biHeight;
+        width = video_info_header_p->bmiHeader.biWidth;
+#else
+        height =
+          data_p->configuration->moduleHandlerConfiguration.sourceFormat.height;
+        width =
+          data_p->configuration->moduleHandlerConfiguration.sourceFormat.width;
+#endif
         gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
-                                     data_p->configuration->moduleHandlerConfiguration.sourceFormat.width,
-                                     data_p->configuration->moduleHandlerConfiguration.sourceFormat.height);
+                                     width, height);
 
         is_session_message = true;
         break;
@@ -2258,11 +2276,18 @@ continue_:
   // retrieve display settings
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // sanity check(s)
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration);
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration);
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format);
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format);
 
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+  struct tagVIDEOINFOHEADER* video_info_header_p =
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->pbFormat);
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->formattype == FORMAT_VideoInfo);
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-  struct tagVIDEOINFOHEADER* video_info_header_p =
+  struct tagVIDEOINFOHEADER* video_info_header_2 =
     reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.format->pbFormat);
 #endif
   drawing_area_p =
@@ -2400,22 +2425,34 @@ continue_:
                             &iterator_2,
                             1, &value);
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
+
+
   switch (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)))
   {
     case ARDRONE_VIDEOMODE_360P:
     { // *TODO*: use ffmpeg to determine the format resolution
-      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
-        640;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
+      video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
+#else
       cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height =
-        368;
+        ARDRONE_H264_360P_VIDEO_HEIGHT;
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
+        ARDRONE_H264_360P_VIDEO_WIDTH;
+#endif
       break;
     }
     case ARDRONE_VIDEOMODE_720P:
     {
-      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
-        1280;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
+      video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
+#else
       cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height =
-        720;
+        ARDRONE_H264_720P_VIDEO_HEIGHT;
+      cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width =
+        ARDRONE_H264_720P_VIDEO_WIDTH;
+#endif
       break;
     }
     default:
@@ -2431,6 +2468,16 @@ continue_:
     }
   } // end SWITCH
   g_value_unset (&value);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  video_info_header_p->bmiHeader.biSizeImage =
+    DIBSIZE (video_info_header_p->bmiHeader);
+  video_info_header_p->dwBitRate =
+    (video_info_header_p->bmiHeader.biWidth * abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
+  cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->lSampleSize =
+    video_info_header_p->bmiHeader.biSizeImage;
+  cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+    video_info_header_p->bmiHeader.biSizeImage;
+#endif
 
   struct _cairo_rectangle_int rectangle_s;
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
@@ -2438,35 +2485,44 @@ continue_:
   if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    //video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
-    //video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
-    video_info_header_p->bmiHeader.biHeight =
+    video_info_header_2->bmiHeader.biHeight =
       -(cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
         cb_data_p->configuration->moduleHandlerConfiguration.area.top);
-    video_info_header_p->bmiHeader.biWidth =
+    video_info_header_2->bmiHeader.biWidth =
       (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
        cb_data_p->configuration->moduleHandlerConfiguration.area.left);
-    video_info_header_p->bmiHeader.biSizeImage =
-      DIBSIZE (video_info_header_p->bmiHeader);
+    video_info_header_2->bmiHeader.biSizeImage =
+      DIBSIZE (video_info_header_2->bmiHeader);
 
     unsigned int source_buffer_size =
       av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat (cb_data_p->configuration->moduleHandlerConfiguration.format->subtype),
-                                cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.width,
-                                cb_data_p->configuration->moduleHandlerConfiguration.sourceFormat.height,
+                                video_info_header_p->bmiHeader.biWidth,
+                                abs (video_info_header_p->bmiHeader.biHeight),
                                 1); // *TODO*: linesize alignment
-    video_info_header_p->bmiHeader.biSizeImage =
-      std::max (video_info_header_p->bmiHeader.biSizeImage,
+    video_info_header_2->bmiHeader.biSizeImage =
+      std::max (video_info_header_2->bmiHeader.biSizeImage,
                 static_cast<ULONG> (source_buffer_size));
 
     cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
-      video_info_header_p->bmiHeader.biSizeImage;
+      video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-      video_info_header_p->bmiHeader.biSizeImage;
+      video_info_header_2->bmiHeader.biSizeImage;
 #endif
   } // end IF
   else
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+    if (!cb_data_p->configuration->moduleHandlerConfiguration.window)
+    {
+      cb_data_p->configuration->moduleHandlerConfiguration.area.left = 0;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+        video_info_header_p->bmiHeader.biWidth;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.top = 0;
+      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+        abs (video_info_header_p->bmiHeader.biHeight);
+      goto create_window;
+    } // end IF
+
     // *NOTE*: if the chosen display device screen area contains the drawing
     //         area, use it; otherwise open a new window
     DWORD flags = MONITOR_DEFAULTTONULL;
@@ -2491,21 +2547,9 @@ continue_:
                   ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
       goto error;
     } // end IF
-    if (ACE_OS::strcmp (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str (),
-                        monitor_info_ex_s.szDevice))
+    if (ACE_OS::strcmp (ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+                        ACE_TEXT (monitor_info_ex_s.szDevice)))
     {
-      DWORD window_style = (WS_OVERLAPPED     |
-                            WS_CAPTION        |
-                            (WS_CLIPSIBLINGS  |
-                             WS_CLIPCHILDREN) |
-                            WS_SYSMENU        |
-                            //WS_THICKFRAME     |
-                            WS_MINIMIZEBOX    |
-                            WS_VISIBLE/*
-                            WS_MAXIMIZEBOX*/);
-      DWORD window_style_ex = (WS_EX_APPWINDOW |
-                               WS_EX_WINDOWEDGE);
-
       // *NOTE*: center the window on the display device
       unsigned int delta_x =
        abs (abs (cb_data_p->configuration->moduleHandlerConfiguration.area.left) -
@@ -2526,6 +2570,19 @@ continue_:
         (cb_data_p->configuration->moduleHandlerConfiguration.area.top +
          rectangle_s.height);
 
+create_window:
+      DWORD window_style = (WS_OVERLAPPED     |
+                            WS_CAPTION        |
+                            (WS_CLIPSIBLINGS  |
+                             WS_CLIPCHILDREN) |
+                            WS_SYSMENU        |
+                            //WS_THICKFRAME     |
+                            WS_MINIMIZEBOX    |
+                            WS_VISIBLE/*
+                            WS_MAXIMIZEBOX*/);
+      DWORD window_style_ex = (WS_EX_APPWINDOW |
+                               WS_EX_WINDOWEDGE);
+
       cb_data_p->configuration->moduleHandlerConfiguration.window =
         CreateWindowEx (window_style_ex,               // dwExStyle
                         ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpClassName
@@ -2533,8 +2590,10 @@ continue_:
                         window_style,                  // dwStyle
                         cb_data_p->configuration->moduleHandlerConfiguration.area.left, // x
                         cb_data_p->configuration->moduleHandlerConfiguration.area.top,  // y
-                        rectangle_s.width,             // nWidth
-                        rectangle_s.height,            // nHeight
+                        //rectangle_s.width,             // nWidth
+                        //rectangle_s.height,            // nHeight
+                        video_info_header_p->bmiHeader.biWidth,
+                        abs (video_info_header_p->bmiHeader.biHeight),
                         //parent_window_handle,          // hWndParent
                         NULL,
                         NULL,                          // hMenu
@@ -2568,18 +2627,19 @@ continue_:
 #endif
     } // end ELSE
 
-    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
-    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
-    video_info_header_p->bmiHeader.biSizeImage =
-      DIBSIZE (video_info_header_p->bmiHeader);
-
+    video_info_header_2->bmiHeader.biHeight = rectangle_s.height;
+    video_info_header_2->bmiHeader.biWidth = rectangle_s.width;
+    video_info_header_2->bmiHeader.biSizeImage =
+      DIBSIZE (video_info_header_2->bmiHeader);
+    video_info_header_2->dwBitRate =
+      (video_info_header_2->bmiHeader.biWidth * abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
     cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
-      video_info_header_p->bmiHeader.biSizeImage;
+      video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-      video_info_header_p->bmiHeader.biSizeImage;
+      std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
+                static_cast<long> (video_info_header_2->bmiHeader.biSizeImage));
 #else
-    gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
-                               &cb_data_p->configuration->moduleHandlerConfiguration.area);
+    cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -3111,25 +3171,47 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate
+  //  gdk_window_get_origin (gtk_widget_get_window (widget_in),
+  //                         &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+  //                         &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
+  //  gtk_widget_translate_coordinates (widget_in,
+  //                                    gtk_widget_get_toplevel (widget_in),
+  //                                    0, 0,
+  //                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
+  //                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  //cb_data_p->configuration->moduleHandlerConfiguration.area.left =
+  //  event_in->configure.x;
+  //cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+  //  event_in->configure.x + event_in->configure.width;
+  //cb_data_p->configuration->moduleHandlerConfiguration.area.top =
+  //  event_in->configure.y;
+  //cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+  //  event_in->configure.y + event_in->configure.height;
+#else
   cb_data_p->configuration->moduleHandlerConfiguration.area.x =
-      event_in->configure.x;
+    event_in->configure.x;
   cb_data_p->configuration->moduleHandlerConfiguration.area.y =
-      event_in->configure.y;
-//  gdk_window_get_origin (gtk_widget_get_window (widget_in),
-//                         &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
-//                         &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
-//  gtk_widget_translate_coordinates (widget_in,
-//                                    gtk_widget_get_toplevel (widget_in),
-//                                    0, 0,
-//                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.x,
-//                                    &cb_data_p->configuration->moduleHandlerConfiguration.area.y);
+    event_in->configure.y;
   cb_data_p->configuration->moduleHandlerConfiguration.area.height =
-      event_in->configure.height;
+    event_in->configure.height;
   cb_data_p->configuration->moduleHandlerConfiguration.area.width =
-      event_in->configure.width;
+    event_in->configure.width;
+#endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
+#if GTK_CHECK_VERSION (3,0,0)
+  GdkWindow* window_p = gtk_widget_get_window (widget_in);
+  if (!window_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_widget_get_window(0x%@), aborting\n"),
+                widget_in));
+    return FALSE;
+  } // end IF
+#endif
+
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
 
     if (cb_data_p->pixelBuffer)
@@ -3139,7 +3221,7 @@ drawingarea_configure_cb (GtkWidget* widget_in,
     } // end IF
     cb_data_p->pixelBuffer =
 #if GTK_CHECK_VERSION (3,0,0)
-        gdk_pixbuf_get_from_window (gtk_widget_get_window (widget_in),
+        gdk_pixbuf_get_from_window (window_p,
                                     0, 0,
                                     event_in->configure.width, event_in->configure.height);
 #else
@@ -3150,9 +3232,10 @@ drawingarea_configure_cb (GtkWidget* widget_in,
                                       0, 0, event_in->configure.width, event_in->configure.height);
 #endif
     if (!cb_data_p->pixelBuffer)
-    { // *NOTE*: most probable reason: window is not mapped
+    { // *NOTE*: most probable reason: window is not (yet) mapped
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), aborting\n")));
+                  ACE_TEXT ("failed to gdk_pixbuf_get_from_window(%@), aborting\n"),
+                  window_p));
       return FALSE;
     } // end IF
     cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =

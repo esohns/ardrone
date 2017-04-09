@@ -632,10 +632,10 @@ continue_:
   //         due to yet-to-be-fully-investigated issues of compatibility with
   //         the system default decoder (Microsoft (TM) 'DTV-DVD Video Decoder')
   //         is currently pre-processed (ffmpeg) and streamed as uncompressed
-  //         YUV420p. This implementation may be more efficient, as it uses less
-  //         DirectShow capabilities and resources; this also requires more
-  //         investigation, however. Note that the processing pipeline includes
-  //         a decoder module that transforms the chroma-luminance format to
+  //         YUV420P. Note that this implementation may be more efficient, as it
+  //         uses less DirectShow capabilities and resources; this also requires
+  //         more investigation, however. The processing pipeline includes a
+  //         decoder module that transforms the chroma-luminance format to
   //         RGB for convenient display/storage purposes; this module ('Color
   //         Converter DSP DMO') is included with Microsoft Windows Vista (TM)
   //         and onwards (i.e. there is no Windows XP support at the moment)
@@ -654,52 +654,53 @@ continue_:
   mediaType_out->bFixedSizeSamples = TRUE;
   mediaType_out->bTemporalCompression = FALSE;
   // *NOTE*: lSampleSize is set after pbFormat (see below)
-  //mediaType_out->lSampleSize = video_info_p->bmiHeader.biSizeImage;
+  //mediaType_out->lSampleSize = video_info_header_p->bmiHeader.biSizeImage;
   mediaType_out->formattype = FORMAT_VideoInfo;
   //mediaType_out->formattype = FORMAT_VideoInfo2;
   mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER);
   //mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER2);
 
-  struct tagVIDEOINFOHEADER* video_info_p =
+  struct tagVIDEOINFOHEADER* video_info_header_p =
     reinterpret_cast<struct tagVIDEOINFOHEADER*> (mediaType_out->pbFormat);
-  //struct tagVIDEOINFOHEADER2* video_info_p =
+  //struct tagVIDEOINFOHEADER2* video_info_header_p =
   //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (mediaType_out->pbFormat);
-  ACE_ASSERT (video_info_p);
+  ACE_ASSERT (video_info_header_p);
 
-  //video_info_p->rcSource.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  //video_info_p->rcSource.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
-  //video_info_p->rcTarget.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  //video_info_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  //video_info_header_p->rcSource.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  //video_info_header_p->rcSource.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  //video_info_header_p->rcTarget.right = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  //video_info_header_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
 
   // *NOTE*: width * height * bytes/pixel * frames/s * 8
-  video_info_p->dwBitRate =
+  video_info_header_p->dwBitRate =
     (ARDRONE_DEFAULT_VIDEO_WIDTH * ARDRONE_DEFAULT_VIDEO_HEIGHT) * 4 * 30 * 8;
-  //video_info_p->dwBitErrorRate = 0;
-  video_info_p->AvgTimePerFrame = MILLISECONDS_TO_100NS_UNITS (1000 / 30);
+  //video_info_header_p->dwBitErrorRate = 0;
+  video_info_header_p->AvgTimePerFrame =
+    MILLISECONDS_TO_100NS_UNITS (1000 / 30);
 
-  //video_info_p->dwInterlaceFlags = 0; // --> progressive
-  //video_info_p->dwCopyProtectFlags = 0; // --> not protected
+  //video_info_header_p->dwInterlaceFlags = 0; // --> progressive
+  //video_info_header_p->dwCopyProtectFlags = 0; // --> not protected
 
-  //video_info_p->dwPictAspectRatioX = 0; // --> *TODO*
-  //video_info_p->dwPictAspectRatioY = 0; // --> *TODO*
+  //video_info_header_p->dwPictAspectRatioX = 0; // --> *TODO*
+  //video_info_header_p->dwPictAspectRatioY = 0; // --> *TODO*
 
-  //video_info_p->dwControlFlags = 0;
-  //video_info_p->dwReserved2 = 0;
+  //video_info_header_p->dwControlFlags = 0;
+  //video_info_header_p->dwReserved2 = 0;
 
   // *TODO*: make this configurable (and part of a protocol)
-  video_info_p->bmiHeader.biSize = sizeof (struct tagBITMAPINFOHEADER);
-  video_info_p->bmiHeader.biWidth = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  video_info_p->bmiHeader.biHeight = -ARDRONE_DEFAULT_VIDEO_HEIGHT;
-  video_info_p->bmiHeader.biPlanes = 1;
-  //video_info_p->bmiHeader.biBitCount = 12;
-  video_info_p->bmiHeader.biBitCount = 24;
-  video_info_p->bmiHeader.biCompression = BI_RGB;
+  video_info_header_p->bmiHeader.biSize = sizeof (struct tagBITMAPINFOHEADER);
+  video_info_header_p->bmiHeader.biWidth = ARDRONE_DEFAULT_VIDEO_WIDTH;
+  video_info_header_p->bmiHeader.biHeight = -ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  video_info_header_p->bmiHeader.biPlanes = 1;
+  //video_info_header_p->bmiHeader.biBitCount = 12;
+  video_info_header_p->bmiHeader.biBitCount = 24;
+  video_info_header_p->bmiHeader.biCompression = BI_RGB;
   // *NOTE*: "...For compressed video and YUV formats, this member is a FOURCC
   //         code, specified as a DWORD in little-endian order. ..."
   //if (ACE_LITTLE_ENDIAN)
-  //  video_info_p->bmiHeader.biCompression = MAKEFOURCC ('Y', 'V', '1', '2');
+  //  video_info_header_p->bmiHeader.biCompression = MAKEFOURCC ('Y', 'V', '1', '2');
   //else
-  //  video_info_p->bmiHeader.biCompression = FCC (ACE_SWAP_LONG ((DWORD)'YV12'));
+  //  video_info_header_p->bmiHeader.biCompression = FCC (ACE_SWAP_LONG ((DWORD)'YV12'));
 
   if (fullScreen_in)
   {
@@ -712,21 +713,22 @@ continue_:
     gdk_monitor_get_geometry (monitor_p,
                               &rectangle_s);
 
-    video_info_p->bmiHeader.biHeight = -rectangle_s.height;
-    video_info_p->bmiHeader.biWidth = rectangle_s.width;
+    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
+    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
   } // end IF
-  video_info_p->bmiHeader.biSizeImage = DIBSIZE (video_info_p->bmiHeader);
-  //video_info_p->bmiHeader.biXPelsPerMeter;
-  //video_info_p->bmiHeader.biYPelsPerMeter;
-  //video_info_p->bmiHeader.biClrUsed;
-  //video_info_p->bmiHeader.biClrImportant;
+  video_info_header_p->bmiHeader.biSizeImage =
+    DIBSIZE (video_info_header_p->bmiHeader);
+  //video_info_header_p->bmiHeader.biXPelsPerMeter;
+  //video_info_header_p->bmiHeader.biYPelsPerMeter;
+  //video_info_header_p->bmiHeader.biClrUsed;
+  //video_info_header_p->bmiHeader.biClrImportant;
 
   // *NOTE*: union
-  //video_info_p->bmiColors = ;
-  //video_info_p->dwBitMasks = {0, 0, 0};
-  //video_info_p->TrueColorInfo = ;
+  //video_info_header_p->bmiColors = ;
+  //video_info_header_p->dwBitMasks = {0, 0, 0};
+  //video_info_header_p->TrueColorInfo = ;
 
-  mediaType_out->lSampleSize = video_info_p->bmiHeader.biSizeImage;
+  mediaType_out->lSampleSize = video_info_header_p->bmiHeader.biSizeImage;
 
   return true;
 
@@ -888,9 +890,9 @@ do_work (int argc_in,
   ACE_ASSERT (CBData_in.configuration);
   ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
   //ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER2));
-  //struct tagVIDEOINFOHEADER2* video_info_p =
+  //struct tagVIDEOINFOHEADER2* video_info_header_p =
   //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (CBData_in.configuration->moduleHandlerConfiguration.format->pbFormat);
-  //ACE_ASSERT (video_info_p);
+  //ACE_ASSERT (video_info_header_p);
 
   // ******************* socket configuration data ****************************
   struct Net_SocketConfiguration socket_configuration;
@@ -967,11 +969,6 @@ do_work (int argc_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  CBData_in.configuration->directShowFilterConfiguration.pinConfiguration =
-    &CBData_in.configuration->directShowPinConfiguration;
-
-  CBData_in.configuration->directShowPinConfiguration.format =
-    CBData_in.configuration->moduleHandlerConfiguration.format;
   CBData_in.configuration->directShowPinConfiguration.isTopToBottom = true;
 
   CBData_in.configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
@@ -995,8 +992,17 @@ do_work (int argc_in,
   CBData_in.configuration->moduleHandlerConfiguration.parserConfiguration =
     &CBData_in.configuration->parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  CBData_in.configuration->moduleHandlerConfiguration.filterConfiguration =
-    &CBData_in.configuration->directShowFilterConfiguration;
+  // sanity check(s)
+  ACE_ASSERT (CBData_in.configuration->directShowPinConfiguration.format);
+
+  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*CBData_in.configuration->directShowPinConfiguration.format,
+                                                             CBData_in.configuration->moduleHandlerConfiguration.format))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), returning\n")));
+    return;
+  } // end IF
+  ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
   CBData_in.configuration->moduleHandlerConfiguration.push = true;
 #else
   CBData_in.configuration->moduleHandlerConfiguration.pixelBufferLock =
@@ -1006,10 +1012,6 @@ do_work (int argc_in,
 //    CBData_in.configuration->socketHandlerConfiguration->socketConfiguration;
   CBData_in.configuration->moduleHandlerConfiguration.socketHandlerConfiguration =
     &CBData_in.configuration->socketHandlerConfiguration;
-  CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.height =
-    ARDRONE_DEFAULT_VIDEO_HEIGHT;
-  CBData_in.configuration->moduleHandlerConfiguration.sourceFormat.width =
-    ARDRONE_DEFAULT_VIDEO_WIDTH;
   //CBData_in.configuration->moduleHandlerConfiguration.stream =
   //  &video_stream;
   CBData_in.configuration->moduleHandlerConfiguration.subscriber =
@@ -1502,6 +1504,12 @@ ACE_TMAIN (int argc_in,
 
   // step6: initialize configuration
   configuration.userData = &user_data;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  configuration.moduleHandlerConfiguration.filterConfiguration =
+    &configuration.directShowFilterConfiguration;
+  configuration.moduleHandlerConfiguration.filterConfiguration->pinConfiguration =
+    &configuration.directShowPinConfiguration;
+#endif
   user_data.connectionConfiguration = &configuration.connectionConfiguration;
 
   // step7: initialize user interface, if any
@@ -1539,7 +1547,7 @@ ACE_TMAIN (int argc_in,
   bool result_2 =
     (use_mediafoundation ? do_initialize_mediafoundation (true)
                          : do_initialize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
-                                                     configuration.moduleHandlerConfiguration.format,
+                                                     configuration.moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format,
                                                      true,
                                                      fullscreen_display));
   if (!result_2)
