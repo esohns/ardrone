@@ -277,15 +277,12 @@ struct ARDrone_ModuleHandlerConfiguration
    , windowController (NULL)
 #else
    , area ()
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , format (AV_PIX_FMT_RGB24)
-#else
    // *NOTE*: GtkPixbuf native format is RGBA
    , format (AV_PIX_FMT_RGBA)
-#endif
    , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
+   , sourceFormat ()
    , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
    , window (NULL)
 #endif
@@ -295,7 +292,6 @@ struct ARDrone_ModuleHandlerConfiguration
    , pushStatisticMessages (true)
    , socketConfiguration (NULL)
    , socketHandlerConfiguration (NULL)
-   , sourceFormat ()
    , stream (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
@@ -312,10 +308,11 @@ struct ARDrone_ModuleHandlerConfiguration
                   ACE_TEXT ("failed to allocate memory, continuing\n")));
     else
       ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
+#else
+    ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
 #endif
 
     passive = false;
-    ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
   };
 
   bool                                           block;               // H264 decoder module
@@ -346,17 +343,17 @@ struct ARDrone_ModuleHandlerConfiguration
   unsigned int                                   height;          // display module
   GdkPixbuf*                                     pixelBuffer;     // display module
   ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
+  struct _cairo_rectangle_int                    sourceFormat;    // H264 decoder module
   unsigned int                                   width;           // display module
   GdkWindow*                                     window;          // display module
 #endif
   bool                                           fullScreen;          // display module
-  bool                                           inbound;               // statistic/IO module
+  bool                                           inbound;          // statistic/IO module
   bool                                           printProgressDot; // file writer module
   bool                                           pushStatisticMessages; // statistic module
 
   struct Net_SocketConfiguration*                socketConfiguration;        // net source module
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
-  struct _cairo_rectangle_int                    sourceFormat;
   Stream_IStream*                                stream;
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;

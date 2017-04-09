@@ -302,6 +302,53 @@ ARDrone_EventHandler::messageCB (const struct __mavlink_message& record_in,
   ACE_UNUSED_ARG (record_in);
   ACE_UNUSED_ARG (payload_in);
 
+  switch (record_in.msgid)
+  {
+    case MAVLINK_MSG_ID_HEARTBEAT: // 0
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_heartbeat_t));
+      struct __mavlink_heartbeat_t* message_p =
+          reinterpret_cast<struct __mavlink_heartbeat_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_SYS_STATUS: // 1
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
+      struct __mavlink_sys_status_t* message_p =
+          reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
+      struct __mavlink_gps_raw_int_t* message_p =
+          reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_ATTITUDE: // 30
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
+      struct __mavlink_attitude_t* message_p =
+          reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_global_position_int_t));
+      struct __mavlink_global_position_int_t* message_p =
+          reinterpret_cast<struct __mavlink_global_position_int_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_MISSION_CURRENT: // 42
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_mission_current_t));
+      struct __mavlink_mission_current_t* message_p =
+          reinterpret_cast<struct __mavlink_mission_current_t*> (payload_in);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown MAVLink message id (was: %u), continuing\n"),
+                  record_in.msgid));
+      break;
+    }
+  } // end SWITCH
+
   if (navDataSessionStarted_ && !videoModeSet_)
   {
     // sanity check(s)

@@ -207,10 +207,10 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
       goto continue_;
 
-error:
-      this->notify (STREAM_SESSION_MESSAGE_ABORT);
-
-      break;
+//error:
+//      this->notify (STREAM_SESSION_MESSAGE_ABORT);
+//
+//      break;
 
 continue_:
       break;
