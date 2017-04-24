@@ -313,7 +313,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
 //  ACE_UINT16 checksum_i = 0;
-  uint16_t checksum_i = 0;
+//  uint16_t checksum_i = 0;
 
   while (remaining_bytes_2)
   { ACE_ASSERT (message_block_p);

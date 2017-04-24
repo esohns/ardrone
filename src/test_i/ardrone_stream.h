@@ -40,6 +40,7 @@
 #include "ardrone_message.h"
 #include "ardrone_sessionmessage.h"
 #include "ardrone_stream_common.h"
+#include "ardrone_types.h"
 
 template <typename SourceModuleType>
 class ARDrone_LiveVideoStream_T
@@ -111,7 +112,7 @@ typedef ARDrone_LiveVideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone
 
 //////////////////////////////////////////
 
-class ARDrone_NavDataStream
+class ARDrone_ControlStream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         enum Stream_ControlType,
@@ -127,15 +128,10 @@ class ARDrone_NavDataStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
- , public Stream_SessionBase_T<Stream_SessionId_t,
-                               struct ARDrone_SessionData,
-                               enum Stream_SessionMessageType,
-                               ARDrone_Message,
-                               ARDrone_SessionMessage>
 {
  public:
-  ARDrone_NavDataStream ();
-  virtual ~ARDrone_NavDataStream ();
+  ARDrone_ControlStream ();
+  virtual ~ARDrone_ControlStream ();
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -167,6 +163,87 @@ class ARDrone_NavDataStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream (const ARDrone_ControlStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream& operator= (const ARDrone_ControlStream&))
+
+  // override (part of) Stream_ISessionNotify_T
+  virtual void start (Stream_SessionId_t,
+                      const struct ARDrone_SessionData&);
+  virtual void notify (Stream_SessionId_t,
+                       const enum Stream_SessionMessageType&);
+  virtual void end (Stream_SessionId_t);
+
+  // *TODO*: re-consider this API
+  void ping ();
+};
+
+//////////////////////////////////////////
+
+class ARDrone_NavDataStream
+ : public Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage>
+ , public Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage>
+ , public ARDrone_INotify
+{
+ public:
+  ARDrone_NavDataStream ();
+  virtual ~ARDrone_NavDataStream ();
+
+  // implement (part of) Stream_IStreamControlBase
+  virtual bool load (Stream_ModuleList_t&, // return value: module list
+                     bool&);               // return value: delete modules ?
+
+  // implement Common_IInitialize_T
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
+                           bool = true,                               // setup pipeline ?
+                           bool = true);                              // reset session data ?
+
+  // implement Common_IStatistic_T
+  // *NOTE*: these delegate to runtimeStatistic_
+  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual void report () const;
+
+  // implement ARDrone_INotify
+  virtual void messageCB (const struct __mavlink_message&, // message record
+                          void*);                          // payload handle
+  virtual void messageCB (const struct _navdata_t&,                     // message record
+                          const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
+                          void*);                                       // payload handle
+
+ private:
+  typedef Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct ARDrone_StreamState,
+                        struct ARDrone_StreamConfiguration,
+                        ARDrone_RuntimeStatistic_t,
+                        struct Stream_ModuleConfiguration,
+                        struct ARDrone_ModuleHandlerConfiguration,
+                        struct ARDrone_SessionData,
+                        ARDrone_StreamSessionData_t,
+                        ARDrone_ControlMessage_t,
+                        ARDrone_Message,
+                        ARDrone_SessionMessage> inherited;
   typedef Stream_SessionBase_T<Stream_SessionId_t,
                                struct ARDrone_SessionData,
                                enum Stream_SessionMessageType,
@@ -176,8 +253,18 @@ class ARDrone_NavDataStream
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream& operator= (const ARDrone_NavDataStream&))
 
+  // override (part of) Stream_ISessionNotify_T
+  virtual void start (Stream_SessionId_t,
+                      const struct ARDrone_SessionData&);
+  virtual void notify (Stream_SessionId_t,
+                       const enum Stream_SessionMessageType&);
+  virtual void end (Stream_SessionId_t);
+
   // *TODO*: re-consider this API
   void ping ();
+
+  ARDrone_IController* controller_;
+  bool                 videoModeSet_;
 };
 
 //////////////////////////////////////////
@@ -238,9 +325,21 @@ class ARDrone_MAVLinkStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+  typedef Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage> inherited2;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream (const ARDrone_MAVLinkStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream& operator= (const ARDrone_MAVLinkStream&))
+
+  // override (part of) Stream_ISessionNotify_T
+  virtual void start (Stream_SessionId_t,
+                      const struct ARDrone_SessionData&);
+  virtual void notify (Stream_SessionId_t,
+                       const enum Stream_SessionMessageType&);
+  virtual void end (Stream_SessionId_t);
 
   // *TODO*: re-consider this API
   void ping ();

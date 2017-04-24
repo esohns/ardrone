@@ -59,6 +59,7 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
+                                     struct Net_SocketConfiguration,
                                      HandlerConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType>
@@ -77,9 +78,18 @@ class ARDrone_Module_Controller_T
                                      bool&);               // return value: pass message downstream ?
 
   // implement ARDrone_IController
+  virtual void ids (uint8_t,  // session id
+                    uint8_t,  // user id
+                    uint8_t); // application id
+
+  virtual void init ();
+  virtual void start ();
+  virtual void resetWatchdog ();
+
   virtual void trim ();
   virtual void takeoff ();
   virtual void land ();
+
   virtual void set (ARDrone_VideoMode); // video mode
 
  private:
@@ -90,6 +100,7 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
+                                     struct Net_SocketConfiguration,
                                      HandlerConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;

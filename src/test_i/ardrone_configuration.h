@@ -142,7 +142,7 @@ struct ARDrone_Configuration
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
   struct Net_ListenerConfiguration                              listenerConfiguration;
-  Net_SocketConfigurationStack_t                                socketConfigurations;
+  Net_SocketConfigurations_t                                    socketConfigurations;
   struct ARDrone_SocketHandlerConfiguration                     socketHandlerConfiguration;
   struct ARDrone_ConnectionConfiguration                        connectionConfiguration;
 
@@ -200,6 +200,7 @@ struct ARDrone_GtkCBData
   , configuration (NULL)
   , contextIdData (0)
   , contextIdInformation (0)
+  , controlStream (NULL)
   , eventStack ()
   , frameCounter (0)
   , liveVideoStream (NULL)
@@ -242,15 +243,16 @@ struct ARDrone_GtkCBData
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
  guint                                contextIdData; // status bar context
  guint                                contextIdInformation; // status bar context
+ ARDrone_StreamBase_t*                controlStream;
  ARDrone_Events_t                     eventStack;
  unsigned int                         frameCounter;
  ARDrone_StreamBase_t*                liveVideoStream;
  // *TODO*: let the user choose a NIC instead
  ACE_INET_Addr                        localSAP;
- ARDrone_MAVLinkStream*               MAVLinkStream;
+ ARDrone_StreamBase_t*                MAVLinkStream;
  ARDrone_Messages_t                   messages;
  ARDrone_MessageAllocator_t*          messageAllocator;
- ARDrone_NavDataStream*               NavDataStream;
+ ARDrone_StreamBase_t*                NavDataStream;
 #if defined (GTKGL_SUPPORT)
  GLuint                               openGLAxesListId;
  struct ARDrone_Camera                openGLCamera;

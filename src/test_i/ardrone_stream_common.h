@@ -290,9 +290,10 @@ struct ARDrone_ModuleHandlerConfiguration
    , inbound (true)
    , printProgressDot (false)
    , pushStatisticMessages (true)
-   , socketConfiguration (NULL)
+   , socketConfigurations (NULL)
    , socketHandlerConfiguration (NULL)
    , stream (NULL)
+   , streamConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
    , targetFileName ()
@@ -352,28 +353,37 @@ struct ARDrone_ModuleHandlerConfiguration
   bool                                           printProgressDot; // file writer module
   bool                                           pushStatisticMessages; // statistic module
 
-  struct Net_SocketConfiguration*                socketConfiguration;        // net source module
+  Net_SocketConfigurations_t*                    socketConfigurations;       // net source/target modules
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
   Stream_IStream*                                stream;
+  // *TODO*: remove this ASAP
+  struct ARDrone_StreamConfiguration*            streamConfiguration;
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
   std::string                                    targetFileName;
   bool                                           useYYScanBuffer; // H264 decoder module
 };
 
-typedef Common_IInitializeP_T<ARDrone_IController> ARDrone_IInitialize_t;
+typedef Common_IInitializeP_T<ARDrone_INotify> ARDrone_IInitialize_t;
+typedef std::map<std::string,
+                 struct ARDrone_ModuleHandlerConfiguration*> ARDrone_ModuleHandlerConfigurations_t;
+typedef ARDrone_ModuleHandlerConfigurations_t::iterator ARDrone_ModuleHandlerConfigurationsIterator_t;
 struct ARDrone_StreamConfiguration
  : Stream_Configuration
 {
   inline ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
    , initialize (NULL)
+   , moduleHandlerConfigurations ()
+   , useReactor (NET_EVENT_USE_REACTOR)
    , userData (NULL)
   {};
 
-  ARDrone_IInitialize_t*   initialize;
+  ARDrone_IInitialize_t*                initialize;
+  ARDrone_ModuleHandlerConfigurations_t moduleHandlerConfigurations;
+  bool                                  useReactor;
 
-  struct ARDrone_UserData* userData;
+  struct ARDrone_UserData*              userData;
 };
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H
