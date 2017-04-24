@@ -98,22 +98,34 @@
 
 // *** network-related ***
 #define ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS         5
-#define ARDRONE_MAVLINK_PORT                               14550 // UDP (drone --> client)
-#define ARDRONE_CONTROL_CONFIGURATION_PORT                 5556 // UDP (client --> drone)
-//#define ARDRONE_CONTROL_PORT                               5559 // TCP (client <--> drone)
-#define ARDRONE_NAVDATA_PORT                               5554 // UDP (drone --> client)
-#define ARDRONE_VIDEO_LIVE_PORT                            5555 // TCP (drone <--> client)
-//#define ARDRONE_VIDEO_RECORDING_PORT                       5553 // TCP (drone <--> client)
+#define ARDRONE_PORT_TCP_CAPTURE                           5557
+#define ARDRONE_PORT_TCP_CONSOLE                           5558
+#define ARDRONE_PORT_TCP_CONTROL                           5559
+#define ARDRONE_PORT_TCP_FTP                               5551
+#define ARDRONE_PORT_TCP_TELNET                            23
+#define ARDRONE_PORT_TCP_VIDEO                             5555
+#define ARDRONE_PORT_UDP_CONTROL_CONFIGURATION             5556  // UDP (drone <-- client)
+#define ARDRONE_PORT_UDP_MAVLINK                           14550 // UDP (drone --> client)
+#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone --> client)
 
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
 // *** protocol-related ***
+#define ARDRONE_PROTOCOL_DEFAULT_SESSION_ID                1
+#define ARDRONE_PROTOCOL_DEFAULT_USER_ID                   1
+#define ARDRONE_PROTOCOL_DEFAULT_APPLICATION_ID            1
+
 #define ARDRONE_PROTOCOL_AT_PREFIX_STRING                  "AT*"
+#define ARDRONE_PROTOCOL_AT_COMMAND_RESET_WATCHDOG_STRING  "COMWDG"
 #define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING          "CONFIG"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_IDS_STRING      "CONFIG_IDS"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING         "CTRL"
 #define ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING           "FTRIM"
 #define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH         1024 // #characters
 
+#define ARDRONE_PROTOCOL_AT_COMMAND_GENERAL_STRING         "general"
 #define ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING           "video"
+#define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_DEMO_STRING  "navdata_demo"
 #define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING "video_codec"
 
 // *** stream-related ***
@@ -147,6 +159,7 @@
 //#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000
 #define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
+#define ARDRONE_CONTROL_LOG_FILE_PREFIX                    "ardrone_control"
 #define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"
 #define ARDRONE_NAVDATA_LOG_FILE_PREFIX                    "ardrone_navdata"
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.rgb"

@@ -35,10 +35,8 @@
 ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_in,
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
- , controller_ (NULL)
  , GtkCBData_ (GtkCBData_in)
- , navDataSessionStarted_ (false)
- , videoModeSet_ (false)
+ , notify_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
@@ -58,32 +56,36 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
+  ACE_UNUSED_ARG (sessionID_in);
+
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
   if (sessionData_in.isNavData)
-    navDataSessionStarted_ = true;
+  {
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
-    guint event_source_id = g_idle_add (idle_session_start_cb,
-                                        GtkCBData_);
-    if (event_source_id == 0)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
-      return;
-    } // end IF
-    GtkCBData_->eventSourceIds.insert (event_source_id);
-  } // end lock scope
+      guint event_source_id = g_idle_add (idle_session_start_cb,
+                                          GtkCBData_);
+      if (event_source_id == 0)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
+        return;
+      } // end IF
+      GtkCBData_->eventSourceIds.insert (event_source_id);
+    } // end lock scope
+  } // end IF
 }
 
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const enum Stream_SessionMessageType& sessionMessage_in)
+                              const enum Stream_SessionMessageType& messageType_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
+  ACE_UNUSED_ARG (sessionID_in);
+  ACE_UNUSED_ARG (messageType_in);
 }
 
 //void
@@ -122,32 +124,27 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
+  ACE_UNUSED_ARG (sessionID_in);
+
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
+  bool message_event = true;
   bool refresh_display = false;
-
   switch (message_in.type ())
   {
     case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
-      break; // do not count outbound messages
+      message_event = false; break; // do not signal outbound messages
     case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
-    {
-      refresh_display = true;
-
-      break;
-    }
+      refresh_display = true; break;
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
-    {
-      const ARDrone_MessageData_t& data_container_r =
-          message_in.get ();
-      const struct ARDrone_MessageData& data_r =
-          data_container_r.get ();
-
+    { ACE_ASSERT (notify_);
+      const ARDrone_MessageData_t& data_container_r = message_in.get ();
+      const struct ARDrone_MessageData& data_r = data_container_r.get ();
       try {
         // *TODO*: remove type inference
-        messageCB (data_r.MAVLinkMessage,
-                   message_in.rd_ptr ());
+        notify_->messageCB (data_r.MAVLinkMessage,
+                            message_in.rd_ptr ());
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
@@ -156,16 +153,13 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       break;
     }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:
-    {
-      const ARDrone_MessageData_t& data_container_r =
-          message_in.get ();
-      const struct ARDrone_MessageData& data_r =
-          data_container_r.get ();
-
+    { ACE_ASSERT (notify_);
+      const ARDrone_MessageData_t& data_container_r = message_in.get ();
+      const struct ARDrone_MessageData& data_r = data_container_r.get ();
       try {
-        messageCB (data_r.NavDataMessage,
-                   data_r.NavDataMessageOptionOffsets,
-                   message_in.rd_ptr ());
+        notify_->messageCB (data_r.NavDataMessage,
+                            data_r.NavDataMessageOptionOffsets,
+                            message_in.rd_ptr ());
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
@@ -182,6 +176,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     }
   } // end SWITCH
 
+  if (message_event)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
     GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
@@ -208,6 +203,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                               const ARDrone_SessionMessage& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
+
+  ACE_UNUSED_ARG (sessionID_in);
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
@@ -274,8 +271,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
-  navDataSessionStarted_ = false;
-  videoModeSet_ = false;
+  ACE_UNUSED_ARG (sessionID_in);
 
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 
@@ -291,89 +287,4 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
     } // end IF
     GtkCBData_->eventSourceIds.insert (event_source_id);
   } // end lock scope
-}
-
-void
-ARDrone_EventHandler::messageCB (const struct __mavlink_message& record_in,
-                                 void* payload_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::messageCB"));
-
-  ACE_UNUSED_ARG (record_in);
-  ACE_UNUSED_ARG (payload_in);
-
-  switch (record_in.msgid)
-  {
-    case MAVLINK_MSG_ID_HEARTBEAT: // 0
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_heartbeat_t));
-      struct __mavlink_heartbeat_t* message_p =
-          reinterpret_cast<struct __mavlink_heartbeat_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_SYS_STATUS: // 1
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
-      struct __mavlink_sys_status_t* message_p =
-          reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
-      struct __mavlink_gps_raw_int_t* message_p =
-          reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_ATTITUDE: // 30
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
-      struct __mavlink_attitude_t* message_p =
-          reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_global_position_int_t));
-      struct __mavlink_global_position_int_t* message_p =
-          reinterpret_cast<struct __mavlink_global_position_int_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_MISSION_CURRENT: // 42
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_mission_current_t));
-      struct __mavlink_mission_current_t* message_p =
-          reinterpret_cast<struct __mavlink_mission_current_t*> (payload_in);
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown MAVLink message id (was: %u), continuing\n"),
-                  record_in.msgid));
-      break;
-    }
-  } // end SWITCH
-
-  if (navDataSessionStarted_ && !videoModeSet_)
-  {
-    // sanity check(s)
-    ACE_ASSERT (controller_);
-
-    try {
-      controller_->set (ARDRONE_VIDEOMODE_720P);
-    } catch (...) {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in ARDrone_IController::set(%d), returning\n"),
-                  ARDRONE_VIDEOMODE_720P));
-      return;
-    }
-
-    videoModeSet_ = true;
-  } // end IF
-}
-void
-ARDrone_EventHandler::messageCB (const struct _navdata_t& record_in,
-                                 const ARDrone_NavDataMessageOptionOffsets_t& offsets_in,
-                                 void* payload_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::messageCB"));
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
 }

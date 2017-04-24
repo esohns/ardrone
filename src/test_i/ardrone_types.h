@@ -161,6 +161,14 @@ class ARDrone_IController
  public:
   virtual ~ARDrone_IController () {};
 
+  virtual void ids (uint8_t,      // session id
+                    uint8_t,      // user id
+                    uint8_t) = 0; // application id
+
+  virtual void init () = 0;
+  virtual void start () = 0;
+  virtual void resetWatchdog () = 0;
+
   virtual void trim () = 0;
 
   virtual void takeoff () = 0;

@@ -371,7 +371,7 @@ install (FILES
 
 if (UNIX)
  create_target_launcher (${EXECUTABLE}
-                         ARGS "-l -p 5555 -t"
+                         ARGS "-l -p 5555 -r -t"
 #                         FORWARD_ARGS
                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib
                                               ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin

@@ -173,6 +173,21 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   switch (message_inout->type ())
   {
+    case STREAM_SESSION_MESSAGE_BEGIN:
+    {
+      // *NOTE*: the NavData connection session data needs to be marked; the
+      //         connection stream is currently generic, so this is done here
+      // sanity check(s)
+      ACE_ASSERT (inherited::sessionData_);
+      typename SessionDataContainerType::DATA_T& session_data_r =
+          const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->get ());
+      ACE_ASSERT (session_data_r.lock);
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_r.lock);
+        session_data_r.isNavData = true;
+      } // end lock scope
+
+      break;
+    }
     case STREAM_SESSION_MESSAGE_CONNECT:
     {
 //      // *TODO*: this needs more work
@@ -311,6 +326,238 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionDataContainerType,
                             HandlerConfigurationType,
                             ConnectionManagerType,
+                            ConnectorType>::ids (uint8_t sessionID_in,
+                                                 uint8_t userID_in,
+                                                 uint8_t applicationID_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ids"));
+
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_IDS_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentID.value ();
+  OWN_TYPE_T::currentID++;
+  command_string += converter.str ();
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (",");
+
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << static_cast<int> (sessionID_in);
+  command_string += converter.str ();
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (",");
+
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << static_cast<int> (userID_in);
+  command_string += converter.str ();
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (",");
+
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << static_cast<int> (applicationID_in);
+  command_string += converter.str ();
+
+  command_string += '\r';
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+}
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename HandlerConfigurationType,
+          typename ConnectionManagerType,
+          typename ConnectorType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            HandlerConfigurationType,
+                            ConnectionManagerType,
+                            ConnectorType>::init ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::init"));
+
+  int result = -1;
+
+  DataMessageType* message_p =
+    inherited::allocateMessage (ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH);
+  if (!message_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to Stream_Task_Base::allocateMessage(%u): \"%m\", returning\n"),
+                inherited::mod_->name (),
+                ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
+    return;
+  } // end IF
+  message_p->set (ARDRONE_MESSAGE_ATCOMMANDMESSAGE);
+  result = message_p->copy (ACE_TEXT_ALWAYS_CHAR ("Init"),
+                            4 + 1);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Message_Block::copy(): \"%m\", aborting\n"),
+                inherited::mod_->name ()));
+    goto error;
+  } // end IF
+
+  result = inherited::put_next (message_p, NULL);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Task::put_next(): \"%m\", aborting\n"),
+                inherited::mod_->name ()));
+    goto error;
+  } // end IF
+
+  return;
+
+error:
+  if (message_p)
+    message_p->release ();
+}
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename HandlerConfigurationType,
+          typename ConnectionManagerType,
+          typename ConnectorType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            HandlerConfigurationType,
+                            ConnectionManagerType,
+                            ConnectorType>::start ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::start"));
+
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << (OWN_TYPE_T::currentID).value ();
+  (OWN_TYPE_T::currentID)++;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
+  command_string +=
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_GENERAL_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR (":");
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_DEMO_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
+  command_string += ACE_TEXT_ALWAYS_CHAR ("TRUE");
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+
+  command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << 0;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+}
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename HandlerConfigurationType,
+          typename ConnectionManagerType,
+          typename ConnectorType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            HandlerConfigurationType,
+                            ConnectionManagerType,
+                            ConnectorType>::resetWatchdog ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::resetWatchdog"));
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_RESET_WATCHDOG_STRING);
+  command_string += '\r';
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+}
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename HandlerConfigurationType,
+          typename ConnectionManagerType,
+          typename ConnectorType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            HandlerConfigurationType,
+                            ConnectionManagerType,
                             ConnectorType>::trim ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::trim"));
@@ -416,27 +663,27 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::set"));
 
+//  ids (ARDRONE_PROTOCOL_DEFAULT_SESSION_ID,
+//       ARDRONE_PROTOCOL_DEFAULT_USER_ID,
+//       ARDRONE_PROTOCOL_DEFAULT_APPLICATION_ID);
+
   std::ostringstream converter;
 
   std::string command_string =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
-  command_string +=
-    ACE_TEXT_ALWAYS_CHAR ("=");
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
   converter << (OWN_TYPE_T::currentID).value ();
   (OWN_TYPE_T::currentID)++;
   command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
   command_string +=
-    ACE_TEXT_ALWAYS_CHAR (",\"");
-  command_string +=
-    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING);
-  command_string +=
-    ACE_TEXT_ALWAYS_CHAR (":");
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR (":");
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING);
-  command_string +=
-    ACE_TEXT_ALWAYS_CHAR ("\",\"");
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
   switch (videoMode_in)
   {
     case ARDRONE_VIDEOMODE_360P:
@@ -460,8 +707,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       return;
     }
   } // end SWITCH
-  command_string +=
-    ACE_TEXT_ALWAYS_CHAR ("\"\r");
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
 
   if (!sendATCommand (command_string))
     ACE_DEBUG ((LM_ERROR,

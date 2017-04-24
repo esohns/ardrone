@@ -57,9 +57,11 @@ G_MODULE_EXPORT void entry_address_insert_text_cb (GtkEditable*,
                                                    gint,
                                                    gpointer,
                                                    gpointer);
+#if defined (GTK3_SUPPORT)
 G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            GMountOperation*,
                                            gpointer);
+#endif
 G_MODULE_EXPORT void togglebutton_save_toggled_cb (GtkToggleButton*, gpointer);
 //G_MODULE_EXPORT void combobox_save_format_changed_cb (GtkComboBox*, gpointer);
 //------------------------------------------------------------------------------

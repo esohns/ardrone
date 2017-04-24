@@ -59,8 +59,11 @@ extern "C"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <gdk/gdkwin32.h>
+#else
+#include <gdk/gdk.h>
 #endif
-//#include <gdk/gdkkeysyms.h>
+#include <gdk/gdkkeysyms.h>
+#include <gtk/gtk.h>
 //#include <gtk/gtkgl.h>
 
 #include "common_timer_manager.h"
@@ -432,7 +435,7 @@ stream_processing_function (void* arg_in)
   Common_UI_GTKBuildersIterator_t iterator;
   ACE_SYNCH_MUTEX* lock_p = NULL;
   struct ARDrone_ThreadData* data_p =
-    static_cast<struct ARDrone_ThreadData*> (arg_in);
+      static_cast<struct ARDrone_ThreadData*> (arg_in);
 
   // sanity check(s)
   ACE_ASSERT (data_p);
@@ -448,8 +451,8 @@ stream_processing_function (void* arg_in)
 //  ACE_ASSERT (lock_p);
 
 //  GtkStatusbar* statusbar_p = NULL;
-  Stream_IStreamControlBase* stream_p, *stream_2, *stream_3 = NULL;
-  Stream_ModuleHandlerConfigurationsIterator_t iterator_3;
+//  Stream_IStreamControlBase* stream_p, *stream_2, *stream_3, *stream_4 = NULL;
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator_3;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
@@ -473,16 +476,39 @@ stream_processing_function (void* arg_in)
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
 
     // *TODO*: bind to a specific interface
-    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
+    logfile_name_string =
+        data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName;
+    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
+    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
+      data_p->CBData->controlStream;
+    result_2 =
+      data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
+//    ACE_ASSERT (session_p);
+    data_p->CBData->controlStream->start ();
+//    // *IMPORTANT NOTE*: race condition here --> add timeout
+//    session_p->wait (false,
+//                     &session_start_timeout);
+    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+        logfile_name_string;
+
+    ++iterator_2;
+    if (data_p->CBData->configuration->streamConfiguration.useReactor)
+      data_p->CBData->configuration->listenerConfiguration.address =
+          (*iterator_2).address;
     logfile_name_string =
         data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName;
     data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
-    stream_p = data_p->CBData->MAVLinkStream;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
     result_2 =
@@ -495,7 +521,7 @@ stream_processing_function (void* arg_in)
     } // end IF
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
-    stream_p->start ();
+    data_p->CBData->MAVLinkStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
@@ -503,27 +529,26 @@ stream_processing_function (void* arg_in)
         logfile_name_string;
 
     ++iterator_2;
-    // *TODO*: bind to a specific interface
-    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
     ++iterator_2;
+    // *TODO*: bind to a specific interface
+    if (data_p->CBData->configuration->streamConfiguration.useReactor)
+      data_p->CBData->configuration->listenerConfiguration.address =
+          (*iterator_2).address;
+    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
+      data_p->CBData->NavDataStream;
     iterator_3 =
         data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
     configuration_p =
           const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> ((*iterator_3).second));
     ACE_ASSERT (configuration_p);
-    configuration_p->socketConfiguration = &*iterator_2;
-    ACE_ASSERT (configuration_p->socketHandlerConfiguration);
-    configuration_p->socketHandlerConfiguration->socketConfiguration =
-        &*iterator_2;
-    configuration_p->stream = data_p->CBData->NavDataStream;
     configuration_p->targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-    stream_2 = data_p->CBData->NavDataStream;
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("cb navdata: %s...\n"),
+                ACE_TEXT (Net_Common_Tools::IPAddressToString ((*iterator_2).address).c_str ())));
+    configuration_p->stream = data_p->CBData->NavDataStream;
     result_2 =
       data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
     if (!result_2)
@@ -532,22 +557,14 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-    stream_2->start ();
+    data_p->CBData->NavDataStream->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
 
-    ++iterator_2;
-    data_p->CBData->configuration->moduleHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration =
-        &*iterator_2;
-    ACE_ASSERT (data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration);
-    data_p->CBData->configuration->socketHandlerConfiguration.socketConfiguration->writeOnly =
-        false;
-    stream_3 = data_p->CBData->liveVideoStream;
+//    ++iterator_2;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->liveVideoStream;
     result_2 =
@@ -579,9 +596,7 @@ stream_processing_function (void* arg_in)
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
 //  } // end lock scope
-//    stream_3->start ();
-
-    ACE_ASSERT (stream_p && stream_2 && stream_3);
+//    data_p->CBData->liveVideoStream->start ();
 
   //    if (!stream_p->isRunning ())
   //    {
@@ -589,9 +604,10 @@ stream_processing_function (void* arg_in)
   //                  ACE_TEXT ("failed to start stream, aborting\n")));
   //      return;
   //    } // end IF
-  stream_p->wait (true, false, false);
-  stream_2->wait (true, false, false);
-  stream_3->wait (true, false, false);
+  data_p->CBData->controlStream->wait (true, false, false);
+  data_p->CBData->MAVLinkStream->wait (true, false, false);
+  data_p->CBData->NavDataStream->wait (true, false, false);
+  data_p->CBData->liveVideoStream->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = 0;
@@ -604,10 +620,7 @@ done:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
 #else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX,
-                      aGuard,
-                      *lock_p,
-                      std::numeric_limits<void*>::max ());
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
 #endif
 
     data_p->CBData->progressData->completedActions.insert (data_p->eventSourceID);
@@ -656,8 +669,8 @@ idle_initialize_ui_cb (gpointer userData_in)
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address,
-                                                          true).c_str ());
+                      Net_Common_Tools::IPAddressToString (cb_data_p->configuration->socketConfigurations.back ().address,
+                                                           true).c_str ());
 
   GtkSpinButton* spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -2112,6 +2125,13 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GtkListStore* list_store_p = NULL;
   GtkDrawingArea* drawing_area_p = NULL;
   GtkCheckButton* check_button_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if GTK_CHECK_VERSION (3,0,0)
+#else
+  GdkPixbuf* pixbuf_p = NULL;
+#endif
+#endif
 
   // update configuration
 
@@ -2141,25 +2161,25 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
   // *TODO*: verify the given address
-  if (!Net_Common_Tools::IPAddress2Interface (cb_data_p->configuration->socketConfigurations.back ().address,
-                                              interface_identifier_string))
+  if (!Net_Common_Tools::IPAddressToInterface (cb_data_p->configuration->socketConfigurations.back ().address,
+                                               interface_identifier_string))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
-                ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
+                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
+                ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
     goto error;
   } // end IF
-  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
-                                              cb_data_p->localSAP))
+  if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
+                                               cb_data_p->localSAP))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
                 ACE_TEXT (interface_identifier_string.c_str ())));
     goto error;
   } // end IF
   ACE_DEBUG ((LM_ERROR,
               ACE_TEXT ("set local SAP: %s...\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->localSAP).c_str ())));
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->localSAP).c_str ())));
 
   // retrieve buffer
   spin_button_p =
@@ -2367,7 +2387,11 @@ continue_:
        list_2;
        list_2 = list_2->next)
   {
+#if defined (GTK3_SUPPORT)
     display_p = GDK_DISPLAY (list_2->data);
+#else
+    display_p = GDK_DISPLAY_OBJECT (list_2->data);
+#endif
     ACE_ASSERT (display_p);
     number_of_screens = gdk_display_get_n_screens (display_p);
     for (int i = 0;
@@ -2426,7 +2450,6 @@ continue_:
                             1, &value);
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
 
-
   switch (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)))
   {
     case ARDRONE_VIDEOMODE_360P:
@@ -2479,7 +2502,11 @@ continue_:
     video_info_header_p->bmiHeader.biSizeImage;
 #endif
 
+#if defined (GTK3_SUPPORT)
   struct _cairo_rectangle_int rectangle_s;
+#else
+  GtkAllocation rectangle_s;
+#endif
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
                              &rectangle_s);
   if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
@@ -2668,6 +2695,20 @@ create_window:
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
+#if GTK_CHECK_VERSION (3,0,0)
+#else
+  pixbuf_p =
+      gdk_pixbuf_new (GDK_COLORSPACE_RGB,
+                      TRUE,
+                      8,
+                      cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+  if (!pixbuf_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_pixbuf_new(), returning\n")));
+    goto error;
+  } // end IF
+#endif
   if (cb_data_p->pixelBuffer)
   {
     g_object_unref (cb_data_p->pixelBuffer);
@@ -2679,7 +2720,7 @@ create_window:
                                   0, 0,
                                   cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
 #else
-      gdk_pixbuf_get_from_drawable (NULL,
+      gdk_pixbuf_get_from_drawable (pixbuf_p,
                                     GDK_DRAWABLE (cb_data_p->configuration->moduleHandlerConfiguration.window),
                                     NULL,
                                     0, 0,
@@ -2687,8 +2728,15 @@ create_window:
 #endif
   if (!cb_data_p->pixelBuffer)
   { // *NOTE*: most probable reason: window is not mapped
+#if GTK_CHECK_VERSION (3,0,0)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), returning\n")));
+#else
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_pixbuf_get_from_drawable(), returning\n")));
+
+    gdk_pixbuf_unref (pixbuf_p);
+#endif
     goto error;
   } // end IF
   cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
@@ -3107,6 +3155,7 @@ refuse:
                                   ACE_TEXT_ALWAYS_CHAR ("insert-text"));
 }
 
+#if defined (GTK3_SUPPORT)
 G_MODULE_EXPORT void
 places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
                       GMountOperation* mountOperation_in,
@@ -3118,6 +3167,7 @@ places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
 //      static_cast<struct ARDrone_GtkCBData*> (userData_in);
 
 }
+#endif
 
 G_MODULE_EXPORT void
 togglebutton_save_toggled_cb (GtkToggleButton* toggleButton_in,
@@ -3165,7 +3215,11 @@ drawingarea_configure_cb (GtkWidget* widget_in,
       reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
 
   // sanity check(s)
+#if defined (GTK3_SUPPORT)
   ACE_ASSERT (gdk_event_get_event_type (event_in) == GDK_CONFIGURE);
+#else
+  ACE_ASSERT (event_in->type == GDK_CONFIGURE);
+#endif
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
 
@@ -3202,15 +3256,33 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if GTK_CHECK_VERSION (3,0,0)
+#else
+  GdkPixbuf* pixbuf_p =
+      gdk_pixbuf_new (GDK_COLORSPACE_RGB,
+                      TRUE,
+                      8,
+                      cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+  if (!pixbuf_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_pixbuf_new(), aborting\n")));
+    return FALSE;
+  } // end IF
+#endif
   GdkWindow* window_p = gtk_widget_get_window (widget_in);
   if (!window_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gtk_widget_get_window(0x%@), aborting\n"),
                 widget_in));
+
+#if GTK_CHECK_VERSION (3,0,0)
+#else
+    gdk_pixbuf_unref (pixbuf_p);
+#endif
+
     return FALSE;
   } // end IF
-#endif
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
 
@@ -3225,17 +3297,25 @@ drawingarea_configure_cb (GtkWidget* widget_in,
                                     0, 0,
                                     event_in->configure.width, event_in->configure.height);
 #else
-        gdk_pixbuf_get_from_drawable (NULL,
-                                      GDK_DRAWABLE (gtk_widget_get_window (widget_in)),
+        gdk_pixbuf_get_from_drawable (pixbuf_p,
+                                      GDK_DRAWABLE (window_p),
                                       NULL,
                                       0, 0,
                                       0, 0, event_in->configure.width, event_in->configure.height);
 #endif
     if (!cb_data_p->pixelBuffer)
     { // *NOTE*: most probable reason: window is not (yet) mapped
+#if GTK_CHECK_VERSION (3,0,0)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to gdk_pixbuf_get_from_window(%@), aborting\n"),
                   window_p));
+#else
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to gdk_pixbuf_get_from_drawable(%@), aborting\n"),
+                  GDK_DRAWABLE (window_p)));
+
+    gdk_pixbuf_unref (pixbuf_p);
+#endif
       return FALSE;
     } // end IF
     cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
@@ -3548,7 +3628,11 @@ button_about_clicked_cb (GtkWidget* widget_in,
   } // end IF
 
   // draw it
+#if defined (GTK3_SUPPORT)
   if (!gtk_widget_is_visible (about_dialog))
+#else
+  if (!gtk_widget_get_visible (about_dialog))
+#endif
     gtk_widget_show_all (about_dialog);
 
   return TRUE; // done (do not propagate further)

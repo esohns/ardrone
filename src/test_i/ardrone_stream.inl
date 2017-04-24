@@ -25,8 +25,6 @@
 
 #include <ace/Log_Msg.h>
 
-//#include "common_ui_defines.h"
-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_dev_directshow_tools.h"
 #endif
@@ -196,8 +194,8 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const ARDrone_StreamCon
   session_data_r.sessionID = configuration_in.sessionID;
   //  ACE_ASSERT (configuration_in.moduleConfiguration);
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
-  Stream_ModuleHandlerConfigurationsIterator_t iterator =
-    const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
+      const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
   struct ARDrone_ModuleHandlerConfiguration* configuration_p =
     dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
