@@ -37,7 +37,8 @@ struct ARDrone_SessionData;
 
 class ARDrone_EventHandler
  : public ARDrone_Notification_t
- , public Common_IInitializeP_T<ARDrone_INotify>
+ , public Common_IInitializeP_T<ARDrone_IMAVLinkNotify>
+ , public Common_IInitializeP_T<ARDrone_INavDataNotify>
 {
  public:
   ARDrone_EventHandler (struct ARDrone_GtkCBData*, // Gtk state
@@ -56,7 +57,8 @@ class ARDrone_EventHandler
   virtual void end (Stream_SessionId_t); // session id
 
   // implement Common_IInitializeP_T
-  inline bool initialize (const ARDrone_INotify* notify_in) { notify_ = const_cast<ARDrone_INotify*> (notify_in); return true; };
+  inline bool initialize (const ARDrone_IMAVLinkNotify* notify_in) { MAVLinkNotify_ = const_cast<ARDrone_IMAVLinkNotify*> (notify_in); return true; };
+  inline bool initialize (const ARDrone_INavDataNotify* notify_in) { NavDataNotify_ = const_cast<ARDrone_INavDataNotify*> (notify_in); return true; };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler ())
@@ -65,7 +67,8 @@ class ARDrone_EventHandler
 
   bool                      consoleMode_;
   struct ARDrone_GtkCBData* GtkCBData_;
-  ARDrone_INotify*          notify_;
+  ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
+  ARDrone_INavDataNotify*   NavDataNotify_;
 };
 
 #endif

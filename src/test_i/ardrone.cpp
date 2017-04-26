@@ -897,10 +897,13 @@ do_work (int argc_in,
 
   // ******************* socket configuration data ****************************
   struct Net_SocketConfiguration socket_configuration;
-  socket_configuration.bufferSize = NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   socket_configuration.address = address_in;
   socket_configuration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                 1);
+  socket_configuration.bufferSize = NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+//  if (useReactor_in)
+//    socket_configuration.connect = false;
+  socket_configuration.connect = false;
   socket_configuration.writeOnly = false;
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
   result =
@@ -913,6 +916,7 @@ do_work (int argc_in,
   socket_configuration.address = address_in;
   socket_configuration.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                                 1);
+  socket_configuration.connect = !useReactor_in;
   socket_configuration.writeOnly = true;
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
   result =
@@ -921,6 +925,7 @@ do_work (int argc_in,
                                         1,
                                         0);
   ACE_ASSERT (!result);
+  socket_configuration.connect = false;
   socket_configuration.writeOnly = false;
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
   //  // *TODO*: verify the given address
@@ -944,6 +949,7 @@ do_work (int argc_in,
 //              ACE_TEXT ("set local SAP: %s...\n"),
 //              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
   socket_configuration.address = address_in;
+  socket_configuration.connect = !useReactor_in;
   socket_configuration.writeOnly = true;
   CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
 
@@ -1039,7 +1045,10 @@ do_work (int argc_in,
   navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
       &navdatatarget_sockethandlerconfiguration;
 
-  CBData_in.configuration->streamConfiguration.initialize = &event_handler;
+  CBData_in.configuration->streamConfiguration.initializeMAVLink =
+      &event_handler;
+  CBData_in.configuration->streamConfiguration.initializeNavData =
+      &event_handler;
   CBData_in.configuration->streamConfiguration.messageAllocator =
       &message_allocator;
   CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),

@@ -493,7 +493,7 @@ stream_processing_function (void* arg_in)
     } // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
 //    ACE_ASSERT (session_p);
-    data_p->CBData->controlStream->start ();
+//    data_p->CBData->controlStream->start ();
 //    // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
@@ -521,7 +521,7 @@ stream_processing_function (void* arg_in)
     } // end IF
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
-    data_p->CBData->MAVLinkStream->start ();
+//    data_p->CBData->MAVLinkStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
@@ -545,9 +545,6 @@ stream_processing_function (void* arg_in)
     configuration_p->targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("cb navdata: %s...\n"),
-                ACE_TEXT (Net_Common_Tools::IPAddressToString ((*iterator_2).address).c_str ())));
     configuration_p->stream = data_p->CBData->NavDataStream;
     result_2 =
       data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
@@ -557,7 +554,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-    data_p->CBData->NavDataStream->start ();
+//    data_p->CBData->NavDataStream->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -596,7 +593,7 @@ stream_processing_function (void* arg_in)
 //                                      converter.str ().c_str ());
 //    gdk_threads_leave ();
 //  } // end lock scope
-//    data_p->CBData->liveVideoStream->start ();
+    data_p->CBData->liveVideoStream->start ();
 
   //    if (!stream_p->isRunning ())
   //    {
