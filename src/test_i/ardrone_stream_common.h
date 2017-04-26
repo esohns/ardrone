@@ -364,7 +364,8 @@ struct ARDrone_ModuleHandlerConfiguration
   bool                                           useYYScanBuffer; // H264 decoder module
 };
 
-typedef Common_IInitializeP_T<ARDrone_INotify> ARDrone_IInitialize_t;
+typedef Common_IInitializeP_T<ARDrone_IMAVLinkNotify> ARDrone_IMAVLinkInitialize_t;
+typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize_t;
 typedef std::map<std::string,
                  struct ARDrone_ModuleHandlerConfiguration*> ARDrone_ModuleHandlerConfigurations_t;
 typedef ARDrone_ModuleHandlerConfigurations_t::iterator ARDrone_ModuleHandlerConfigurationsIterator_t;
@@ -373,13 +374,15 @@ struct ARDrone_StreamConfiguration
 {
   inline ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
-   , initialize (NULL)
+   , initializeMAVLink (NULL)
+   , initializeNavData (NULL)
    , moduleHandlerConfigurations ()
    , useReactor (NET_EVENT_USE_REACTOR)
    , userData (NULL)
   {};
 
-  ARDrone_IInitialize_t*                initialize;
+  ARDrone_IMAVLinkInitialize_t*         initializeMAVLink;
+  ARDrone_INavDataInitialize_t*         initializeNavData;
   ARDrone_ModuleHandlerConfigurations_t moduleHandlerConfigurations;
   bool                                  useReactor;
 

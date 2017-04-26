@@ -36,7 +36,8 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
  , GtkCBData_ (GtkCBData_in)
- , notify_ (NULL)
+ , MAVLinkNotify_ (NULL)
+ , NavDataNotify_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
@@ -138,31 +139,31 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
       refresh_display = true; break;
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
-    { ACE_ASSERT (notify_);
+    { ACE_ASSERT (MAVLinkNotify_);
       const ARDrone_MessageData_t& data_container_r = message_in.get ();
       const struct ARDrone_MessageData& data_r = data_container_r.get ();
       try {
         // *TODO*: remove type inference
-        notify_->messageCB (data_r.MAVLinkMessage,
-                            message_in.rd_ptr ());
+        MAVLinkNotify_->messageCB (data_r.MAVLinkMessage,
+                                   message_in.rd_ptr ());
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
+                    ACE_TEXT ("caught exception in ARDrone_IMAVLinkNotify::messageCB(), returning\n")));
       }
 
       break;
     }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:
-    { ACE_ASSERT (notify_);
+    { ACE_ASSERT (NavDataNotify_);
       const ARDrone_MessageData_t& data_container_r = message_in.get ();
       const struct ARDrone_MessageData& data_r = data_container_r.get ();
       try {
-        notify_->messageCB (data_r.NavDataMessage,
-                            data_r.NavDataMessageOptionOffsets,
-                            message_in.rd_ptr ());
+        NavDataNotify_->messageCB (data_r.NavDataMessage,
+                                   data_r.NavDataMessageOptionOffsets,
+                                   message_in.rd_ptr ());
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("caught exception in ARDrone_INotify::messageCB(), returning\n")));
+                    ACE_TEXT ("caught exception in ARDrone_INavDataNotify::messageCB(), returning\n")));
       }
 
       break;

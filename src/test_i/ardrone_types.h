@@ -144,13 +144,19 @@ enum ARDrone_VideoMode : int
   ARDRONE_VIDEOMODE_MAX
 };
 
-class ARDrone_INotify
+class ARDrone_IMAVLinkNotify
 {
  public:
-  virtual ~ARDrone_INotify () {};
+  virtual ~ARDrone_IMAVLinkNotify () {};
 
   virtual void messageCB (const struct __mavlink_message&, // message record
                           void*) = 0;                      // payload handle
+};
+class ARDrone_INavDataNotify
+{
+ public:
+  virtual ~ARDrone_INavDataNotify () {};
+
   virtual void messageCB (const struct _navdata_t&,                     // message record
                           const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
                           void*) = 0;                                   // payload handle

@@ -183,51 +183,6 @@ ARDrone_ControlStream::initialize (const ARDrone_StreamConfiguration& configurat
   // --> set the argument that is passed along
   module_p->arg (inherited::sessionData_);
 
-//  // **************************** Controller ***********************************
-//  module_p =
-//    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("Controller")));
-//  if (!module_p)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-//                ACE_TEXT ("Controller")));
-//    return false;
-//  } // end IF
-
-//  controller_ =
-//    dynamic_cast<ARDrone_IController*> (module_p->writer ());
-//  if (!controller_)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<ARDrone_IController> failed, aborting\n")));
-//    return false;
-//  } // end IF
-
-//  ACE_ASSERT (configuration_in.initialize);
-//  if (!configuration_in.initialize->initialize (this))
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to initialize event handler, aborting\n")));
-//    return false;
-//  } // end IF
-
-  // -------------------------------------------------------------
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_ASSERT (configuration_p->format);
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
-                                                             session_data_r.format))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), aborting\n")));
-    goto error;
-  } // end IF
-  ACE_ASSERT (session_data_r.format);
-#endif
-
   // ---------------------------------------------------------------------------
 
   if (setupPipeline_in)
@@ -244,33 +199,6 @@ ARDrone_ControlStream::initialize (const ARDrone_StreamConfiguration& configurat
   return true;
 
 error:
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //if (media_type_p)
-  //  media_type_p->Release ();
-  //if (topology_p)
-  //  topology_p->Release ();
-  if (session_data_r.direct3DDevice)
-  {
-    session_data_r.direct3DDevice->Release ();
-    session_data_r.direct3DDevice = NULL;
-  } // end IF
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  session_data_r.resetToken = 0;
-  if (session_data_r.session)
-  {
-    session_data_r.session->Release ();
-    session_data_r.session = NULL;
-  } // end IF
-  //if (mediaSession_)
-  //{
-  //  mediaSession_->Release ();
-  //  mediaSession_ = NULL;
-  //} // end IF
-
-  //if (COM_initialized)
-  //  CoUninitialize ();
-#endif
   return false;
 }
 
@@ -444,11 +372,18 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   ACE_ASSERT (inherited::configuration_);
 
   Stream_Module_t* module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Controller_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
-                                                    NULL,
-                                                    false),
-                  false);
+  if (inherited::configuration_->useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_Controller_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                                                      NULL,
+                                                      false),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchController_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                                                            NULL,
+                                                            false),
+                    false);
   modules_out.push_back (module_p);
   module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
@@ -609,30 +544,13 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
     return false;
   } // end IF
 
-  ACE_ASSERT (configuration_in.initialize);
-  if (!configuration_in.initialize->initialize (this))
+  ACE_ASSERT (configuration_in.initializeNavData);
+  if (!configuration_in.initializeNavData->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize event handler, aborting\n")));
     return false;
   } // end IF
-
-  // -------------------------------------------------------------
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_ASSERT (configuration_p->format);
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
-                                                             session_data_r.format))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), aborting\n")));
-    goto error;
-  } // end IF
-  ACE_ASSERT (session_data_r.format);
-#endif
 
   // ---------------------------------------------------------------------------
 
@@ -650,33 +568,6 @@ ARDrone_NavDataStream::initialize (const ARDrone_StreamConfiguration& configurat
   return true;
 
 error:
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //if (media_type_p)
-  //  media_type_p->Release ();
-  //if (topology_p)
-  //  topology_p->Release ();
-  if (session_data_r.direct3DDevice)
-  {
-    session_data_r.direct3DDevice->Release ();
-    session_data_r.direct3DDevice = NULL;
-  } // end IF
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  session_data_r.resetToken = 0;
-  if (session_data_r.session)
-  {
-    session_data_r.session->Release ();
-    session_data_r.session = NULL;
-  } // end IF
-  //if (mediaSession_)
-  //{
-  //  mediaSession_->Release ();
-  //  mediaSession_ = NULL;
-  //} // end IF
-
-  //if (COM_initialized)
-  //  CoUninitialize ();
-#endif
   return false;
 }
 
@@ -873,62 +764,6 @@ ARDrone_NavDataStream::report () const
 }
 
 void
-ARDrone_NavDataStream::messageCB (const struct __mavlink_message& record_in,
-                                  void* payload_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::messageCB"));
-
-  ACE_UNUSED_ARG (record_in);
-  ACE_UNUSED_ARG (payload_in);
-
-  switch (record_in.msgid)
-  {
-    case MAVLINK_MSG_ID_HEARTBEAT: // 0
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_heartbeat_t));
-      struct __mavlink_heartbeat_t* message_p =
-          reinterpret_cast<struct __mavlink_heartbeat_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_SYS_STATUS: // 1
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
-      struct __mavlink_sys_status_t* message_p =
-          reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
-      struct __mavlink_gps_raw_int_t* message_p =
-          reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_ATTITUDE: // 30
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
-      struct __mavlink_attitude_t* message_p =
-          reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_global_position_int_t));
-      struct __mavlink_global_position_int_t* message_p =
-          reinterpret_cast<struct __mavlink_global_position_int_t*> (payload_in);
-      break;
-    }
-    case MAVLINK_MSG_ID_MISSION_CURRENT: // 42
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_mission_current_t));
-      struct __mavlink_mission_current_t* message_p =
-          reinterpret_cast<struct __mavlink_mission_current_t*> (payload_in);
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown MAVLink message id (was: %u), continuing\n"),
-                  record_in.msgid));
-      break;
-    }
-  } // end SWITCH
-}
-void
 ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
                                   const ARDrone_NavDataMessageOptionOffsets_t& offsets_in,
                                   void* payload_in)
@@ -1057,8 +892,6 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
 
   // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-
   Stream_Module_t* module_p = NULL;
 
   // ***************************** Statistic **********************************
@@ -1122,20 +955,13 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
 
   // -------------------------------------------------------------
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_ASSERT (configuration_p->format);
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  ACE_ASSERT (!session_data_r.format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
-                                                             session_data_r.format))
+  ACE_ASSERT (configuration_in.initializeMAVLink);
+  if (!configuration_in.initializeMAVLink->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), aborting\n")));
-    goto error;
+                ACE_TEXT ("failed to initialize event handler, aborting\n")));
+    return false;
   } // end IF
-  ACE_ASSERT (session_data_r.format);
-#endif
 
   // ---------------------------------------------------------------------------
 
@@ -1153,33 +979,6 @@ ARDrone_MAVLinkStream::initialize (const ARDrone_StreamConfiguration& configurat
   return true;
 
 error:
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //if (media_type_p)
-  //  media_type_p->Release ();
-  //if (topology_p)
-  //  topology_p->Release ();
-  if (session_data_r.direct3DDevice)
-  {
-    session_data_r.direct3DDevice->Release ();
-    session_data_r.direct3DDevice = NULL;
-  } // end IF
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  session_data_r.resetToken = 0;
-  if (session_data_r.session)
-  {
-    session_data_r.session->Release ();
-    session_data_r.session = NULL;
-  } // end IF
-  //if (mediaSession_)
-  //{
-  //  mediaSession_->Release ();
-  //  mediaSession_ = NULL;
-  //} // end IF
-
-  //if (COM_initialized)
-  //  CoUninitialize ();
-#endif
   return false;
 }
 
@@ -1351,4 +1150,61 @@ ARDrone_MAVLinkStream::report () const
               inherited::state_.currentSessionData->currentStatistic.dataMessages,
               inherited::state_.currentSessionData->currentStatistic.droppedFrames,
               inherited::state_.currentSessionData->currentStatistic.bytes));
+}
+
+void
+ARDrone_MAVLinkStream::messageCB (const struct __mavlink_message& record_in,
+                                  void* payload_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::messageCB"));
+
+  ACE_UNUSED_ARG (record_in);
+  ACE_UNUSED_ARG (payload_in);
+
+  switch (record_in.msgid)
+  {
+    case MAVLINK_MSG_ID_HEARTBEAT: // 0
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_heartbeat_t));
+      struct __mavlink_heartbeat_t* message_p =
+          reinterpret_cast<struct __mavlink_heartbeat_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_SYS_STATUS: // 1
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
+      struct __mavlink_sys_status_t* message_p =
+          reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
+      struct __mavlink_gps_raw_int_t* message_p =
+          reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_ATTITUDE: // 30
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
+      struct __mavlink_attitude_t* message_p =
+          reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_global_position_int_t));
+      struct __mavlink_global_position_int_t* message_p =
+          reinterpret_cast<struct __mavlink_global_position_int_t*> (payload_in);
+      break;
+    }
+    case MAVLINK_MSG_ID_MISSION_CURRENT: // 42
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_mission_current_t));
+      struct __mavlink_mission_current_t* message_p =
+          reinterpret_cast<struct __mavlink_mission_current_t*> (payload_in);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown MAVLink message id (was: %u), continuing\n"),
+                  record_in.msgid));
+      break;
+    }
+  } // end SWITCH
 }

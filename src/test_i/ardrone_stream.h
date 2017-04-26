@@ -201,7 +201,7 @@ class ARDrone_NavDataStream
                                enum Stream_SessionMessageType,
                                ARDrone_Message,
                                ARDrone_SessionMessage>
- , public ARDrone_INotify
+ , public ARDrone_INavDataNotify
 {
  public:
   ARDrone_NavDataStream ();
@@ -221,9 +221,7 @@ class ARDrone_NavDataStream
   virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
   virtual void report () const;
 
-  // implement ARDrone_INotify
-  virtual void messageCB (const struct __mavlink_message&, // message record
-                          void*);                          // payload handle
+  // implement ARDrone_INavDataNotify
   virtual void messageCB (const struct _navdata_t&,                     // message record
                           const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
                           void*);                                       // payload handle
@@ -290,6 +288,7 @@ class ARDrone_MAVLinkStream
                                enum Stream_SessionMessageType,
                                ARDrone_Message,
                                ARDrone_SessionMessage>
+ , public ARDrone_IMAVLinkNotify
 {
  public:
   ARDrone_MAVLinkStream ();
@@ -308,6 +307,10 @@ class ARDrone_MAVLinkStream
   // *NOTE*: these delegate to runtimeStatistic_
   virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
   virtual void report () const;
+
+  // implement ARDrone_IMAVLinkNotify
+  virtual void messageCB (const struct __mavlink_message&, // message record
+                          void*);                          // payload handle
 
  private:
   typedef Stream_Base_T<ACE_MT_SYNCH,
