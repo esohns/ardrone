@@ -483,24 +483,24 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->controlStream;
-    result_2 =
-      data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
+    //result_2 =
+    //  data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
 //    ACE_ASSERT (session_p);
-//    data_p->CBData->controlStream->start ();
+    //data_p->CBData->controlStream->start ();
 //    // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
     data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
         logfile_name_string;
 
-    ++iterator_2;
+    iterator_2++;
     if (data_p->CBData->configuration->streamConfiguration.useReactor)
       data_p->CBData->configuration->listenerConfiguration.address =
           (*iterator_2).address;
@@ -511,14 +511,14 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
-    result_2 =
-      data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
+    //result_2 =
+    //  data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
 //    data_p->CBData->MAVLinkStream->start ();
@@ -528,8 +528,8 @@ stream_processing_function (void* arg_in)
     data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
         logfile_name_string;
 
-    ++iterator_2;
-    ++iterator_2;
+    iterator_2++;
+    iterator_2++;
     // *TODO*: bind to a specific interface
     if (data_p->CBData->configuration->streamConfiguration.useReactor)
       data_p->CBData->configuration->listenerConfiguration.address =
@@ -561,7 +561,7 @@ stream_processing_function (void* arg_in)
     session_p->wait (false,
                      &session_start_timeout);
 
-//    ++iterator_2;
+//    iterator_2++;
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->liveVideoStream;
     result_2 =
@@ -573,7 +573,7 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = data_p->CBData->liveVideoStream->get ();
+    session_data_container_p = &data_p->CBData->liveVideoStream->get ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
@@ -2118,7 +2118,12 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   int number_of_screens = 0;
   GdkScreen* screen_p = NULL;
   bool device_found = false;
-  GValue value = G_VALUE_INIT;
+  GValue value;
+#if GTK_CHECK_VERSION (3,0,0)
+  value = G_VALUE_INIT;
+#else
+  g_value_init (&value, G_TYPE_NONE);
+#endif
   GtkListStore* list_store_p = NULL;
   GtkDrawingArea* drawing_area_p = NULL;
   GtkCheckButton* check_button_p = NULL;

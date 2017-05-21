@@ -49,6 +49,7 @@ template <ACE_SYNCH_DECL,
           typename SessionDataContainerType,
           ////////////////////////////////
           typename HandlerConfigurationType, // socket-
+          typename ConnectionConfigurationType,
           typename ConnectionManagerType,
           typename ConnectorType>
 class ARDrone_Module_Controller_T
@@ -61,6 +62,7 @@ class ARDrone_Module_Controller_T
                                      SessionDataContainerType,
                                      struct Net_SocketConfiguration,
                                      HandlerConfigurationType,
+                                     ConnectionConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType>
  , public ARDrone_IController
@@ -90,7 +92,7 @@ class ARDrone_Module_Controller_T
   virtual void takeoff ();
   virtual void land ();
 
-  virtual void set (ARDrone_VideoMode); // video mode
+  virtual void set (enum ARDrone_VideoMode); // video mode
 
  private:
   typedef Stream_Module_Net_Target_T<ACE_SYNCH_USE,
@@ -102,6 +104,7 @@ class ARDrone_Module_Controller_T
                                      SessionDataContainerType,
                                      struct Net_SocketConfiguration,
                                      HandlerConfigurationType,
+                                     ConnectionConfigurationType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;
 
@@ -117,6 +120,7 @@ class ARDrone_Module_Controller_T
                                       SessionMessageType,
                                       SessionDataContainerType,
                                       HandlerConfigurationType,
+                                      ConnectionConfigurationType,
                                       ConnectionManagerType,
                                       ConnectorType> OWN_TYPE_T;
 

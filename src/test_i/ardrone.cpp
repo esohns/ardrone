@@ -535,7 +535,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
                           bool coInitialize_in,
                           bool fullScreen_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::do_initialize_directshow"));
+  ARDRONE_TRACE (ACE_TEXT ("::do_initialize_directshow"));
 
   HRESULT result = E_FAIL;
   std::list<std::wstring> filter_pipeline;
@@ -704,15 +704,27 @@ continue_:
 
   if (fullScreen_in)
   {
-    struct _cairo_rectangle_int rectangle_s;
     GdkDisplay* display_p =
       gdk_display_manager_get_default_display (gdk_display_manager_get ());
     ACE_ASSERT (display_p);
+#if GTK_CHECK_VERSION (3,0,0)
     GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
     ACE_ASSERT (monitor_p);
+    struct _cairo_rectangle_int rectangle_s;
     gdk_monitor_get_geometry (monitor_p,
                               &rectangle_s);
-
+#else
+    GdkScreen* screen_p =
+      //gdk_display_get_screen (display_p,
+      //                        0);
+      gdk_display_get_default_screen (display_p);
+    ACE_ASSERT (screen_p);
+    gint monitor_i = gdk_screen_get_primary_monitor (screen_p);
+    struct _GdkRectangle rectangle_s;
+    gdk_screen_get_monitor_geometry (screen_p,
+                                     monitor_i,
+                                     &rectangle_s);
+#endif
     video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
     video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
   } // end IF
@@ -747,7 +759,7 @@ void
 do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
                         struct _AMMediaType*& mediaType_inout)
 {
-  STREAM_TRACE (ACE_TEXT ("::do_finalize_directshow"));
+  ARDRONE_TRACE (ACE_TEXT ("::do_finalize_directshow"));
 
   if (IGraphBuilder_inout)
   {
@@ -767,7 +779,7 @@ do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
 bool
 do_initialize_mediafoundation (bool coInitialize_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::do_initialize_mediafoundation"));
+  ARDRONE_TRACE (ACE_TEXT ("::do_initialize_mediafoundation"));
 
   HRESULT result = E_FAIL;
 
@@ -816,7 +828,7 @@ error:
 void
 do_finalize_mediafoundation ()
 {
-  STREAM_TRACE (ACE_TEXT ("::do_finalize_mediafoundation"));
+  ARDRONE_TRACE (ACE_TEXT ("::do_finalize_mediafoundation"));
 
   HRESULT result = E_FAIL;
 
@@ -963,7 +975,7 @@ do_work (int argc_in,
       std::max (bufferSize_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
   CBData_in.configuration->socketHandlerConfiguration.statisticReportingInterval =
-      ARDRONE_STATISTIC_REPORTING_INTERVAL;
+    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
   CBData_in.configuration->socketHandlerConfiguration.userData =
       CBData_in.configuration->userData;
 
@@ -1002,6 +1014,8 @@ do_work (int argc_in,
       fullScreen_in;
   CBData_in.configuration->moduleHandlerConfiguration.parserConfiguration =
       &CBData_in.configuration->parserConfiguration;
+  CBData_in.configuration->moduleHandlerConfiguration.statisticReportingInterval =
+    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration->directShowPinConfiguration.format);
@@ -1058,8 +1072,6 @@ do_work (int argc_in,
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
       &CBData_in.configuration->moduleConfiguration;
-  CBData_in.configuration->streamConfiguration.statisticReportingInterval =
-      ARDRONE_STATISTIC_REPORTING_INTERVAL;
   CBData_in.configuration->streamConfiguration.printFinalReport = false;
   CBData_in.configuration->streamConfiguration.useReactor = useReactor_in;
   CBData_in.configuration->streamConfiguration.userData =

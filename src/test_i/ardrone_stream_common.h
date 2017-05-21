@@ -292,7 +292,6 @@ struct ARDrone_ModuleHandlerConfiguration
    , pushStatisticMessages (true)
    , socketConfigurations (NULL)
    , socketHandlerConfiguration (NULL)
-   , stream (NULL)
    , streamConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
@@ -355,8 +354,6 @@ struct ARDrone_ModuleHandlerConfiguration
 
   Net_SocketConfigurations_t*                    socketConfigurations;       // net source/target modules
   struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
-  Stream_IStream*                                stream;
-  // *TODO*: remove this ASAP
   struct ARDrone_StreamConfiguration*            streamConfiguration;
   ARDrone_Notification_t*                        subscriber;
   ARDrone_Subscribers_t*                         subscribers;
