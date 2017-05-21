@@ -69,9 +69,7 @@ class ARDrone_LiveVideoStream_T
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
-  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
-                           bool = true,                               // setup pipeline ?
-                           bool = true);                              // reset session data ?
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&); // configuration
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
@@ -138,9 +136,7 @@ class ARDrone_ControlStream
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
-  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
-                           bool = true,                               // setup pipeline ?
-                           bool = true);                              // reset session data ?
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&); // configuration
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
@@ -212,9 +208,7 @@ class ARDrone_NavDataStream
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
-  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
-                           bool = true,                               // setup pipeline ?
-                           bool = true);                              // reset session data ?
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&); // configuration
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
@@ -299,9 +293,7 @@ class ARDrone_MAVLinkStream
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
-  virtual bool initialize (const struct ARDrone_StreamConfiguration&, // configuration
-                           bool = true,                               // setup pipeline ?
-                           bool = true);                              // reset session data ?
+  virtual bool initialize (const struct ARDrone_StreamConfiguration&); // configuration
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_

@@ -134,7 +134,7 @@
 //#define ARDRONE_MAXIMUM_QUEUE_SLOTS                       STREAM_QUEUE_MAX_MESSAGES
 #define ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES        std::numeric_limits<unsigned int>::max ()
 
-#define ARDRONE_STATISTIC_REPORTING_INTERVAL               0 // seconds [0 --> OFF]
+//#define ARDRONE_STATISTIC_REPORTING_INTERVAL               0 // seconds [0 --> OFF]
 
 // *** device-related ***
 //#define ARDRONE_ACCELEROMETER_LSB_FACTOR_2                16384.0F // LSB/g
