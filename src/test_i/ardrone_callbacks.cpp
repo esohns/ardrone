@@ -483,18 +483,18 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->controlStream;
-    //result_2 =
-    //  data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
+    result_2 =
+      data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
 //    ACE_ASSERT (session_p);
-    //data_p->CBData->controlStream->start ();
-//    // *IMPORTANT NOTE*: race condition here --> add timeout
+    data_p->CBData->controlStream->start ();
+    // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
     data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
@@ -511,17 +511,17 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
-    //result_2 =
-    //  data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
+    result_2 =
+      data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
     ACE_ASSERT (session_p);
-//    data_p->CBData->MAVLinkStream->start ();
+    data_p->CBData->MAVLinkStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
@@ -554,7 +554,7 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-//    data_p->CBData->NavDataStream->start ();
+    data_p->CBData->NavDataStream->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -3287,7 +3287,6 @@ drawingarea_configure_cb (GtkWidget* widget_in,
   } // end IF
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
-
     if (cb_data_p->pixelBuffer)
     {
       g_object_unref (cb_data_p->pixelBuffer);
