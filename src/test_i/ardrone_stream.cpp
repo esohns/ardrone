@@ -848,7 +848,7 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
 //  module_p = NULL;
 //#endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                  ARDrone_Module_StatisticReport_Module (std::string (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
                                                          NULL,
                                                          false),
                   false);

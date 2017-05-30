@@ -433,7 +433,7 @@ stream_processing_function (void* arg_in)
 #endif
 
   Common_UI_GTKBuildersIterator_t iterator;
-  ACE_SYNCH_MUTEX* lock_p = NULL;
+  //ACE_SYNCH_MUTEX* lock_p = NULL;
   struct ARDrone_ThreadData* data_p =
       static_cast<struct ARDrone_ThreadData*> (arg_in);
 
@@ -444,14 +444,12 @@ stream_processing_function (void* arg_in)
 
   iterator =
     data_p->CBData->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
-  lock_p = &data_p->CBData->lock;
+  //lock_p = &data_p->CBData->lock;
 
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->CBData->builders.end ());
-//  ACE_ASSERT (lock_p);
 
-//  GtkStatusbar* statusbar_p = NULL;
-//  Stream_IStreamControlBase* stream_p, *stream_2, *stream_3, *stream_4 = NULL;
+  GtkStatusbar* statusbar_p = NULL;
   ARDrone_ModuleHandlerConfigurationsIterator_t iterator_3;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
@@ -483,17 +481,17 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->controlStream;
-    result_2 =
-      data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
+    //result_2 =
+    //  data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
 //    ACE_ASSERT (session_p);
-    data_p->CBData->controlStream->start ();
+    //data_p->CBData->controlStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
@@ -511,20 +509,20 @@ stream_processing_function (void* arg_in)
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
     data_p->CBData->configuration->moduleHandlerConfiguration.stream =
       data_p->CBData->MAVLinkStream;
-    result_2 =
-      data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
-    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
-    ACE_ASSERT (session_p);
-    data_p->CBData->MAVLinkStream->start ();
+    //result_2 =
+    //  data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
+    //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
+    //ACE_ASSERT (session_p);
+    //data_p->CBData->MAVLinkStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
-    session_p->wait (false,
-                     &session_start_timeout);
+    //session_p->wait (false,
+    //                 &session_start_timeout);
     data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
         logfile_name_string;
 
@@ -546,15 +544,15 @@ stream_processing_function (void* arg_in)
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
     configuration_p->stream = data_p->CBData->NavDataStream;
-    result_2 =
-      data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
-    data_p->CBData->NavDataStream->start ();
+    //result_2 =
+    //  data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    //if (!result_2)
+    //{
+    //  ACE_DEBUG ((LM_ERROR,
+    //              ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+    //  goto done;
+    //} // end IF
+    //data_p->CBData->NavDataStream->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -583,15 +581,15 @@ stream_processing_function (void* arg_in)
     converter << session_data_p->sessionID;
 
 //    // set context ID
-//    gdk_threads_enter ();
-//    statusbar_p =
-//      GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
-//                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
-//    ACE_ASSERT (statusbar_p);
-//    data_p->CBData->configuration->moduleHandlerConfiguration.contextID =
-//        gtk_statusbar_get_context_id (statusbar_p,
-//                                      converter.str ().c_str ());
-//    gdk_threads_leave ();
+    gdk_threads_enter ();
+    statusbar_p =
+      GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
+    ACE_ASSERT (statusbar_p);
+    data_p->CBData->configuration->moduleHandlerConfiguration.contextId =
+        gtk_statusbar_get_context_id (statusbar_p,
+                                      converter.str ().c_str ());
+    gdk_threads_leave ();
 //  } // end lock scope
     data_p->CBData->liveVideoStream->start ();
 
@@ -615,9 +613,9 @@ stream_processing_function (void* arg_in)
 done:
   { // synch access
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->CBData->lock, -1);
 #else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->CBData->lock, std::numeric_limits<void*>::max ());
 #endif
 
     data_p->CBData->progressData->completedActions.insert (data_p->eventSourceID);
@@ -1406,8 +1404,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
-  cb_data_p->configuration->moduleHandlerConfiguration.window =
-    gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
+  cb_data_p->configuration->moduleHandlerConfiguration.window = window_p;
   ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #endif
 
@@ -2046,7 +2043,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (cb_data_p->progressData);
+  ACE_ASSERT (cb_data_p->controlStream);
   ACE_ASSERT (cb_data_p->MAVLinkStream);
+  ACE_ASSERT (cb_data_p->NavDataStream);
   ACE_ASSERT (cb_data_p->liveVideoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
@@ -2083,6 +2082,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
     // stop stream
+    cb_data_p->controlStream->stop (false, true);
     cb_data_p->MAVLinkStream->stop (false, true);
     cb_data_p->NavDataStream->stop (false, true);
     cb_data_p->liveVideoStream->stop (false, true);
@@ -2115,6 +2115,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GSList* list_p = NULL;
   GdkDisplay* display_p = NULL;
   int number_of_monitors = 0;
+  int monitor_number = -1;
   int number_of_screens = 0;
   GdkScreen* screen_p = NULL;
   bool device_found = false;
@@ -2384,6 +2385,10 @@ continue_:
                 ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
     goto error;
   } // end IF
+  display_p = gdk_monitor_get_display (monitor_p);
+  ACE_ASSERT (display_p);
+  screen_p = gdk_display_get_default_screen (display_p);
+  ACE_ASSERT (screen_p);
 #else
   for (GSList* list_2 = list_p;
        list_2;
@@ -2404,11 +2409,11 @@ continue_:
                                          i);
       ACE_ASSERT (screen_p);
       number_of_monitors = gdk_screen_get_n_monitors (screen_p);
-      for (int j = 0;
-           j < number_of_monitors;
-           ++j)
+      for (monitor_number = 0;
+           monitor_number < number_of_monitors;
+           ++monitor_number)
       {
-        if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, j)),
+        if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, monitor_number)),
                              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())))
         {
           device_found = true;
@@ -2421,6 +2426,7 @@ continue_:
     } // end FOR
   } // end FOR
   g_slist_free (list_p);
+#endif /* GTK_CHECK_VERSION (3,22,0) */
   if (!screen_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2428,7 +2434,6 @@ continue_:
                 ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ())));
     goto error;
   } // end IF
-#endif /* GTK_CHECK_VERSION (3,22,0) */
 #endif
 
   combo_box_p =
@@ -2511,6 +2516,9 @@ continue_:
 #endif
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
                              &rectangle_s);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#endif
   if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2536,6 +2544,37 @@ continue_:
       video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       video_info_header_2->bmiHeader.biSizeImage;
+#else
+    GtkWidget* widget_p = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    if (!widget_p)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("failed to gtk_window_new(), returning\n")));
+      goto error;
+    } // end IF
+    gtk_window_set_decorated (GTK_WINDOW (widget_p), FALSE);
+//        gdk_screen_get_root_window (screen_p);
+//    gtk_container_set_border_width (GTK_CONTAINER (widget_p), 10);
+    gtk_widget_realize (widget_p);
+    gtk_widget_show (widget_p);
+//    gtk_window_set_screen (GTK_WINDOW (widget_p), screen_p);
+    // *NOTE*: gtk_widget_get_allocation() does not work on GtkWindows for some
+    //         reason
+//    gtk_widget_get_allocation (widget_p,
+//                               &rectangle_s);
+//    gtk_window_get_size (GTK_WINDOW (widget_p),
+//                         &rectangle_s.width,
+//                         &rectangle_s.height);
+//    rectangle_s.width = gdk_screen_get_width (screen_p);
+//    rectangle_s.height = gdk_screen_get_height (screen_p);
+    gdk_screen_get_monitor_geometry (screen_p,
+                                     monitor_number,
+                                     &rectangle_s);
+    gtk_window_move (GTK_WINDOW (widget_p),
+                     rectangle_s.x, rectangle_s.y);
+    gtk_window_fullscreen (GTK_WINDOW (widget_p));
+    cb_data_p->configuration->moduleHandlerConfiguration.window =
+        gtk_widget_get_window (widget_p);
 #endif
   } // end IF
   else
@@ -2668,7 +2707,8 @@ create_window:
       std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
                 static_cast<long> (video_info_header_2->bmiHeader.biSizeImage));
 #else
-    cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
+    cb_data_p->configuration->moduleHandlerConfiguration.window =
+        gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2684,9 +2724,12 @@ create_window:
               (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
                cb_data_p->configuration->moduleHandlerConfiguration.area.top)));
 #else
+  cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d...\n"),
               ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+              ACE_TEXT (gdk_display_get_name (display_p)),
+              monitor_number,
               cb_data_p->configuration->moduleHandlerConfiguration.area.x,
               cb_data_p->configuration->moduleHandlerConfiguration.area.y,
               cb_data_p->configuration->moduleHandlerConfiguration.area.width,
@@ -3224,6 +3267,8 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 #endif
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
+  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+    return TRUE; // nothing to do
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate

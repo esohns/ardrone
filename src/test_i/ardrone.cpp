@@ -1000,7 +1000,6 @@ do_work (int argc_in,
       CBData_in.configuration->moduleHandlerConfiguration.format->lSampleSize;
 #endif
 
-
   CBData_in.configuration->moduleHandlerConfiguration.connectionManager =
       connection_manager_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
