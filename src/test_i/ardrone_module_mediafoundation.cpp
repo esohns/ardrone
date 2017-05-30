@@ -555,7 +555,8 @@ Stream_Vis_Target_MediaFoundation_T<ACE_SYNCH_USE,
                                     DataMessageType,
                                     SessionMessageType,
                                     SessionDataType,
-                                    SessionDataContainerType>::initialize (const ConfigurationType& configuration_in)
+                                    SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
+                                                                           Stream_IAllocator* allocator_in)
 {
   STREAM_TRACE (ACE_TEXT ("Stream_Vis_Target_MediaFoundation_T::initialize"));
 
@@ -595,7 +596,8 @@ Stream_Vis_Target_MediaFoundation_T<ACE_SYNCH_USE,
     inherited::isInitialized_ = false;
   } // end IF
 
-  return inherited::initialize (configuration_in);
+  return inherited::initialize (configuration_in,
+                                allocator_in);
 }
 //template <typename SessionMessageType,
 //          typename MessageType,
@@ -756,7 +758,7 @@ Stream_Vis_Target_MediaFoundation_T<ACE_SYNCH_USE,
     result = stream_sink_p->GetMediaSink (&IMFMediaSink_out);
     ACE_ASSERT (SUCCEEDED (result));
     stream_sink_p->Release ();
-  
+
     goto continue_;
   } // end IF
 

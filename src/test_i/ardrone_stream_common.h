@@ -97,8 +97,8 @@ struct ARDrone_SessionData
    , windowController (NULL)
 #else
    , format (AV_PIX_FMT_RGBA)
-   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
-   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
+//   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
+//   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
    , isNavData (false)
    , state (NULL)
@@ -186,8 +186,8 @@ struct ARDrone_SessionData
   IVideoWindow*                   windowController;
 #else
   enum AVPixelFormat              format;
-  unsigned int                    height;
-  unsigned int                    width;
+//  unsigned int                    height;
+//  unsigned int                    width;
 #endif
 
   bool                            isNavData;
@@ -260,6 +260,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
    , connectionManager (NULL)
+   , contextId (0)
    , debugScanner (COMMON_PARSER_DEFAULT_LEX_TRACE)
    , device ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -279,11 +280,11 @@ struct ARDrone_ModuleHandlerConfiguration
    , area ()
    // *NOTE*: GtkPixbuf native format is RGBA
    , format (AV_PIX_FMT_RGBA)
-   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
+//   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
    , sourceFormat ()
-   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
+//   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
    , window (NULL)
 #endif
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
@@ -320,6 +321,7 @@ struct ARDrone_ModuleHandlerConfiguration
   enum AVCodecID                                 codecId;             // H264 decoder module
   ARDrone_IConnection_t*                         connection;          // net source/IO module
   ARDrone_IConnectionManager_t*                  connectionManager;   // IO module
+  guint                                          contextId;
   bool                                           debugScanner;        // H264 decoder module
   std::string                                    device;
 
@@ -340,11 +342,11 @@ struct ARDrone_ModuleHandlerConfiguration
 #else
   GdkRectangle                                   area;            // display module
   enum AVPixelFormat                             format;          // display module
-  unsigned int                                   height;          // display module
+//  unsigned int                                   height;          // display module
   GdkPixbuf*                                     pixelBuffer;     // display module
   ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
   struct _cairo_rectangle_int                    sourceFormat;    // H264 decoder module
-  unsigned int                                   width;           // display module
+//  unsigned int                                   width;           // display module
   GdkWindow*                                     window;          // display module
 #endif
   bool                                           fullScreen;          // display module

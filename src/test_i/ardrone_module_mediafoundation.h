@@ -59,7 +59,8 @@ class Stream_Vis_Target_MediaFoundation_T
   Stream_Vis_Target_MediaFoundation_T ();
   virtual ~Stream_Vis_Target_MediaFoundation_T ();
 
-  virtual bool initialize (const ConfigurationType&);
+  virtual bool initialize (const ConfigurationType&,
+                           Stream_IAllocator* = NULL);
 
   // implement (part of) Stream_ITaskBase_T
   virtual void handleDataMessage (DataMessageType*&, // data message handle

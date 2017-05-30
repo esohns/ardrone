@@ -211,6 +211,8 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   configuration_p =
     dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
   ACE_ASSERT (configuration_p);
+//  session_data_p->width = configuration_p->sourceFormat.width;
+//  session_data_p->height = configuration_p->sourceFormat.height;
 
   // ---------------------------------------------------------------------------
 
@@ -806,17 +808,17 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   // ---------------------------------------------------------------------------
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  ACE_ASSERT (!session_data_r.format);
+  if (session_data_p->format)
+    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->format);
+  ACE_ASSERT (!session_data_p->format);
   if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->format,
-                                                             session_data_r.format))
+                                                             session_data_p->format))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), aborting\n")));
     goto error;
   } // end IF
-  ACE_ASSERT (session_data_r.format);
+  ACE_ASSERT (session_data_p->format);
 #endif
 
   // ---------------------------------------------------------------------------
@@ -844,18 +846,18 @@ error:
   //  media_type_p->Release ();
   //if (topology_p)
   //  topology_p->Release ();
-  if (session_data_r.direct3DDevice)
+  if (session_data_p->direct3DDevice)
   {
-    session_data_r.direct3DDevice->Release ();
-    session_data_r.direct3DDevice = NULL;
+    session_data_p->direct3DDevice->Release ();
+    session_data_p->direct3DDevice = NULL;
   } // end IF
-  if (session_data_r.format)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_r.format);
-  session_data_r.resetToken = 0;
-  if (session_data_r.session)
+  if (session_data_p->format)
+    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->format);
+  session_data_p->resetToken = 0;
+  if (session_data_p->session)
   {
-    session_data_r.session->Release ();
-    session_data_r.session = NULL;
+    session_data_p->session->Release ();
+    session_data_p->session = NULL;
   } // end IF
   //if (mediaSession_)
   //{
