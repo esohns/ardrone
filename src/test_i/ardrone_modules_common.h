@@ -21,8 +21,8 @@
 #ifndef ARDRONE_MODULES_COMMON_H
 #define ARDRONE_MODULES_COMMON_H
 
-#include <ace/INET_Addr.h>
-#include <ace/Synch_Traits.h>
+#include "ace/INET_Addr.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_time_common.h"
 
@@ -90,8 +90,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     struct ARDrone_SessionData,
                                     ARDrone_StreamSessionData_t,
                                     ARDrone_RuntimeStatistic_t,
-                                    struct Net_SocketConfiguration,
-                                    struct ARDrone_SocketHandlerConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_TCPConnector_t,
                                     struct ARDrone_UserData> ARDrone_Module_TCPSource;
@@ -111,8 +110,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     struct ARDrone_SessionData,
                                     ARDrone_StreamSessionData_t,
                                     ARDrone_RuntimeStatistic_t,
-                                    struct Net_SocketConfiguration,
-                                    struct ARDrone_SocketHandlerConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchTCPConnector_t,
                                     struct ARDrone_UserData> ARDrone_Module_AsynchTCPSource;
@@ -132,8 +130,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     struct ARDrone_SessionData,
                                     ARDrone_StreamSessionData_t,
                                     ARDrone_RuntimeStatistic_t,
-                                    struct Net_SocketConfiguration,
-                                    struct ARDrone_SocketHandlerConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_UDPConnector_t,
                                     struct ARDrone_UserData> ARDrone_Module_UDPSource;
@@ -153,8 +150,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     struct ARDrone_SessionData,
                                     ARDrone_StreamSessionData_t,
                                     ARDrone_RuntimeStatistic_t,
-                                    struct Net_SocketConfiguration,
-                                    struct ARDrone_SocketHandlerConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchUDPConnector_t,
                                     struct ARDrone_UserData> ARDrone_Module_AsynchUDPSource;
@@ -261,8 +257,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_Message,
                                     ARDrone_SessionMessage,
                                     ARDrone_StreamSessionData_t,
-                                    struct ARDrone_SocketHandlerConfiguration,
-                                    struct ARDrone_ConnectionConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchUDPConnector_t> ARDrone_Module_AsynchController;
 DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
@@ -277,8 +272,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_Message,
                                     ARDrone_SessionMessage,
                                     ARDrone_StreamSessionData_t,
-                                    struct ARDrone_SocketHandlerConfiguration,
-                                    struct ARDrone_ConnectionConfiguration,
+                                    ARDrone_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_UDPConnector_t> ARDrone_Module_Controller;
 DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type

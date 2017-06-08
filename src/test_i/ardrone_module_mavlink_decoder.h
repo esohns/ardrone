@@ -21,7 +21,7 @@
 #ifndef ARDRONE_MODULE_MAVLINK_DECODER_H
 #define ARDRONE_MODULE_MAVLINK_DECODER_H
 
-#include <ace/Global_Macros.h>
+#include "ace/Global_Macros.h"
 
 #include "common_time_common.h"
 
@@ -59,12 +59,12 @@ class ARDrone_Module_MAVLinkDecoder_T
  , public ARDrone_MAVLink_IParser
 {
  public:
-  ARDrone_Module_MAVLinkDecoder_T ();
+  ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_MAVLinkDecoder_T ();
 
   //// override (part of) Stream_IModuleHandler_T
   virtual bool initialize (const ConfigurationType&,
-                           Stream_IAllocator*);
+                           Stream_IAllocator* = NULL);
   //virtual const ConfigurationType& get () const;
 
   // implement (part of) Stream_ITaskBase
@@ -115,6 +115,7 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  enum Stream_SessionMessageType,
                                  struct Stream_UserData> inherited;
 
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T (const ARDrone_Module_MAVLinkDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T& operator= (const ARDrone_Module_MAVLinkDecoder_T&))
 

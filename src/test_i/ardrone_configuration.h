@@ -32,10 +32,10 @@
 #endif
 #endif /* GTKGL_SUPPORT */
 
-#include <gtk/gtk.h>
+#include "gtk/gtk.h"
 
-#include <ace/Singleton.h>
-#include <ace/Synch_Traits.h>
+#include "ace/Singleton.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_common.h"
@@ -122,13 +122,9 @@ struct ARDrone_Configuration
   inline ARDrone_Configuration ()
    : signalHandlerConfiguration ()
    , listenerConfiguration ()
-   , socketConfigurations ()
-   , socketHandlerConfiguration ()
-   , connectionConfiguration ()
+   , connectionConfigurations ()
    , allocatorConfiguration ()
    , parserConfiguration ()
-   , moduleConfiguration ()
-   , moduleHandlerConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowFilterConfiguration ()
    , directShowPinConfiguration ()
@@ -142,14 +138,9 @@ struct ARDrone_Configuration
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
   struct Net_ListenerConfiguration                              listenerConfiguration;
-  Net_SocketConfigurations_t                                    socketConfigurations;
-  struct ARDrone_SocketHandlerConfiguration                     socketHandlerConfiguration;
-  struct ARDrone_ConnectionConfiguration                        connectionConfiguration;
-
+  ARDrone_ConnectionConfigurations_t                            connectionConfigurations;
   struct ARDrone_AllocatorConfiguration                         allocatorConfiguration;
   struct Common_ParserConfiguration                             parserConfiguration;
-  struct Stream_ModuleConfiguration                             moduleConfiguration;
-  struct ARDrone_ModuleHandlerConfiguration                     moduleHandlerConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_FilterConfiguration                 directShowFilterConfiguration;
   struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration directShowPinConfiguration;
@@ -198,8 +189,6 @@ struct ARDrone_GtkCBData
  inline ARDrone_GtkCBData ()
   : Common_UI_GTKState ()
   , configuration (NULL)
-  , contextIdData (0)
-  , contextIdInformation (0)
   , controlStream (NULL)
   , eventStack ()
   , frameCounter (0)
@@ -241,8 +230,6 @@ struct ARDrone_GtkCBData
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
- guint                                contextIdData; // status bar context
- guint                                contextIdInformation; // status bar context
  ARDrone_StreamBase_t*                controlStream;
  ARDrone_Events_t                     eventStack;
  unsigned int                         frameCounter;

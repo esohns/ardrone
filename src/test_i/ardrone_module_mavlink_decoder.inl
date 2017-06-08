@@ -18,7 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <ace/Log_Msg.h>
+#include "ace/Log_Msg.h"
 
 #include "checksum.h"
 
@@ -39,8 +39,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T ()
- : inherited ()
+                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
+ : inherited (stream_in)
  , buffer_ (NULL)
  , bufferState_ (NULL)
  , isFirst_ (true)

@@ -18,7 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <ace/Log_Msg.h>
+#include "ace/Log_Msg.h"
 
 #include "stream_macros.h"
 
@@ -35,8 +35,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
-                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T ()
- : inherited ()
+                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+ : inherited (stream_in)
  , allocator_ (NULL)
  , buffer_ (NULL)
  , header_ ()

@@ -26,8 +26,8 @@
 
 #include "ardrone_macros.h"
 
-ARDrone_Module_EventHandler::ARDrone_Module_EventHandler ()
- : inherited ()
+ARDrone_Module_EventHandler::ARDrone_Module_EventHandler (ISTREAM_T* stream_in)
+ : inherited (stream_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::ARDrone_Module_EventHandler"));
 
@@ -50,8 +50,10 @@ ARDrone_Module_EventHandler:: clone ()
 
   Stream_Module_t* module_p = NULL;
   ACE_NEW_NORETURN (module_p,
-                    ARDrone_Module_EventHandler_Module (ACE_TEXT_ALWAYS_CHAR (inherited::name ()),
-                                                        NULL));
+                    ARDrone_Module_EventHandler_Module (NULL,
+                                                        ACE_TEXT_ALWAYS_CHAR (inherited::name ()),
+                                                        NULL,
+                                                        false));
   if (!module_p)
     ACE_DEBUG ((LM_CRITICAL,
                 ACE_TEXT ("failed to allocate memory(%u): %m, aborting\n"),

@@ -21,7 +21,7 @@
 #ifndef ARDRONE_MODULE_NAVDATA_DECODER_H
 #define ARDRONE_MODULE_NAVDATA_DECODER_H
 
-#include <ace/Global_Macros.h>
+#include "ace/Global_Macros.h"
 
 #include "common_iscanner.h"
 #include "common_time_common.h"
@@ -60,12 +60,12 @@ class ARDrone_Module_NavDataDecoder_T
  , public ARDrone_NavData_IParser
 {
  public:
-  ARDrone_Module_NavDataDecoder_T ();
+  ARDrone_Module_NavDataDecoder_T (ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_NavDataDecoder_T ();
 
   //// override (part of) Stream_IModuleHandler_T
   virtual bool initialize (const ConfigurationType&,
-                           Stream_IAllocator*);
+                           Stream_IAllocator* = NULL);
   //virtual const ConfigurationType& get () const;
 
   // implement (part of) Stream_ITaskBase
@@ -117,6 +117,7 @@ class ARDrone_Module_NavDataDecoder_T
                                  enum Stream_SessionMessageType,
                                  struct Stream_UserData> inherited;
 
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T (const ARDrone_Module_NavDataDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T& operator= (const ARDrone_Module_NavDataDecoder_T&))
 

@@ -21,9 +21,9 @@
 #ifndef ARDRONE_MODULE_CONTROLLER_H
 #define ARDRONE_MODULE_CONTROLLER_H
 
-#include <ace/Atomic_Op.h>
-#include <ace/Global_Macros.h>
-#include <ace/Synch_Traits.h>
+#include "ace/Atomic_Op.h"
+#include "ace/Global_Macros.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_iscanner.h"
 #include "common_time_common.h"
@@ -48,8 +48,7 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename SessionDataContainerType,
           ////////////////////////////////
-          typename HandlerConfigurationType, // socket-
-          typename ConnectionConfigurationType,
+          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType>
 class ARDrone_Module_Controller_T
@@ -60,15 +59,13 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
-                                     struct Net_SocketConfiguration,
-                                     HandlerConfigurationType,
-                                     ConnectionConfigurationType,
+                                     ConnectionConfigurationIteratorType,
                                      ConnectionManagerType,
                                      ConnectorType>
  , public ARDrone_IController
 {
  public:
-  ARDrone_Module_Controller_T ();
+  ARDrone_Module_Controller_T (ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_Controller_T ();
 
 //  // override (part of) Stream_IModuleHandler_T
@@ -102,12 +99,11 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
-                                     struct Net_SocketConfiguration,
-                                     HandlerConfigurationType,
-                                     ConnectionConfigurationType,
+                                     ConnectionConfigurationIteratorType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;
 
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T (const ARDrone_Module_Controller_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T& operator= (const ARDrone_Module_Controller_T&))
 
@@ -119,8 +115,7 @@ class ARDrone_Module_Controller_T
                                       DataMessageType,
                                       SessionMessageType,
                                       SessionDataContainerType,
-                                      HandlerConfigurationType,
-                                      ConnectionConfigurationType,
+                                      ConnectionConfigurationIteratorType,
                                       ConnectionManagerType,
                                       ConnectorType> OWN_TYPE_T;
 
