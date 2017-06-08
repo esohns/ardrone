@@ -25,10 +25,10 @@
 #include <sstream>
 
 #if defined (ENABLE_NLS)
-#include <locale.h>
-#include <libintl.h>
+#include "locale.h"
+#include "libintl.h"
 #endif
-#include <gettext.h>
+#include "gettext.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <dshow.h>
@@ -39,9 +39,9 @@
 #ifdef __cplusplus
 extern "C"
 {
-#include <libavcodec/avcodec.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/pixfmt.h>
+#include "libavcodec/avcodec.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/pixfmt.h"
 }
 #endif /* __cplusplus */
 
@@ -872,7 +872,8 @@ do_work (int argc_in,
   ARDrone_EventHandler event_handler (&CBData_in,
                                       interfaceDefinitionFile_in.empty ());
   std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
-  ARDrone_Module_EventHandler_Module event_handler_module (module_name,
+  ARDrone_Module_EventHandler_Module event_handler_module (NULL,
+                                                           module_name,
                                                            NULL,
                                                            true);
 
@@ -880,7 +881,7 @@ do_work (int argc_in,
   if (!heap_allocator.initialize (CBData_in.configuration->allocatorConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize message allocator, returning\n")));
+                ACE_TEXT ("failed to initialize heap allocator, returning\n")));
     return;
   } // end IF
   ARDrone_MessageAllocator_t message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
@@ -901,45 +902,102 @@ do_work (int argc_in,
   //         developer guide
   ARDrone_NavDataStream navdata_stream;
   ACE_ASSERT (CBData_in.configuration);
-  ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
+    CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+  ACE_ASSERT ((*iterator).second.format);
   //ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER2));
   //struct tagVIDEOINFOHEADER2* video_info_header_p =
   //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (CBData_in.configuration->moduleHandlerConfiguration.format->pbFormat);
   //ACE_ASSERT (video_info_header_p);
 
   // ******************* socket configuration data ****************************
-  struct Net_SocketConfiguration socket_configuration;
-  socket_configuration.address = address_in;
-  socket_configuration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
-                                                1);
-  socket_configuration.bufferSize = NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  struct ARDrone_ConnectionConfiguration connection_configuration;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+    address_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
+                                                                                                   1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
 //  if (useReactor_in)
-//    socket_configuration.connect = false;
-  socket_configuration.connect = false;
-  socket_configuration.writeOnly = false;
-  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+//    connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+//      false;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+    false;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+    false;
+  connection_configuration.socketHandlerConfiguration.listenerConfiguration =
+    &CBData_in.configuration->listenerConfiguration;
+  connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
+    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
+  connection_configuration.socketHandlerConfiguration.userData =
+    CBData_in.configuration->userData;
+  connection_configuration.connectionManager = connection_manager_p;
+  connection_configuration.messageAllocator = &message_allocator;
+  connection_configuration.PDUSize =
+    std::max (bufferSize_in,
+              static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
+  connection_configuration.streamConfiguration =
+    &CBData_in.configuration->streamConfiguration;
+  connection_configuration.userData = CBData_in.configuration->userData;
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                            connection_configuration));
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Control"),
+                                                                            connection_configuration));
+  ARDrone_ConnectionConfigurationIterator_t iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
+  (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
+    &((*iterator_2).second);
+
   result =
-      socket_configuration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
-                                        static_cast<ACE_UINT32> (INADDR_ANY),
-                                        1,
-                                        0);
-  ACE_ASSERT (!result);
-  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
-  socket_configuration.address = address_in;
-  socket_configuration.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                1);
-  socket_configuration.connect = !useReactor_in;
-  socket_configuration.writeOnly = true;
-  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
+                                                                                         static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                         1,
+                                                                                         0);
+  ACE_ASSERT (result == 0);
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"),
+                                                                            connection_configuration));
+  iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
+  (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
+    &((*iterator_2).second);
+
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+    address_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                                                                   1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+    !useReactor_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+    true;
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NAVData_Out"),
+                                                                            connection_configuration));
+  iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NAVData_Out"));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
+  (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
+    &((*iterator_2).second);
+
   result =
-      socket_configuration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
-                                        static_cast<ACE_UINT32> (INADDR_ANY),
-                                        1,
-                                        0);
-  ACE_ASSERT (!result);
-  socket_configuration.connect = false;
-  socket_configuration.writeOnly = false;
-  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
+                                                                                         static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                         1,
+                                                                                         0);
+  ACE_ASSERT (result == 0);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+    false;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+    false;
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NAVData_In"),
+                                                                            connection_configuration));
+  iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NAVData_In"));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
+  (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
+    &((*iterator_2).second);
+
   //  // *TODO*: verify the given address
 //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
 //                                              interface_identifier_string))
@@ -960,33 +1018,23 @@ do_work (int argc_in,
 //  ACE_DEBUG ((LM_ERROR,
 //              ACE_TEXT ("set local SAP: %s...\n"),
 //              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
-  socket_configuration.address = address_in;
-  socket_configuration.connect = !useReactor_in;
-  socket_configuration.writeOnly = true;
-  CBData_in.configuration->socketConfigurations.push_back (socket_configuration);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+    address_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+    !useReactor_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+    true;
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Video_In"),
+                                                                            connection_configuration));
+  iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
+  (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
+    &((*iterator_2).second);
 
-  CBData_in.configuration->socketHandlerConfiguration.connectionConfiguration =
-      &CBData_in.configuration->connectionConfiguration;
-  CBData_in.configuration->socketHandlerConfiguration.listenerConfiguration =
-      &CBData_in.configuration->listenerConfiguration;
-  CBData_in.configuration->socketHandlerConfiguration.messageAllocator =
-      &message_allocator;
-  CBData_in.configuration->socketHandlerConfiguration.PDUSize =
-      std::max (bufferSize_in,
-                static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
-  CBData_in.configuration->socketHandlerConfiguration.statisticReportingInterval =
-    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
-  CBData_in.configuration->socketHandlerConfiguration.userData =
-      CBData_in.configuration->userData;
-
-  CBData_in.configuration->connectionConfiguration.connectionManager =
-      connection_manager_p;
-  CBData_in.configuration->connectionConfiguration.socketHandlerConfiguration =
-      &CBData_in.configuration->socketHandlerConfiguration;
-  CBData_in.configuration->connectionConfiguration.streamConfiguration =
-      &CBData_in.configuration->streamConfiguration;
-  CBData_in.configuration->connectionConfiguration.userData =
-      CBData_in.configuration->userData;
+  iterator_2 =
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
 
   // ******************** stream configuration data ***************************
   CBData_in.configuration->allocatorConfiguration.defaultBufferSize =
@@ -997,66 +1045,51 @@ do_work (int argc_in,
   CBData_in.configuration->directShowPinConfiguration.isTopToBottom = true;
 
   CBData_in.configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-      CBData_in.configuration->moduleHandlerConfiguration.format->lSampleSize;
+    (*iterator).second.format->lSampleSize;
 #endif
 
-  CBData_in.configuration->moduleHandlerConfiguration.connectionManager =
-      connection_manager_p;
+  (*iterator).second.connectionManager = connection_manager_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  CBData_in.configuration->moduleHandlerConfiguration.consoleMode =
-      interfaceDefinitionFile_in.empty ();
+  (*iterator).second.consoleMode = interfaceDefinitionFile_in.empty ();
 #endif
-  CBData_in.configuration->moduleHandlerConfiguration.debugScanner =
-      debugScanner_in;
-  CBData_in.configuration->moduleHandlerConfiguration.demultiplex = true;
-  CBData_in.configuration->moduleHandlerConfiguration.fullScreen =
-      fullScreen_in;
-  CBData_in.configuration->moduleHandlerConfiguration.parserConfiguration =
-      &CBData_in.configuration->parserConfiguration;
-  CBData_in.configuration->moduleHandlerConfiguration.statisticReportingInterval =
+  (*iterator).second.debugScanner = debugScanner_in;
+  (*iterator).second.demultiplex = true;
+  (*iterator).second.fullScreen = fullScreen_in;
+  (*iterator).second.parserConfiguration =
+    &CBData_in.configuration->parserConfiguration;
+  (*iterator).second.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration->directShowPinConfiguration.format);
 
   if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*CBData_in.configuration->directShowPinConfiguration.format,
-                                                             CBData_in.configuration->moduleHandlerConfiguration.format))
+                                                             (*iterator).second.format))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), returning\n")));
     return;
   } // end IF
-  ACE_ASSERT (CBData_in.configuration->moduleHandlerConfiguration.format);
-  CBData_in.configuration->moduleHandlerConfiguration.push = true;
+  ACE_ASSERT ((*iterator).second.format);
+  (*iterator).second.push = true;
 #else
   CBData_in.configuration->moduleHandlerConfiguration.pixelBufferLock =
       &CBData_in.lock;
 #endif
-  CBData_in.configuration->moduleHandlerConfiguration.socketConfigurations =
-      &CBData_in.configuration->socketConfigurations;
-  CBData_in.configuration->moduleHandlerConfiguration.socketHandlerConfiguration =
-      &CBData_in.configuration->socketHandlerConfiguration;
-  CBData_in.configuration->moduleHandlerConfiguration.streamConfiguration =
+  (*iterator).second.connectionConfigurations =
+      &CBData_in.configuration->connectionConfigurations;
+  (*iterator).second.streamConfiguration =
       &CBData_in.configuration->streamConfiguration;
-  CBData_in.configuration->moduleHandlerConfiguration.subscriber =
-      &event_handler;
-  CBData_in.configuration->moduleHandlerConfiguration.subscribers =
+  (*iterator).second.subscriber = &event_handler;
+  (*iterator).second.subscribers =
       &CBData_in.configuration->streamSubscribers;
-  CBData_in.configuration->moduleHandlerConfiguration.subscribersLock =
+  (*iterator).second.subscribersLock =
       &CBData_in.configuration->streamSubscribersLock;
-  //CBData_in.configuration->moduleHandlerConfiguration.useYYScanBuffer = false;
+  //(*iterator).second.useYYScanBuffer = false;
   if (useReactor_in)
-    CBData_in.configuration->moduleHandlerConfiguration.stream = &video_stream;
+    (*iterator).second.stream = &video_stream;
   else
-    CBData_in.configuration->moduleHandlerConfiguration.stream =
-        &asynch_video_stream;
-
-  struct ARDrone_SocketHandlerConfiguration navdatatarget_sockethandlerconfiguration =
-      CBData_in.configuration->socketHandlerConfiguration;
-  struct ARDrone_ModuleHandlerConfiguration navdatatarget_modulehandlerconfiguration =
-      CBData_in.configuration->moduleHandlerConfiguration;
-  navdatatarget_modulehandlerconfiguration.socketHandlerConfiguration =
-      &navdatatarget_sockethandlerconfiguration;
+    (*iterator).second.stream = &asynch_video_stream;
 
   CBData_in.configuration->streamConfiguration.initializeMAVLink =
       &event_handler;
@@ -1064,13 +1097,11 @@ do_work (int argc_in,
       &event_handler;
   CBData_in.configuration->streamConfiguration.messageAllocator =
       &message_allocator;
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                                                   &CBData_in.configuration->moduleHandlerConfiguration));
-  CBData_in.configuration->streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Controller"),
-                                                                                                   &navdatatarget_modulehandlerconfiguration));
   CBData_in.configuration->streamConfiguration.module = &event_handler_module;
   CBData_in.configuration->streamConfiguration.moduleConfiguration =
-      &CBData_in.configuration->moduleConfiguration;
+      &CBData_in.configuration->streamConfiguration.moduleConfiguration_2;
+  CBData_in.configuration->streamConfiguration.moduleConfiguration->streamConfiguration =
+    &CBData_in.configuration->streamConfiguration;
   CBData_in.configuration->streamConfiguration.printFinalReport = false;
   CBData_in.configuration->streamConfiguration.useReactor = useReactor_in;
   CBData_in.configuration->streamConfiguration.userData =
@@ -1085,10 +1116,8 @@ do_work (int argc_in,
   CBData_in.NavDataStream = &navdata_stream;
 
   // step2: initialize connection manager
-  struct ARDrone_ConnectionConfiguration configuration_2 =
-      CBData_in.configuration->connectionConfiguration;
   //configuration_2.streamConfiguration->module = NULL;
-  connection_manager_p->set (configuration_2,
+  connection_manager_p->set ((*iterator_2).second,
                              CBData_in.configuration->userData); // passed to all handlers
 
   Common_Timer_Manager_t* timer_manager_p =
@@ -1398,6 +1427,8 @@ ACE_TMAIN (int argc_in,
   unsigned short port_number  = ARDRONE_PORT_TCP_VIDEO;
   bool trace_information      = false;
   bool print_version_and_exit = false;
+  struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator;
 
   // step0: process profile
   ACE_Profile_Timer process_profile;
@@ -1539,12 +1570,16 @@ ACE_TMAIN (int argc_in,
   // step6: initialize configuration
   configuration.userData = &user_data;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  configuration.moduleHandlerConfiguration.filterConfiguration =
+  modulehandler_configuration.filterConfiguration =
     &configuration.directShowFilterConfiguration;
-  configuration.moduleHandlerConfiguration.filterConfiguration->pinConfiguration =
+  modulehandler_configuration.filterConfiguration->pinConfiguration =
     &configuration.directShowPinConfiguration;
 #endif
-  user_data.connectionConfiguration = &configuration.connectionConfiguration;
+  configuration.streamConfiguration.moduleHandlerConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                                        modulehandler_configuration));
+  iterator =
+    configuration.streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration.streamConfiguration.moduleHandlerConfigurations.end ());
 
   // step7: initialize user interface, if any
   gtk_cb_data.argc = argc_in;
@@ -1580,8 +1615,8 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool result_2 =
     (use_mediafoundation ? do_initialize_mediafoundation (true)
-                         : do_initialize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
-                                                     configuration.moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format,
+                         : do_initialize_directshow ((*iterator).second.graphBuilder,
+                                                     (*iterator).second.filterConfiguration->pinConfiguration->format,
                                                      true,
                                                      fullscreen_display));
   if (!result_2)
@@ -1645,9 +1680,11 @@ done:
 
     // clean up
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (use_mediafoundation) do_finalize_mediafoundation ();
-    else do_finalize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
-                                 configuration.moduleHandlerConfiguration.format);
+    if (use_mediafoundation)
+      do_finalize_mediafoundation ();
+    else
+      do_finalize_directshow ((*iterator).second.graphBuilder,
+                              (*iterator).second.format);
 #endif
     Common_Tools::finalizeSignals (signal_set,
                                    previous_signal_actions,
@@ -1699,9 +1736,11 @@ done:
 
   // step10: clean up
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (use_mediafoundation) do_finalize_mediafoundation ();
-  else do_finalize_directshow (configuration.moduleHandlerConfiguration.graphBuilder,
-                               configuration.moduleHandlerConfiguration.format);
+  if (use_mediafoundation)
+    do_finalize_mediafoundation ();
+  else
+    do_finalize_directshow ((*iterator).second.graphBuilder,
+                            (*iterator).second.format);
 #endif
   Common_Tools::finalizeSignals (signal_set,
                                  previous_signal_actions,

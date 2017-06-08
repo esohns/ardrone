@@ -21,8 +21,8 @@
 #ifndef ARDRONE_MODULE_EVENTHANDLER_H
 #define ARDRONE_MODULE_EVENTHANDLER_H
 
-#include <ace/Global_Macros.h>
-#include <ace/Synch_Traits.h>
+#include "ace/Global_Macros.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_time_common.h"
 
@@ -47,7 +47,7 @@ class ARDrone_Module_EventHandler
                                          struct ARDrone_SessionData>
 {
  public:
-  ARDrone_Module_EventHandler ();
+  ARDrone_Module_EventHandler (ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_EventHandler ();
 
   // implement Common_IClone_T
@@ -64,6 +64,7 @@ class ARDrone_Module_EventHandler
                                          Stream_SessionId_t,
                                          struct ARDrone_SessionData> inherited;
 
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler (const ARDrone_Module_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler& operator= (const ARDrone_Module_EventHandler&))
 };

@@ -45,8 +45,8 @@
 #ifdef __cplusplus
 extern "C"
 {
-#include <libavcodec/avcodec.h>
-#include <libavutil/pixfmt.h>
+#include "libavcodec/avcodec.h"
+#include "libavutil/pixfmt.h"
 }
 #endif /* __cplusplus */
 
@@ -55,16 +55,16 @@ extern "C"
 #include "ace/Process_Manager.h"
 #include "ace/Synch.h"
 
-#include <gmodule.h>
+#include "gmodule.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <gdk/gdkwin32.h>
+#include "gdk/gdkwin32.h"
 #else
-#include <gdk/gdk.h>
+#include "gdk/gdk.h"
 #endif
-#include <gdk/gdkkeysyms.h>
-#include <gtk/gtk.h>
-//#include <gtk/gtkgl.h>
+#include "gdk/gdkkeysyms.h"
+#include "gtk/gtk.h"
+//#include "gtk/gtkgl.h"
 
 #include "common_timer_manager.h"
 
@@ -166,12 +166,14 @@ monitor_clip_cb (HMONITOR monitor_in,
     return FALSE;
   } // end IF
 
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
+    cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
   if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                      cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()))
+                      (*iterator).second.device.c_str ()))
     return TRUE;
 
-  cb_data_p->configuration->moduleHandlerConfiguration.area =
-    *clippingArea_in;
+  (*iterator).second.area = *clippingArea_in;
 
   return TRUE;
 };
@@ -450,7 +452,7 @@ stream_processing_function (void* arg_in)
   ACE_ASSERT (iterator != data_p->CBData->builders.end ());
 
   GtkStatusbar* statusbar_p = NULL;
-  ARDrone_ModuleHandlerConfigurationsIterator_t iterator_3;
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator_2;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
@@ -467,101 +469,100 @@ stream_processing_function (void* arg_in)
 //#endif
 
     // configure streams and retrieve stream handles
-    Net_SocketConfigurationIterator_t iterator_2 =
-        data_p->CBData->configuration->socketConfigurations.begin ();
+    ARDrone_ConnectionConfigurationIterator_t iterator_3 =
+      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
+    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
+
     Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
 
     // *TODO*: bind to a specific interface
-    logfile_name_string =
-        data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName;
-    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+    iterator_2 =
+      data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
+    ACE_ASSERT (iterator_2 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+    logfile_name_string = (*iterator_2).second.targetFileName;
+    (*iterator_2).second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
-    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->controlStream;
-    //result_2 =
-    //  data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
-//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
-//    ACE_ASSERT (session_p);
-    //data_p->CBData->controlStream->start ();
+    (*iterator_2).second.stream = data_p->CBData->controlStream;
+    result_2 =
+      data_p->CBData->controlStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+    //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
+    //ACE_ASSERT (session_p);
+    data_p->CBData->controlStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
-    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
-        logfile_name_string;
+    (*iterator_2).second.targetFileName = logfile_name_string;
 
-    iterator_2++;
     if (data_p->CBData->configuration->streamConfiguration.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.address =
-          (*iterator_2).address;
-    logfile_name_string =
-        data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName;
-    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
+      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration.address =
+        (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address;
+    iterator_2 =
+      data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
+    ACE_ASSERT (iterator_2 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+    logfile_name_string = (*iterator_2).second.targetFileName;
+    (*iterator_2).second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
-    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->MAVLinkStream;
-    //result_2 =
-    //  data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
-    //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
-    //ACE_ASSERT (session_p);
-    //data_p->CBData->MAVLinkStream->start ();
+    (*iterator_2).second.stream = data_p->CBData->MAVLinkStream;
+    result_2 =
+      data_p->CBData->MAVLinkStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
+    ACE_ASSERT (session_p);
+    data_p->CBData->MAVLinkStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
-    //session_p->wait (false,
-    //                 &session_start_timeout);
-    data_p->CBData->configuration->moduleHandlerConfiguration.targetFileName =
-        logfile_name_string;
+    session_p->wait (false,
+                     &session_start_timeout);
+    (*iterator_2).second.targetFileName = logfile_name_string;
 
-    iterator_2++;
-    iterator_2++;
     // *TODO*: bind to a specific interface
     if (data_p->CBData->configuration->streamConfiguration.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.address =
-          (*iterator_2).address;
-    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->NavDataStream;
-    iterator_3 =
+      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration.address =
+          (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address;
+    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
+    iterator_2 =
         data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
-    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+    ACE_ASSERT (iterator_2 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
     configuration_p =
-          const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> ((*iterator_3).second));
+          const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
     ACE_ASSERT (configuration_p);
     configuration_p->targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
     configuration_p->stream = data_p->CBData->NavDataStream;
-    //result_2 =
-    //  data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
-    //if (!result_2)
-    //{
-    //  ACE_DEBUG ((LM_ERROR,
-    //              ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-    //  goto done;
-    //} // end IF
-    //data_p->CBData->NavDataStream->start ();
+    result_2 =
+      data_p->CBData->NavDataStream->initialize (data_p->CBData->configuration->streamConfiguration);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+    data_p->CBData->NavDataStream->start ();
     session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
     ACE_ASSERT (session_p);
     // *IMPORTANT NOTE*: race condition here --> add timeout
     session_p->wait (false,
                      &session_start_timeout);
 
-//    iterator_2++;
-    data_p->CBData->configuration->moduleHandlerConfiguration.stream =
-      data_p->CBData->liveVideoStream;
+    iterator_2 =
+      data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+    ACE_ASSERT (iterator_2 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+    (*iterator_2).second.stream = data_p->CBData->liveVideoStream;
     result_2 =
       data_p->CBData->liveVideoStream->initialize (data_p->CBData->configuration->streamConfiguration);
     if (!result_2)
@@ -581,12 +582,15 @@ stream_processing_function (void* arg_in)
     converter << session_data_p->sessionID;
 
 //    // set context ID
+    iterator_2 =
+      data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+    ACE_ASSERT (iterator_2 != data_p->CBData->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
     gdk_threads_enter ();
     statusbar_p =
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
     ACE_ASSERT (statusbar_p);
-    data_p->CBData->configuration->moduleHandlerConfiguration.contextId =
+    data_p->CBData->contextIds[GTK_STATUSCONTEXT_DATA] =
         gtk_statusbar_get_context_id (statusbar_p,
                                       converter.str ().c_str ());
     gdk_threads_leave ();
@@ -640,7 +644,6 @@ idle_initialize_ui_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
-  ACE_ASSERT (!cb_data_p->configuration->socketConfigurations.empty ());
   //ACE_ASSERT (cb_data_p->MAVLinkStream);
   //ACE_ASSERT (cb_data_p->liveVideoStream);
 
@@ -663,8 +666,11 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
+  ARDrone_ConnectionConfigurationIterator_t iterator_2 =
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddressToString (cb_data_p->configuration->socketConfigurations.back ().address,
+                      Net_Common_Tools::IPAddressToString ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration.address,
                                                            true).c_str ());
 
   GtkSpinButton* spin_button_p =
@@ -833,16 +839,19 @@ idle_initialize_ui_cb (gpointer userData_in)
   //GFile* file_p = NULL;
   struct _GString* string_p = NULL;
   gchar* filename_p = NULL;
-  if (!cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.empty ())
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator_3 =
+    cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
+  ACE_ASSERT (iterator_3 != cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+  if (!(*iterator_3).second.targetFileName.empty ())
   {
     // *NOTE*: gtk does not complain if the file doesn't exist, but the button
     //         will display "(None)" --> create empty file
-    if (!Common_File_Tools::isReadable (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName))
-      if (!Common_File_Tools::create (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName))
+    if (!Common_File_Tools::isReadable ((*iterator_3).second.targetFileName))
+      if (!Common_File_Tools::create ((*iterator_3).second.targetFileName))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Common_File_Tools::create(\"%s\"): \"%m\", aborting\n"),
-                    ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ())));
+                    ACE_TEXT ((*iterator_3).second.targetFileName.c_str ())));
         return G_SOURCE_REMOVE;
       } // end IF
     //file_p =
@@ -856,7 +865,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     //if (!gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (file_chooser_button_p),
     //                                              file_uri.c_str ()))
     string_p =
-      g_string_new (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ());
+      g_string_new ((*iterator_3).second.targetFileName.c_str ());
     filename_p = string_p->str;
       //Common_UI_Tools::Locale2UTF8 (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName);
     if (!gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (file_chooser_button_p),
@@ -864,7 +873,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to gtk_file_chooser_set_filename(\"%s\"): \"%s\", aborting\n"),
-                  ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ())));
+                  ACE_TEXT ((*iterator_3).second.targetFileName.c_str ())));
 
       // clean up
       g_string_free (string_p, FALSE);
@@ -920,8 +929,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end ELSE
 
   std::string default_folder_uri = ACE_TEXT_ALWAYS_CHAR ("file://");
-  default_folder_uri +=
-    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName;
+  default_folder_uri += (*iterator_3).second.targetFileName;
   if (!gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (file_chooser_button_p),
                                                 default_folder_uri.c_str ()))
   {
@@ -936,7 +944,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                cb_data_p->configuration->moduleHandlerConfiguration.fullScreen);
+                                (*iterator_3).second.fullScreen);
   check_button_p =
     GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
@@ -948,7 +956,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                !cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.empty ());
+                                !(*iterator_3).second.targetFileName.empty ());
 
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -1051,10 +1059,10 @@ idle_initialize_ui_cb (gpointer userData_in)
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
   ACE_ASSERT (statusbar_p);
-  cb_data_p->contextIdData =
+  cb_data_p->contextIds[GTK_STATUSCONTEXT_DATA] =
       gtk_statusbar_get_context_id (statusbar_p,
                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_STATUSBAR_CONTEXT_DATA));
-  cb_data_p->contextIdInformation =
+  cb_data_p->contextIds[GTK_STATUSCONTEXT_INFORMATION] =
     gtk_statusbar_get_context_id (statusbar_p,
                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION));
 
@@ -1397,8 +1405,8 @@ idle_initialize_ui_cb (gpointer userData_in)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
   //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
-  ACE_ASSERT (!cb_data_p->configuration->moduleHandlerConfiguration.window);
-  cb_data_p->configuration->moduleHandlerConfiguration.window = NULL;
+  ACE_ASSERT (!(*iterator_3).second.window);
+  (*iterator_3).second.window = NULL;
     //static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
   //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
@@ -1472,8 +1480,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     gtk_combo_box_set_active (combo_box_p, 0);
   } // end IF
 
-  bool is_active =
-    !cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.empty ();
+  bool is_active = !(*iterator_3).second.targetFileName.empty ();
   if (is_active)
   {
     GtkToggleButton* toggle_button_p =
@@ -1515,7 +1522,6 @@ idle_finalize_ui_cb (gpointer userData_in)
 
   // synch access
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, G_SOURCE_REMOVE);
-
     unsigned int num_messages = cb_data_p->messages.size ();
     while (!cb_data_p->messages.empty ())
     {
@@ -1698,7 +1704,6 @@ idle_reset_ui_cb (gpointer userData_in)
   gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
-
     data_p->progressData->statistic.bytes = 0.0F;
   } // end lock scope
 
@@ -1800,22 +1805,24 @@ idle_update_info_display_cb (gpointer userData_in)
         ACE_ASSERT (drawing_area_p);
         unsigned int height, width;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-        // sanity check(s)
-        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration);
-        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration);
-        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format);
+        ARDrone_ModuleHandlerConfigurationsIterator_t iterator_3 =
+          data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
+        ACE_ASSERT (iterator_3 != data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
 
-        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        // sanity check(s)
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format);
+
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_p =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> (data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.filterConfiguration->pinConfiguration->format->pbFormat);
         height = video_info_header_p->bmiHeader.biHeight;
         width = video_info_header_p->bmiHeader.biWidth;
 #else
-        height =
-          data_p->configuration->moduleHandlerConfiguration.sourceFormat.height;
-        width =
-          data_p->configuration->moduleHandlerConfiguration.sourceFormat.width;
+        height = (*iterator_3).second.sourceFormat.height;
+        width = (*iterator_3).second.sourceFormat.width;
 #endif
         gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
                                      width, height);
@@ -2147,6 +2154,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
   ACE_ASSERT (spin_button_p);
+  ARDrone_ConnectionConfigurationIterator_t iterator_3 =
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator_4;
   std::string address_string = gtk_entry_get_text (entry_p);
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
   std::ostringstream converter;
@@ -2154,8 +2165,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
   result =
-      cb_data_p->configuration->socketConfigurations.back ().address.set (address_string.c_str (),
-                                                                          AF_INET);
+    (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address.set (address_string.c_str (),
+                                                                                     AF_INET);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2164,12 +2175,12 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
   // *TODO*: verify the given address
-  if (!Net_Common_Tools::IPAddressToInterface (cb_data_p->configuration->socketConfigurations.back ().address,
+  if (!Net_Common_Tools::IPAddressToInterface ((*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address,
                                                interface_identifier_string))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
-                ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
+                ACE_TEXT (Net_Common_Tools::IPAddressToString ((*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address).c_str ())));
     goto error;
   } // end IF
   if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
@@ -2181,7 +2192,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
   ACE_DEBUG ((LM_ERROR,
-              ACE_TEXT ("set local SAP: %s...\n"),
+              ACE_TEXT ("set local SAP: %s\n"),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->localSAP).c_str ())));
 
   // retrieve buffer
@@ -2197,7 +2208,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
   ACE_ASSERT (check_button_p);
-  cb_data_p->configuration->moduleHandlerConfiguration.fullScreen =
+  iterator_4 =
+    cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_4 != cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+  (*iterator_4).second.fullScreen =
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
 
   // retrieve filename ?
@@ -2207,7 +2221,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (check_button_p);
   if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p)))
   {
-    cb_data_p->configuration->moduleHandlerConfiguration.targetFileName.clear ();
+    (*iterator_4).second.targetFileName.clear ();
 
     goto continue_;
   } // end IF
@@ -2240,13 +2254,11 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
   ACE_ASSERT (!hostname_p);
-  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName =
-      directory_p;
+  (*iterator_4).second.targetFileName = directory_p;
   g_free (directory_p);
-  ACE_ASSERT (Common_File_Tools::isDirectory (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName));
-  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
-      ACE_DIRECTORY_SEPARATOR_STR;
-  cb_data_p->configuration->moduleHandlerConfiguration.targetFileName +=
+  ACE_ASSERT (Common_File_Tools::isDirectory ((*iterator_4).second.targetFileName));
+  (*iterator_4).second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
+  (*iterator_4).second.targetFileName +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
 
 continue_:
@@ -2280,7 +2292,7 @@ continue_:
 #else
     result = CLSIDFromString (ACE_TEXT_ALWAYS_WCHAR (format_string.c_str ()),
 #endif
-                              &cb_data_p->configuration->moduleHandlerConfiguration.format->subtype);
+                              &(*iterator_4).second.format->subtype);
     if (FAILED (result))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -2299,19 +2311,19 @@ continue_:
   // retrieve display settings
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // sanity check(s)
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format);
+  ACE_ASSERT ((*iterator_4).second.filterConfiguration);
+  ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration);
+  ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format);
+  ACE_ASSERT ((*iterator_4).second.format);
 
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+  ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_p =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->pbFormat);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.filterConfiguration->pinConfiguration->format->pbFormat);
+  ACE_ASSERT ((*iterator_4).second.format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT ((*iterator_4).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_2 =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> (cb_data_p->configuration->moduleHandlerConfiguration.format->pbFormat);
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.format->pbFormat);
 #endif
   drawing_area_p =
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
@@ -2337,8 +2349,7 @@ continue_:
                             &iterator_2,
                             0, &value);
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-  cb_data_p->configuration->moduleHandlerConfiguration.device =
-    g_value_get_string (&value);
+  (*iterator_4).second.device = g_value_get_string (&value);
   g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (!EnumDisplayMonitors (NULL,                                     // hdc
@@ -2503,7 +2514,7 @@ continue_:
     DIBSIZE (video_info_header_p->bmiHeader);
   video_info_header_p->dwBitRate =
     (video_info_header_p->bmiHeader.biWidth * abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
-  cb_data_p->configuration->moduleHandlerConfiguration.filterConfiguration->pinConfiguration->format->lSampleSize =
+  (*iterator_4).second.filterConfiguration->pinConfiguration->format->lSampleSize =
     video_info_header_p->bmiHeader.biSizeImage;
   cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
     video_info_header_p->bmiHeader.biSizeImage;
@@ -2519,20 +2530,20 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #endif
-  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+  if ((*iterator_4).second.fullScreen)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     video_info_header_2->bmiHeader.biHeight =
-      -(cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
-        cb_data_p->configuration->moduleHandlerConfiguration.area.top);
+      -((*iterator_4).second.area.bottom -
+      (*iterator_4).second.area.top);
     video_info_header_2->bmiHeader.biWidth =
-      (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
-       cb_data_p->configuration->moduleHandlerConfiguration.area.left);
+      ((*iterator_4).second.area.right -
+      (*iterator_4).second.area.left);
     video_info_header_2->bmiHeader.biSizeImage =
       DIBSIZE (video_info_header_2->bmiHeader);
 
     unsigned int source_buffer_size =
-      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat (cb_data_p->configuration->moduleHandlerConfiguration.format->subtype),
+      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*iterator_4).second.format->subtype),
                                 video_info_header_p->bmiHeader.biWidth,
                                 abs (video_info_header_p->bmiHeader.biHeight),
                                 1); // *TODO*: linesize alignment
@@ -2540,7 +2551,7 @@ continue_:
       std::max (video_info_header_2->bmiHeader.biSizeImage,
                 static_cast<ULONG> (source_buffer_size));
 
-    cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
+    (*iterator_4).second.format->lSampleSize =
       video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       video_info_header_2->bmiHeader.biSizeImage;
@@ -2580,13 +2591,13 @@ continue_:
   else
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (!cb_data_p->configuration->moduleHandlerConfiguration.window)
+    if (!(*iterator_4).second.window)
     {
-      cb_data_p->configuration->moduleHandlerConfiguration.area.left = 0;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
+      (*iterator_4).second.area.left = 0;
+      (*iterator_4).second.area.right =
         video_info_header_p->bmiHeader.biWidth;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.top = 0;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
+      (*iterator_4).second.area.top = 0;
+      (*iterator_4).second.area.bottom =
         abs (video_info_header_p->bmiHeader.biHeight);
       goto create_window;
     } // end IF
@@ -2595,7 +2606,7 @@ continue_:
     //         area, use it; otherwise open a new window
     DWORD flags = MONITOR_DEFAULTTONULL;
     HMONITOR monitor_h =
-      MonitorFromWindow (cb_data_p->configuration->moduleHandlerConfiguration.window,
+      MonitorFromWindow ((*iterator_4).second.window,
                          flags);
     if (!monitor_h)
     {
@@ -2615,27 +2626,27 @@ continue_:
                   ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
       goto error;
     } // end IF
-    if (ACE_OS::strcmp (ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+    if (ACE_OS::strcmp (ACE_TEXT ((*iterator_4).second.device.c_str ()),
                         ACE_TEXT (monitor_info_ex_s.szDevice)))
     {
       // *NOTE*: center the window on the display device
       unsigned int delta_x =
-       abs (abs (cb_data_p->configuration->moduleHandlerConfiguration.area.left) -
+       abs (abs ((*iterator_4).second.area.left) -
             rectangle_s.width) / 2;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-        (cb_data_p->configuration->moduleHandlerConfiguration.area.left +
+      (*iterator_4).second.area.left =
+        ((*iterator_4).second.area.left +
          delta_x);
-      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-        (cb_data_p->configuration->moduleHandlerConfiguration.area.left +
+      (*iterator_4).second.area.right =
+        ((*iterator_4).second.area.left +
          rectangle_s.width);
       unsigned int delta_y =
-        abs (abs (cb_data_p->configuration->moduleHandlerConfiguration.area.top) -
+        abs (abs ((*iterator_4).second.area.top) -
              rectangle_s.height) / 2;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-        (cb_data_p->configuration->moduleHandlerConfiguration.area.top +
+      (*iterator_4).second.area.top =
+        ((*iterator_4).second.area.top +
          delta_y);
-      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-        (cb_data_p->configuration->moduleHandlerConfiguration.area.top +
+      (*iterator_4).second.area.bottom =
+        ((*iterator_4).second.area.top +
          rectangle_s.height);
 
 create_window:
@@ -2651,13 +2662,13 @@ create_window:
       DWORD window_style_ex = (WS_EX_APPWINDOW |
                                WS_EX_WINDOWEDGE);
 
-      cb_data_p->configuration->moduleHandlerConfiguration.window =
+      (*iterator_4).second.window =
         CreateWindowEx (window_style_ex,               // dwExStyle
                         ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpClassName
                         ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpWindowName
                         window_style,                  // dwStyle
-                        cb_data_p->configuration->moduleHandlerConfiguration.area.left, // x
-                        cb_data_p->configuration->moduleHandlerConfiguration.area.top,  // y
+                        (*iterator_4).second.area.left, // x
+                        (*iterator_4).second.area.top,  // y
                         //rectangle_s.width,             // nWidth
                         //rectangle_s.height,            // nHeight
                         video_info_header_p->bmiHeader.biWidth,
@@ -2667,7 +2678,7 @@ create_window:
                         NULL,                          // hMenu
                         GetModuleHandle (NULL),        // hInstance
                         NULL);                         // lpParam
-      if (!cb_data_p->configuration->moduleHandlerConfiguration.window)
+      if (!(*iterator_4).second.window)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to CreateWindow(): \"%s\", returning\n"),
@@ -2677,21 +2688,17 @@ create_window:
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("opened window (size: %ux%u, handle: 0x%@)...\n"),
                   rectangle_s.width, rectangle_s.height,
-                  cb_data_p->configuration->moduleHandlerConfiguration.window));
+                  (*iterator_4).second.window));
     } // end IF
     else
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-        rectangle_s.y + rectangle_s.height;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-        rectangle_s.x;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-        rectangle_s.x + rectangle_s.width;
-      cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-        rectangle_s.y;
+      (*iterator_4).second.area.bottom = rectangle_s.y + rectangle_s.height;
+      (*iterator_4).second.area.left = rectangle_s.x;
+      (*iterator_4).second.area.right = rectangle_s.x + rectangle_s.width;
+      (*iterator_4).second.area.top = rectangle_s.y;
 #else
-      cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
+      (*iterator_4).second.area = rectangle_s;
 #endif
     } // end ELSE
 
@@ -2701,7 +2708,7 @@ create_window:
       DIBSIZE (video_info_header_2->bmiHeader);
     video_info_header_2->dwBitRate =
       (video_info_header_2->bmiHeader.biWidth * abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
-    cb_data_p->configuration->moduleHandlerConfiguration.format->lSampleSize =
+    (*iterator_4).second.format->lSampleSize =
       video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
@@ -2714,28 +2721,28 @@ create_window:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
-              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
-              cb_data_p->configuration->moduleHandlerConfiguration.area.left,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.right,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.top,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.bottom,
-              (cb_data_p->configuration->moduleHandlerConfiguration.area.right -
-               cb_data_p->configuration->moduleHandlerConfiguration.area.left),
-              (cb_data_p->configuration->moduleHandlerConfiguration.area.bottom -
-               cb_data_p->configuration->moduleHandlerConfiguration.area.top)));
+              ACE_TEXT ((*iterator_4).second.device.c_str ()),
+              (*iterator_4).second.area.left,
+              (*iterator_4).second.area.right,
+              (*iterator_4).second.area.top,
+              (*iterator_4).second.area.bottom,
+              ((*iterator_4).second.area.right -
+               (*iterator_4).second.area.left),
+              ((*iterator_4).second.area.bottom -
+               (*iterator_4).second.area.top)));
 #else
-  cb_data_p->configuration->moduleHandlerConfiguration.area = rectangle_s;
+  (*iterator_4).second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d...\n"),
-              ACE_TEXT (cb_data_p->configuration->moduleHandlerConfiguration.device.c_str ()),
+              ACE_TEXT ((*iterator_4).second.device.c_str ()),
               ACE_TEXT (gdk_display_get_name (display_p)),
               monitor_number,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.x,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.y,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.height,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.width,
-              cb_data_p->configuration->moduleHandlerConfiguration.area.height));
+              (*iterator_4).second.area.x,
+              (*iterator_4).second.area.y,
+              (*iterator_4).second.area.width,
+              (*iterator_4).second.area.height,
+              (*iterator_4).second.area.width,
+              (*iterator_4).second.area.height));
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2746,7 +2753,7 @@ create_window:
       gdk_pixbuf_new (GDK_COLORSPACE_RGB,
                       TRUE,
                       8,
-                      cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+                      (*iterator_4).second.area.width, (*iterator_4).second.area.height);
   if (!pixbuf_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2761,15 +2768,15 @@ create_window:
   } // end IF
   cb_data_p->pixelBuffer =
 #if GTK_CHECK_VERSION (3,0,0)
-      gdk_pixbuf_get_from_window (cb_data_p->configuration->moduleHandlerConfiguration.window,
+      gdk_pixbuf_get_from_window ((*iterator_4).second.window,
                                   0, 0,
-                                  cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+                                  (*iterator_4).second.area.width, (*iterator_4).second.area.height);
 #else
       gdk_pixbuf_get_from_drawable (pixbuf_p,
-                                    GDK_DRAWABLE (cb_data_p->configuration->moduleHandlerConfiguration.window),
+                                    GDK_DRAWABLE ((*iterator_4).second.window),
                                     NULL,
                                     0, 0,
-                                    0, 0, cb_data_p->configuration->moduleHandlerConfiguration.area.width, cb_data_p->configuration->moduleHandlerConfiguration.area.height);
+                                    0, 0, (*iterator_4).second.area.width, (*iterator_4).second.area.height);
 #endif
   if (!cb_data_p->pixelBuffer)
   { // *NOTE*: most probable reason: window is not mapped
@@ -2784,8 +2791,7 @@ create_window:
 #endif
     goto error;
   } // end IF
-  cb_data_p->configuration->moduleHandlerConfiguration.pixelBuffer =
-    cb_data_p->pixelBuffer;
+  (*iterator_4).second.pixelBuffer = cb_data_p->pixelBuffer;
 #endif
 
   // update widgets
@@ -2872,7 +2878,6 @@ create_window:
   //         early
   ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
-
     cb_data_p->progressData->eventSourceID =
         //g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, // _LOW doesn't work (on Win32)
         //                 idle_update_progress_cb,
@@ -3267,7 +3272,11 @@ drawingarea_configure_cb (GtkWidget* widget_in,
 #endif
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
-  if (cb_data_p->configuration->moduleHandlerConfiguration.fullScreen)
+
+  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
+    cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
+  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+  if ((*iterator).second.fullScreen)
     return TRUE; // nothing to do
 
   // *NOTE*: x,y members are relative to the parent window

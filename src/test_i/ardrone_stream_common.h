@@ -22,8 +22,10 @@
 #define ARDRONE_STREAM_COMMON_H
 
 #include <list>
+#include <map>
+#include <string>
 
-#include <ace/config-lite.h>
+#include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <d3d9.h>
 #include <strmif.h>
@@ -34,7 +36,7 @@
 #ifdef __cplusplus
 extern "C"
 {
-#include <libavformat/avformat.h>
+#include "libavformat/avformat.h"
 }
 #endif /* __cplusplus */
 
@@ -218,7 +220,9 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
-struct ARDrone_ConnectionConfiguration;
+//struct ARDrone_ConnectionConfiguration;
+//typedef std::deque<struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
+//typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 struct ARDrone_ConnectionState;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
@@ -259,8 +263,8 @@ struct ARDrone_ModuleHandlerConfiguration
    , codecFormat (AV_PIX_FMT_YUV420P) // codec output-
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
+   , connectionConfigurations ()
    , connectionManager (NULL)
-   , contextId (0)
    , debugScanner (COMMON_PARSER_DEFAULT_LEX_TRACE)
    , device ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -291,8 +295,8 @@ struct ARDrone_ModuleHandlerConfiguration
    , inbound (true)
    , printProgressDot (false)
    , pushStatisticMessages (true)
-   , socketConfigurations (NULL)
-   , socketHandlerConfiguration (NULL)
+   //, socketConfigurations (NULL)
+   //, socketHandlerConfiguration (NULL)
    , streamConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
@@ -320,8 +324,8 @@ struct ARDrone_ModuleHandlerConfiguration
   enum AVPixelFormat                             codecFormat;         // H264 decoder module
   enum AVCodecID                                 codecId;             // H264 decoder module
   ARDrone_IConnection_t*                         connection;          // net source/IO module
+  ARDrone_ConnectionConfigurations_t*            connectionConfigurations; // net source/target modules
   ARDrone_IConnectionManager_t*                  connectionManager;   // IO module
-  guint                                          contextId;
   bool                                           debugScanner;        // H264 decoder module
   std::string                                    device;
 
@@ -353,12 +357,9 @@ struct ARDrone_ModuleHandlerConfiguration
   bool                                           inbound;          // statistic/IO module
   bool                                           printProgressDot; // file writer module
   bool                                           pushStatisticMessages; // statistic module
-
-  Net_SocketConfigurations_t*                    socketConfigurations;       // net source/target modules
-  struct ARDrone_SocketHandlerConfiguration*     socketHandlerConfiguration; // net target module
-  struct ARDrone_StreamConfiguration*            streamConfiguration;
-  ARDrone_Notification_t*                        subscriber;
-  ARDrone_Subscribers_t*                         subscribers;
+  struct ARDrone_StreamConfiguration*            streamConfiguration; // net source/target modules
+  ARDrone_Notification_t*                        subscriber; // event handler module
+  ARDrone_Subscribers_t*                         subscribers; // event handler module
   std::string                                    targetFileName;
   bool                                           useYYScanBuffer; // H264 decoder module
 };
@@ -366,7 +367,7 @@ struct ARDrone_ModuleHandlerConfiguration
 typedef Common_IInitializeP_T<ARDrone_IMAVLinkNotify> ARDrone_IMAVLinkInitialize_t;
 typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize_t;
 typedef std::map<std::string,
-                 struct ARDrone_ModuleHandlerConfiguration*> ARDrone_ModuleHandlerConfigurations_t;
+                 struct ARDrone_ModuleHandlerConfiguration> ARDrone_ModuleHandlerConfigurations_t;
 typedef ARDrone_ModuleHandlerConfigurations_t::iterator ARDrone_ModuleHandlerConfigurationsIterator_t;
 struct ARDrone_StreamConfiguration
  : Stream_Configuration
@@ -375,6 +376,7 @@ struct ARDrone_StreamConfiguration
    : Stream_Configuration ()
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
+   , moduleConfiguration_2 ()
    , moduleHandlerConfigurations ()
    , useReactor (NET_EVENT_USE_REACTOR)
    , userData (NULL)
@@ -382,6 +384,7 @@ struct ARDrone_StreamConfiguration
 
   ARDrone_IMAVLinkInitialize_t*         initializeMAVLink;
   ARDrone_INavDataInitialize_t*         initializeNavData;
+  struct Stream_ModuleConfiguration     moduleConfiguration_2;
   ARDrone_ModuleHandlerConfigurations_t moduleHandlerConfigurations;
   bool                                  useReactor;
 

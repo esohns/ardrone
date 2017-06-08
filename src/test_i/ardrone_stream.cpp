@@ -57,7 +57,8 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 //  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
+                  ARDrone_Module_Dump_Module (this,
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
                                               NULL,
                                               false),
                   false);
@@ -65,7 +66,8 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
                                                          NULL,
                                                          false),
                   false);
@@ -80,13 +82,15 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 //  module_p = NULL;
   if (inherited::configuration_->useReactor)
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_TCPSource_Module (ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
+                    ARDrone_Module_TCPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
                                                      NULL,
                                                      false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchTCPSource_Module (ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
+                    ARDrone_Module_AsynchTCPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
                                                            NULL,
                                                            false),
                     false);
@@ -384,13 +388,15 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   Stream_Module_t* module_p = NULL;
   if (inherited::configuration_->useReactor)
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_Controller_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                    ARDrone_Module_Controller_Module (this,
+                                                      ACE_TEXT_ALWAYS_CHAR ("Controller"),
                                                       NULL,
                                                       false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchController_Module (ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                    ARDrone_Module_AsynchController_Module (this,
+                                                            ACE_TEXT_ALWAYS_CHAR ("Controller"),
                                                             NULL,
                                                             false),
                     false);
@@ -405,7 +411,8 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
 //  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
+                  ARDrone_Module_Dump_Module (this,
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
                                               NULL,
                                               false),
                   false);
@@ -413,14 +420,16 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
                                                          NULL,
                                                          false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_NavDataDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataDecoder"),
+                  ARDrone_Module_NavDataDecoder_Module (this,
+                                                        ACE_TEXT_ALWAYS_CHAR ("NavDataDecoder"),
                                                         NULL,
                                                         false),
                   false);
@@ -428,13 +437,15 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
   if (inherited::configuration_->useReactor)
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
+                    ARDrone_Module_UDPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
                                                      NULL,
                                                      false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
+                    ARDrone_Module_AsynchUDPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
                                                            NULL,
                                                            false),
                     false);
@@ -494,7 +505,7 @@ ARDrone_NavDataStream::initialize (const struct ARDrone_StreamConfiguration& con
       const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
   configuration_p =
-      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
   ACE_ASSERT (configuration_p);
   ACE_ASSERT (configuration_p->subscribers);
   configuration_p->subscribers->push_back (this);
@@ -848,14 +859,16 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
 //  module_p = NULL;
 //#endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (std::string (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
                                                          NULL,
                                                          false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_MAVLinkDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("MAVLinkDecoder"),
+                  ARDrone_Module_MAVLinkDecoder_Module (this,
+                                                        ACE_TEXT_ALWAYS_CHAR ("MAVLinkDecoder"),
                                                         NULL,
                                                         false),
                   false);
@@ -863,13 +876,15 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
   if (inherited::configuration_->useReactor)
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
+                    ARDrone_Module_UDPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
                                                      NULL,
                                                      false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
+                    ARDrone_Module_AsynchUDPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
                                                            NULL,
                                                            false),
                     false);
@@ -924,7 +939,7 @@ ARDrone_MAVLinkStream::initialize (const struct ARDrone_StreamConfiguration& con
       const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
   configuration_p =
-      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
   ACE_ASSERT (configuration_p);
   ACE_ASSERT (configuration_p->subscribers);
   configuration_p->subscribers->push_back (this);

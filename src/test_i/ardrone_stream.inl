@@ -85,7 +85,8 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
   Stream_Module_t* module_p = NULL;
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AVIEncoder_Module (ACE_TEXT_ALWAYS_CHAR ("AVIEncoder"),
+                  ARDrone_Module_AVIEncoder_Module (this,
+                                                    ACE_TEXT_ALWAYS_CHAR ("AVIEncoder"),
                                                     NULL,
                                                     false),
                   false);
@@ -94,13 +95,15 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (inherited::configuration_->useMediaFoundation)
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_MediaFoundationDisplay_Module (ACE_TEXT_ALWAYS_CHAR ("Display"),
+                    ARDrone_Module_MediaFoundationDisplay_Module (this,
+                                                                  ACE_TEXT_ALWAYS_CHAR ("Display"),
                                                                   NULL,
                                                                   false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_DirectShowDisplay_Module (ACE_TEXT_ALWAYS_CHAR ("Display"),
+                    ARDrone_Module_DirectShowDisplay_Module (this,
+                                                             ACE_TEXT_ALWAYS_CHAR ("Display"),
                                                              NULL,
                                                              false),
                     false);
@@ -108,7 +111,8 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
   module_p = NULL;
 #else
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Display_Module (ACE_TEXT_ALWAYS_CHAR ("Display"),
+                  ARDrone_Module_Display_Module (this,
+                                                 ACE_TEXT_ALWAYS_CHAR ("Display"),
                                                  NULL,
                                                  false),
                   false);
@@ -116,28 +120,32 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_H264Decoder_Module (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"),
+                  ARDrone_Module_H264Decoder_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("H264Decoder"),
                                                      NULL,
                                                      false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
                                                          NULL,
                                                          false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_PaVEDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
+                  ARDrone_Module_PaVEDecoder_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
                                                      NULL,
                                                      false),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
-                  SourceModuleType (ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource"),
+                  SourceModuleType (this,
+                                    ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource"),
                                     NULL,
                                     false),
                   false);
@@ -209,7 +217,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
       const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
   configuration_p =
-    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
+    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
   ACE_ASSERT (configuration_p);
 //  session_data_p->width = configuration_p->sourceFormat.width;
 //  session_data_p->height = configuration_p->sourceFormat.height;

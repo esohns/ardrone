@@ -21,11 +21,14 @@
 #ifndef ARDRONE_NETWORK_H
 #define ARDRONE_NETWORK_H
 
-#include <ace/Global_Macros.h>
-#include <ace/INET_Addr.h>
-#include <ace/Singleton.h>
-#include <ace/SOCK_Connector.h>
-#include <ace/Synch_Traits.h>
+#include <map>
+#include <string>
+
+#include "ace/Global_Macros.h"
+#include "ace/INET_Addr.h"
+#include "ace/Singleton.h"
+#include "ace/SOCK_Connector.h"
+#include "ace/Synch_Traits.h"
 
 #include "common_time_common.h"
 
@@ -72,28 +75,7 @@ typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_RuntimeStatistic_t,
                                  struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 
-struct ARDrone_StreamConfiguration;
-struct ARDrone_SocketHandlerConfiguration;
-struct ARDrone_ConnectionConfiguration
- : Net_ConnectionConfiguration
-{
-  inline ARDrone_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration ()
-   , connectionManager (NULL)
-   , streamConfiguration (NULL)
-   , socketHandlerConfiguration (NULL)
-   , userData (NULL)
-  {
-    PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  };
-
-  ARDrone_IConnectionManager_t*              connectionManager;
-  struct ARDrone_StreamConfiguration*        streamConfiguration;
-  struct ARDrone_SocketHandlerConfiguration* socketHandlerConfiguration;
-
-  struct ARDrone_UserData*                   userData;
-};
-
+struct ARDrone_ConnectionConfiguration;
 struct ARDrone_UserData;
 struct ARDrone_SocketHandlerConfiguration
  : Net_SocketHandlerConfiguration
@@ -102,14 +84,36 @@ struct ARDrone_SocketHandlerConfiguration
    : Net_SocketHandlerConfiguration ()
    , connectionConfiguration (NULL)
    , userData (NULL)
-  {
-    PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  };
+  {};
 
   struct ARDrone_ConnectionConfiguration* connectionConfiguration;
 
   struct ARDrone_UserData*                userData;
 };
+
+struct ARDrone_StreamConfiguration;
+struct ARDrone_ConnectionConfiguration
+ : Net_ConnectionConfiguration
+{
+  inline ARDrone_ConnectionConfiguration ()
+   : Net_ConnectionConfiguration ()
+   , connectionManager (NULL)
+   , streamConfiguration (NULL)
+   , socketHandlerConfiguration ()
+   , userData (NULL)
+  {
+    PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
+  };
+
+  ARDrone_IConnectionManager_t*             connectionManager;
+  struct ARDrone_StreamConfiguration*       streamConfiguration;
+  struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
+
+  struct ARDrone_UserData*                  userData;
+};
+typedef std::map<std::string,
+                 struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
+typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 
 struct ARDrone_Configuration;
 struct ARDrone_ConnectionState
