@@ -21,7 +21,7 @@
 #ifndef ARDrone_SESSIONMESSAGE_H
 #define ARDrone_SESSIONMESSAGE_H
 
-#include <ace/Global_Macros.h>
+#include "ace/Global_Macros.h"
 
 #include "stream_common.h"
 #include "stream_messageallocatorheap_base.h"

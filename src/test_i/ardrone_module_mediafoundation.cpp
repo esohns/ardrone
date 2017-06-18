@@ -22,8 +22,8 @@
 #include <mferror.h>
 #include <mfidl.h>
 
-#include <ace/Log_Msg.h>
-#include <ace/OS.h>
+#include "ace/Log_Msg.h"
+#include "ace/OS.h"
 
 #include "stream_macros.h"
 #include "stream_session_message_base.h"

@@ -59,6 +59,7 @@
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
+//#include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_types.h"
 
@@ -91,7 +92,14 @@ struct ARDrone_SocketHandlerConfiguration
   struct ARDrone_UserData*                userData;
 };
 
+extern const char stream_name_string_[];
 struct ARDrone_StreamConfiguration;
+struct ARDrone_ModuleHandlerConfiguration;
+typedef Stream_Configuration_T<stream_name_string_,
+                               struct ARDrone_AllocatorConfiguration,
+                               struct ARDrone_StreamConfiguration,
+                               struct Stream_ModuleConfiguration,
+                               struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
 struct ARDrone_ConnectionConfiguration
  : Net_ConnectionConfiguration
 {
@@ -106,7 +114,7 @@ struct ARDrone_ConnectionConfiguration
   };
 
   ARDrone_IConnectionManager_t*             connectionManager;
-  struct ARDrone_StreamConfiguration*       streamConfiguration;
+  ARDrone_StreamConfiguration_t*            streamConfiguration;
   struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
 
   struct ARDrone_UserData*                  userData;
@@ -151,12 +159,14 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
+                                      stream_name_string_,
                                       enum Stream_ControlType,
                                       enum Stream_SessionMessageType,
                                       enum Stream_StateMachine_ControlState,
                                       struct ARDrone_StreamState,
                                       struct ARDrone_StreamConfiguration,
                                       ARDrone_RuntimeStatistic_t,
+                                      struct ARDrone_AllocatorConfiguration,
                                       struct Stream_ModuleConfiguration,
                                       struct ARDrone_ModuleHandlerConfiguration,
                                       struct ARDrone_SessionData,

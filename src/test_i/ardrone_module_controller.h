@@ -64,8 +64,19 @@ class ARDrone_Module_Controller_T
                                      ConnectorType>
  , public ARDrone_IController
 {
+  typedef Stream_Module_Net_Target_T<ACE_SYNCH_USE,
+                                     TimePolicyType,
+                                     ConfigurationType,
+                                     ControlMessageType,
+                                     DataMessageType,
+                                     SessionMessageType,
+                                     SessionDataContainerType,
+                                     ConnectionConfigurationIteratorType,
+                                     ConnectionManagerType,
+                                     ConnectorType> inherited;
+
  public:
-  ARDrone_Module_Controller_T (ISTREAM_T*); // stream handle
+  ARDrone_Module_Controller_T (typename inherited::ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_Controller_T ();
 
 //  // override (part of) Stream_IModuleHandler_T
@@ -92,17 +103,6 @@ class ARDrone_Module_Controller_T
   virtual void set (enum ARDrone_VideoMode); // video mode
 
  private:
-  typedef Stream_Module_Net_Target_T<ACE_SYNCH_USE,
-                                     TimePolicyType,
-                                     ConfigurationType,
-                                     ControlMessageType,
-                                     DataMessageType,
-                                     SessionMessageType,
-                                     SessionDataContainerType,
-                                     ConnectionConfigurationIteratorType,
-                                     ConnectionManagerType,
-                                     ConnectorType> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T (const ARDrone_Module_Controller_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T& operator= (const ARDrone_Module_Controller_T&))

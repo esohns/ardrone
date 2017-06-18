@@ -38,7 +38,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::ARDrone_Module_NavDataDecoder_T (ISTREAM_T* stream_in)
+                                SessionDataContainerType>::ARDrone_Module_NavDataDecoder_T (typename inherited::ISTREAM_T* stream_in)
  : inherited (stream_in)
  , buffer_ (NULL)
  , isFirst_ (true)
@@ -133,7 +133,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   } // end IF
 
   // *TODO*: remove type inferences
-  allocator_ = configuration_in.streamConfiguration->messageAllocator;
+  allocator_ =
+      configuration_in.streamConfiguration->configuration_.messageAllocator;
   // trace ?
   ARDrone_NavData_Scanner_set_debug (configuration_in.debugScanner,
                                      scannerState_);

@@ -47,7 +47,7 @@
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
-#include "ardrone_stream.h"
+//#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
@@ -117,19 +117,21 @@ struct ARDrone_SignalHandlerConfiguration
   ACE_INET_Addr         peerAddress;
 };
 
+struct ARDrone_ConnectionConfiguration;
+typedef std::map<std::string,
+                 struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
 struct ARDrone_Configuration
 {
   inline ARDrone_Configuration ()
    : signalHandlerConfiguration ()
    , listenerConfiguration ()
    , connectionConfigurations ()
-   , allocatorConfiguration ()
    , parserConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowFilterConfiguration ()
    , directShowPinConfiguration ()
 #endif
-   , streamConfiguration ()
+   , streamConfigurations ()
    , streamSubscribers ()
    , streamSubscribersLock ()
    , userData (NULL)
@@ -139,13 +141,12 @@ struct ARDrone_Configuration
 
   struct Net_ListenerConfiguration                              listenerConfiguration;
   ARDrone_ConnectionConfigurations_t                            connectionConfigurations;
-  struct ARDrone_AllocatorConfiguration                         allocatorConfiguration;
   struct Common_ParserConfiguration                             parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_FilterConfiguration                 directShowFilterConfiguration;
   struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration directShowPinConfiguration;
 #endif
-  struct ARDrone_StreamConfiguration                            streamConfiguration;
+  ARDrone_StreamConfigurations_t                                streamConfigurations;
   ARDrone_Subscribers_t                                         streamSubscribers;
   ACE_SYNCH_RECURSIVE_MUTEX                                     streamSubscribersLock;
 
@@ -165,21 +166,24 @@ struct ARDrone_GtkProgressData
    , statistic ()
   {};
 
-  Stream_Statistic statistic;
+  ARDrone_RuntimeStatistic_t statistic;
 };
 
+extern const char stream_name_string_[];
 typedef Stream_Base_T<ACE_MT_SYNCH,
                       Common_TimePolicy_t,
+                      stream_name_string_,
                       enum Stream_ControlType,
                       enum Stream_SessionMessageType,
                       enum Stream_StateMachine_ControlState,
                       struct ARDrone_StreamState,
                       struct ARDrone_StreamConfiguration,
                       ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_AllocatorConfiguration,
                       struct Stream_ModuleConfiguration,
                       struct ARDrone_ModuleHandlerConfiguration,
                       struct ARDrone_SessionData,
-                      ARDrone_StreamSessionData_t,
+                      ARDrone_SessionData_t,
                       ARDrone_ControlMessage_t,
                       ARDrone_Message,
                       ARDrone_SessionMessage> ARDrone_StreamBase_t;

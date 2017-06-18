@@ -23,7 +23,7 @@
 #include <Mferror.h>
 #endif
 
-#include <ace/Log_Msg.h>
+#include "ace/Log_Msg.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_dev_directshow_tools.h"
@@ -35,7 +35,7 @@
 
 template <typename SourceModuleType>
 ARDrone_LiveVideoStream_T<SourceModuleType>::ARDrone_LiveVideoStream_T ()
- : inherited (ACE_TEXT_ALWAYS_CHAR ("LiveVideoStream"))
+ : inherited ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
  , graphBuilder_ (NULL)
  , mediaSession_ (NULL)
@@ -78,9 +78,6 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
                                                    bool& delete_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::load"));
-
-  // sanity check(s)
-  ACE_ASSERT (inherited::configuration_);
 
   Stream_Module_t* module_p = NULL;
   module_p = NULL;
@@ -158,7 +155,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
 
 template <typename SourceModuleType>
 bool
-ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_StreamConfiguration& configuration_in)
+ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_LiveVideoStream_T::initialize"));
 
@@ -179,27 +176,27 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
 #endif
   } // end IF
 
-  bool result = false;
-  bool setup_pipeline = configuration_in.setupPipeline;
+//  bool result = false;
+  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
   struct ARDrone_SessionData* session_data_p = NULL;
-  ARDrone_ModuleHandlerConfigurationsIterator_t iterator;
+  typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
   typename SourceModuleType::WRITER_T* sourceWriter_impl_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
-                ACE_TEXT (inherited::name_.c_str ())));
+                ACE_TEXT (inherited::configuration_.name_.c_str ())));
     goto error;
   } // end IF
-  const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
   ACE_ASSERT (inherited::sessionData_);
@@ -210,12 +207,11 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   // - push them onto the stream (tail-first)
   session_data_p =
     &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  session_data_p->sessionID = configuration_in.sessionID;
-  //  ACE_ASSERT (configuration_in.moduleConfiguration);
+  session_data_p->sessionID = configuration_in.configuration_.sessionID;
   //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
   iterator =
-      const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
+      const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.end ());
   configuration_p =
     dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
   ACE_ASSERT (configuration_p);
@@ -233,7 +229,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::name_.c_str ()),
+                ACE_TEXT (inherited::configuration_.name_.c_str ()),
                 ACE_TEXT ("Display")));
     goto error;
   } // end IF
@@ -345,7 +341,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::name_.c_str ()),
+                ACE_TEXT (inherited::configuration_.name_.c_str ()),
                 ACE_TEXT ("LiveVideoSource")));
     goto error;
   } // end IF
@@ -356,7 +352,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: dynamic_cast<SourceModuleType::WRITER_T> failed, aborting\n"),
-                ACE_TEXT (inherited::name_.c_str ())));
+                ACE_TEXT (inherited::configuration_.name_.c_str ())));
     goto error;
   } // end IF
   sourceWriter_impl_p->set (&(inherited::state_));
@@ -473,7 +469,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
 //#if defined (_DEBUG)
 //    ACE_DEBUG ((LM_DEBUG,
 //                ACE_TEXT ("%s: capture format: \"%s\"...\n"),
-//                ACE_TEXT (inherited::name_.c_str ()),
+//                ACE_TEXT (inherited::configuration_.name_.c_str ()),
 //                ACE_TEXT (Stream_Module_Device_DirectShow_Tools::mediaTypeToString (*configuration_in.moduleHandlerConfiguration->format, true).c_str ())));
 //
 //    log_file_name =
@@ -831,12 +827,12 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
 
   // ---------------------------------------------------------------------------
 
-  if (configuration_in.setupPipeline)
+  if (configuration_in.configuration_.setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
-                  ACE_TEXT (inherited::name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
       goto error;
     } // end IF
 
@@ -847,7 +843,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const struct ARDrone_St
 
 error:
   if (reset_setup_pipeline)
-    const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
       setup_pipeline;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   //if (media_type_p)

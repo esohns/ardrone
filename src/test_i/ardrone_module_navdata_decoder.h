@@ -59,8 +59,19 @@ class ARDrone_Module_NavDataDecoder_T
                                  struct Stream_UserData>
  , public ARDrone_NavData_IParser
 {
+  typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
+                                 TimePolicyType,
+                                 ConfigurationType,
+                                 ControlMessageType,
+                                 DataMessageType,
+                                 SessionMessageType,
+                                 Stream_SessionId_t,
+                                 enum Stream_ControlType,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_UserData> inherited;
+
  public:
-  ARDrone_Module_NavDataDecoder_T (ISTREAM_T*); // stream handle
+  ARDrone_Module_NavDataDecoder_T (typename inherited::ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_NavDataDecoder_T ();
 
   //// override (part of) Stream_IModuleHandler_T
@@ -106,17 +117,6 @@ class ARDrone_Module_NavDataDecoder_T
   virtual void waitBuffer ();
 
  private:
-  typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
-                                 TimePolicyType,
-                                 ConfigurationType,
-                                 ControlMessageType,
-                                 DataMessageType,
-                                 SessionMessageType,
-                                 Stream_SessionId_t,
-                                 enum Stream_ControlType,
-                                 enum Stream_SessionMessageType,
-                                 struct Stream_UserData> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T (const ARDrone_Module_NavDataDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T& operator= (const ARDrone_Module_NavDataDecoder_T&))
