@@ -35,7 +35,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
-                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
  : inherited (stream_in)
  , allocator_ (NULL)
  , buffer_ (NULL)

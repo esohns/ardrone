@@ -39,7 +39,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
+                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T* stream_in)
  : inherited (stream_in)
  , buffer_ (NULL)
  , bufferState_ (NULL)

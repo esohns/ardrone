@@ -28,11 +28,11 @@
 #include <strmif.h>
 #endif
 
-#include <mavlink.h>
+#include "mavlink.h"
 
-#include <navdata_common.h>
+#include "navdata_common.h"
 
-#include <ace/config-lite.h>
+#include "ace/config-lite.h"
 
 #include "stream_data_base.h"
 

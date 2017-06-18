@@ -27,13 +27,13 @@
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#include <video_encapsulation.h>
+#include "video_encapsulation.h"
 #endif
 
-#include <ace/Global_Macros.h>
-#include <ace/Time_Value.h>
+#include "ace/Global_Macros.h"
+#include "ace/Time_Value.h"
 
-#include <gtk/gtk.h>
+#include "gtk/gtk.h"
 
 #include "common_ui_common.h"
 
@@ -180,7 +180,7 @@ class ARDrone_IController
   virtual void takeoff () = 0;
   virtual void land () = 0;
 
-  virtual void set (ARDrone_VideoMode) = 0;
+  virtual void set (enum ARDrone_VideoMode) = 0;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H

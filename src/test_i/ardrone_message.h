@@ -18,12 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef ardrone_MESSAGE_H
-#define ardrone_MESSAGE_H
+#ifndef ARDRONE_MESSAGE_H
+#define ARDRONE_MESSAGE_H
 
 #include <string>
 
-#include <ace/Global_Macros.h>
+#include "ace/Global_Macros.h"
 
 #include "common_iget.h"
 
@@ -32,6 +32,7 @@
 #include "stream_data_message_base.h"
 #include "stream_messageallocatorheap_base.h"
 
+#include "ardrone_configuration.h"
 #include "ardrone_common.h"
 #include "ardrone_types.h"
 

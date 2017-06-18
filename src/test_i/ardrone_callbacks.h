@@ -21,7 +21,7 @@
 #ifndef ARDRONE_CALLBACKS_H
 #define ARDRONE_CALLBACKS_H
 
-#include <gtk/gtk.h>
+#include "gtk/gtk.h"
 
 // thread functions
 ACE_THR_FUNC_RETURN stream_processing_function (void*);

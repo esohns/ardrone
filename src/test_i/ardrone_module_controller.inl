@@ -67,7 +67,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionDataContainerType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
+                            ConnectorType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
  : inherited (stream_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));

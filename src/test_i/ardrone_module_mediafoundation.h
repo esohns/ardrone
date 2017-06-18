@@ -21,7 +21,7 @@
 #ifndef ARDRONE_MODULE_MEDIAFOUNDATION_H
 #define ARDRONE_MODULE_MEDIAFOUNDATION_H
 
-#include <ace/Global_Macros.h>
+#include "ace/Global_Macros.h"
 
 #include <d3d9.h>
 #include <evr.h>
@@ -94,10 +94,10 @@ class Stream_Vis_Target_MediaFoundation_T
                                    //IMFVideoSampleAllocator*&, // return value: video sample allocator handle
                                    IMFMediaSession*);         // media session handle
 
-  IDirect3DDevice9Ex*      device_;
-  IMFMediaSession*         mediaSession_;
-  IMFStreamSink*           streamSink_;
-  IMFVideoDisplayControl*  videoDisplayControl_;
+  IDirect3DDevice9Ex*     device_;
+  IMFMediaSession*        mediaSession_;
+  IMFStreamSink*          streamSink_;
+  IMFVideoDisplayControl* videoDisplayControl_;
   //IMFVideoSampleAllocator* videoSampleAllocator_;
 };
 
@@ -162,7 +162,7 @@ class Stream_Vis_Target_MediaFoundation_2
   ACE_UNIMPLEMENTED_FUNC (Stream_Vis_Target_MediaFoundation_2& operator= (const Stream_Vis_Target_MediaFoundation_2&))
 };
 
-// include template implementation
+// include template definition
 #include "stream_vis_target_mediafoundation.inl"
 
 #endif
