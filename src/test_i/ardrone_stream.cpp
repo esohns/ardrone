@@ -384,14 +384,14 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   if (inherited::configuration_.configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_Controller_Module (this,
-                                                      ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
                                                       NULL,
                                                       false),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchController_Module (this,
-                                                            ACE_TEXT_ALWAYS_CHAR ("Controller"),
+                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
                                                             NULL,
                                                             false),
                     false);
@@ -552,13 +552,13 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // **************************** Controller ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("Controller")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (inherited::configuration_.name_.c_str ()),
-                ACE_TEXT ("Controller")));
+                ACE_TEXT ("NavDataTarget")));
     goto error;
   } // end IF
 
