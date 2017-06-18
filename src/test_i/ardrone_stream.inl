@@ -142,7 +142,7 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   SourceModuleType (this,
-                                    ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource"),
+                                    ACE_TEXT_ALWAYS_CHAR ("VideoSource"),
                                     NULL,
                                     false),
                   false);
@@ -336,13 +336,13 @@ ARDrone_LiveVideoStream_T<SourceModuleType>::initialize (const typename inherite
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("LiveVideoSource")));
+    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("VideoSource")));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (inherited::configuration_.name_.c_str ()),
-                ACE_TEXT ("LiveVideoSource")));
+                ACE_TEXT ("VideoSource")));
     goto error;
   } // end IF
 

@@ -469,20 +469,20 @@ stream_processing_function (void* arg_in)
 //#endif
 
     // configure streams and retrieve stream handles
-    ARDrone_ConnectionConfigurationIterator_t iterator_3 =
-      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
-    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
-
+    ARDrone_ConnectionConfigurationIterator_t iterator_3;
     Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
 
+    iterator_3 =
+      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
+    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     // *TODO*: bind to a specific interface
     ARDrone_StreamConfigurationsIterator_t iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 =
-        (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR ("Controller"));
+        (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.targetFileName;
     (*iterator_2).second.targetFileName =
@@ -504,6 +504,9 @@ stream_processing_function (void* arg_in)
 //                     &session_start_timeout);
     (*iterator_2).second.targetFileName = logfile_name_string;
 
+    iterator_3 =
+      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
+    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
@@ -532,6 +535,9 @@ stream_processing_function (void* arg_in)
                      &session_start_timeout);
     (*iterator_2).second.targetFileName = logfile_name_string;
 
+    iterator_3 =
+      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
@@ -673,7 +679,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
   ARDrone_ConnectionConfigurationIterator_t iterator_2 =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
   ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
   gtk_entry_set_text (entry_p,
                       Net_Common_Tools::IPAddressToString ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration.address,
@@ -2166,7 +2172,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
   ACE_ASSERT (spin_button_p);
   ARDrone_ConnectionConfigurationIterator_t iterator_3 =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5;

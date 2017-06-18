@@ -934,6 +934,8 @@ do_work (int argc_in,
       &event_handler;
   (*navdata_streamconfiguration_iterator).second.configuration_.initializeNavData =
       &event_handler;
+  (*navdata_streamconfiguration_iterator).second.moduleConfiguration_.notify =
+      &navdata_stream;
   (*video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
       std::max (bufferSize_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
@@ -969,10 +971,10 @@ do_work (int argc_in,
 //                                                                            connection_configuration));
   connection_configuration.streamConfiguration =
     &((*control_streamconfiguration_iterator).second);
-  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Control"),
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
                                                                             connection_configuration));
   ARDrone_ConnectionConfigurationIterator_t iterator_2 =
-    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
@@ -985,10 +987,10 @@ do_work (int argc_in,
   ACE_ASSERT (result == 0);
   connection_configuration.streamConfiguration =
     &((*mavlink_streamconfiguration_iterator).second);
-  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"),
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
                                                                             connection_configuration));
   iterator_2 =
-    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
@@ -1003,10 +1005,10 @@ do_work (int argc_in,
     true;
   connection_configuration.streamConfiguration =
     &((*navdata_streamconfiguration_iterator).second);
-  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavData_Out"),
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
                                                                             connection_configuration));
   iterator_2 =
-    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData_Out"));
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
@@ -1023,10 +1025,10 @@ do_work (int argc_in,
     false;
 //  connection_configuration.streamConfiguration =
 //    &((*navdata_streamconfiguration_iterator).second);
-  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavData_In"),
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
                                                                             connection_configuration));
   iterator_2 =
-    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData_In"));
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
@@ -1059,10 +1061,10 @@ do_work (int argc_in,
     true;
   connection_configuration.streamConfiguration =
     &((*video_streamconfiguration_iterator).second);
-  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Video_In"),
+  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("VideoSource"),
                                                                             connection_configuration));
   iterator_2 =
-    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
@@ -1162,12 +1164,12 @@ do_work (int argc_in,
 #endif
 
   CBData_in.controlStream = &control_stream;
+  CBData_in.MAVLinkStream = &mavlink_stream;
+  CBData_in.NavDataStream = &navdata_stream;
   if (useReactor_in)
     CBData_in.liveVideoStream = &video_stream;
   else
     CBData_in.liveVideoStream = &asynch_video_stream;
-  CBData_in.MAVLinkStream = &mavlink_stream;
-  CBData_in.NavDataStream = &navdata_stream;
 
   if (!heap_allocator.initialize ((*video_streamconfiguration_iterator).second.allocatorConfiguration_))
   {
