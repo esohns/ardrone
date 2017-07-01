@@ -63,7 +63,7 @@ extern "C"
 // forward declarations
 class ARDrone_MAVLinkMessage;
 class ARDrone_NavDataMessage;
-class ARDrone_LiveVideoMessage;
+class ARDrone_VideoMessage;
 class ARDrone_SessionMessage;
 
 struct ARDrone_UserData;
@@ -295,13 +295,13 @@ struct ARDrone_ModuleHandlerConfiguration
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    format =
-      static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
-    if (!format)
-      ACE_DEBUG ((LM_CRITICAL,
-                  ACE_TEXT ("failed to allocate memory, continuing\n")));
-    else
-      ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
+    //format =
+    //  static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
+    //if (!format)
+    //  ACE_DEBUG ((LM_CRITICAL,
+    //              ACE_TEXT ("failed to allocate memory, continuing\n")));
+    //else
+    //  ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
 #else
     ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
 #endif

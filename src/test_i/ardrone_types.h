@@ -23,7 +23,7 @@
 
 #include <deque>
 
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -47,7 +47,7 @@ enum ARDrone_MessageType : int
 {
   ARDRONE_MESSAGE_INVALID = -1,
   ARDRONE_MESSAGE_ATCOMMANDMESSAGE = ACE_Message_Block::MB_PROTO,
-  ARDRONE_MESSAGE_LIVEVIDEOFRAME,
+  ARDRONE_MESSAGE_VIDEOFRAME,
   ARDRONE_MESSAGE_MAVLINKMESSAGE,
   ARDRONE_MESSAGE_NAVDATAMESSAGE,
   ///////////////////////////////////////

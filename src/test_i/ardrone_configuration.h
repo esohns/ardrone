@@ -80,20 +80,16 @@ struct ARDrone_AllocatorConfiguration
 };
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct _AMMediaType;
-//class ACE_Message_Queue_Base;
 struct ARDrone_DirectShow_FilterConfiguration
  : Stream_Miscellaneous_DirectShow_FilterConfiguration
 {
   inline ARDrone_DirectShow_FilterConfiguration ()
-    : Stream_Miscellaneous_DirectShow_FilterConfiguration ()
-    //, format (NULL)
-    , module (NULL)
-    , pinConfiguration (NULL)
+   : Stream_Miscellaneous_DirectShow_FilterConfiguration ()
+   , module (NULL)
+   , pinConfiguration (NULL)
   {};
 
   // *TODO*: specify this as part of the network protocol header/handshake
-  //struct _AMMediaType*                                           format; // handle
   Stream_Module_t*                                               module; // handle
   struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
 };
@@ -192,11 +188,15 @@ struct ARDrone_GtkCBData
 {
  inline ARDrone_GtkCBData ()
   : Common_UI_GTKState ()
+  , autoAssociate (true)
   , configuration (NULL)
   , controlStream (NULL)
+ #if defined (ACE_WIN32) || defined (ACE_WIN64)
+ #else
+  , device (ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN))
+ #endif
   , eventStack ()
   , frameCounter (0)
-  , liveVideoStream (NULL)
   , localSAP ()
   , MAVLinkStream (NULL)
   , messages ()
@@ -213,9 +213,10 @@ struct ARDrone_GtkCBData
   , pixelBuffer (NULL)
 #endif
   , progressData (NULL)
-  //, temperature ()
-  //, temperatureIndex (-1)
+  , SSID (ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID))
   , timeStamp (ACE_Time_Value::zero)
+  , videoOnly (false)
+  , videoStream (NULL)
  {
 #if defined (GTKGL_SUPPORT)
    resetCamera ();
@@ -230,34 +231,38 @@ struct ARDrone_GtkCBData
  };
 #endif
 
- struct ARDrone_Configuration*        configuration;
+ bool                            autoAssociate;
+ struct ARDrone_Configuration*   configuration;
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
- ARDrone_StreamBase_t*                controlStream;
- ARDrone_Events_t                     eventStack;
- unsigned int                         frameCounter;
- ARDrone_StreamBase_t*                liveVideoStream;
- // *TODO*: let the user choose a NIC instead
- ACE_INET_Addr                        localSAP;
- ARDrone_StreamBase_t*                MAVLinkStream;
- ARDrone_Messages_t                   messages;
- ARDrone_MessageAllocator_t*          messageAllocator;
- ARDrone_StreamBase_t*                NavDataStream;
+ ARDrone_StreamBase_t*           controlStream;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+ std::string                     device;
+#endif
+ ARDrone_Events_t                eventStack;
+ unsigned int                    frameCounter;
+ ACE_INET_Addr                   localSAP;
+ ARDrone_StreamBase_t*           MAVLinkStream;
+ ARDrone_Messages_t              messages;
+ ARDrone_MessageAllocator_t*     messageAllocator;
+ ARDrone_StreamBase_t*           NavDataStream;
 #if defined (GTKGL_SUPPORT)
- GLuint                               openGLAxesListId;
- struct ARDrone_Camera                openGLCamera;
- guint                                openGLRefreshId;
- bool                                 openGLDoubleBuffered;
+ GLuint                          openGLAxesListId;
+ struct ARDrone_Camera           openGLCamera;
+ guint                           openGLRefreshId;
+ bool                            openGLDoubleBuffered;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
- GdkPixbuf*                           pixelBuffer;
+ GdkPixbuf*                      pixelBuffer;
 #endif
- struct ARDrone_GtkProgressData*      progressData;
- //gfloat                temperature[ARDRONE_TEMPERATURE_BUFFER_SIZE * 2];
- //int                   temperatureIndex;
- ACE_Time_Value                       timeStamp;
+ struct ARDrone_GtkProgressData* progressData;
+ std::string                     SSID;
+ ACE_Time_Value                  timeStamp;
+ bool                            videoOnly;
+ ARDrone_StreamBase_t*           videoStream;
 };
 
 struct ARDrone_ThreadData
