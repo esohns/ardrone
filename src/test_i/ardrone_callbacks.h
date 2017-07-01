@@ -47,7 +47,8 @@ G_MODULE_EXPORT void toggleaction_connect_toggled_cb (GtkToggleAction*, gpointer
 G_MODULE_EXPORT void action_trim_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void action_calibrate_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void action_cut_activate_cb (GtkAction*, gpointer);
-//G_MODULE_EXPORT void combobox_destination_changed_cb (GtkComboBox*, gpointer);
+G_MODULE_EXPORT void combobox_wlan_interface_changed_cb (GtkComboBox*, gpointer);
+G_MODULE_EXPORT void combobox_display_device_changed_cb (GtkComboBox*, gpointer);
 G_MODULE_EXPORT void entry_address_delete_text_cb (GtkEditable*,
                                                    gint,
                                                    gint,
@@ -62,15 +63,16 @@ G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            GMountOperation*,
                                            gpointer);
 #endif
+G_MODULE_EXPORT void togglebutton_fullscreen_toggled_cb (GtkToggleButton*, gpointer);
 G_MODULE_EXPORT void togglebutton_save_toggled_cb (GtkToggleButton*, gpointer);
 //G_MODULE_EXPORT void combobox_save_format_changed_cb (GtkComboBox*, gpointer);
 //------------------------------------------------------------------------------
 
-G_MODULE_EXPORT gboolean drawingarea_configure_cb (GtkWidget*, GdkEvent*, gpointer);
-G_MODULE_EXPORT gboolean drawingarea_draw_cb (GtkWidget*, cairo_t*, gpointer);
-G_MODULE_EXPORT void drawingarea_realize_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gboolean drawingarea_video_configure_cb (GtkWidget*, GdkEvent*, gpointer);
+G_MODULE_EXPORT gboolean drawingarea_video_draw_cb (GtkWidget*, cairo_t*, gpointer);
+G_MODULE_EXPORT void drawingarea_video_realize_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gboolean key_cb (GtkWidget*, GdkEventKey*, gpointer);
-G_MODULE_EXPORT gboolean drawingarea_key_press_event_cb (GtkWidget*, GdkEventKey*, gpointer);
+G_MODULE_EXPORT gboolean drawingarea_video_key_press_event_cb (GtkWidget*, GdkEventKey*, gpointer);
 G_MODULE_EXPORT gboolean dialog_main_key_press_event_cb (GtkWidget*, GdkEventKey*, gpointer);
 //------------------------------------------------------------------------------
 G_MODULE_EXPORT gint button_clear_clicked_cb (GtkWidget*, gpointer);

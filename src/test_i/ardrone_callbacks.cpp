@@ -38,8 +38,11 @@
 #include <glm/glm.hpp>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include <cguid.h>
+#include <PhysicalMonitorEnumerationAPI.h>
 #include <mfapi.h>
 #include <mfidl.h>
+#include <wlanapi.h>
 #endif
 
 #ifdef __cplusplus
@@ -94,6 +97,113 @@ extern "C"
 bool un_toggling_connect = false;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+void WINAPI
+ardrone_wlan_notification_cb (PWLAN_NOTIFICATION_DATA data_in,
+                              PVOID context_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ardrone_wlan_notification_cb"));
+
+  // sanity check(s)
+  ACE_ASSERT (data_in);
+  ACE_ASSERT (context_in);
+
+  struct ARDrone_GtkCBData* cb_data_p =
+    static_cast<struct ARDrone_GtkCBData*> (context_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+
+  //ACE_DEBUG ((LM_DEBUG,
+  //            ACE_TEXT ("received notification for WLAN adapter \"%s\"\n"),
+  //            ACE_TEXT (Net_Common_Tools::interfaceToString (data_in->InterfaceGuid).c_str ())));
+
+  switch (data_in->NotificationSource)
+  {
+    case WLAN_NOTIFICATION_SOURCE_ACM:
+    {
+      switch (data_in->NotificationCode)
+      {
+        case wlan_notification_acm_autoconf_enabled:
+          break;
+        case wlan_notification_acm_autoconf_disabled:
+          break;
+        case wlan_notification_acm_background_scan_enabled:
+          break;
+        case wlan_notification_acm_background_scan_disabled:
+          break;
+        case wlan_notification_acm_bss_type_change:
+          break;
+        case wlan_notification_acm_power_setting_change:
+          break;
+        case wlan_notification_acm_scan_complete:
+          break;
+        case wlan_notification_acm_scan_fail:
+          break;
+        case wlan_notification_acm_connection_start:
+          break;
+        case wlan_notification_acm_connection_complete:
+        { ACE_ASSERT (data_in->dwDataSize == sizeof (struct _WLAN_CONNECTION_NOTIFICATION_DATA));
+          struct _WLAN_CONNECTION_NOTIFICATION_DATA* wlan_connection_notification_data_p =
+            static_cast<struct _WLAN_CONNECTION_NOTIFICATION_DATA*> (data_in->pData);
+          ACE_DEBUG ((LM_DEBUG,
+                      ACE_TEXT ("WLAN associated to SSID \"%s\" complete: %s\n"),
+                      ACE_TEXT (cb_data_p->SSID.c_str ()),
+                      ((wlan_connection_notification_data_p->wlanReasonCode == WLAN_REASON_CODE_SUCCESS) ? ACE_TEXT ("SUCCESS") : ACE_TEXT ("ERROR"))));
+          break;
+        }
+        case wlan_notification_acm_connection_attempt_fail:
+          break;
+        case wlan_notification_acm_filter_list_change:
+          break;
+        case wlan_notification_acm_interface_arrival:
+          break;
+        case wlan_notification_acm_interface_removal:
+          break;
+        case wlan_notification_acm_profile_change:
+          break;
+        case wlan_notification_acm_profile_name_change:
+          break;
+        case wlan_notification_acm_profiles_exhausted:
+          break;
+        case wlan_notification_acm_network_not_available:
+          break;
+        case wlan_notification_acm_network_available:
+          break;
+        case wlan_notification_acm_disconnecting:
+          break;
+        case wlan_notification_acm_disconnected:
+          break;
+        case wlan_notification_acm_adhoc_network_state_change:
+          break;
+        case wlan_notification_acm_profile_unblocked:
+          break;
+        case wlan_notification_acm_screen_power_change:
+          break;
+        case wlan_notification_acm_profile_blocked:
+          break;
+        case wlan_notification_acm_scan_list_refresh:
+          break;
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown notification code (was: %d), returning\n"),
+                      data_in->NotificationCode));
+          return;
+        }
+      } // end SWITCH
+
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown notification source (was: %d), returning\n"),
+                  data_in->NotificationSource));
+      return;
+    }
+  } // end SWITCH
+}
+
 BOOL CALLBACK
 monitor_enum_cb (HMONITOR monitor_in,
                  HDC      deviceContext_in,
@@ -109,6 +219,31 @@ monitor_enum_cb (HMONITOR monitor_in,
 
   // sanity check(s)
   ACE_ASSERT (list_store_p);
+
+  // *NOTE*: more than one physical monitor may be associated with a monitor
+  //         handle. Note how this is racy.
+  DWORD number_of_monitors = 0;
+  if (!GetNumberOfPhysicalMonitorsFromHMONITOR (monitor_in,
+                                                &number_of_monitors))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to GetNumberOfPhysicalMonitorsFromHMONITOR(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
+    return FALSE;
+  } // end IF
+  ACE_ASSERT (number_of_monitors == 1);
+
+  struct _PHYSICAL_MONITOR physical_monitors_a[1];
+  ACE_OS::memset (&physical_monitors_a, 0, sizeof (struct _PHYSICAL_MONITOR[1]));
+  if (!GetPhysicalMonitorsFromHMONITOR (monitor_in,
+                                        1,
+                                        physical_monitors_a))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to GetPhysicalMonitorsFromHMONITOR(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
+    return FALSE;
+  } // end IF
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof (MONITORINFOEX);
   if (!GetMonitorInfo (monitor_in,
@@ -116,17 +251,18 @@ monitor_enum_cb (HMONITOR monitor_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
     return FALSE;
   } // end IF
 
   GtkTreeIter iterator;
   gtk_list_store_append (list_store_p, &iterator);
   gtk_list_store_set (list_store_p, &iterator,
-#if defined (ACE_USES_WCHAR)
-                      0, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (monitor_info.szDevice)),
+                      0, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (physical_monitors_a[0].szPhysicalMonitorDescription)),
+#if defined (UNICODE)
+                      1, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (monitor_info.szDevice)),
 #else
-                      0, monitor_info.szDevice,
+                      1, monitor_info.szDevice,
 #endif
                       -1);
 
@@ -162,22 +298,104 @@ monitor_clip_cb (HMONITOR monitor_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
     return FALSE;
   } // end IF
 
-  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
-    cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfiguration.moduleHandlerConfigurations.end ());
+  ARDrone_StreamConfigurationsIterator_t iterator =
+    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
+    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
   if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                      (*iterator).second.device.c_str ()))
+                      (*iterator_2).second.device.c_str ()))
     return TRUE;
 
-  (*iterator).second.area = *clippingArea_in;
+  if ((*iterator_2).second.fullScreen)
+    (*iterator_2).second.area = *clippingArea_in;
 
   return TRUE;
 };
 #endif
+
+bool
+load_wlan_interfaces (GtkListStore* listStore_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::load_wlan_interfaces"));
+
+  // initialize result
+  gtk_list_store_clear (listStore_in);
+
+  bool result = false;
+  GtkTreeIter iterator;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  HANDLE handle_client = NULL;
+  // *TODO*: support WinXP
+  DWORD maximum_client_version =
+    WLAN_API_MAKE_VERSION (2, 0); // *NOTE*: 1 for <= WinXP_SP2
+  DWORD current_version = 0;
+  DWORD result_2 = 0;
+  PWLAN_INTERFACE_INFO_LIST interface_list_p = NULL;
+  PWLAN_INTERFACE_INFO interface_info_p = NULL;
+
+  result_2 = WlanOpenHandle (maximum_client_version,
+                             NULL,
+                             &current_version,
+                             &handle_client);
+  if (result_2 != ERROR_SUCCESS)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanOpenHandle(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+    return false;
+  } // end IF
+  result_2 = WlanEnumInterfaces (handle_client,
+                                 NULL,
+                                 &interface_list_p);
+  if (result_2 != ERROR_SUCCESS)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanEnumInterfaces(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+    goto error;
+  } // end IF
+  ACE_ASSERT (interface_list_p);
+
+  //ACE_DEBUG ((LM_DEBUG,
+  //            ACE_TEXT ("found %u wireless adapter(s)\n"),
+  //            interface_list_p->dwNumberOfItems));
+  for (DWORD i = 0;
+       i < interface_list_p->dwNumberOfItems;
+       ++i)
+  {
+    interface_info_p = &interface_list_p->InterfaceInfo[i];
+    gtk_list_store_append (listStore_in, &iterator);
+    gtk_list_store_set (listStore_in, &iterator,
+                        0, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (interface_info_p->strInterfaceDescription)),
+                        1, ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (interface_info_p->InterfaceGuid).c_str ()),
+                        -1);
+  } // end FOR
+
+  result = true;
+
+error:
+  if (interface_list_p)
+    WlanFreeMemory (interface_list_p);
+  result_2 = WlanCloseHandle (handle_client,
+                              NULL);
+  if (result_2 != ERROR_SUCCESS)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanCloseHandle(): \"%s\", continuing\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+#else
+  ACE_ASSERT (false);
+
+  result = true;
+#endif
+
+  return result;
+}
 
 bool
 load_display_devices (GtkListStore* listStore_in)
@@ -195,7 +413,7 @@ load_display_devices (GtkListStore* listStore_in)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to EnumDisplayMonitors(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
     return false;
   } // end IF
   //GdkDisplayManager* display_manager_p = gdk_display_manager_get ();
@@ -404,12 +622,12 @@ load_save_formats (GtkListStore* listStore_in)
     //         through the API, instead of static values
     // *TODO*: define/activate a 'save-to-file' subpipeline (use a multiplexer)
     //         and forward(/encapsulate) the byte-stream as default format
-    format_string = ACE_TEXT_ALWAYS_CHAR ("RGB");
+    format_string = ACE_TEXT_ALWAYS_CHAR ("RGB AVI");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
                         0, ACE_TEXT (format_string.c_str ()),
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                        1, ACE_TEXT (Stream_Module_Decoder_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
+                        1, ACE_TEXT (Common_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
 #else
                         2, AV_PIX_FMT_RGBA,
 #endif
@@ -470,15 +688,20 @@ stream_processing_function (void* arg_in)
 
     // configure streams and retrieve stream handles
     ARDrone_ConnectionConfigurationIterator_t iterator_3;
+    ARDrone_StreamConfigurationsIterator_t iterator_4;
     Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
 
+    if (data_p->CBData->videoOnly)
+      goto video;
+
+    // control
     iterator_3 =
       data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     // *TODO*: bind to a specific interface
-    ARDrone_StreamConfigurationsIterator_t iterator_4 =
+    iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 =
@@ -504,6 +727,7 @@ stream_processing_function (void* arg_in)
 //                     &session_start_timeout);
     (*iterator_2).second.targetFileName = logfile_name_string;
 
+    // mavlink
     iterator_3 =
       data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
@@ -535,6 +759,7 @@ stream_processing_function (void* arg_in)
                      &session_start_timeout);
     (*iterator_2).second.targetFileName = logfile_name_string;
 
+    // navdata
     iterator_3 =
       data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
@@ -570,14 +795,16 @@ stream_processing_function (void* arg_in)
     session_p->wait (false,
                      &session_start_timeout);
 
+    // video
+video:
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-    (*iterator_2).second.stream = data_p->CBData->liveVideoStream;
+    (*iterator_2).second.stream = data_p->CBData->videoStream;
     result_2 =
-        data_p->CBData->liveVideoStream->initialize ((*iterator_4).second);
+        data_p->CBData->videoStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -585,7 +812,7 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = &data_p->CBData->liveVideoStream->get ();
+    session_data_container_p = &data_p->CBData->videoStream->get ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
@@ -607,7 +834,7 @@ stream_processing_function (void* arg_in)
                                       converter.str ().c_str ());
     gdk_threads_leave ();
 //  } // end lock scope
-    data_p->CBData->liveVideoStream->start ();
+    data_p->CBData->videoStream->start ();
 
   //    if (!stream_p->isRunning ())
   //    {
@@ -615,10 +842,13 @@ stream_processing_function (void* arg_in)
   //                  ACE_TEXT ("failed to start stream, aborting\n")));
   //      return;
   //    } // end IF
-  data_p->CBData->controlStream->wait (true, false, false);
-  data_p->CBData->MAVLinkStream->wait (true, false, false);
-  data_p->CBData->NavDataStream->wait (true, false, false);
-  data_p->CBData->liveVideoStream->wait (true, false, false);
+  if (!data_p->CBData->videoOnly)
+  {
+    data_p->CBData->controlStream->wait (true, false, false);
+    data_p->CBData->MAVLinkStream->wait (true, false, false);
+    data_p->CBData->NavDataStream->wait (true, false, false);
+  } // end IF
+  data_p->CBData->videoStream->wait (true, false, false);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = 0;
@@ -633,7 +863,6 @@ done:
 #else
     ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->CBData->lock, std::numeric_limits<void*>::max ());
 #endif
-
     data_p->CBData->progressData->completedActions.insert (data_p->eventSourceID);
   } // end lock scope
 
@@ -657,7 +886,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
   //ACE_ASSERT (cb_data_p->MAVLinkStream);
-  //ACE_ASSERT (cb_data_p->liveVideoStream);
+  //ACE_ASSERT (cb_data_p->videoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -674,7 +903,50 @@ idle_initialize_ui_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT)));
   ACE_ASSERT (about_dialog_p);
 
+  GtkListStore* list_store_p =
+    GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_WLAN_INTERFACE)));
+  ACE_ASSERT (list_store_p);
+  gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (list_store_p),
+                                        1, GTK_SORT_ASCENDING);
+  if (!load_wlan_interfaces (list_store_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::load_wlan_interfaces(), aborting\n")));
+    return G_SOURCE_REMOVE;
+  } // end IF
+  GtkComboBox* combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE)));
+  ACE_ASSERT (combo_box_p);
+  //gtk_combo_box_set_model (combo_box_p,
+  //                         GTK_TREE_MODEL (list_store_p));
+  GtkCellRenderer* cell_renderer_p = gtk_cell_renderer_text_new ();
+  if (!cell_renderer_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to gtk_cell_renderer_text_new(), aborting\n")));
+    return G_SOURCE_REMOVE;
+  } // end IF
+  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_box_p), cell_renderer_p,
+                              true);
+  // *NOTE*: cell_renderer_p does not need to be g_object_unref()ed because it
+  //         is GInitiallyUnowned and the floating reference has been
+  //         passed to combo_box_p by the gtk_cell_layout_pack_start() call
+  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_box_p), cell_renderer_p,
+                                  //"cell-background", 0,
+                                  //"text", 1,
+                                  "text", 0,
+                                  NULL);
+
   GtkEntry* entry_p =
+    GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_SSID)));
+  ACE_ASSERT (entry_p);
+  gtk_entry_set_text (entry_p,
+                      cb_data_p->SSID.c_str ());
+
+  entry_p =
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
@@ -698,7 +970,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_spin_button_set_value (spin_button_p,
                              (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
 
-  GtkListStore* list_store_p =
+  list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
@@ -710,13 +982,13 @@ idle_initialize_ui_cb (gpointer userData_in)
                 ACE_TEXT ("failed to ::load_display_devices(), aborting\n")));
     return G_SOURCE_REMOVE;
   } // end IF
-  GtkComboBox* combo_box_p =
+  combo_box_p =
     GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
   ACE_ASSERT (combo_box_p);
   //gtk_combo_box_set_model (combo_box_p,
   //                         GTK_TREE_MODEL (list_store_p));
-  GtkCellRenderer* cell_renderer_p = gtk_cell_renderer_text_new ();
+  cell_renderer_p = gtk_cell_renderer_text_new ();
   if (!cell_renderer_p)
   {
     ACE_DEBUG ((LM_CRITICAL,
@@ -962,16 +1234,22 @@ idle_initialize_ui_cb (gpointer userData_in)
                                 (*iterator_4).second.fullScreen);
   check_button_p =
     GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
-  check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
                                 !(*iterator_4).second.targetFileName.empty ());
+  check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                cb_data_p->autoAssociate);
+  check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
 
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -1001,59 +1279,6 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
                              std::numeric_limits<unsigned int>::max ());
-
-  // step4: initialize text view, setup auto-scrolling
-  //GtkTextView* text_view_p =
-  //  GTK_TEXT_VIEW (gtk_builder_get_object ((*iterator).second.second,
-  //                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG)));
-  //ACE_ASSERT (text_view_p);
-//  GtkTextBuffer* buffer_p =
-////    gtk_text_buffer_new (NULL); // text tag table --> create new
-//      gtk_text_view_get_buffer (view_p);
-//  ACE_ASSERT (buffer_p);
-////  gtk_text_view_set_buffer (view_p, buffer_p);
-
-  //PangoFontDescription* font_description_p =
-  //  pango_font_description_from_string (ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION));
-  //if (!font_description_p)
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to pango_font_description_from_string(\"%s\"): \"%m\", aborting\n"),
-  //              ACE_TEXT (ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION)));
-  //  return G_SOURCE_REMOVE;
-  //} // end IF
-  //// apply font
-  //GtkRcStyle* rc_style_p = gtk_rc_style_new ();
-  //if (!rc_style_p)
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to gtk_rc_style_new(): \"%m\", aborting\n")));
-  //  return G_SOURCE_REMOVE;
-  //} // end IF
-  //rc_style_p->font_desc = font_description_p;
-  //GdkColor base_colour, text_colour;
-  //gdk_color_parse (ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_GTK_PANGO_LOG_COLOR_BASE),
-  //                 &base_colour);
-  //rc_style_p->base[GTK_STATE_NORMAL] = base_colour;
-  //gdk_color_parse (ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_GTK_PANGO_LOG_COLOR_TEXT),
-  //                 &text_colour);
-  //rc_style_p->text[GTK_STATE_NORMAL] = text_colour;
-  //rc_style_p->color_flags[GTK_STATE_NORMAL] =
-  //  static_cast<GtkRcFlags> (GTK_RC_BASE |
-  //                           GTK_RC_TEXT);
-  //gtk_widget_modify_style (GTK_WIDGET (text_view_p),
-  //                         rc_style_p);
-  ////gtk_rc_style_unref (rc_style_p);
-  //g_object_unref (rc_style_p);
-
-  //  GtkTextIter iterator;
-  //  gtk_text_buffer_get_end_iter (buffer_p,
-  //                                &iterator);
-  //  gtk_text_buffer_create_mark (buffer_p,
-  //                               ACE_TEXT_ALWAYS_CHAR (NET_UI_SCROLLMARK_NAME),
-  //                               &iterator,
-  //                               TRUE);
-  //  g_object_unref (buffer_p);
 
   GtkWidget* drawing_area_p =
       GTK_WIDGET (gtk_builder_get_object ((*iterator).second.second,
@@ -1247,13 +1472,13 @@ idle_initialize_ui_cb (gpointer userData_in)
   //result =
   //  g_signal_connect (G_OBJECT (drawing_area_p),
   //                    ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
-  //                    G_CALLBACK (drawingarea_size_allocate_cb),
+  //                    G_CALLBACK (drawingarea_video_size_allocate_cb),
   //                    userData_in);
   //ACE_ASSERT (result);
   //result =
   //  g_signal_connect (G_OBJECT (drawing_area_p),
   //                    ACE_TEXT_ALWAYS_CHAR ("draw"),
-  //                    G_CALLBACK (drawingarea_2d_draw_cb),
+  //                    G_CALLBACK (drawingarea_video_draw_cb),
   //                    userData_in);
   //ACE_ASSERT (result);
 #if GTK_CHECK_VERSION (3,16,0)
@@ -1297,13 +1522,13 @@ idle_initialize_ui_cb (gpointer userData_in)
   result =
       g_signal_connect (G_OBJECT (drawing_area_p),
                         ACE_TEXT_ALWAYS_CHAR ("configure-event"),
-                        G_CALLBACK (drawingarea_configure_event_cb),
+                        G_CALLBACK (drawingarea_video_configure_event_cb),
                         userData_in);
   ACE_ASSERT (result);
   result =
       g_signal_connect (G_OBJECT (drawing_area_p),
                         ACE_TEXT_ALWAYS_CHAR ("expose-event"),
-                        G_CALLBACK (drawingarea_2d_expose_event_cb),
+                        G_CALLBACK (drawingarea_video_expose_event_cb),
                         userData_in);
   ACE_ASSERT (result);
 #if defined (GTKGLAREA_SUPPORT)
@@ -1328,13 +1553,13 @@ idle_initialize_ui_cb (gpointer userData_in)
   result =
       g_signal_connect (G_OBJECT (drawing_area_2),
                         ACE_TEXT_ALWAYS_CHAR ("configure-event"),
-                        G_CALLBACK (drawingarea_configure_event_cb),
+                        G_CALLBACK (drawingarea_video_configure_event_cb),
                         userData_in);
   ACE_ASSERT (result);
   result =
       g_signal_connect (G_OBJECT (drawing_area_2),
                         ACE_TEXT_ALWAYS_CHAR ("expose-event"),
-                        G_CALLBACK (drawingarea_3d_expose_event_cb),
+                        G_CALLBACK (drawingarea_video_expose_event_cb),
                         userData_in);
 #endif
 #endif
@@ -1361,7 +1586,6 @@ idle_initialize_ui_cb (gpointer userData_in)
   // step7: initialize updates
   guint event_source_id = 0;
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, G_SOURCE_REMOVE);
-
     // schedule asynchronous updates of the log view
     //event_source_id = g_timeout_add_seconds (1,
     //                                         idle_update_log_display_cb,
@@ -1419,17 +1643,19 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (window_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
-  //  static_cast<HWND> (GDK_WINDOW_HWND (GDK_DRAWABLE (window_p)));
-  ACE_ASSERT (!(*iterator_3).second.window);
-  (*iterator_3).second.window = NULL;
-    //static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+  ACE_ASSERT (!(*iterator_4).second.window);
+  //(*iterator_4).second.window =
+  //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
   //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
 #else
   ACE_ASSERT (!(*iterator_4).second.window);
   (*iterator_4).second.window = window_p;
-  ACE_ASSERT ((*iterator_4).second.window);
 #endif
+  //ACE_ASSERT ((*iterator_4).second.window);
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("using drawing area display window (handle: %@)\n"),
+              (*iterator_4).second.window));
 
   // step9: activate some widgets
   GtkToggleAction* toggle_action_p =
@@ -1440,38 +1666,86 @@ idle_initialize_ui_cb (gpointer userData_in)
   gint n_rows = 0;
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_WLAN_INTERFACE)));
   ACE_ASSERT (list_store_p);
-  n_rows = 1;
-//    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
-  if (n_rows)
-  {
-    combo_box_p =
-      GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
-    ACE_ASSERT (combo_box_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
-    gtk_combo_box_set_active (combo_box_p, 0);
-  } // end IF
-  else
-    gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
+  n_rows = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p),
+                                           NULL);
+  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
+  bool activate_combobox_network_interface = (n_rows > 0);
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
-  n_rows = 1;
-//    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
-  if (n_rows)
+  n_rows = gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p),
+                                           NULL);
+  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
+  bool activate_combobox_display_interface = (n_rows > 0);
+  int primary_display_monitor_index = 0;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  HMONITOR monitor_h = NULL;
+  if (!Stream_Module_Device_Tools::getDisplayDevice (ACE_TEXT_ALWAYS_CHAR (""),
+                                                     monitor_h))
   {
-    combo_box_p =
-      GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
-    ACE_ASSERT (combo_box_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
-    gtk_combo_box_set_active (combo_box_p, 0);
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Stream_Module_Device_Tools::getDisplayDevice(\"\"), aborting\n")));
+    return G_SOURCE_REMOVE;
   } // end IF
-  else
-    gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
+  ACE_ASSERT (monitor_h);
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof (MONITORINFOEX);
+  if (!GetMonitorInfo (monitor_h,
+                       &monitor_info))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", aborting\n"),
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
+    return G_SOURCE_REMOVE;
+  } // end IF
+  GtkTreeIter tree_iterator;
+  GValue value;
+  for (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (list_store_p),
+                                      &tree_iterator);
+       gtk_tree_model_iter_next (GTK_TREE_MODEL (list_store_p),
+                                 &tree_iterator);
+       ++primary_display_monitor_index)
+  {
+#if GTK_CHECK_VERSION (3,0,0)
+    value = G_VALUE_INIT;
+#else
+    g_value_init (&value, G_TYPE_STRING);
+#endif
+    gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                              &tree_iterator,
+                              0, &value);
+    ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
+    if (!ACE_OS::strcmp (g_value_get_string (&value),
+#if defined (UNICODE)
+                         ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (monitor_info.szDevice))))
+#else
+                         monitor_info.szDevice))
+#endif
+      break;
+  } // end FOR
+#endif
+
+  //list_store_p =
+  //  GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+  //                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+  //ACE_ASSERT (list_store_p);
+  //n_rows =
+  //  gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
+  //gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
+  //if (n_rows)
+  //{
+  //  combo_box_p =
+  //    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+  //                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
+  //  ACE_ASSERT (combo_box_p);
+  //  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
+  //  gtk_combo_box_set_active (combo_box_p, 0);
+  //} // end IF
+  //else
+  //  gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
 
   GtkAction* action_p =
       GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
@@ -1511,6 +1785,19 @@ idle_initialize_ui_cb (gpointer userData_in)
     gtk_widget_set_sensitive (GTK_WIDGET (frame_p),
                               true);
   } // end IF
+
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE)));
+  ACE_ASSERT (combo_box_p);
+  if (activate_combobox_network_interface)
+    gtk_combo_box_set_active (combo_box_p, 0);
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
+  ACE_ASSERT (combo_box_p);
+  if (activate_combobox_display_interface)
+    gtk_combo_box_set_active (combo_box_p, primary_display_monitor_index);
 
   ///* Get Icons shown on buttons */
   //GtkSettings* settings_p = gtk_settings_get_default ();
@@ -1608,7 +1895,6 @@ idle_session_end_cb (gpointer userData_in)
   // stop progress reporting ?
   ACE_ASSERT (data_p->progressData->eventSourceID);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
-
     if (!g_source_remove (data_p->progressData->eventSourceID))
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to g_source_remove(%u), continuing\n"),
@@ -2070,7 +2356,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p->controlStream);
   ACE_ASSERT (cb_data_p->MAVLinkStream);
   ACE_ASSERT (cb_data_p->NavDataStream);
-  ACE_ASSERT (cb_data_p->liveVideoStream);
+  ACE_ASSERT (cb_data_p->videoStream);
 
   Common_UI_GTKBuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -2109,7 +2395,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     cb_data_p->controlStream->stop (false, true);
     cb_data_p->MAVLinkStream->stop (false, true);
     cb_data_p->NavDataStream->stop (false, true);
-    cb_data_p->liveVideoStream->stop (false, true);
+    cb_data_p->videoStream->stop (false, true);
 
     return;
   } // end IF
@@ -2176,7 +2462,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5;
-  std::string address_string = gtk_entry_get_text (entry_p);
+  std::string address_string =
+    ACE_TEXT_ALWAYS_CHAR (gtk_entry_get_text (entry_p));
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
   std::ostringstream converter;
   converter <<
@@ -2192,26 +2479,6 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                 ACE_TEXT (address_string.c_str ())));
     goto error;
   } // end IF
-  // *TODO*: verify the given address
-  if (!Net_Common_Tools::IPAddressToInterface ((*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address,
-                                               interface_identifier_string))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
-                ACE_TEXT (Net_Common_Tools::IPAddressToString ((*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address).c_str ())));
-    goto error;
-  } // end IF
-  if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
-                                               cb_data_p->localSAP))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
-                ACE_TEXT (interface_identifier_string.c_str ())));
-    goto error;
-  } // end IF
-  ACE_DEBUG ((LM_ERROR,
-              ACE_TEXT ("set local SAP: %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->localSAP).c_str ())));
 
   iterator_4 =
       cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
@@ -2312,12 +2579,12 @@ continue_:
 #else
     result = CLSIDFromString (ACE_TEXT_ALWAYS_WCHAR (format_string.c_str ()),
 #endif
-                              &(*iterator_4).second.format->subtype);
+                              &(*iterator_5).second.format->subtype);
     if (FAILED (result))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to CLSIDFromString(): \"%s\", returning\n"),
-                  ACE_TEXT (Common_Tools::error2String (result).c_str ())));
+                  ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
       goto error;
     } // end IF
 #else
@@ -2367,7 +2634,11 @@ continue_:
   ACE_ASSERT (list_store_p);
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                            1, &value);
+#else
                             0, &value);
+#endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
   (*iterator_5).second.device = g_value_get_string (&value);
   g_value_unset (&value);
@@ -2379,7 +2650,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to EnumDisplayMonitors(): \"%s\", returning\n"),
-                ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
     goto error;
   } // end IF
 #else
@@ -2620,7 +2891,7 @@ continue_:
     } // end IF
 
     // *NOTE*: if the chosen display device screen area contains the drawing
-    //         area, use it; otherwise open a new window
+    //         area, use it[; otherwise open a new window]
     DWORD flags = MONITOR_DEFAULTTONULL;
     HMONITOR monitor_h =
       MonitorFromWindow ((*iterator_5).second.window,
@@ -2629,7 +2900,7 @@ continue_:
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to MonitorFromWindow(): \"%s\", returning\n"),
-                  ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                  ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
     MONITORINFOEX monitor_info_ex_s;
@@ -2640,16 +2911,17 @@ continue_:
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", returning\n"),
-                  ACE_TEXT (Common_Tools::error2String (GetLastError ()).c_str ())));
+                  ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
     if (ACE_OS::strcmp (ACE_TEXT ((*iterator_5).second.device.c_str ()),
                         ACE_TEXT (monitor_info_ex_s.szDevice)))
-    {
+    { // --> the drawing area is NOT currently displayed on the selected monitor
+create_window:
       // *NOTE*: center the window on the display device
       unsigned int delta_x =
        abs (abs ((*iterator_5).second.area.left) -
-            rectangle_s.width) / 2;
+                 rectangle_s.width) / 2;
       (*iterator_5).second.area.left =
         ((*iterator_5).second.area.left +
          delta_x);
@@ -2666,49 +2938,45 @@ continue_:
         ((*iterator_5).second.area.top +
          rectangle_s.height);
 
-create_window:
-      DWORD window_style = (WS_OVERLAPPED     |
-                            WS_CAPTION        |
-                            (WS_CLIPSIBLINGS  |
-                             WS_CLIPCHILDREN) |
-                            WS_SYSMENU        |
-                            //WS_THICKFRAME     |
-                            WS_MINIMIZEBOX    |
-                            WS_VISIBLE/*
-                            WS_MAXIMIZEBOX*/);
-      DWORD window_style_ex = (WS_EX_APPWINDOW |
-                               WS_EX_WINDOWEDGE);
+      //DWORD window_style = (WS_OVERLAPPED     |
+      //                      WS_CAPTION        |
+      //                      (WS_CLIPSIBLINGS  |
+      //                       WS_CLIPCHILDREN) |
+      //                      WS_SYSMENU        |
+      //                      //WS_THICKFRAME     |
+      //                      WS_MINIMIZEBOX    |
+      //                      WS_VISIBLE/*
+      //                      WS_MAXIMIZEBOX*/);
+      //DWORD window_style_ex = (WS_EX_APPWINDOW |
+      //                         WS_EX_WINDOWEDGE);
 
-      (*iterator_5).second.window =
-        CreateWindowEx (window_style_ex,               // dwExStyle
-                        ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpClassName
-                        ACE_TEXT_ALWAYS_CHAR ("EDIT"), // lpWindowName
-                        window_style,                  // dwStyle
-                        (*iterator_5).second.area.left, // x
-                        (*iterator_5).second.area.top,  // y
-                        //rectangle_s.width,             // nWidth
-                        //rectangle_s.height,            // nHeight
-                        video_info_header_p->bmiHeader.biWidth,
-                        abs (video_info_header_p->bmiHeader.biHeight),
-                        //parent_window_handle,          // hWndParent
-                        NULL,
-                        NULL,                          // hMenu
-                        GetModuleHandle (NULL),        // hInstance
-                        NULL);                         // lpParam
-      if (!(*iterator_5).second.window)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to CreateWindow(): \"%s\", returning\n"),
-                    ACE_TEXT (Common_Tools::error2String (::GetLastError ()).c_str ())));
-        goto error;
-      } // end IF
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("opened window (size: %ux%u, handle: 0x%@)...\n"),
-                  rectangle_s.width, rectangle_s.height,
-                  (*iterator_5).second.window));
+      //(*iterator_5).second.window =
+      //  CreateWindowEx (window_style_ex,                                                                       // dwExStyle
+      //                  ACE_TEXT_ALWAYS_CHAR ("EDIT"),                                                         // lpClassName
+      //                  ACE_TEXT_ALWAYS_CHAR ("EDIT"),                                                         // lpWindowName
+      //                  window_style,                                                                          // dwStyle
+      //                  (*iterator_5).second.area.left, (*iterator_5).second.area.top,                         // x, y
+      //                  //rectangle_s.width, rectangle_s.height,                        // width, height
+      //                  video_info_header_p->bmiHeader.biWidth, abs (video_info_header_p->bmiHeader.biHeight), // width, height
+      //                  //parent_window_handle,                                                                // hWndParent
+      //                  NULL,                                                                                  // hWndParent
+      //                  NULL,                                                                                  // hMenu
+      //                  GetModuleHandle (NULL),                                                                // hInstance
+      //                  NULL);                                                                                 // lpParam
+      //if (!(*iterator_5).second.window)
+      //{
+      //  ACE_DEBUG ((LM_ERROR,
+      //              ACE_TEXT ("failed to CreateWindow(): \"%s\", returning\n"),
+      //              ACE_TEXT (Common_Tools::errorToString (::GetLastError ()).c_str ())));
+      //  goto error;
+      //} // end IF
+      //ACE_DEBUG ((LM_DEBUG,
+      //            ACE_TEXT ("opened window (size: %ux%u, handle: 0x%@)...\n"),
+      //            rectangle_s.width, rectangle_s.height,
+      //            (*iterator_5).second.window));
     } // end IF
     else
-    {
+    { // --> the drawing area is currently displayed on the selected monitor
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       (*iterator_5).second.area.bottom = rectangle_s.y + rectangle_s.height;
       (*iterator_5).second.area.left = rectangle_s.x;
@@ -2946,7 +3214,6 @@ error:
 
   if (stop_progress_reporting)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
-
     cb_data_p->progressData->completedActions.insert (cb_data_p->progressData->eventSourceID);
   } // end IF
 
@@ -2996,18 +3263,235 @@ action_cut_activate_cb (GtkAction* action_in,
   ACE_ASSERT (cb_data_p);
 }
 
-//G_MODULE_EXPORT void
-//combobox_destination_changed_cb (GtkComboBox* comboBox_in,
-//                                 gpointer userData_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("::combobox_destination_changed_cb"));
-//
-//  struct ARDrone_GtkCBData* cb_data_p =
-//      static_cast<struct ARDrone_GtkCBData*> (userData_in);
-//
-//  // sanity check(s)
-//  ACE_ASSERT (cb_data_p);
-//}
+G_MODULE_EXPORT void
+combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::combobox_wlan_interface_changed_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  bool result = false;
+  GtkCheckButton* check_button_p =
+      GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
+  ACE_ASSERT (check_button_p);
+  if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p)))
+    return;
+
+  GtkTreeIter iterator_2;
+  if (!gtk_combo_box_get_active_iter (comboBox_in,
+                                      &iterator_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_combo_box_get_active_iter(), returning\n")));
+    return;
+  } // end IF
+  GtkListStore* list_store_p =
+      GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_WLAN_INTERFACE)));
+  ACE_ASSERT (list_store_p);
+  GValue value;
+#if GTK_CHECK_VERSION (3,0,0)
+  value = G_VALUE_INIT;
+#else
+  g_value_init (&value, G_TYPE_STRING);
+#endif
+  gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                            &iterator_2,
+                            1, &value);
+  ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct _GUID GUID_s =
+    Common_Tools::StringToGUID (ACE_TEXT_ALWAYS_CHAR (g_value_get_string (&value)));
+#endif
+  GtkSpinner* spinner_p = NULL;
+  GtkEntry* entry_p = NULL;
+  GtkToggleButton* toggle_button_p = NULL;
+
+  ACE_INET_Addr local_sap, peer_sap;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  HANDLE handle_client = NULL;
+  // *TODO*: support WinXP
+  DWORD maximum_client_version =
+    WLAN_API_MAKE_VERSION (2, 0); // *NOTE*: 1 for <= WinXP_SP2
+  DWORD current_version = 0;
+  DWORD result_2 = WlanOpenHandle (maximum_client_version,
+                                   NULL,
+                                   &current_version,
+                                   &handle_client);
+  if (result_2 != ERROR_SUCCESS)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanOpenHandle(): \"%s\", returning\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+    return;
+  } // end IF
+
+  DWORD data_size = 0;
+  PVOID data_p = NULL;
+  struct _WLAN_CONNECTION_ATTRIBUTES* wlan_connection_attributes_p = NULL;
+  result_2 =
+    WlanQueryInterface (handle_client,
+                        &GUID_s,
+                        wlan_intf_opcode_current_connection,
+                        NULL,
+                        &data_size,
+                        &data_p,
+                        NULL);
+  if ((result_2 != ERROR_SUCCESS) &&
+      (result_2 != ERROR_INVALID_STATE)) // <-- not connected
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanQueryInterface(wlan_intf_opcode_current_connection): \"%s\", returning\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+    goto clean;
+  } // end IF
+  if (result_2 == ERROR_INVALID_STATE)
+    goto continue_;
+  ACE_ASSERT (data_size == sizeof (struct _WLAN_CONNECTION_ATTRIBUTES));
+  wlan_connection_attributes_p =
+    static_cast<struct _WLAN_CONNECTION_ATTRIBUTES*> (data_p);
+  if (ACE_OS::memcmp (cb_data_p->SSID.c_str (),
+                      wlan_connection_attributes_p->wlanAssociationAttributes.dot11Ssid.ucSSID,
+                      wlan_connection_attributes_p->wlanAssociationAttributes.dot11Ssid.uSSIDLength) == 0)
+  {
+    result = true;
+    goto clean; // already connected --> nothing to do
+  } // end IF
+  WlanFreeMemory (data_p);
+  data_p = NULL;
+
+continue_:
+  DWORD notification_mask = WLAN_NOTIFICATION_SOURCE_ALL;
+  DWORD previous_notification_mask = 0;
+  result_2 = WlanRegisterNotification (handle_client,
+                                       notification_mask,
+                                       FALSE,
+                                       ardrone_wlan_notification_cb,
+                                       userData_in,
+                                       NULL,
+                                       &previous_notification_mask);
+  if (result_2 != ERROR_SUCCESS)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanRegisterNotification(): \"%s\", returning\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+    goto clean;
+  } // end IF
+#endif
+
+  spinner_p =
+    GTK_SPINNER (gtk_builder_get_object ((*iterator).second.second,
+                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINNER)));
+  ACE_ASSERT (spinner_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
+                            true);
+  gtk_spinner_start (spinner_p);
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (!Net_Common_Tools::associateWithWLAN (GUID_s,
+#else
+  if (!Net_Common_Tools::associateWithWLAN (cb_data_p->device,
+#endif
+                                            cb_data_p->SSID,
+                                            peer_sap,
+                                            local_sap))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::associateWithWLAN(\"%s\"/\"%s\"), aborting\n"),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                ACE_TEXT (Net_Common_Tools::interfaceToString (GUID_s).c_str ()),
+#else
+                ACE_TEXT (cb_data_p->device.c_str ()),
+#endif
+                ACE_TEXT (cb_data_p->SSID.c_str ())));
+    goto clean;
+  } // end IF
+  ACE_DEBUG ((LM_ERROR,
+              ACE_TEXT ("\"%s\": associated with SSID \"%s\" (access point IP: %s, local IP: %s)\n"),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+              ACE_TEXT (Net_Common_Tools::interfaceToString (GUID_s).c_str ()),
+#else
+              ACE_TEXT (cb_data_p->device.c_str ()),
+#endif
+              ACE_TEXT (cb_data_p->SSID.c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_sap).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_sap).c_str ())));
+
+  entry_p =
+    GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
+  ACE_ASSERT (entry_p);
+  gtk_entry_set_text (entry_p,
+                      Net_Common_Tools::IPAddressToString (peer_sap,
+                                                           true).c_str ());
+
+  result = true;
+
+clean:
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (data_p)
+    WlanFreeMemory (data_p);
+  result_2 = WlanCloseHandle (handle_client,
+                              NULL);
+  if (result_2 != ERROR_SUCCESS)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ::WlanCloseHandle(): \"%s\", continuing\n"),
+                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
+#endif
+  gtk_spinner_stop (spinner_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
+                            false);
+
+  toggle_button_p =
+    GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_CONNECT)));
+  ACE_ASSERT (toggle_button_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
+                            result);
+}
+
+G_MODULE_EXPORT void
+combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::combobox_display_device_changed_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  GtkComboBox* combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
+  ACE_ASSERT (combo_box_p);
+  GtkListStore* list_store_p =
+    GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
+  ACE_ASSERT (list_store_p);
+  gint n_rows =
+    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
+  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
+  if (n_rows > 0)
+    gtk_combo_box_set_active (combo_box_p, 0);
+}
 
 G_MODULE_EXPORT void
 entry_address_delete_text_cb (GtkEditable* editable_in,
@@ -3237,6 +3721,26 @@ places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
 #endif
 
 G_MODULE_EXPORT void
+togglebutton_fullscreen_toggled_cb (GtkToggleButton* toggleButton_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::togglebutton_fullscreen_toggled_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (toggleButton_in);
+  ACE_ASSERT (cb_data_p);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  bool is_active = gtk_toggle_button_get_active (toggleButton_in);
+}
+G_MODULE_EXPORT void
 togglebutton_save_toggled_cb (GtkToggleButton* toggleButton_in,
                               gpointer userData_in)
 {
@@ -3267,11 +3771,11 @@ togglebutton_save_toggled_cb (GtkToggleButton* toggleButton_in,
 //------------------------------------------------------------------------------
 
 G_MODULE_EXPORT gboolean
-drawingarea_configure_cb (GtkWidget* widget_in,
-                          GdkEvent* event_in,
-                          gpointer userData_in)
+drawingarea_video_configure_cb (GtkWidget* widget_in,
+                                GdkEvent* event_in,
+                                gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_configure_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_video_configure_cb"));
 
   // sanity check(s)
   ACE_ASSERT (widget_in);
@@ -3310,14 +3814,12 @@ drawingarea_configure_cb (GtkWidget* widget_in,
   //                                    &(*iterator_2).second.area.x,
   //                                    &(*iterator_2).second.area.y);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //cb_data_p->configuration->moduleHandlerConfiguration.area.left =
-  //  event_in->configure.x;
-  //cb_data_p->configuration->moduleHandlerConfiguration.area.right =
-  //  event_in->configure.x + event_in->configure.width;
-  //cb_data_p->configuration->moduleHandlerConfiguration.area.top =
-  //  event_in->configure.y;
-  //cb_data_p->configuration->moduleHandlerConfiguration.area.bottom =
-  //  event_in->configure.y + event_in->configure.height;
+  (*iterator_2).second.area.left = event_in->configure.x;
+  (*iterator_2).second.area.right =
+    event_in->configure.x + event_in->configure.width;
+  (*iterator_2).second.area.top = event_in->configure.y;
+  (*iterator_2).second.area.bottom =
+    event_in->configure.y + event_in->configure.height;
 #else
   (*iterator_2).second.area.x = event_in->configure.x;
   (*iterator_2).second.area.y = event_in->configure.y;
@@ -3409,11 +3911,11 @@ drawingarea_configure_cb (GtkWidget* widget_in,
   return TRUE;
 }
 G_MODULE_EXPORT gboolean
-drawingarea_draw_cb (GtkWidget* widget_in,
-                     cairo_t* context_in,
-                     gpointer userData_in)
+drawingarea_video_draw_cb (GtkWidget* widget_in,
+                           cairo_t* context_in,
+                           gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_draw_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_video_draw_cb"));
 
   struct ARDrone_GtkCBData* cb_data_p =
       reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -3448,10 +3950,10 @@ drawingarea_draw_cb (GtkWidget* widget_in,
   return TRUE;
 }
 G_MODULE_EXPORT void
-drawingarea_realize_cb (GtkWidget* widget_in,
-                        gpointer userData_in)
+drawingarea_video_realize_cb (GtkWidget* widget_in,
+                              gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_realize_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_video_realize_cb"));
 
   // sanity check(s)
   ACE_ASSERT (widget_in);
@@ -3519,17 +4021,17 @@ key_cb (GtkWidget* widget_in,
 
 continue_:
       // sanity check(s)
-      ACE_ASSERT (cb_data_p->liveVideoStream);
-      if (!cb_data_p->liveVideoStream->isRunning ())
+      ACE_ASSERT (cb_data_p->videoStream);
+      if (!cb_data_p->videoStream->isRunning ())
         break;
 
       const Stream_Module_t* module_p =
-        cb_data_p->liveVideoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
+        cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR ("Display"));
       if (!module_p)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_IStream::find(\"Display\"), aborting\n"),
-                    ACE_TEXT (cb_data_p->liveVideoStream->name ().c_str ())));
+                    ACE_TEXT (cb_data_p->videoStream->name ().c_str ())));
         return FALSE;
       } // end IF
       Stream_Module_Visualization_IFullscreen* ifullscreen_p =
@@ -3558,11 +4060,11 @@ continue_:
   return TRUE; // done (do not propagate further)
 }
 gboolean
-drawingarea_key_press_event_cb (GtkWidget* widget_in,
-                                GdkEventKey* event_in,
-                                gpointer userData_in)
+drawingarea_video_key_press_event_cb (GtkWidget* widget_in,
+                                      GdkEventKey* event_in,
+                                      gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_key_press_event_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_video_key_press_event_cb"));
 
   return key_cb (widget_in, event_in, userData_in);
 };

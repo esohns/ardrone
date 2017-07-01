@@ -38,6 +38,7 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
  , GtkCBData_ (GtkCBData_in)
  , MAVLinkNotify_ (NULL)
  , NavDataNotify_ (NULL)
+ , NavDataSessionId_ (0)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
@@ -63,9 +64,12 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
   ACE_ASSERT (GtkCBData_);
 
   if (sessionData_in.isNavData)
+    NavDataSessionId_ = sessionID_in;
+
+  if (sessionData_in.isNavData ||
+      GtkCBData_->videoOnly)
   {
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
       guint event_source_id = g_idle_add (idle_session_start_cb,
                                           GtkCBData_);
       if (event_source_id == 0)
@@ -136,7 +140,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   {
     case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
       message_event = false; break; // do not signal outbound messages
-    case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
+    case ARDRONE_MESSAGE_VIDEOFRAME:
       refresh_display = true; break;
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
     { ACE_ASSERT (MAVLinkNotify_);
@@ -179,7 +183,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 
   if (message_event)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
     GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
   } // end lock scope
 
@@ -272,10 +275,12 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
-  ACE_UNUSED_ARG (sessionID_in);
+  // sanity check(s)
+  ACE_ASSERT (GtkCBData_);
 
+  if ((sessionID_in == NavDataSessionId_) ||
+      GtkCBData_->videoOnly)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
     GtkCBData_->eventStack.push_back (ARDRONE_EVENT_DISCONNECT);
 
     guint event_source_id = g_idle_add (idle_session_end_cb,

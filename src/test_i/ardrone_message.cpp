@@ -53,7 +53,7 @@ ARDrone_Message::ARDrone_Message (ACE_Data_Block* dataBlock_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::ARDrone_Message"));
 
-  inherited::type_ = ARDRONE_MESSAGE_LIVEVIDEOFRAME;
+  inherited::type_ = ARDRONE_MESSAGE_VIDEOFRAME;
 }
 
 // *NOTE*: this is implicitly invoked by duplicate()
@@ -309,7 +309,7 @@ ARDrone_Message::dump_state (void) const
 
   switch (inherited::type_)
   {
-    case ARDRONE_MESSAGE_LIVEVIDEOFRAME:
+    case ARDRONE_MESSAGE_VIDEOFRAME:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),

@@ -45,7 +45,7 @@
 extern const char stream_name_string_[];
 
 template <typename SourceModuleType>
-class ARDrone_LiveVideoStream_T
+class ARDrone_VideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         stream_name_string_,
@@ -83,8 +83,8 @@ class ARDrone_LiveVideoStream_T
                         ARDrone_SessionMessage> inherited;
 
  public:
-  ARDrone_LiveVideoStream_T ();
-  virtual ~ARDrone_LiveVideoStream_T ();
+  ARDrone_VideoStream_T ();
+  virtual ~ARDrone_VideoStream_T ();
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -99,8 +99,8 @@ class ARDrone_LiveVideoStream_T
   virtual void report () const;
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoStream_T (const ARDrone_LiveVideoStream_T&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_LiveVideoStream_T& operator= (const ARDrone_LiveVideoStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T (const ARDrone_VideoStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T& operator= (const ARDrone_VideoStream_T&))
 
   // *TODO*: re-consider this API
   void ping ();
@@ -111,8 +111,8 @@ class ARDrone_LiveVideoStream_T
 #endif
 };
 
-typedef ARDrone_LiveVideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_LiveVideoStream_t;
-typedef ARDrone_LiveVideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchLiveVideoStream_t;
+typedef ARDrone_VideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
+typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
 
 //////////////////////////////////////////
 

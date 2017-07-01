@@ -69,6 +69,7 @@ class ARDrone_EventHandler
   struct ARDrone_GtkCBData* GtkCBData_;
   ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
   ARDrone_INavDataNotify*   NavDataNotify_;
+  Stream_SessionId_t        NavDataSessionId_;
 };
 
 #endif

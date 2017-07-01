@@ -35,7 +35,11 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+#else
                              SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
+#endif
  : inherited (stream_in)
  , allocator_ (NULL)
  , buffer_ (NULL)
@@ -274,7 +278,7 @@ next:
   else
     message_block_2 = NULL;
   ACE_ASSERT (buffer_->total_length () == header_.payload_size);
-  buffer_->set (ARDRONE_MESSAGE_LIVEVIDEOFRAME);
+  buffer_->set (ARDRONE_MESSAGE_VIDEOFRAME);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {

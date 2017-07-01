@@ -45,6 +45,9 @@ endif ()
 add_definitions (-DACE_HAS_DLL)
 
 if (WIN32)
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  add_definitions (-DDEBUG) # activate DirectShow debug logging
+ endif ()
  set (DIRECTSHOW_BASECLASSES_DIRECTORY "$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
 endif ()
 
@@ -403,7 +406,7 @@ install (FILES
 
 if (UNIX)
  create_target_launcher (${EXECUTABLE}
-                         ARGS "-l -p 5555 -r -t"
+                         ARGS "-l -t"
 #                         FORWARD_ARGS
                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib
                                               ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin
@@ -425,7 +428,7 @@ elseif (WIN32)
 
  if (GTK3_SUPPORT)
   create_target_launcher (${EXECUTABLE}
-                          ARGS "-c -l -p 5555 -t"
+                          ARGS "-c -g -l -t"
 #                        FORWARD_ARGS
                           RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
 #                                              ${PROJECT_SOURCE_DIR}/../openssl/bin
@@ -450,7 +453,7 @@ elseif (WIN32)
                           ENVIRONMENT ${ENVIRONMENT})
  else ()
   create_target_launcher (${EXECUTABLE}
-                          ARGS "-c -l -p 5555 -t"
+                          ARGS "-c -l -t"
 #                        FORWARD_ARGS
                           RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
 #                                              ${PROJECT_SOURCE_DIR}/../openssl/bin

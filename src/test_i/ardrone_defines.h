@@ -58,17 +58,20 @@
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                "button_about"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_CLEAR                "button_clear"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_QUIT                 "button_quit"
-#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN      "checkbutton_fullscreen"
+#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE       "checkbutton_associate"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH          "checkbutton_asynch"
+#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN      "checkbutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE            "checkbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE     "combobox_display_device"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT     "combobox_display_format"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT        "combobox_save_format"
+#define ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE     "combobox_wlan_interface"
 //#define ARDRONE_UI_WIDGET_NAME_CURVE                      "curve"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT                "dialog_about"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_MAIN                 "dialog_main"
-#define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO           "drawing_area"
+#define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO           "drawingarea_video"
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS               "entry_address"
+#define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                  "entry_SSID"
 #define ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE      "filechooserbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION         "frame_configuration"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS               "frame_options"
@@ -76,6 +79,7 @@
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE    "liststore_display_device"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT    "liststore_display_format"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT       "liststore_save_format"
+#define ARDRONE_UI_WIDGET_NAME_LISTSTORE_WLAN_INTERFACE    "liststore_wlan_interface"
 #define ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR                "progress_bar"
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS      "spinbutton_connections"
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_BUFFERSIZE       "spinbutton_buffersize"
@@ -83,6 +87,7 @@
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES     "spinbutton_data_messages"
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT             "spinbutton_port"
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES  "spinbutton_session_messages"
+#define ARDRONE_UI_WIDGET_NAME_SPINNER                     "spinner"
 #define ARDRONE_UI_WIDGET_NAME_STATUSBAR                   "statusbar"
 #define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT        "toggleaction_connect"
@@ -97,6 +102,9 @@
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION           "information"
 
 // *** network-related ***
+#define ARDRONE_DEFAULT_WLAN_SSID                          "ardrone2_291480"
+#define ARDRONE_DEFAULT_IP_ADDRESS                         "192.168.1.1"
+
 #define ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS         5
 #define ARDRONE_PORT_TCP_CAPTURE                           5557
 #define ARDRONE_PORT_TCP_CONSOLE                           5558
@@ -162,6 +170,7 @@
 #define ARDRONE_CONTROL_LOG_FILE_PREFIX                    "ardrone_control"
 #define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"
 #define ARDRONE_NAVDATA_LOG_FILE_PREFIX                    "ardrone_navdata"
-#define ARDRONE_VIDEO_FILE_NAME                            "ardrone.rgb"
+#define ARDRONE_VIDEO_FILE_NAME                            "ardrone.avi"
+#define ARDRONE_VIDEO_RAW_FILE_NAME                        "ardrone.rgb"
 
 #endif // #ifndef ARDRONE_DEFINES_H
