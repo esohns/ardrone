@@ -77,7 +77,7 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
-  if (inherited::configuration_.configuration_.useReactor)
+  if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_TCPSource_Module (this,
                                                      ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
@@ -119,7 +119,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     return false;
   } // end IF
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -197,7 +197,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
 
@@ -381,7 +381,7 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::load"));
 
   Stream_Module_t* module_p = NULL;
-  if (inherited::configuration_.configuration_.useReactor)
+  if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_Controller_Module (this,
                                                       ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
@@ -430,7 +430,7 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_.configuration_.useReactor)
+  if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
@@ -478,7 +478,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -513,7 +513,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ()),
+                ACE_TEXT (inherited::configuration_->name_.c_str ()),
                 ACE_TEXT ("NavDataSource")));
     goto error;
   } // end IF
@@ -526,7 +526,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_UDPSource> failed, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
     sourceWriter_impl_p->set (&(inherited::state_));
@@ -539,7 +539,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
     asynchSourceWriter_impl_p->set (&(inherited::state_));
@@ -557,7 +557,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ()),
+                ACE_TEXT (inherited::configuration_->name_.c_str ()),
                 ACE_TEXT ("NavDataTarget")));
     goto error;
   } // end IF
@@ -568,7 +568,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: dynamic_cast<ARDrone_IController> failed, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
 
@@ -577,7 +577,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
 
@@ -588,7 +588,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
 
@@ -863,7 +863,7 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_.configuration_.useReactor)
+  if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
                                                      ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
@@ -909,7 +909,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -960,7 +960,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ()),
+                ACE_TEXT (inherited::configuration_->name_.c_str ()),
                 ACE_TEXT ("MAVLinkSource")));
     goto error;
   } // end IF
@@ -973,7 +973,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_UDPSource> failed, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
     sourceWriter_impl_p->set (&(inherited::state_));
@@ -986,7 +986,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
     asynchSourceWriter_impl_p->set (&(inherited::state_));
@@ -1004,7 +1004,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
 
@@ -1015,7 +1015,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
 

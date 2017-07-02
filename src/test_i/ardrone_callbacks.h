@@ -67,8 +67,11 @@ G_MODULE_EXPORT void togglebutton_fullscreen_toggled_cb (GtkToggleButton*, gpoin
 G_MODULE_EXPORT void togglebutton_save_toggled_cb (GtkToggleButton*, gpointer);
 //G_MODULE_EXPORT void combobox_save_format_changed_cb (GtkComboBox*, gpointer);
 //------------------------------------------------------------------------------
-
+#if GTK_CHECK_VERSION (3,0,0)
+G_MODULE_EXPORT void drawingarea_video_size_allocate_cb (GtkWidget*, GdkRectangle*, gpointer);
+#else
 G_MODULE_EXPORT gboolean drawingarea_video_configure_cb (GtkWidget*, GdkEvent*, gpointer);
+#endif
 G_MODULE_EXPORT gboolean drawingarea_video_draw_cb (GtkWidget*, cairo_t*, gpointer);
 G_MODULE_EXPORT void drawingarea_video_realize_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gboolean key_cb (GtkWidget*, GdkEventKey*, gpointer);

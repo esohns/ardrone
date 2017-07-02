@@ -1171,6 +1171,8 @@ do_work (int argc_in,
 
   modulehandler_configuration.push = true;
 #else
+  modulehandler_configuration.frameRate.den = 1;
+  modulehandler_configuration.frameRate.num = 30;
   modulehandler_configuration.pixelBufferLock = &CBData_in.lock;
 #endif
   modulehandler_configuration.connectionConfigurations =
@@ -1830,7 +1832,7 @@ ACE_TMAIN (int argc_in,
     configuration.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
   ACE_ASSERT (video_streamconfiguration_iterator != configuration.streamConfigurations.end ());
   (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                       modulehandler_configuration));
+                                                                       ARDrone_ModuleHandlerConfiguration ()));
   video_modulehandlerconfiguration_iterator =
     (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (video_modulehandlerconfiguration_iterator != (*video_streamconfiguration_iterator).second.end ());

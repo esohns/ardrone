@@ -31,6 +31,8 @@
 #include <strmif.h>
 #include <minwindef.h>
 //#include <mfidl.h>
+#else
+#include <linux/videodev2.h>
 #endif
 
 #ifdef __cplusplus
@@ -39,6 +41,8 @@ extern "C"
 #include "libavformat/avformat.h"
 }
 #endif /* __cplusplus */
+
+#include "ace/OS.h"
 
 #include "common_ui_defines.h"
 
@@ -99,8 +103,8 @@ struct ARDrone_SessionData
    , windowController (NULL)
 #else
    , format (AV_PIX_FMT_RGBA)
-//   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
-//   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
+   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
+   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
    , isNavData (false)
    , state (NULL)
@@ -188,8 +192,8 @@ struct ARDrone_SessionData
   IVideoWindow*                   windowController;
 #else
   enum AVPixelFormat              format;
-//  unsigned int                    height;
-//  unsigned int                    width;
+  unsigned int                    height;
+  unsigned int                    width;
 #endif
 
   bool                            isNavData;
@@ -273,19 +277,16 @@ struct ARDrone_ModuleHandlerConfiguration
    , area ()
    // *NOTE*: GtkPixbuf native format is RGBA
    , format (AV_PIX_FMT_RGBA)
-//   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
+   , frameRate ()
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
    , sourceFormat ()
-//   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
    , window (NULL)
 #endif
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
    , inbound (true)
    , printProgressDot (false)
    , pushStatisticMessages (true)
-   //, socketConfigurations (NULL)
-   //, socketHandlerConfiguration (NULL)
    , streamConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
@@ -335,11 +336,10 @@ struct ARDrone_ModuleHandlerConfiguration
 #else
   GdkRectangle                                   area;            // display module
   enum AVPixelFormat                             format;          // display module
-//  unsigned int                                   height;          // display module
+  struct AVRational                              frameRate;       // AVI encoder module
   GdkPixbuf*                                     pixelBuffer;     // display module
   ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
   struct _cairo_rectangle_int                    sourceFormat;    // H264 decoder module
-//  unsigned int                                   width;           // display module
   GdkWindow*                                     window;          // display module
 #endif
   bool                                           fullScreen;          // display module
