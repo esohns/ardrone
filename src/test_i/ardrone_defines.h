@@ -69,6 +69,7 @@
 //#define ARDRONE_UI_WIDGET_NAME_CURVE                      "curve"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT                "dialog_about"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_MAIN                 "dialog_main"
+#define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN      "drawingarea_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO           "drawingarea_video"
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS               "entry_address"
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                  "entry_SSID"
@@ -93,6 +94,7 @@
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT        "toggleaction_connect"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_CONNECT        "togglebutton_connect"
 //#define ARDRONE_UI_WIDGET_NAME_VBOX_SAVE_OPTIONS           "vbox_save_options"
+#define ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN           "window_fullscreen"
 
 #define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
 #define ARDRONE_UI_GTK_PANGO_LOG_COLOR_BASE                "#FFFFFF" // white

@@ -24,7 +24,8 @@
 #include <cmath>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#include "math.h"
+#else
+#include <ifaddrs.h>
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -389,9 +390,41 @@ error:
                 ACE_TEXT ("failed to ::WlanCloseHandle(): \"%s\", continuing\n"),
                 ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
 #else
-  ACE_ASSERT (false);
+#if defined (ACE_HAS_GETIFADDRS)
+  struct ifaddrs* ifaddrs_p = NULL;
+  int result_2 = ::getifaddrs (&ifaddrs_p);
+  if (result_2 == -1)
+  {
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("failed to ::getifaddrs(): \"%m\", aborting\n")));
+    return false;
+  } // end IF
+  ACE_ASSERT (ifaddrs_p);
+
+  for (struct ifaddrs* ifaddrs_2 = ifaddrs_p;
+       ifaddrs_2;
+       ifaddrs_2 = ifaddrs_2->ifa_next)
+  {
+    if (!ifaddrs_2->ifa_addr                                        ||
+        !(ifaddrs_2->ifa_addr->sa_family == AF_INET)                ||
+        !Net_Common_Tools::interfaceIsWireless (ifaddrs_2->ifa_name))
+      continue;
+
+    gtk_list_store_append (listStore_in, &iterator);
+    gtk_list_store_set (listStore_in, &iterator,
+                        0, ACE_TEXT_ALWAYS_CHAR (ifaddrs_2->ifa_name),
+                        -1);
+  } // end FOR
+
+  // clean up
+  ::freeifaddrs (ifaddrs_p);
 
   result = true;
+#else
+  ACE_ASSERT (false);
+  ACE_NOTSUP_RETURN (false);
+  ACE_NOTREACHED (return false;)
+#endif /* ACE_HAS_GETIFADDRS */
 #endif
 
   return result;
@@ -2612,11 +2645,6 @@ continue_:
   struct tagVIDEOINFOHEADER* video_info_header_2 =
     reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.format->pbFormat);
 #endif
-  drawing_area_p =
-    GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
-  ACE_ASSERT (drawing_area_p);
-
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
@@ -2690,7 +2718,6 @@ continue_:
   display_p = gdk_monitor_get_display (monitor_p);
   ACE_ASSERT (display_p);
   screen_p = gdk_display_get_default_screen (display_p);
-  ACE_ASSERT (screen_p);
 #else
   for (GSList* list_2 = list_p;
        list_2;
@@ -2802,7 +2829,8 @@ continue_:
   video_info_header_p->bmiHeader.biSizeImage =
     DIBSIZE (video_info_header_p->bmiHeader);
   video_info_header_p->dwBitRate =
-    (video_info_header_p->bmiHeader.biWidth * abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
+    (video_info_header_p->bmiHeader.biWidth         *
+     abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
   (*iterator_5).second.filterConfiguration->pinConfiguration->format->lSampleSize =
     video_info_header_p->bmiHeader.biSizeImage;
   cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
@@ -2814,11 +2842,12 @@ continue_:
 #else
   GtkAllocation rectangle_s;
 #endif
+  drawing_area_p =
+    GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+  ACE_ASSERT (drawing_area_p);
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
                              &rectangle_s);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-#endif
   if ((*iterator_5).second.fullScreen)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2845,39 +2874,27 @@ continue_:
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       video_info_header_2->bmiHeader.biSizeImage;
 #else
-    GtkWidget* widget_p = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    if (!widget_p)
-    {
-      ACE_DEBUG ((LM_CRITICAL,
-                  ACE_TEXT ("failed to gtk_window_new(), returning\n")));
-      goto error;
-    } // end IF
-    gtk_window_set_decorated (GTK_WINDOW (widget_p), FALSE);
-//        gdk_screen_get_root_window (screen_p);
-//    gtk_container_set_border_width (GTK_CONTAINER (widget_p), 10);
-    gtk_widget_realize (widget_p);
-    gtk_widget_show (widget_p);
-//    gtk_window_set_screen (GTK_WINDOW (widget_p), screen_p);
-    // *NOTE*: gtk_widget_get_allocation() does not work on GtkWindows for some
-    //         reason
-//    gtk_widget_get_allocation (widget_p,
-//                               &rectangle_s);
-//    gtk_window_get_size (GTK_WINDOW (widget_p),
-//                         &rectangle_s.width,
-//                         &rectangle_s.height);
-//    rectangle_s.width = gdk_screen_get_width (screen_p);
-//    rectangle_s.height = gdk_screen_get_height (screen_p);
     gdk_screen_get_monitor_geometry (screen_p,
                                      monitor_number,
                                      &rectangle_s);
-    gtk_window_move (GTK_WINDOW (widget_p),
+    GtkWindow* window_p =
+        GTK_WINDOW (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN)));
+    ACE_ASSERT (window_p);
+    gtk_window_present (window_p);
+    gtk_window_move (window_p,
                      rectangle_s.x, rectangle_s.y);
-    gtk_window_fullscreen (GTK_WINDOW (widget_p));
-    (*iterator_5).second.window = gtk_widget_get_window (widget_p);
+    gtk_window_fullscreen (window_p);
+    drawing_area_p =
+        GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)));
+    ACE_ASSERT (drawing_area_p);
+    (*iterator_5).second.window =
+        gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
 #endif
   } // end IF
   else
-  {
+  { // --> not fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     if (!(*iterator_5).second.window)
     {
@@ -3029,54 +3046,29 @@ create_window:
               (*iterator_5).second.area.width,
               (*iterator_5).second.area.height));
 #endif
+  ACE_ASSERT ((*iterator_5).second.window);
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
+  // *NOTE*: the surface / pixel buffer haven't been created yet, as the window
+  //         wasn't 'viewable' during the first 'configure' event
+  //         --> create it now
 #if GTK_CHECK_VERSION (3,0,0)
+  g_signal_emit_by_name (G_OBJECT (drawing_area_p),
+                         ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
+                         &rectangle_s,
+                         userData_in,
+                         &result);
 #else
-  pixbuf_p =
-      gdk_pixbuf_new (GDK_COLORSPACE_RGB,
-                      TRUE,
-                      8,
-                      (*iterator_5).second.area.width, (*iterator_5).second.area.height);
-  if (!pixbuf_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gdk_pixbuf_new(), returning\n")));
-    goto error;
-  } // end IF
-#endif
-  if (cb_data_p->pixelBuffer)
-  {
-    g_object_unref (cb_data_p->pixelBuffer);
-    cb_data_p->pixelBuffer = NULL;
-  } // end IF
-  cb_data_p->pixelBuffer =
-#if GTK_CHECK_VERSION (3,0,0)
-      gdk_pixbuf_get_from_window ((*iterator_5).second.window,
-                                  0, 0,
-                                  (*iterator_5).second.area.width, (*iterator_5).second.area.height);
-#else
-      gdk_pixbuf_get_from_drawable (pixbuf_p,
-                                    GDK_DRAWABLE ((*iterator_5).second.window),
-                                    NULL,
-                                    0, 0,
-                                    0, 0, (*iterator_5).second.area.width, (*iterator_5).second.area.height);
-#endif
-  if (!cb_data_p->pixelBuffer)
-  { // *NOTE*: most probable reason: window is not mapped
-#if GTK_CHECK_VERSION (3,0,0)
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gdk_pixbuf_get_from_window(), returning\n")));
-#else
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gdk_pixbuf_get_from_drawable(), returning\n")));
-
-    gdk_pixbuf_unref (pixbuf_p);
-#endif
-    goto error;
-  } // end IF
-  (*iterator_5).second.pixelBuffer = cb_data_p->pixelBuffer;
+  GdkEventConfigure event_s;
+  event_s.type = GDK_CONFIGURE;
+  event_s.window = (*iterator_5).second.window;
+  event_s.send_event = TRUE;
+  event_s.x = rectangle_s.x; event_s.y = rectangle_s.y;
+  event_s.width = rectangle_s.width; event_s.height = rectangle_s.height;
+  g_signal_emit_by_name (G_OBJECT (drawing_area_p),
+                         ACE_TEXT_ALWAYS_CHAR ("configure-event"),
+                         &event_s,
+                         userData_in,
+                         &result);
 #endif
 
   // update widgets
@@ -3308,7 +3300,11 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                             1, &value);
+#else
+                            0, &value);
+#endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct _GUID GUID_s =
@@ -3388,6 +3384,8 @@ continue_:
                 ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
     goto clean;
   } // end IF
+#else
+
 #endif
 
   spinner_p =
@@ -3770,6 +3768,137 @@ togglebutton_save_toggled_cb (GtkToggleButton* toggleButton_in,
 
 //------------------------------------------------------------------------------
 
+#if GTK_CHECK_VERSION (3,0,0)
+G_MODULE_EXPORT void
+drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
+                                    GdkRectangle* allocation_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::drawingarea_video_size_allocate_cb"));
+
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+  ACE_ASSERT (allocation_in);
+  ACE_ASSERT (userData_in);
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      reinterpret_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->configuration);
+
+  ARDrone_StreamConfigurationsIterator_t iterator =
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
+    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+
+  GdkWindow* window_p = gtk_widget_get_window (widget_in);
+  if (!window_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_widget_get_window(%@), returning\n"),
+                widget_in));
+    return;
+  } // end IF
+
+  // sanity check(s)
+  if (!gdk_window_is_viewable (window_p))
+    return; // window is not (yet) mapped, nothing to do
+
+  // *NOTE*: x,y members are relative to the parent window
+  //         --> no need to translate
+  //  gdk_window_get_origin (gtk_widget_get_window (widget_in),
+  //                         &(*iterator_2).second.area.x,
+  //                         &(*iterator_2).second.area.y);
+  //  gtk_widget_translate_coordinates (widget_in,
+  //                                    gtk_widget_get_toplevel (widget_in),
+  //                                    0, 0,
+  //                                    &(*iterator_2).second.area.x,
+  //                                    &(*iterator_2).second.area.y);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  (*iterator_2).second.area.left = event_in->configure.x;
+  (*iterator_2).second.area.right =
+    event_in->configure.x + event_in->configure.width;
+  (*iterator_2).second.area.top = event_in->configure.y;
+  (*iterator_2).second.area.bottom =
+    event_in->configure.y + event_in->configure.height;
+#else
+  (*iterator_2).second.area = *allocation_in;
+#endif
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if GTK_CHECK_VERSION (3,0,0)
+#else
+  GdkPixbuf* pixbuf_p =
+      gdk_pixbuf_new (GDK_COLORSPACE_RGB,
+                      TRUE,
+                      8,
+                      (*iterator_2).second.area.width, (*iterator_2).second.area.height);
+  if (!pixbuf_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gdk_pixbuf_new(), returning\n")));
+    return;
+  } // end IF
+#endif
+
+  { ACE_ASSERT (&cb_data_p->lock == (*iterator_2).second.pixelBufferLock);
+    ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+    if (cb_data_p->pixelBuffer)
+    {
+      g_object_unref (cb_data_p->pixelBuffer);
+      cb_data_p->pixelBuffer = NULL;
+    } // end IF
+//    (*iterator_2).second.pixelBuffer = NULL;
+    cb_data_p->pixelBuffer =
+#if GTK_CHECK_VERSION (3,0,0)
+        gdk_pixbuf_get_from_window (window_p,
+                                    0, 0,
+                                    allocation_in->width, allocation_in->height);
+#else
+        gdk_pixbuf_get_from_drawable (pixbuf_p,
+                                      GDK_DRAWABLE (window_p),
+                                      NULL,
+                                      0, 0,
+                                      0, 0, allocation_in->width, allocation_in->height);
+#endif
+    if (!cb_data_p->pixelBuffer)
+    {
+#if GTK_CHECK_VERSION (3,0,0)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to gdk_pixbuf_get_from_window(%@), returning\n"),
+                  window_p));
+#else
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to gdk_pixbuf_get_from_drawable(%@), returning\n"),
+                  GDK_DRAWABLE (window_p)));
+
+      gdk_pixbuf_unref (pixbuf_p);
+#endif
+      return;
+    } // end IF
+    (*iterator_2).second.pixelBuffer = cb_data_p->pixelBuffer;
+
+//    GHashTable* hash_table_p = gdk_pixbuf_get_options (cb_data_p->pixelBuffer);
+//    GHashTableIter iterator;
+//    g_hash_table_iter_init (&iterator, hash_table_p);
+//    gpointer key, value;
+//    for (unsigned int i = 0;
+//         g_hash_table_iter_next (iterator, &key, &value);
+//         ++i)
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("%u: \"\" --> \"\"\n"),
+//                  i,
+//                  static_cast<gchar*> (key),
+//                  static_cast<gchar*> (value)));
+  } // end lock scope
+#endif
+}
+#else
 G_MODULE_EXPORT gboolean
 drawingarea_video_configure_cb (GtkWidget* widget_in,
                                 GdkEvent* event_in,
@@ -3789,7 +3918,8 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
 #if defined (GTK3_SUPPORT)
   ACE_ASSERT (gdk_event_get_event_type (event_in) == GDK_CONFIGURE);
 #else
-  ACE_ASSERT (event_in->type == GDK_CONFIGURE);
+  if (event_in->type != GDK_CONFIGURE)
+    return FALSE;
 #endif
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
@@ -3800,8 +3930,19 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
     (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_2 != (*iterator).second.end ());
-  if ((*iterator_2).second.fullScreen)
-    return TRUE; // nothing to do
+
+  GdkWindow* window_p = gtk_widget_get_window (widget_in);
+  if (!window_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_widget_get_window(%@), aborting\n"),
+                widget_in));
+    return TRUE;
+  } // end IF
+
+  // sanity check(s)
+  if (!gdk_window_is_viewable (window_p))
+    return TRUE; // window is not (yet) mapped, nothing to do
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate
@@ -3840,30 +3981,18 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_pixbuf_new(), aborting\n")));
-    return FALSE;
+    return TRUE;
   } // end IF
 #endif
-  GdkWindow* window_p = gtk_widget_get_window (widget_in);
-  if (!window_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gtk_widget_get_window(0x%@), aborting\n"),
-                widget_in));
 
-#if GTK_CHECK_VERSION (3,0,0)
-#else
-    gdk_pixbuf_unref (pixbuf_p);
-#endif
-
-    return FALSE;
-  } // end IF
-
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
+  { ACE_ASSERT (&cb_data_p->lock == (*iterator_2).second.pixelBufferLock);
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, TRUE);
     if (cb_data_p->pixelBuffer)
     {
       g_object_unref (cb_data_p->pixelBuffer);
       cb_data_p->pixelBuffer = NULL;
     } // end IF
+//    (*iterator_2).second.pixelBuffer = NULL;
     cb_data_p->pixelBuffer =
 #if GTK_CHECK_VERSION (3,0,0)
         gdk_pixbuf_get_from_window (window_p,
@@ -3877,7 +4006,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
                                       0, 0, event_in->configure.width, event_in->configure.height);
 #endif
     if (!cb_data_p->pixelBuffer)
-    { // *NOTE*: most probable reason: window is not (yet) mapped
+    {
 #if GTK_CHECK_VERSION (3,0,0)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to gdk_pixbuf_get_from_window(%@), aborting\n"),
@@ -3887,9 +4016,9 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
                   ACE_TEXT ("failed to gdk_pixbuf_get_from_drawable(%@), aborting\n"),
                   GDK_DRAWABLE (window_p)));
 
-    gdk_pixbuf_unref (pixbuf_p);
+      gdk_pixbuf_unref (pixbuf_p);
 #endif
-      return FALSE;
+      return TRUE;
     } // end IF
     (*iterator_2).second.pixelBuffer = cb_data_p->pixelBuffer;
 
@@ -3910,6 +4039,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
 
   return TRUE;
 }
+#endif
 G_MODULE_EXPORT gboolean
 drawingarea_video_draw_cb (GtkWidget* widget_in,
                            cairo_t* context_in,
@@ -3925,7 +4055,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   if (!cb_data_p->pixelBuffer)
-    return FALSE; // --> widget has not been realized yet
+    return TRUE; // --> widget has not been realized yet
 
   //GdkWindow* window_p = gtk_widget_get_window (widget_in);
   //ACE_ASSERT (window_p);

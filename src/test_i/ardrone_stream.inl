@@ -98,7 +98,7 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (inherited::configuration_.configuration_.useMediaFoundation)
+  if (inherited::configuration_->configuration_.useMediaFoundation)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_MediaFoundationDisplay_Module (this,
                                                                   ACE_TEXT_ALWAYS_CHAR ("Display"),
@@ -201,7 +201,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -249,7 +249,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ()),
+                ACE_TEXT (inherited::configuration_->name_.c_str ()),
                 ACE_TEXT ("VideoSource")));
     goto error;
   } // end IF
@@ -260,7 +260,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: dynamic_cast<SourceModuleType::WRITER_T> failed, aborting\n"),
-                ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                ACE_TEXT (inherited::configuration_->name_.c_str ())));
     goto error;
   } // end IF
   sourceWriter_impl_p->set (&(inherited::state_));
@@ -277,7 +277,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
-                  ACE_TEXT (inherited::configuration_.name_.c_str ())));
+                  ACE_TEXT (inherited::configuration_->name_.c_str ())));
       goto error;
     } // end IF
 
