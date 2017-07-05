@@ -1296,27 +1296,18 @@
       <action-widget response="0">button_quit</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkAdjustment" id="scrolledwindow_hadjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="scrolledwindow_vadjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkTextBuffer" id="textbuffer_log"/>
   <object class="GtkWindow" id="window_fullscreen">
     <property name="can_focus">False</property>
     <property name="no_show_all">True</property>
     <property name="title" translatable="yes">ARDrone</property>
     <property name="resizable">False</property>
+    <property name="destroy_with_parent">True</property>
     <property name="hide_titlebar_when_maximized">True</property>
     <property name="accept_focus">False</property>
     <property name="focus_on_map">False</property>
     <property name="decorated">False</property>
     <property name="deletable">False</property>
+    <property name="transient_for">dialog_main</property>
     <child>
       <object class="GtkDrawingArea" id="drawingarea_fullscreen">
         <property name="visible">True</property>
@@ -1328,4 +1319,15 @@
       </object>
     </child>
   </object>
+  <object class="GtkAdjustment" id="scrolledwindow_hadjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="scrolledwindow_vadjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer_log"/>
 </interface>

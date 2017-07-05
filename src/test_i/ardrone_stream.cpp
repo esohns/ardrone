@@ -896,7 +896,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-  struct ARDrone_SessionData* session_data_p = NULL;
+//  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -921,8 +921,8 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
   // - push them onto the stream (tail-first)
-  session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+//  session_data_p =
+//    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   //session_data_r.sessionID = configuration_in.sessionID;
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
