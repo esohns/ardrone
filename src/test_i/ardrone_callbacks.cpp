@@ -2881,10 +2881,19 @@ continue_:
         GTK_WINDOW (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN)));
     ACE_ASSERT (window_p);
+//    gtk_widget_set_colormap (GTK_WIDGET (window_p),
+//                             gdk_screen_get_rgba_colormap (screen_p));
+    GdkVisual *visual_p = gdk_screen_get_rgba_visual (screen_p);
+    ACE_ASSERT (visual_p);
+    gtk_widget_set_visual (GTK_WIDGET (window_p),
+                           visual_p);
+    gtk_window_set_keep_above (window_p,
+                               TRUE);
     gtk_window_present (window_p);
     gtk_window_move (window_p,
                      rectangle_s.x, rectangle_s.y);
     gtk_window_fullscreen (window_p);
+//    gtk_window_fullscreen_on_monitor ();
     drawing_area_p =
         GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)));
@@ -3796,17 +3805,14 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   ACE_ASSERT (iterator_2 != (*iterator).second.end ());
 
   GdkWindow* window_p = gtk_widget_get_window (widget_in);
-  if (!window_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gtk_widget_get_window(%@), returning\n"),
-                widget_in));
-    return;
-  } // end IF
-
   // sanity check(s)
+  if (!window_p)
+    return; // window is not (yet) realized, nothing to do
   if (!gdk_window_is_viewable (window_p))
     return; // window is not (yet) mapped, nothing to do
+  if ((*iterator_2).second.fullScreen &&
+      ((*iterator_2).second.window != window_p))
+    return; // use the fullscreen window, not the applications'
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate
