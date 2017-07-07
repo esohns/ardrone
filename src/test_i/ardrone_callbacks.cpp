@@ -1599,15 +1599,6 @@ idle_initialize_ui_cb (gpointer userData_in)
 #endif
   ACE_ASSERT (result);
 
-  //g_signal_connect (drawing_area_p,
-  //                  ACE_TEXT_ALWAYS_CHAR ("key-press-event"),
-  //                  G_CALLBACK (key_cb),
-  //                  cb_data_p);
-  //g_signal_connect (drawing_area_p,
-  //                  ACE_TEXT_ALWAYS_CHAR ("motion-notify-event"),
-  //                  G_CALLBACK (motion_cb),
-  //                  cb_data_p);
-
 //  // step5: use correct screen
 //  if (parentWidget_in)
 //    gtk_window_set_screen (GTK_WINDOW (dialog),
@@ -1686,9 +1677,9 @@ idle_initialize_ui_cb (gpointer userData_in)
   (*iterator_4).second.window = window_p;
 #endif
   //ACE_ASSERT ((*iterator_4).second.window);
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using drawing area display window (handle: %@)\n"),
-              (*iterator_4).second.window));
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("drawing area display window (handle: %@)\n"),
+//              (*iterator_4).second.window));
 
   // step9: activate some widgets
   GtkToggleAction* toggle_action_p =
@@ -1905,6 +1896,13 @@ idle_session_end_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+  ARDrone_StreamConfigurationsIterator_t iterator_2 =
+      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator_2 != data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+
   // *IMPORTANT NOTE*: there are two major reasons for being here that are not
   //                   mutually exclusive, so there could be a race:
   //                   - user pressed stop
@@ -1959,6 +1957,15 @@ idle_session_end_cb (gpointer userData_in)
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
   ACE_ASSERT (action_p);
   gtk_action_set_sensitive (action_p, false);
+
+  if ((*iterator_3).second.fullScreen)
+  {
+    GtkWindow* window_p =
+        GTK_WINDOW (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN)));
+    ACE_ASSERT (window_p);
+    gtk_widget_hide (GTK_WIDGET (window_p));
+  } // end IF
 
   return G_SOURCE_REMOVE;
 }
@@ -2296,9 +2303,17 @@ idle_update_video_display_cb (gpointer userData_in)
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+  ARDrone_StreamConfigurationsIterator_t iterator_2 =
+      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator_2 != data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+
   GtkDrawingArea* drawing_area_p =
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+                                              ((*iterator_3).second.fullScreen ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)
+                                                                               : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO))));
   ACE_ASSERT (drawing_area_p);
 
   gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (drawing_area_p)),
@@ -2881,25 +2896,37 @@ continue_:
         GTK_WINDOW (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN)));
     ACE_ASSERT (window_p);
-//    gtk_widget_set_colormap (GTK_WIDGET (window_p),
+//    gtk_widget_set_colormap (GTK_WIDGET ((*iterator_5).second.window),
 //                             gdk_screen_get_rgba_colormap (screen_p));
     GdkVisual *visual_p = gdk_screen_get_rgba_visual (screen_p);
     ACE_ASSERT (visual_p);
     gtk_widget_set_visual (GTK_WIDGET (window_p),
                            visual_p);
+    gtk_widget_set_size_request (GTK_WIDGET (window_p),
+                                 rectangle_s.width, rectangle_s.height);
+    gtk_window_set_screen (window_p,
+                           screen_p);
     gtk_window_set_keep_above (window_p,
                                TRUE);
-    gtk_window_present (window_p);
+//    gtk_window_present (window_p);
+    gtk_widget_show_all (GTK_WIDGET (window_p));
     gtk_window_move (window_p,
                      rectangle_s.x, rectangle_s.y);
+    gtk_window_resize (window_p,
+                       rectangle_s.width, rectangle_s.height);
     gtk_window_fullscreen (window_p);
 //    gtk_window_fullscreen_on_monitor ();
+//#if defined (_DEBUG)
+//    gtk_window_set_interactive_debugging (TRUE);
+//#endif
+    (*iterator_5).second.window = gtk_widget_get_window (GTK_WIDGET (window_p));
+    ACE_ASSERT ((*iterator_5).second.window);
+//    gdk_window_set_override_redirect ((*iterator_5).second.window,
+//                                      TRUE);
     drawing_area_p =
         GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)));
     ACE_ASSERT (drawing_area_p);
-    (*iterator_5).second.window =
-        gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
 #endif
   } // end IF
   else
@@ -3811,7 +3838,8 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   if (!gdk_window_is_viewable (window_p))
     return; // window is not (yet) mapped, nothing to do
   if ((*iterator_2).second.fullScreen &&
-      ((*iterator_2).second.window != window_p))
+      ACE_OS::strcmp (gtk_buildable_get_name (GTK_BUILDABLE (widget_in)),
+                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)))
     return; // use the fullscreen window, not the applications'
 
   // *NOTE*: x,y members are relative to the parent window
@@ -3887,6 +3915,23 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
 #endif
       return;
     } // end IF
+
+    // sanity check(s)
+    ACE_ASSERT (gdk_pixbuf_get_colorspace (cb_data_p->pixelBuffer) == GDK_COLORSPACE_RGB);
+    ACE_ASSERT (gdk_pixbuf_get_bits_per_sample (cb_data_p->pixelBuffer) == 8);
+
+    if (!gdk_pixbuf_get_has_alpha (cb_data_p->pixelBuffer))
+    { ACE_ASSERT (gdk_pixbuf_get_n_channels (cb_data_p->pixelBuffer) == 3);
+      GdkPixbuf* pixbuf_p =
+          gdk_pixbuf_add_alpha (cb_data_p->pixelBuffer,
+                                FALSE, 0, 0, 0);
+      ACE_ASSERT (pixbuf_p);
+      gdk_pixbuf_unref (cb_data_p->pixelBuffer);
+      cb_data_p->pixelBuffer = pixbuf_p;
+    } // end IF
+    // sanity check(s)
+    ACE_ASSERT (gdk_pixbuf_get_has_alpha (cb_data_p->pixelBuffer));
+    ACE_ASSERT (gdk_pixbuf_get_n_channels (cb_data_p->pixelBuffer) == 4);
     (*iterator_2).second.pixelBuffer = cb_data_p->pixelBuffer;
 
 //    GHashTable* hash_table_p = gdk_pixbuf_get_options (cb_data_p->pixelBuffer);
@@ -4058,10 +4103,23 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->configuration);
+
+  ARDrone_StreamConfigurationsIterator_t iterator =
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
+    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   if (!cb_data_p->pixelBuffer)
     return TRUE; // --> widget has not been realized yet
+  if ((*iterator_2).second.fullScreen &&
+      ACE_OS::strcmp (gtk_buildable_get_name (GTK_BUILDABLE (widget_in)),
+                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)))
+    return TRUE; // use the fullscreen window, not the applications'
 
   //GdkWindow* window_p = gtk_widget_get_window (widget_in);
   //ACE_ASSERT (window_p);
