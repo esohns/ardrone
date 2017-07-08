@@ -122,7 +122,7 @@ ARDrone_SignalHandler::handle (int signal_in)
       inherited::configuration_->interfaceHandle->connect (inherited::configuration_->peerAddress);
     } catch (...) {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in ardrone_IConnector_t::connect(), returning\n")));
+                  ACE_TEXT ("caught exception in ARDrone_IConnector_t::connect(), returning\n")));
       return;
     }
   } // end IF
@@ -141,7 +141,7 @@ ARDrone_SignalHandler::handle (int signal_in)
         inherited::configuration_->interfaceHandle->abort ();
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("caught exception in ardrone_IConnector_t::abort(), returning\n")));
+                    ACE_TEXT ("caught exception in ARDrone_IConnector_t::abort(), returning\n")));
         return;
       }
     } // end IF
@@ -150,10 +150,12 @@ ARDrone_SignalHandler::handle (int signal_in)
     if (inherited::configuration_->hasUI)
       ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
                                                            false); // N/A
-
-    // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (inherited::configuration_->useReactor,  // stop reactor ?
-                                         !inherited::configuration_->useReactor, // stop proactor ?
-                                         -1);                                    // group ID (--> don't block !)
+    else
+    {
+      // step3: stop reactor (&& proactor, if applicable)
+      Common_Tools::finalizeEventDispatch (inherited::configuration_->useReactor,  // stop reactor ?
+                                           !inherited::configuration_->useReactor, // stop proactor ?
+                                           -1);                                    // group ID (--> don't block !)
+    } // end ELSE
   } // end IF
 }

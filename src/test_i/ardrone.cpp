@@ -1244,6 +1244,8 @@ do_work (int argc_in,
 
   (*video_modulehandlerconfiguration_iterator).second.push = true;
 #else
+  (*video_modulehandlerconfiguration_iterator).second.frameRate.den = 1;
+  (*video_modulehandlerconfiguration_iterator).second.frameRate.num = 30;
   (*video_modulehandlerconfiguration_iterator).second.pixelBufferLock =
     &CBData_in.lock;
 #endif
