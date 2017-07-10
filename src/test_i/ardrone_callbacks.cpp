@@ -2440,10 +2440,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
     // stop stream
-    cb_data_p->controlStream->stop (false, true);
-    cb_data_p->MAVLinkStream->stop (false, true);
-    cb_data_p->NavDataStream->stop (false, true);
-    cb_data_p->videoStream->stop (false, true);
+    cb_data_p->controlStream->stop (false, false, true);
+    cb_data_p->MAVLinkStream->stop (false, false, true);
+    cb_data_p->NavDataStream->stop (false, false, true);
+    cb_data_p->videoStream->stop (false, false, true);
 
     return;
   } // end IF
@@ -2840,6 +2840,11 @@ continue_:
     }
   } // end SWITCH
   g_value_unset (&value);
+
+  drawing_area_p =
+    GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+  ACE_ASSERT (drawing_area_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   video_info_header_p->bmiHeader.biSizeImage =
     DIBSIZE (video_info_header_p->bmiHeader);
@@ -2850,17 +2855,17 @@ continue_:
     video_info_header_p->bmiHeader.biSizeImage;
   cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
     video_info_header_p->bmiHeader.biSizeImage;
+
+  (*iterator_5).second.window =
+    static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
 #endif
 
+  //GtkWindow* window_p = NULL;
 #if defined (GTK3_SUPPORT)
   struct _cairo_rectangle_int rectangle_s;
 #else
   GtkAllocation rectangle_s;
 #endif
-  drawing_area_p =
-    GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
-  ACE_ASSERT (drawing_area_p);
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
                              &rectangle_s);
   if ((*iterator_5).second.fullScreen)
@@ -2920,7 +2925,6 @@ continue_:
 //    gtk_window_set_interactive_debugging (TRUE);
 //#endif
     (*iterator_5).second.window = gtk_widget_get_window (GTK_WIDGET (window_p));
-    ACE_ASSERT ((*iterator_5).second.window);
 //    gdk_window_set_override_redirect ((*iterator_5).second.window,
 //                                      TRUE);
     drawing_area_p =
@@ -2932,16 +2936,12 @@ continue_:
   else
   { // --> not fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (!(*iterator_5).second.window)
-    {
-      (*iterator_5).second.area.left = 0;
-      (*iterator_5).second.area.right =
-        video_info_header_p->bmiHeader.biWidth;
-      (*iterator_5).second.area.top = 0;
-      (*iterator_5).second.area.bottom =
-        abs (video_info_header_p->bmiHeader.biHeight);
-      goto create_window;
-    } // end IF
+    (*iterator_5).second.area.left = 0;
+    (*iterator_5).second.area.right =
+      video_info_header_p->bmiHeader.biWidth;
+    (*iterator_5).second.area.top = 0;
+    (*iterator_5).second.area.bottom =
+      abs (video_info_header_p->bmiHeader.biHeight);
 
     // *NOTE*: if the chosen display device screen area contains the drawing
     //         area, use it[; otherwise open a new window]
@@ -2952,7 +2952,8 @@ continue_:
     if (!monitor_h)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to MonitorFromWindow(): \"%s\", returning\n"),
+                  ACE_TEXT ("failed to MonitorFromWindow(%@): \"%s\", returning\n"),
+                  (*iterator_5).second.window,
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
@@ -2963,70 +2964,33 @@ continue_:
                          reinterpret_cast<struct tagMONITORINFO*> (&monitor_info_ex_s)))
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to GetMonitorInfo(): \"%s\", returning\n"),
+                  ACE_TEXT ("failed to GetMonitorInfo(%@): \"%s\", returning\n"),
+                  monitor_h,
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
     if (ACE_OS::strcmp (ACE_TEXT ((*iterator_5).second.device.c_str ()),
                         ACE_TEXT (monitor_info_ex_s.szDevice)))
     { // --> the drawing area is NOT currently displayed on the selected monitor
-create_window:
       // *NOTE*: center the window on the display device
-      unsigned int delta_x =
-       abs (abs ((*iterator_5).second.area.left) -
-                 rectangle_s.width) / 2;
-      (*iterator_5).second.area.left =
-        ((*iterator_5).second.area.left +
-         delta_x);
-      (*iterator_5).second.area.right =
-        ((*iterator_5).second.area.left +
-         rectangle_s.width);
-      unsigned int delta_y =
-        abs (abs ((*iterator_5).second.area.top) -
-             rectangle_s.height) / 2;
-      (*iterator_5).second.area.top =
-        ((*iterator_5).second.area.top +
-         delta_y);
-      (*iterator_5).second.area.bottom =
-        ((*iterator_5).second.area.top +
-         rectangle_s.height);
-
-      //DWORD window_style = (WS_OVERLAPPED     |
-      //                      WS_CAPTION        |
-      //                      (WS_CLIPSIBLINGS  |
-      //                       WS_CLIPCHILDREN) |
-      //                      WS_SYSMENU        |
-      //                      //WS_THICKFRAME     |
-      //                      WS_MINIMIZEBOX    |
-      //                      WS_VISIBLE/*
-      //                      WS_MAXIMIZEBOX*/);
-      //DWORD window_style_ex = (WS_EX_APPWINDOW |
-      //                         WS_EX_WINDOWEDGE);
-
-      //(*iterator_5).second.window =
-      //  CreateWindowEx (window_style_ex,                                                                       // dwExStyle
-      //                  ACE_TEXT_ALWAYS_CHAR ("EDIT"),                                                         // lpClassName
-      //                  ACE_TEXT_ALWAYS_CHAR ("EDIT"),                                                         // lpWindowName
-      //                  window_style,                                                                          // dwStyle
-      //                  (*iterator_5).second.area.left, (*iterator_5).second.area.top,                         // x, y
-      //                  //rectangle_s.width, rectangle_s.height,                        // width, height
-      //                  video_info_header_p->bmiHeader.biWidth, abs (video_info_header_p->bmiHeader.biHeight), // width, height
-      //                  //parent_window_handle,                                                                // hWndParent
-      //                  NULL,                                                                                  // hWndParent
-      //                  NULL,                                                                                  // hMenu
-      //                  GetModuleHandle (NULL),                                                                // hInstance
-      //                  NULL);                                                                                 // lpParam
-      //if (!(*iterator_5).second.window)
-      //{
-      //  ACE_DEBUG ((LM_ERROR,
-      //              ACE_TEXT ("failed to CreateWindow(): \"%s\", returning\n"),
-      //              ACE_TEXT (Common_Tools::errorToString (::GetLastError ()).c_str ())));
-      //  goto error;
-      //} // end IF
-      //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("opened window (size: %ux%u, handle: 0x%@)...\n"),
-      //            rectangle_s.width, rectangle_s.height,
-      //            (*iterator_5).second.window));
+      //unsigned int delta_x =
+      // abs (abs ((*iterator_5).second.area.left) -
+      //           rectangle_s.width) / 2;
+      //(*iterator_5).second.area.left =
+      //  ((*iterator_5).second.area.left +
+      //   delta_x);
+      //(*iterator_5).second.area.right =
+      //  ((*iterator_5).second.area.left +
+      //   rectangle_s.width);
+      //unsigned int delta_y =
+      //  abs (abs ((*iterator_5).second.area.top) -
+      //       rectangle_s.height) / 2;
+      //(*iterator_5).second.area.top =
+      //  ((*iterator_5).second.area.top +
+      //   delta_y);
+      //(*iterator_5).second.area.bottom =
+      //  ((*iterator_5).second.area.top +
+      //   rectangle_s.height);
     } // end IF
     else
     { // --> the drawing area is currently displayed on the selected monitor
@@ -3051,14 +3015,16 @@ create_window:
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
                 static_cast<long> (video_info_header_2->bmiHeader.biSizeImage));
+
+    // *TODO*: for some reason DirectShow fails to paint into the drawing area
+    //         --> open a dedicated window
+    //(*iterator_5).second.window = NULL;
 #else
-    (*iterator_5).second.window =
-        gtk_widget_get_window (GTK_WIDGET (drawing_area_p));
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d\n"),
               ACE_TEXT ((*iterator_5).second.device.c_str ()),
               (*iterator_5).second.area.left,
               (*iterator_5).second.area.right,
@@ -3071,7 +3037,7 @@ create_window:
 #else
   (*iterator_5).second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d...\n"),
+              ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d\n"),
               ACE_TEXT ((*iterator_5).second.device.c_str ()),
               ACE_TEXT (gdk_display_get_name (display_p)),
               monitor_number,
@@ -3441,26 +3407,34 @@ continue_:
                                             peer_sap,
                                             local_sap))
   {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::associateWithWLAN(\"%s\"/\"%s\"), aborting\n"),
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
                 ACE_TEXT (Net_Common_Tools::interfaceToString (GUID_s).c_str ()),
-#else
-                ACE_TEXT (cb_data_p->device.c_str ()),
-#endif
                 ACE_TEXT (cb_data_p->SSID.c_str ())));
+#else
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::associateWithWLAN(\"%s\"/\"%s\"), aborting\n"),
+                ACE_TEXT (cb_data_p->device.c_str ()),
+                ACE_TEXT (cb_data_p->SSID.c_str ())));
+#endif
     goto clean;
   } // end IF
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_ERROR,
               ACE_TEXT ("\"%s\": associated with SSID \"%s\" (access point IP: %s, local IP: %s)\n"),
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
               ACE_TEXT (Net_Common_Tools::interfaceToString (GUID_s).c_str ()),
-#else
-              ACE_TEXT (cb_data_p->device.c_str ()),
-#endif
               ACE_TEXT (cb_data_p->SSID.c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_sap).c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (local_sap).c_str ())));
+#else
+  ACE_DEBUG ((LM_ERROR,
+              ACE_TEXT ("\"%s\": associated with SSID \"%s\" (access point IP: %s, local IP: %s)\n"),
+              ACE_TEXT (cb_data_p->device.c_str ()),
+              ACE_TEXT (cb_data_p->SSID.c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_sap).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_sap).c_str ())));
+#endif
 
   entry_p =
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
@@ -3853,12 +3827,12 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   //                                    &(*iterator_2).second.area.x,
   //                                    &(*iterator_2).second.area.y);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  (*iterator_2).second.area.left = event_in->configure.x;
+  (*iterator_2).second.area.left = allocation_in->x;
   (*iterator_2).second.area.right =
-    event_in->configure.x + event_in->configure.width;
-  (*iterator_2).second.area.top = event_in->configure.y;
+    allocation_in->x + allocation_in->width;
+  (*iterator_2).second.area.top = allocation_in->y;
   (*iterator_2).second.area.bottom =
-    event_in->configure.y + event_in->configure.height;
+    allocation_in->y + allocation_in->height;
 #else
   (*iterator_2).second.area = *allocation_in;
 #endif

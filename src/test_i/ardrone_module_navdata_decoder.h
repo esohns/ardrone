@@ -91,8 +91,8 @@ class ARDrone_Module_NavDataDecoder_T
                                      bool&);               // return value: pass message downstream ?
 
   // implement ARDrone_NavData_IParser
-  inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->get ().get ()).NavDataMessageOptionOffsets.push_back (offset_in); };
-  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->get ().get ().NavDataMessage); };
+  inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->get ().get ()).NavData.NavDataOptionOffsets.push_back (offset_in); };
+  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->get ().get ().NavData.NavData); };
   inline virtual bool hasFinished () const { return true; };
   virtual void record (struct _navdata_t*&); // record handle
   inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };

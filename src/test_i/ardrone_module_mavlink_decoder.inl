@@ -653,7 +653,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     {
       case ACE_Message_Block::MB_DATA:
       case ACE_Message_Block::MB_PROTO:
-        is_data = true; break;
+        is_data = true;
+        break;
+      case ACE_Message_Block::MB_STOP:
+        done = true; // session has finished --> abort
+        break;
       case ACE_Message_Block::MB_USER:
       {
         session_message_p = dynamic_cast<SessionMessageType*> (message_block_p);
@@ -664,7 +668,6 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
             case STREAM_SESSION_MESSAGE_END:
             {
               done = true; // session has finished --> abort
-
               break;
             }
             default:
@@ -683,7 +686,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       default:
         break;
     } // end SWITCH
-    if (is_data) break;
+    if (is_data)
+      break;
 
     // requeue message ?
     if (message_block_p)

@@ -79,7 +79,7 @@ ARDrone_Message::~ARDrone_Message ()
 
       struct ARDrone_MessageData& message_data_r =
         const_cast<struct ARDrone_MessageData&> (inherited::data_->get ());
-      for (struct _navdata_option_t* options_p = &message_data_r.NavDataMessage.options[0];
+      for (struct _navdata_option_t* options_p = &message_data_r.NavData.NavData.options[0];
            options_p;
            ++options_p)
       {
@@ -332,11 +332,11 @@ ARDrone_Message::dump_state (void) const
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
                   inherited::id_,
-                  message_data_r.MAVLinkMessage.len,
-                  message_data_r.MAVLinkMessage.seq,
-                  message_data_r.MAVLinkMessage.msgid,
-                  message_data_r.MAVLinkMessage.compid,
-                  message_data_r.MAVLinkMessage.sysid));
+                  message_data_r.MAVLinkData.len,
+                  message_data_r.MAVLinkData.seq,
+                  message_data_r.MAVLinkData.msgid,
+                  message_data_r.MAVLinkData.compid,
+                  message_data_r.MAVLinkData.sysid));
       break;
     }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:
@@ -354,15 +354,15 @@ ARDrone_Message::dump_state (void) const
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: header: 0x%x, state: 0x%x, seq: %u, vision: %u, options [%u]:\n"),
                   inherited::id_,
-                  message_data_r.NavDataMessage.header,
-                  message_data_r.NavDataMessage.ardrone_state,
-                  message_data_r.NavDataMessage.sequence,
-                  message_data_r.NavDataMessage.vision_defined,
+                  message_data_r.NavData.NavData.header,
+                  message_data_r.NavData.NavData.ardrone_state,
+                  message_data_r.NavData.NavData.sequence,
+                  message_data_r.NavData.NavData.vision_defined,
                   1));
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("\tid: %u, size: %u\n"),
-                  message_data_r.NavDataMessage.options[0].tag,
-                  message_data_r.NavDataMessage.options[0].size));
+                  message_data_r.NavData.NavData.options[0].tag,
+                  message_data_r.NavData.NavData.options[0].size));
       break;
     }
     default:

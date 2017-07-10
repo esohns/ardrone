@@ -92,10 +92,13 @@ struct ARDrone_SocketHandlerConfiguration
   struct ARDrone_UserData*                userData;
 };
 
-extern const char stream_name_string_[];
+//extern const char video_stream_name_string_[];
+//extern const char control_stream_name_string_[];
+//extern const char navdata_stream_name_string_[];
+//extern const char mavlink_stream_name_string_[];
 struct ARDrone_StreamConfiguration;
 struct ARDrone_ModuleHandlerConfiguration;
-typedef Stream_Configuration_T<stream_name_string_,
+typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
                                struct Stream_ModuleConfiguration,
@@ -153,13 +156,14 @@ typedef Net_Connection_Manager_T<ACE_INET_Addr,
                                  ARDrone_RuntimeStatistic_t,
                                  struct ARDrone_UserData> ARDrone_ConnectionManager_t;
 
+extern const char net_stream_name_string_[];
 typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_StreamSessionData_t;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
-                                      stream_name_string_,
+                                      net_stream_name_string_,
                                       enum Stream_ControlType,
                                       enum Stream_SessionMessageType,
                                       enum Stream_StateMachine_ControlState,

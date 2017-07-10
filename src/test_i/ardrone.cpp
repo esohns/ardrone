@@ -99,7 +99,14 @@ extern "C"
 #include "ardrone_stream.h"
 #include "ardrone_types.h"
 
-const char stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("ARDroneStream");
+const char net_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("NetStream");
+const char video_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("VideoStream");
+const char control_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("ControlStream");
+const char navdata_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("NavDataStream");
+const char mavlink_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream");
 
 //----------------------------------------
 
@@ -946,7 +953,7 @@ do_work (int argc_in,
   ARDrone_MAVLinkStream mavlink_stream;
   // *TODO*: some AR drones use flashed firmware that supports 'MAVLink'
   //         communications instead of the 'NavData' stream documented in the
-  //         developer guide: apparently this is a total mess
+  //         developer guide (this is a total mess, apparently)
   ARDrone_NavDataStream navdata_stream;
   ARDrone_VideoStream_t video_stream;
   ARDrone_AsynchVideoStream_t asynch_video_stream;
@@ -1547,12 +1554,12 @@ do_work (int argc_in,
               ACE_TEXT ("finished working...\n")));
 
   // clean up
+  timer_manager_p->stop ();
   connection_manager_p->stop ();
+  connection_manager_p->abort (true); // wait for completion ?
   Common_Tools::finalizeEventDispatch (useReactor_in,
                                        !useReactor_in,
                                        group_id);
-  connection_manager_p->wait ();
-  timer_manager_p->stop ();
 
   return;
 

@@ -238,11 +238,11 @@ typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 struct ARDrone_DirectShow_FilterConfiguration;
 struct ARDrone_StreamState;
-extern const char stream_name_string_[];
+//extern const char stream_name_string_[];
 struct ARDrone_AllocatorConfiguration;
 struct ARDrone_StreamConfiguration;
 struct ARDrone_ModuleHandlerConfiguration;
-typedef Stream_Configuration_T<stream_name_string_,
+typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
                                struct Stream_ModuleConfiguration,

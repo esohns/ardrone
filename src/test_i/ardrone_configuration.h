@@ -165,10 +165,10 @@ struct ARDrone_GtkProgressData
   ARDrone_RuntimeStatistic_t statistic;
 };
 
-extern const char stream_name_string_[];
+extern const char video_stream_name_string_[];
 typedef Stream_Base_T<ACE_MT_SYNCH,
                       Common_TimePolicy_t,
-                      stream_name_string_,
+                      video_stream_name_string_,
                       enum Stream_ControlType,
                       enum Stream_SessionMessageType,
                       enum Stream_StateMachine_ControlState,
@@ -182,7 +182,61 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       ARDrone_SessionData_t,
                       ARDrone_ControlMessage_t,
                       ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_StreamBase_t;
+                      ARDrone_SessionMessage> ARDrone_VideoStreamBase_t;
+extern const char control_stream_name_string_[];
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      control_stream_name_string_,
+                      enum Stream_ControlType,
+                      enum Stream_SessionMessageType,
+                      enum Stream_StateMachine_ControlState,
+                      struct ARDrone_StreamState,
+                      struct ARDrone_StreamConfiguration,
+                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_AllocatorConfiguration,
+                      struct Stream_ModuleConfiguration,
+                      struct ARDrone_ModuleHandlerConfiguration,
+                      struct ARDrone_SessionData,
+                      ARDrone_SessionData_t,
+                      ARDrone_ControlMessage_t,
+                      ARDrone_Message,
+                      ARDrone_SessionMessage> ARDrone_ControlStreamBase_t;
+extern const char navdata_stream_name_string_[];
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      navdata_stream_name_string_,
+                      enum Stream_ControlType,
+                      enum Stream_SessionMessageType,
+                      enum Stream_StateMachine_ControlState,
+                      struct ARDrone_StreamState,
+                      struct ARDrone_StreamConfiguration,
+                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_AllocatorConfiguration,
+                      struct Stream_ModuleConfiguration,
+                      struct ARDrone_ModuleHandlerConfiguration,
+                      struct ARDrone_SessionData,
+                      ARDrone_SessionData_t,
+                      ARDrone_ControlMessage_t,
+                      ARDrone_Message,
+                      ARDrone_SessionMessage> ARDrone_NavDataStreamBase_t;
+extern const char mavlink_stream_name_string_[];
+typedef Stream_Base_T<ACE_MT_SYNCH,
+                      Common_TimePolicy_t,
+                      mavlink_stream_name_string_,
+                      enum Stream_ControlType,
+                      enum Stream_SessionMessageType,
+                      enum Stream_StateMachine_ControlState,
+                      struct ARDrone_StreamState,
+                      struct ARDrone_StreamConfiguration,
+                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_AllocatorConfiguration,
+                      struct Stream_ModuleConfiguration,
+                      struct ARDrone_ModuleHandlerConfiguration,
+                      struct ARDrone_SessionData,
+                      ARDrone_SessionData_t,
+                      ARDrone_ControlMessage_t,
+                      ARDrone_Message,
+                      ARDrone_SessionMessage> ARDrone_MAVLinkStreamBase_t;
 struct ARDrone_GtkCBData
  : Common_UI_GTKState
 {
@@ -236,7 +290,7 @@ struct ARDrone_GtkCBData
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
- ARDrone_StreamBase_t*           controlStream;
+ ARDrone_ControlStreamBase_t*    controlStream;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
  std::string                     device;
@@ -244,10 +298,10 @@ struct ARDrone_GtkCBData
  ARDrone_Events_t                eventStack;
  unsigned int                    frameCounter;
  ACE_INET_Addr                   localSAP;
- ARDrone_StreamBase_t*           MAVLinkStream;
+ ARDrone_MAVLinkStreamBase_t*    MAVLinkStream;
  ARDrone_Messages_t              messages;
  ARDrone_MessageAllocator_t*     messageAllocator;
- ARDrone_StreamBase_t*           NavDataStream;
+ ARDrone_NavDataStreamBase_t*    NavDataStream;
 #if defined (GTKGL_SUPPORT)
  GLuint                          openGLAxesListId;
  struct ARDrone_Camera           openGLCamera;
@@ -262,7 +316,7 @@ struct ARDrone_GtkCBData
  std::string                     SSID;
  ACE_Time_Value                  timeStamp;
  bool                            videoOnly;
- ARDrone_StreamBase_t*           videoStream;
+ ARDrone_VideoStreamBase_t*      videoStream;
 };
 
 struct ARDrone_ThreadData

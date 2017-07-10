@@ -1593,13 +1593,9 @@ static const flex_int32_t yy_rule_linenum[10] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 
-//#include <regex>
+#include "ace/Log_Msg.h"
 
-//#include <ace/ace_wchar.h>
-#include <ace/Log_Msg.h>
-//#include <ace/Message_Block.h>
-//#include <ace/OS_Memory.h>
-
+#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
 /* %option c++ yyclass="ARDrone_MAVLink_Scanner" */

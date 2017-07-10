@@ -23,24 +23,16 @@
 
 #include <deque>
 
-#include "glm/glm.hpp"
-
+#include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #include "video_encapsulation.h"
 #endif
 
-#include "ace/Global_Macros.h"
-#include "ace/Time_Value.h"
-
-#include "gtk/gtk.h"
-
-#include "common_ui_common.h"
+#include "ace/Message_Block.h"
 
 #include "net_common.h"
-#include "net_iconnector.h"
 
-#include "ardrone_common.h"
 #include "ardrone_defines.h"
 
 enum ARDrone_MessageType : int
@@ -142,45 +134,6 @@ enum ARDrone_VideoMode : int
   ARDRONE_VIDEOMODE_720P,
   ///////////////////////////////////////
   ARDRONE_VIDEOMODE_MAX
-};
-
-class ARDrone_IMAVLinkNotify
-{
- public:
-  virtual ~ARDrone_IMAVLinkNotify () {};
-
-  virtual void messageCB (const struct __mavlink_message&, // message record
-                          void*) = 0;                      // payload handle
-};
-class ARDrone_INavDataNotify
-{
- public:
-  virtual ~ARDrone_INavDataNotify () {};
-
-  virtual void messageCB (const struct _navdata_t&,                     // message record
-                          const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
-                          void*) = 0;                                   // payload handle
-};
-
-class ARDrone_IController
-{
- public:
-  virtual ~ARDrone_IController () {};
-
-  virtual void ids (uint8_t,      // session id
-                    uint8_t,      // user id
-                    uint8_t) = 0; // application id
-
-  virtual void init () = 0;
-  virtual void start () = 0;
-  virtual void resetWatchdog () = 0;
-
-  virtual void trim () = 0;
-
-  virtual void takeoff () = 0;
-  virtual void land () = 0;
-
-  virtual void set (enum ARDrone_VideoMode) = 0;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H
