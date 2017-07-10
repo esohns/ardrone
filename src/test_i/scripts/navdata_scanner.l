@@ -23,11 +23,9 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 %{
 #include <sstream>
 
-//#include <ace/ace_wchar.h>
-#include <ace/Log_Msg.h>
-//#include <ace/Message_Block.h>
-//#include <ace/OS_Memory.h>
+#include "ace/Log_Msg.h"
 
+#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
 %}

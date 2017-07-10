@@ -1913,11 +1913,9 @@ static const flex_int32_t yy_rule_linenum[9] =
 
 #include <sstream>
 
-//#include <ace/ace_wchar.h>
-#include <ace/Log_Msg.h>
-//#include <ace/Message_Block.h>
-//#include <ace/OS_Memory.h>
+#include "ace/Log_Msg.h"
 
+#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
 /* %option c++ yyclass="ARDrone_NavData_Scanner" */

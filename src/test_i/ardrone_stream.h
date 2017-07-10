@@ -42,13 +42,13 @@
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
-extern const char stream_name_string_[];
+extern const char video_stream_name_string_[];
 
 template <typename SourceModuleType>
 class ARDrone_VideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        video_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -66,7 +66,7 @@ class ARDrone_VideoStream_T
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        video_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -116,10 +116,12 @@ typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_Asy
 
 //////////////////////////////////////////
 
+extern const char control_stream_name_string_[];
+
 class ARDrone_ControlStream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        control_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -137,7 +139,7 @@ class ARDrone_ControlStream
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        control_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -186,10 +188,12 @@ class ARDrone_ControlStream
 
 //////////////////////////////////////////
 
+extern const char navdata_stream_name_string_[];
+
 class ARDrone_NavDataStream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        navdata_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -213,7 +217,7 @@ class ARDrone_NavDataStream
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        navdata_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -246,9 +250,9 @@ class ARDrone_NavDataStream
   virtual void report () const;
 
   // implement ARDrone_INavDataNotify
-  virtual void messageCB (const struct _navdata_t&,                     // message record
-                          const ARDrone_NavDataMessageOptionOffsets_t&, // option offsets
-                          void*);                                       // payload handle
+  virtual void messageCB (const struct _navdata_t&,              // message record
+                          const ARDrone_NavDataOptionOffsets_t&, // option offsets
+                          void*);                                // payload handle
 
  private:
   typedef Stream_SessionBase_T<Stream_SessionId_t,
@@ -276,10 +280,12 @@ class ARDrone_NavDataStream
 
 //////////////////////////////////////////
 
+extern const char mavlink_stream_name_string_[];
+
 class ARDrone_MAVLinkStream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        mavlink_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,
@@ -303,7 +309,7 @@ class ARDrone_MAVLinkStream
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
-                        stream_name_string_,
+                        mavlink_stream_name_string_,
                         enum Stream_ControlType,
                         enum Stream_SessionMessageType,
                         enum Stream_StateMachine_ControlState,

@@ -32,7 +32,7 @@
 
 #include "stream_module_target.h"
 
-#include "ardrone_types.h"
+#include "ardrone_common.h"
 
 // forward declaration(s)
 class Stream_IAllocator;
