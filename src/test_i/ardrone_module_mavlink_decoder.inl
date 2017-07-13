@@ -458,47 +458,7 @@ error:
   if (message_data_container_p)
     message_data_container_p->decrease ();
 }
-//template <ACE_SYNCH_DECL,
-//          typename TimePolicyType,
-//          typename ConfigurationType,
-//          typename ControlMessageType,
-//          typename DataMessageType,
-//          typename SessionMessageType,
-//          typename SessionDataContainerType>
-//bool
-//ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-//                                TimePolicyType,
-//                                ConfigurationType,
-//                                ControlMessageType,
-//                                DataMessageType,
-//                                SessionMessageType,
-//                                SessionDataContainerType>::initialize (const struct Common_ParserConfiguration& configuration_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::initialize"));
 
-//  ACE_UNUSED_ARG (configuration_in);
-
-//  return true;
-//}
-//template <ACE_SYNCH_DECL,
-//          typename TimePolicyType,
-//          typename ConfigurationType,
-//          typename ControlMessageType,
-//          typename DataMessageType,
-//          typename SessionMessageType,
-//          typename SessionDataContainerType>
-//void
-//ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-//                                TimePolicyType,
-//                                ConfigurationType,
-//                                ControlMessageType,
-//                                DataMessageType,
-//                                SessionMessageType,
-//                                SessionDataContainerType>::dump_state () const
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::dump_state"));
-
-//}
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,

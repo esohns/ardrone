@@ -1020,6 +1020,7 @@ do_work (int argc_in,
     &video_stream;
 
   // ******************* socket configuration data ****************************
+  // *TODO*: bind to a specific interface
   struct ARDrone_ConnectionConfiguration connection_configuration;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
     address_in;
@@ -1027,14 +1028,6 @@ do_work (int argc_in,
                                                                                                      1);
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.bufferSize =
-    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
-    false;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
-    false;
-  connection_configuration.socketHandlerConfiguration.listenerConfiguration =
-    &CBData_in.configuration->listenerConfiguration;
   connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
   connection_configuration.socketHandlerConfiguration.userData =
@@ -1056,13 +1049,23 @@ do_work (int argc_in,
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
+  (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_2;
 
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
+    false;
   result =
-    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
-                                                                                           static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                           1,
-                                                                                           0);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
+                                                                                                 static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                                 1,
+                                                                                                 0);
   ACE_ASSERT (result == 0);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
+      connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
+    false;
   connection_configuration.streamConfiguration =
     &((*mavlink_streamconfiguration_iterator).second);
   CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
@@ -1074,8 +1077,6 @@ do_work (int argc_in,
     &((*iterator_2).second);
   (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
-  (*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration =
-      &(*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration_3;
 
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
     address_in;
@@ -1100,11 +1101,13 @@ do_work (int argc_in,
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
 
   result =
-    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
-                                                                                           static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                           1,
-                                                                                           0);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
+                                                                                                 static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                                 1,
+                                                                                                 0);
   ACE_ASSERT (result == 0);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
+      connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     false;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
@@ -1122,8 +1125,6 @@ do_work (int argc_in,
     &((*iterator_2).second);
   (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
-  (*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration =
-      &(*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration_3;
 
   //  // *TODO*: verify the given address
 //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
@@ -1145,8 +1146,8 @@ do_work (int argc_in,
 //  ACE_DEBUG ((LM_ERROR,
 //              ACE_TEXT ("set local SAP: %s...\n"),
 //              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
-    address_in;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
+                                                                                                     1);
 //  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
 //    !useReactor_in;
 //  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
@@ -1160,6 +1161,8 @@ do_work (int argc_in,
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
+  (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_2;
 
 //  iterator_2 =
 //    CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));

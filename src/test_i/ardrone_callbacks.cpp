@@ -733,7 +733,6 @@ stream_processing_function (void* arg_in)
     iterator_3 =
       data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
     ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
-    // *TODO*: bind to a specific interface
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
@@ -767,9 +766,6 @@ stream_processing_function (void* arg_in)
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
-    if ((*iterator_4).second.configuration_.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration_3.address =
-        (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_3.address;
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.targetFileName;
@@ -784,13 +780,10 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
-    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
-    ACE_ASSERT (session_p);
+//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
+//    ACE_ASSERT (session_p);
     data_p->CBData->MAVLinkStream->start ();
-    // *IMPORTANT NOTE*: race condition here --> add timeout
-    session_p->wait (false,
-                     &session_start_timeout);
-    (*iterator_2).second.targetFileName = logfile_name_string;
+//    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
     iterator_3 =
@@ -799,10 +792,6 @@ stream_processing_function (void* arg_in)
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
-    // *TODO*: bind to a specific interface
-    if ((*iterator_4).second.configuration_.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration_3.address =
-          (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_3.address;
     (*iterator_2).second.stream = data_p->CBData->NavDataStream;
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -822,11 +811,11 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     data_p->CBData->NavDataStream->start ();
-    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
-    ACE_ASSERT (session_p);
-    // *IMPORTANT NOTE*: race condition here --> add timeout
-    session_p->wait (false,
-                     &session_start_timeout);
+//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
+//    ACE_ASSERT (session_p);
+//    // *IMPORTANT NOTE*: race condition here --> add timeout
+//    session_p->wait (false,
+//                     &session_start_timeout);
 
     // video
 video:
