@@ -69,32 +69,6 @@ ARDrone_Message::~ARDrone_Message ()
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::~ARDrone_Message"));
 
   // *NOTE*: called just BEFORE 'this' is passed back to the allocator
-
-  switch (inherited::type_)
-  {
-    case ARDRONE_MESSAGE_NAVDATAMESSAGE:
-    {
-      if (!inherited::data_)
-        break;
-
-      struct ARDrone_MessageData& message_data_r =
-        const_cast<struct ARDrone_MessageData&> (inherited::data_->get ());
-      for (struct _navdata_option_t* options_p = &message_data_r.NavData.NavData.options[0];
-           options_p;
-           ++options_p)
-      {
-        delete [] options_p->data;
-        if (options_p->tag == NAVDATA_CKS_TAG)
-          break;
-      } // end FOR
-
-      break;
-    }
-    default:
-    {
-
-    }
-  } // end SWITCH
 }
 
 std::string

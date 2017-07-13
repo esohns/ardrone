@@ -768,8 +768,8 @@ stream_processing_function (void* arg_in)
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     if ((*iterator_4).second.configuration_.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration.address =
-        (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address;
+      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration_3.address =
+        (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_3.address;
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.targetFileName;
@@ -801,8 +801,8 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     // *TODO*: bind to a specific interface
     if ((*iterator_4).second.configuration_.useReactor)
-      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration.address =
-          (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address;
+      data_p->CBData->configuration->listenerConfiguration.socketHandlerConfiguration.socketConfiguration_3.address =
+          (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_3.address;
     (*iterator_2).second.stream = data_p->CBData->NavDataStream;
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -987,7 +987,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
   ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddressToString ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration.address,
+                      Net_Common_Tools::IPAddressToString ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
                                                            true).c_str ());
 
   GtkSpinButton* spin_button_p =
@@ -2518,12 +2518,12 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
   result =
-    (*iterator_3).second.socketHandlerConfiguration.socketConfiguration.address.set (address_string.c_str (),
-                                                                                     AF_INET);
+    (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
+                                                                                       AF_INET);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", returning\n"),
+                ACE_TEXT ("failed to ACE_INET_Addr::set(%s): \"%m\", returning\n"),
                 ACE_TEXT (address_string.c_str ())));
     goto error;
   } // end IF

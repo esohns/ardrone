@@ -170,10 +170,15 @@ struct ARDrone_SessionData
       windowController = rhs_in.windowController;
     } // end IF
 #else
+    format = ((format != AV_PIX_FMT_NONE) ? format : rhs_in.format);
+    height = (height ? height : rhs_in.height);
+    width = (width ? width : rhs_in.width);
 #endif
+    isNavData = (isNavData ? isNavData : rhs_in.isNavData);
     state = (state ? state : rhs_in.state);
     targetFileName =
       (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
+
     userData = (userData ? userData : rhs_in.userData);
 
     return *this;

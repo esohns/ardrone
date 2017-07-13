@@ -88,11 +88,33 @@ struct ARDrone_MessageData
   };
   ~ARDrone_MessageData ()
   {
+    switch (messageType)
+    {
+      case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+      {
+        for (struct _navdata_option_t* options_p = &NavData.NavData.options[0];
+             options_p;
+             ++options_p)
+        {
+          delete [] options_p->data;
+          if (options_p->tag == NAVDATA_CKS_TAG)
+            break;
+        } // end FOR
+        break;
+      }
+      case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+        break;
+      case ARDRONE_MESSAGE_VIDEOFRAME:
+      {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if ((messageType == ARDRONE_MESSAGE_VIDEOFRAME) &&
-        videoFrame.sample)
-      videoFrame.sample->Release ();
+        if (videoFrame.sample)
+          videoFrame.sample->Release ();
 #endif
+        break;
+      }
+      default:
+        break;
+    } // end SWITCH
     messageType = ARDRONE_MESSAGE_INVALID;
   };
   inline void operator+= (struct ARDrone_MessageData rhs_in)

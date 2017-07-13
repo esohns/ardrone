@@ -76,12 +76,13 @@ class ARDrone_Module_Controller_T
                                      ConnectorType> inherited;
 
  public:
+  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_Module_Controller_T (ISTREAM_T*);                     // stream handle
+#else
   ARDrone_Module_Controller_T (typename inherited::ISTREAM_T*); // stream handle
+#endif
   virtual ~ARDrone_Module_Controller_T ();
-
-//  // override (part of) Stream_IModuleHandler_T
-//  virtual bool initialize (const ConfigurationType&,
-//                           Stream_IAllocator*);
 
   // implement (part of) Stream_ITaskBase
   virtual void handleSessionMessage (SessionMessageType*&, // session message handle
