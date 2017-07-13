@@ -838,15 +838,16 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
-//#if defined (_DEBUG)
-//  ACE_NEW_RETURN (module_p,
-//                  ARDrone_Module_Dump_Module (ACE_TEXT_ALWAYS_CHAR ("Dump"),
-//                                              NULL,
-//                                              false),
-//                  false);
-//  modules_out.push_back (module_p);
-//  module_p = NULL;
-//#endif
+#if defined (_DEBUG)
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_Dump_Module (this,
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
+                                              NULL,
+                                              false),
+                  false);
+  modules_out.push_back (module_p);
+  module_p = NULL;
+#endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (this,
                                                          ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),

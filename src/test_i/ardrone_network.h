@@ -86,7 +86,6 @@ struct ARDrone_SocketHandlerConfiguration
    , socketConfiguration_2 ()
    , socketConfiguration_3 ()
    , connectionConfiguration (NULL)
-   , listenerConfiguration (NULL)
    , userData (NULL)
   {
     socketConfiguration = &socketConfiguration_2;
@@ -95,20 +94,8 @@ struct ARDrone_SocketHandlerConfiguration
   struct Net_TCPSocketConfiguration       socketConfiguration_2;
   struct Net_UDPSocketConfiguration       socketConfiguration_3;
   struct ARDrone_ConnectionConfiguration* connectionConfiguration;
-  struct ARDrone_ListenerConfiguration*   listenerConfiguration;
 
   struct ARDrone_UserData*                userData;
-};
-
-struct ARDrone_ListenerConfiguration
- : Net_ListenerConfiguration
-{
-  inline ARDrone_ListenerConfiguration ()
-   : Net_ListenerConfiguration ()
-   , socketHandlerConfiguration ()
-  {};
-
-  struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
 };
 
 //extern const char video_stream_name_string_[];

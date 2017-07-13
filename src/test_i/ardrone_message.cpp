@@ -285,10 +285,10 @@ ARDrone_Message::dump_state (void) const
   {
     case ARDRONE_MESSAGE_VIDEOFRAME:
     {
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("[%u]: %u byte(s)\n"),
-                  inherited::id_,
-                  inherited::length ()));
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("[%u]: %u byte(s)\n"),
+//                  inherited::id_,
+//                  inherited::length ()));
       break;
     }
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
@@ -303,14 +303,14 @@ ARDrone_Message::dump_state (void) const
       const struct ARDrone_MessageData& message_data_r =
           inherited::data_->get ();
 
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
-                  inherited::id_,
-                  message_data_r.MAVLinkData.len,
-                  message_data_r.MAVLinkData.seq,
-                  message_data_r.MAVLinkData.msgid,
-                  message_data_r.MAVLinkData.compid,
-                  message_data_r.MAVLinkData.sysid));
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
+//                  inherited::id_,
+//                  message_data_r.MAVLinkData.len,
+//                  message_data_r.MAVLinkData.seq,
+//                  message_data_r.MAVLinkData.msgid,
+//                  message_data_r.MAVLinkData.compid,
+//                  message_data_r.MAVLinkData.sysid));
       break;
     }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:

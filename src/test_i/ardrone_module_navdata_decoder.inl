@@ -171,6 +171,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 //  ACE_Message_Block* message_block_2 = NULL;
   bool do_scan_end = false;
   unsigned int offset = (isFirst_ ? 0 : 3);
+  typename DataMessageType::DATA_T* message_data_container_p = NULL;
+  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
 
   // initialize return value(s)
   // *NOTE*: the default behavior is to pass all messages along
@@ -191,6 +193,36 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
   message_block_p = buffer_;
+
+  if (buffer_->isInitialized ())
+    goto scan;
+
+  ACE_NEW_NORETURN (message_data_p,
+                    typename DataMessageType::DATA_T::DATA_T ());
+  if (!message_data_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                inherited::mod_->name ()));
+    goto error;
+  } // end IF
+  message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+  ACE_OS::memset (&message_data_p->NavData,
+                  0,
+                  sizeof (struct _navdata_t));
+  ACE_NEW_NORETURN (message_data_container_p,
+                    typename DataMessageType::DATA_T (message_data_p));
+  if (!message_data_container_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                inherited::mod_->name ()));
+    goto error;
+  } // end IF
+  message_data_p = NULL;
+  buffer_->initialize (message_data_container_p,
+                       NULL);
+  message_data_container_p = NULL;
 
 scan:
   if (!scan_begin (message_block_p->rd_ptr () + offset,
@@ -249,6 +281,10 @@ scan:
 error:
   if (do_scan_end)
     scan_end ();
+  if (message_data_p)
+    delete message_data_p;
+  if (message_data_container_p)
+    message_data_container_p->decrease ();
 }
 
 template <ACE_SYNCH_DECL,
@@ -555,6 +591,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 //      STREAM_SESSION_MESSAGE_INVALID;
   bool is_data = false;
   bool stop_processing = false;
+  typename DataMessageType::DATA_T* message_data_container_p = NULL;
+  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
 
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
@@ -625,19 +663,54 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       message_block_p = NULL;
     } // end IF
   } while (!done);
+  if (!message_block_p)
+    return;
 
   // 2. append data ?
-  if (message_block_p)
+  if (buffer_)
   {
-    // sanity check(s)
-    ACE_ASSERT (buffer_);
-
     ACE_Message_Block* message_block_2 = buffer_;
     for (;
          message_block_2->cont ();
          message_block_2 = message_block_2->cont ());
     message_block_2->cont (message_block_p);
   } // end IF
+  else
+  {
+    buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
+    ACE_ASSERT (buffer_);
+
+    ACE_NEW_NORETURN (message_data_p,
+                      typename DataMessageType::DATA_T::DATA_T ());
+    if (!message_data_p)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+      return;
+    } // end IF
+    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+    ACE_OS::memset (&message_data_p->NavData,
+                    0,
+                    sizeof (struct _navdata_t));
+    ACE_NEW_NORETURN (message_data_container_p,
+                      typename DataMessageType::DATA_T (message_data_p));
+    if (!message_data_container_p)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+
+      // clean up
+      delete message_data_p;
+
+      return;
+    } // end IF
+    message_data_p = NULL;
+    buffer_->initialize (message_data_container_p,
+                         NULL);
+    message_data_container_p = NULL;
+  } // end ELSE
 }
 
 template <ACE_SYNCH_DECL,
