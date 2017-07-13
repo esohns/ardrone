@@ -135,7 +135,7 @@ struct ARDrone_Configuration
 
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
-  struct Net_ListenerConfiguration                              listenerConfiguration;
+  struct ARDrone_ListenerConfiguration                          listenerConfiguration;
   ARDrone_ConnectionConfigurations_t                            connectionConfigurations;
   struct Common_ParserConfiguration                             parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

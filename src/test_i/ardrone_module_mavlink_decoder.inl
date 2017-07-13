@@ -18,9 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "ace/ACE.h"
 #include "ace/Log_Msg.h"
 
-#include "checksum.h"
+//#include "checksum.h"
+//#include "mavlink.h"
 
 #include "stream_dec_defines.h"
 
@@ -316,8 +318,9 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+//  unsigned char byte_c = 0x00;
 //  ACE_UINT16 checksum_i = 0;
-//  uint16_t checksum_i = 0;
+//  ACE_UINT16 checksum_swapped = 0;
 
   while (remaining_bytes_2)
   { ACE_ASSERT (message_block_p);
@@ -366,21 +369,28 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
   } // end IF
 
-  // *TODO*: validate checksum
+//  // validate checksum
+//  byte_c = *(buffer_->rd_ptr () + record_inout->len + 1);
+//  static const uint8_t mavlink_message_crcs[256] = MAVLINK_MESSAGE_CRCS;
+//  *(buffer_->rd_ptr () + record_inout->len + 1) =
+//      mavlink_message_crcs[record_inout->msgid];
 //  checksum_i = ACE::crc_ccitt (buffer_->rd_ptr () - MAVLINK_CORE_HEADER_LEN,
-//                               record_inout->len + MAVLINK_CORE_HEADER_LEN,
+//                               MAVLINK_CORE_HEADER_LEN + record_inout->len + 1,
 //                               0);
 //  checksum_i =
 //      crc_calculate (reinterpret_cast<uint8_t*> (buffer_->rd_ptr ()) - MAVLINK_CORE_HEADER_LEN,
-//                     record_inout->len + MAVLINK_CORE_HEADER_LEN);
-//  static const uint8_t mavlink_message_crcs[256] = MAVLINK_MESSAGE_CRCS;
-//#define MAVLINK_MESSAGE_CRC(msgid) mavlink_message_crcs[msgid]
-//  crc_accumulate (MAVLINK_MESSAGE_CRC (record_inout->msgid), &checksum_i);
+//                     MAVLINK_CORE_HEADER_LEN + record_inout->len + 1);
+//  *(buffer_->rd_ptr () + record_inout->len + 1) = byte_c;
+//  //  static const uint8_t mavlink_message_crcs[256] = MAVLINK_MESSAGE_CRCS;
+////#define MAVLINK_MESSAGE_CRC(msgid) mavlink_message_crcs[msgid]
+////  crc_accumulate (MAVLINK_MESSAGE_CRC (record_inout->msgid), &checksum_i);
+//  checksum_swapped = ACE_SWAP_WORD (record_inout->checksum);
 //  if (checksum_i != record_inout->checksum)
 //  {
 //    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("%s: invalid checksum, continuing\n"),
-//                inherited::mod_->name ()));
+//                ACE_TEXT ("%s: invalid checksum (message id: %u), continuing\n"),
+//                inherited::mod_->name (),
+//                buffer_->id ()));
 
 //    // clean up
 //    buffer_->release ();
@@ -419,6 +429,10 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       goto error;
     } // end IF
+    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+    ACE_OS::memset (&message_data_p->MAVLinkData,
+                    0,
+                    sizeof (struct __mavlink_message));
     ACE_NEW_NORETURN (message_data_container_p,
                       typename DataMessageType::DATA_T (message_data_p));
     if (!message_data_container_p)
@@ -443,11 +457,6 @@ error:
     delete message_data_p;
   if (message_data_container_p)
     message_data_container_p->decrease ();
-//  if (record_inout)
-//  {
-//    delete record_inout;
-//    record_inout = NULL;
-//  } // end IF
 }
 //template <ACE_SYNCH_DECL,
 //          typename TimePolicyType,
@@ -702,10 +711,10 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       message_block_p = NULL;
     } // end IF
   } while (!done);
-
-  // 2. append data ?
   if (!message_block_p)
     return;
+
+  // 2. append data ?
   if (buffer_)
   {
     ACE_Message_Block* message_block_2 = buffer_;
@@ -728,6 +737,10 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       return;
     } // end IF
+    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+    ACE_OS::memset (&message_data_p->MAVLinkData,
+                    0,
+                    sizeof (struct __mavlink_message));
     ACE_NEW_NORETURN (message_data_container_p,
                       typename DataMessageType::DATA_T (message_data_p));
     if (!message_data_container_p)
@@ -902,6 +915,10 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                       inherited::mod_->name ()));
           goto error;
         } // end IF
+        message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+        ACE_OS::memset (&message_data_p->MAVLinkData,
+                        0,
+                        sizeof (struct __mavlink_message));
         ACE_NEW_NORETURN (message_data_container_p,
                           typename DataMessageType::DATA_T (message_data_p));
         if (!message_data_container_p)

@@ -148,9 +148,6 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   //             as such
   passMessageDownstream_out = false;
 
-  // sanity check(s)
-  //ACE_ASSERT (inherited::isInitialized_);
-
   // form a chain of buffers
   if (buffer_)
   {

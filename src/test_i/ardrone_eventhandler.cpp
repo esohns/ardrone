@@ -132,9 +132,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
-  const ARDrone_MessageData_t& data_container_r = message_in.get ();
-  const struct ARDrone_MessageData& data_r = data_container_r.get ();
-
   bool message_event = true;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -153,6 +150,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       break;
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
     { ACE_ASSERT (MAVLinkNotify_);
+
+      const ARDrone_MessageData_t& data_container_r = message_in.get ();
+      const struct ARDrone_MessageData& data_r = data_container_r.get ();
+
       try {
         // *TODO*: remove type inference
         MAVLinkNotify_->messageCB (data_r.MAVLinkData,
@@ -166,6 +167,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     }
     case ARDRONE_MESSAGE_NAVDATAMESSAGE:
     { ACE_ASSERT (NavDataNotify_);
+
+      const ARDrone_MessageData_t& data_container_r = message_in.get ();
+      const struct ARDrone_MessageData& data_r = data_container_r.get ();
+
       try {
         // *TODO*: remove type inference
         NavDataNotify_->messageCB (data_r.NavData.NavData,

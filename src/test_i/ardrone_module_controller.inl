@@ -67,8 +67,12 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionDataContainerType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                            ConnectorType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
+#else
                             ConnectorType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
- : inherited (stream_in)
+#endif
+: inherited (stream_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));
 
@@ -98,39 +102,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::~ARDrone_Module_Controller_T"));
 
 }
-
-//template <ACE_SYNCH_DECL,
-//          typename TimePolicyType,
-//          typename ConfigurationType,
-//          typename ControlMessageType,
-//          typename DataMessageType,
-//          typename SessionMessageType,
-//          typename SessionDataContainerType,
-//          typename HandlerConfigurationType,
-//          typename ConnectionManagerType,
-//          typename ConnectorType>
-//bool
-//ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-//                            TimePolicyType,
-//                            ConfigurationType,
-//                            ControlMessageType,
-//                            DataMessageType,
-//                            SessionMessageType,
-//                            SessionDataContainerType,
-//                            HandlerConfigurationType,
-//                            ConnectionManagerType,
-//                            ConnectorType>::initialize (const ConfigurationType& configuration_in,
-//                                                        Stream_IAllocator* allocator_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::initialize"));
-
-//  if (inherited::isInitialized_)
-//  {
-//  } // end IF
-
-//  return inherited::initialize (configuration_in,
-//                                allocator_in);
-//}
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
@@ -174,20 +145,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   switch (message_inout->type ())
   {
     case STREAM_SESSION_MESSAGE_BEGIN:
-    {
-      // *NOTE*: the NavData connection session data needs to be marked; the
-      //         connection stream is currently generic, so this is done here
-      // sanity check(s)
-      ACE_ASSERT (inherited::sessionData_);
-      typename SessionDataContainerType::DATA_T& session_data_r =
-          const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->get ());
-      ACE_ASSERT (session_data_r.lock);
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_r.lock);
-        session_data_r.isNavData = true;
-      } // end lock scope
-
       break;
-    }
     case STREAM_SESSION_MESSAGE_CONNECT:
     {
 //      // *TODO*: this needs more work
@@ -404,14 +362,15 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   if (!message_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to Stream_Task_Base::allocateMessage(%u): \"%m\", returning\n"),
+                ACE_TEXT ("%s: failed to Stream_TaskBase_T::allocateMessage(%u): \"%m\", returning\n"),
                 inherited::mod_->name (),
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return;
   } // end IF
   message_p->set (ARDRONE_MESSAGE_ATCOMMANDMESSAGE);
-  result = message_p->copy (ACE_TEXT_ALWAYS_CHAR ("Init"),
-                            4 + 1);
+  unsigned char buffer_a[] = { 0x01, 0x00, 0x00, 0x00 };
+  result = message_p->copy (reinterpret_cast<char*> (buffer_a),
+                            sizeof (buffer_a));
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,

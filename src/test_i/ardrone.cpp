@@ -1021,18 +1021,17 @@ do_work (int argc_in,
 
   // ******************* socket configuration data ****************************
   struct ARDrone_ConnectionConfiguration connection_configuration;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
     address_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
-                                                                                                   1);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.bufferSize =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
+                                                                                                     1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-//  if (useReactor_in)
-//    connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
-//      false;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     false;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
     false;
   connection_configuration.socketHandlerConfiguration.listenerConfiguration =
     &CBData_in.configuration->listenerConfiguration;
@@ -1059,10 +1058,10 @@ do_work (int argc_in,
     &((*iterator_2).second);
 
   result =
-    connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
-                                                                                         static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                         1,
-                                                                                         0);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
+                                                                                           static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                           1,
+                                                                                           0);
   ACE_ASSERT (result == 0);
   connection_configuration.streamConfiguration =
     &((*mavlink_streamconfiguration_iterator).second);
@@ -1073,14 +1072,20 @@ do_work (int argc_in,
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
+  (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
+  (*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration_3;
 
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
     address_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                                                                   1);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                                                                     1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     !useReactor_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
+    ARDRONE_PORT_UDP_NAVDATA;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
     true;
   connection_configuration.streamConfiguration =
     &((*navdata_streamconfiguration_iterator).second);
@@ -1091,16 +1096,20 @@ do_work (int argc_in,
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
+  (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
 
   result =
-    connection_configuration.socketHandlerConfiguration.socketConfiguration.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
-                                                                                         static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                         1,
-                                                                                         0);
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
+                                                                                           static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                           1,
+                                                                                           0);
   ACE_ASSERT (result == 0);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     false;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
+    0;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
     false;
 //  connection_configuration.streamConfiguration =
 //    &((*navdata_streamconfiguration_iterator).second);
@@ -1111,6 +1120,10 @@ do_work (int argc_in,
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
     &((*iterator_2).second);
+  (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
+  (*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration =
+      &(*iterator_2).second.socketHandlerConfiguration.listenerConfiguration->socketHandlerConfiguration.socketConfiguration_3;
 
   //  // *TODO*: verify the given address
 //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
@@ -1132,12 +1145,12 @@ do_work (int argc_in,
 //  ACE_DEBUG ((LM_ERROR,
 //              ACE_TEXT ("set local SAP: %s...\n"),
 //              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.address =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
     address_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
-    !useReactor_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
-    true;
+//  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
+//    !useReactor_in;
+//  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
+//    true;
   connection_configuration.streamConfiguration =
     &((*video_streamconfiguration_iterator).second);
   CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("VideoSource"),
