@@ -24,7 +24,7 @@
 //#include "checksum.h"
 //#include "mavlink.h"
 
-#include "stream_dec_defines.h"
+#include "net_defines.h"
 
 #include "ardrone_macros.h"
 
@@ -51,7 +51,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
  , bufferState_ (NULL)
  , isFirst_ (true)
  , scannerState_ (NULL)
- , useYYScanBuffer_ (STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
+ , useYYScanBuffer_ (NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::ARDrone_Module_MAVLinkDecoder_T"));
 
@@ -61,7 +61,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   if (result)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to yylex_init_extra: \"%m\", returning\n")));
+                ACE_TEXT ("%s: failed to yylex_init_extra: \"%m\", returning\n"),
+                inherited::mod_->name ()));
     return;
   } // end IF
   ACE_ASSERT (scannerState_);
@@ -90,7 +91,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   if (ARDrone_MAVLink_Scanner_lex_destroy (scannerState_))
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to yylex_destroy(): \"%m\", continuing\n")));
+                ACE_TEXT ("%s: failed to yylex_destroy(): \"%m\", continuing\n"),
+                inherited::mod_->name ()));
 }
 
 template <ACE_SYNCH_DECL,
@@ -121,7 +123,6 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   if (inherited::isInitialized_)
   {
-    //allocator_ = NULL;
     if (buffer_)
       buffer_->release ();
     buffer_ = NULL;
@@ -135,7 +136,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
     isFirst_ = true;
 
-    useYYScanBuffer_ = STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER;
+    useYYScanBuffer_ = NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER;
   } // end IF
 
   ACE_ASSERT (inherited::msg_queue_);
@@ -184,8 +185,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   passMessageDownstream_out = false;
 
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_inout->capacity () - message_inout->length () >=
-              STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE);
+  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
   *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
   *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
@@ -197,7 +197,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     int error = ACE_OS::last_error ();
     if (error != ESHUTDOWN)
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n")));
+                  ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
+                  inherited::mod_->name ()));
 
     // clean up
     message_inout->release ();
@@ -399,7 +400,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 //    goto error;
 //  } // end IF
 
-  buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
+  //buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -446,6 +447,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     buffer_->initialize (message_data_container_p,
                          NULL);
     message_data_container_p = NULL;
+    buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
   } // end IF
 
   return;
@@ -479,7 +481,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   // *NOTE*: the output format has been "adjusted" to fit in with bison error-reporting
   ACE_DEBUG ((LM_ERROR,
-              ACE_TEXT ("%s: failed to parse message: \"%s\"...\n"),
+              ACE_TEXT ("%s: failed to parse message: \"%s\"\n"),
               inherited::mod_->name (),
               ACE_TEXT (message_in.c_str ())));
 //   ACE_DEBUG((LM_ERROR,
@@ -539,7 +541,8 @@ continue_:
   {
     // *NOTE*: most probable reason: received session end
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("no data after ARDrone_Module_MAVLinkDecoder_T::waitBuffer(), aborting\n")));
+                ACE_TEXT ("%s: no data after ARDrone_Module_MAVLinkDecoder_T::waitBuffer(), aborting\n"),
+                inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -551,8 +554,7 @@ continue_:
   // initialize next buffer
 
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >=
-              STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE);
+  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
   *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
   *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
@@ -561,7 +563,8 @@ continue_:
                    message_block_2->length ()))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n")));
+                ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -613,7 +616,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       int error = ACE_OS::last_error ();
       if (error != ESHUTDOWN)
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE_Message_Queue::dequeue_head(): \"%m\", returning\n")));
+                    ACE_TEXT ("%s: failed to ACE_Message_Queue::dequeue_head(): \"%m\", returning\n"),
+                    inherited::mod_->name ()));
       return;
     } // end IF
     ACE_ASSERT (message_block_p);
@@ -665,7 +669,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       if (result == -1)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n")));
+                    ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
+                    inherited::mod_->name ()));
         return;
       } // end IF
       message_block_p = NULL;
@@ -718,6 +723,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     buffer_->initialize (message_data_container_p,
                          NULL);
     message_data_container_p = NULL;
+    buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
   } // end ELSE
 }
 
@@ -748,7 +754,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   // create/initialize a new buffer state
   bufferState_ =
     (useYYScanBuffer_ ? ARDrone_MAVLink_Scanner__scan_buffer (const_cast<char*> (data_in),
-                                                              length_in + STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE,
+                                                              length_in + NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
                                                               scannerState_)
                       : ARDrone_MAVLink_Scanner__scan_bytes (data_in,
                                                              length_in,
@@ -892,13 +898,15 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         buffer_->initialize (message_data_container_p,
                              NULL);
         message_data_container_p = NULL;
+        buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
 
 continue_:
         if (!scan_begin (buffer_->rd_ptr (),
                          buffer_->length ()))
         {
           ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n")));
+                      ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                      inherited::mod_->name ()));
           goto error;
         } // end IF
         do_scan_end = true;
@@ -919,7 +927,8 @@ continue_:
                                                 this);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("caught exception in yylex(), continuing\n")));
+                      ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),
+                      inherited::mod_->name ()));
           result = 1;
         }
         switch (result)
@@ -929,7 +938,7 @@ continue_:
             // *NOTE*: most probable reason: connection
             //         has been closed --> session end
             ACE_DEBUG ((LM_DEBUG,
-                        ACE_TEXT ("%s: failed to parse MAVLink messages (result was: %d), aborting\n"),
+                        ACE_TEXT ("%s: failed to parse MAVLink message(s) (result was: %d), aborting\n"),
                         inherited::mod_->name (),
                         result));
             goto error;

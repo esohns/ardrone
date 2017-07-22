@@ -252,6 +252,7 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_StreamConfiguration,
                                struct Stream_ModuleConfiguration,
                                struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
+struct ARDrone_GtkCBData;
 struct ARDrone_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {
@@ -347,11 +348,11 @@ struct ARDrone_ModuleHandlerConfiguration
   struct _cairo_rectangle_int                    sourceFormat;    // H264 decoder module
   GdkWindow*                                     window;          // display module
 #endif
-  bool                                           fullScreen;          // display module
-  bool                                           inbound;          // statistic/IO module
-  bool                                           printProgressDot; // file writer module
+  bool                                           fullScreen;            // display module
+  bool                                           inbound;               // statistic/IO module
+  bool                                           printProgressDot;      // file writer module
   bool                                           pushStatisticMessages; // statistic module
-  ARDrone_StreamConfiguration_t*                 streamConfiguration; // net source/target modules
+  ARDrone_StreamConfiguration_t*                 streamConfiguration;   // net source/target modules
   ARDrone_Notification_t*                        subscriber; // event handler module
   ARDrone_Subscribers_t*                         subscribers; // event handler module
   std::string                                    targetFileName;
@@ -365,12 +366,14 @@ struct ARDrone_StreamConfiguration
 {
   inline ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
+   , GtkCBData (NULL)
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
    , useReactor (NET_EVENT_USE_REACTOR)
    , userData (NULL)
   {};
 
+  struct ARDrone_GtkCBData*     GtkCBData;
   ARDrone_IMAVLinkInitialize_t* initializeMAVLink;
   ARDrone_INavDataInitialize_t* initializeNavData;
   bool                          useReactor;

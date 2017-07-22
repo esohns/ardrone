@@ -49,7 +49,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
-HEADER                 \x55\x66\x77\x88
+HEADER                 \x88\x77\x66\x55
 
 %s                     state
 %s                     _sequence
@@ -67,65 +67,61 @@ HEADER                 \x55\x66\x77\x88
 
   struct _navdata_t& message_r = iparser_in->current ();
 
-  std::stringstream converter;
   static unsigned int option_offset = 0;
-  struct _navdata_option_t current_option_s;
+  static struct _navdata_option_t current_option_s;
 %}
 
 <INITIAL>{
-{HEADER}   { option_offset = yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t message_header;
-             converter >> message_header;
-             message_r.header = message_header;
+{HEADER}   { ACE_ASSERT (yyleng == 4);
+             option_offset = yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.header =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (state);
            }
 } // end <INITIAL>
 <state>{
-{OCTET}{4} { option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t ardrone_state;
-             converter >> ardrone_state;
-             message_r.ardrone_state = ardrone_state;
+{OCTET}{4} { ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.ardrone_state =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (_sequence);
            }
 } // end <state>
 <_sequence>{
-{OCTET}{4} { option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t sequence;
-             converter >> sequence;
-             message_r.sequence = sequence;
+{OCTET}{4} { ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.sequence =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (vision);
            }
 } // end <sequence>
 <vision>{
-{OCTET}{4} { option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t vision_flags;
-             converter >> vision_flags;
-             message_r.vision_defined = vision_flags;
+{OCTET}{4} { ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             int32_t* integer_p = reinterpret_cast<int32_t*> (yytext);
+             message_r.vision_defined =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              ACE_OS::memset (&current_option_s, 0, sizeof (struct _navdata_option_t));
              BEGIN (option_id);
            }
 } // end <vision>
 <option_id>{
-{OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             converter >> current_option_s.tag;
+{OCTET}{2} { ACE_ASSERT (yyleng == 2);
+             uint16_t* integer_p = reinterpret_cast<uint16_t*> (yytext);
+             current_option_s.tag =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
+                                                      : *integer_p);
 
              try {
                iparser_in->addOption (option_offset);
@@ -135,32 +131,18 @@ HEADER                 \x55\x66\x77\x88
                            option_offset));
                yyterminate ();
              }
+             option_offset += yyleng;
 
              BEGIN (option_size);
            }
 } // end <option_id>
 <option_size>{
-{OCTET}{2} { converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             converter >> current_option_s.size;
-
-//            // *TODO*: iff there is only ever a single option (as the header
-//            //         definition implies), framing the message accordingly
-//            //         would be preferable
-//            ACE_ASSERT (!message_r.options[0].data);
-//            ACE_NEW_NORETURN (message_r.options[0].data,
-//                              uint8_t[message_r.options[0].size]);
-//            message_r.options[0].data =
-//                (uint8_t[])new (std::nothrow) uint8_t[message_r.options[0].size];
-//            if (!message_r.options[0].data)
-//            {
-//              ACE_DEBUG ((LM_CRITICAL,
-//                          ACE_TEXT ("failed to allocate memory (%u byte(s)): \"%m\", aborting\n"),
-//                          message_r.options[0].size));
-//              yyterminate ();
-//            } // end IF
-             option_offset += current_option_s.size;
+{OCTET}{2} { ACE_ASSERT (yyleng == 2);
+             option_offset += yyleng;
+             uint16_t* integer_p = reinterpret_cast<uint16_t*> (yytext);
+             current_option_s.size =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (option_data);
            }
@@ -168,30 +150,35 @@ HEADER                 \x55\x66\x77\x88
 <option_data>{
 {OCTET}    { yyless (0);
 
-             // skip ahead message_r.len bytes
+             // skip ahead current_option_s.size bytes
              /* undo the effects of YY_DO_BEFORE_ACTION */
              *yy_cp = yyg->yy_hold_char;
 
              char c = 0;
-             for (unsigned int i = 0;
-                  i < current_option_s.size;
-                  ++i)
+             for (unsigned int i = (current_option_s.size - 4);
+                  i;
+                  --i)
                c = yyinput (yyscanner);
              ACE_UNUSED_ARG (c);
-
-             struct _navdata_t* message_p = &message_r;
-             try {
-               iparser_in->record (message_p);
-             } catch (...) {
-               ACE_DEBUG ((LM_ERROR,
-                           ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
-               yyterminate ();
-             }
+             option_offset += current_option_s.size - 4;
 
              if (current_option_s.tag != NAVDATA_CKS_TAG)
                BEGIN (option_id);
              else
+             {
+               struct _navdata_t* message_p = &message_r;
+               try {
+                 iparser_in->record (message_p);
+               } catch (...) {
+                 ACE_DEBUG ((LM_ERROR,
+                             ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+                 yyterminate ();
+               }
+               BEGIN (INITIAL);
+               option_offset = 0;
+
                return 0;
+             } // end ELSE
            }
 } // end <option_data>
 <<EOF>>                { return -1; }

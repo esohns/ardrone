@@ -214,6 +214,7 @@ class ARDrone_NavDataStream
                                ARDrone_Message,
                                ARDrone_SessionMessage>
  , public ARDrone_INavDataNotify
+ , public Net_IWLANCB
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -271,11 +272,42 @@ class ARDrone_NavDataStream
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 
+  // implement Net_IWLANCB
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onAssociate (REFGUID,            // device identifier
+#else
+  virtual void onAssociate (const std::string&, // device identifier
+#endif
+                            const std::string&, // SSID
+                            bool);              // success ?
+  // *IMPORTANT NOTE*: Net_IWLANMonitor_T::addresses() may not return
+  //                   significant data before this, as the link layer
+  //                   configuration (e.g. DHCP handshake, ...) most likely has
+  //                   not been established
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onConnect (REFGUID,            // device identifier
+#else
+  virtual void onConnect (const std::string&, // device identifier
+#endif
+                          const std::string&, // SSID
+                          bool);              // success ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onHotPlug (REFGUID,            // device identifier
+#else
+  virtual void onHotPlug (const std::string&, // device identifier
+#endif
+                          bool);              // enabled ? : disabled/removed
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onScanComplete (REFGUID);            // device identifier
+#else
+  virtual void onScanComplete (const std::string&); // device identifier
+#endif
+
   // *TODO*: re-consider this API
-  void ping ();
+  inline void ping () { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
   ARDrone_IController* controller_;
-  bool                 videoModeSet_;
+  bool                 isFirst_;
 };
 
 //////////////////////////////////////////

@@ -126,20 +126,21 @@ class ARDrone_Module_NavDataDecoder_T
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T (const ARDrone_Module_NavDataDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T& operator= (const ARDrone_Module_NavDataDecoder_T&))
 
+  // override some ACE_Task_T methods
+  int svc (void);
+
   // helper methods
   bool scan_begin (const char*,   // buffer handle
                    unsigned int); // buffer size
   void scan_end ();
 
-  Stream_IAllocator*      allocator_;
   DataMessageType*        buffer_;
+  struct yy_buffer_state* bufferState_;
   bool                    isFirst_;
+  unsigned int            numberOfOptions_; // current-
   yyscan_t                scannerState_;
   //std::string             scannerTables_;
-  struct yy_buffer_state* bufferState_;
   bool                    useYYScanBuffer_;
-
-  unsigned int            numberOfOptions_; // current-
 };
 
 // include template definition

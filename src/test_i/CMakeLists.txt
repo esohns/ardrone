@@ -282,6 +282,8 @@ set (ardrone_EXE_SRCS
      ardrone_sessionmessage.h
      ardrone_signalhandler.cpp
      ardrone_signalhandler.h
+     ardrone_statemachine_navdata.cpp
+     ardrone_statemachine_navdata.h
      ardrone_stream.cpp
      ardrone_stream.h
      ardrone_stream.inl

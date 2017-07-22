@@ -361,15 +361,24 @@ ARDrone_NavDataStream::ARDrone_NavDataStream ()
  : inherited ()
  , inherited2 (&(inherited::sessionDataLock_))
  , controller_ (NULL)
- , videoModeSet_ (false)
+ , isFirst_ (true)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::ARDrone_NavDataStream"));
 
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
+  WLAN_monitor_p->subscribe (this);
 }
 
 ARDrone_NavDataStream::~ARDrone_NavDataStream ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::~ARDrone_NavDataStream"));
+
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
+  WLAN_monitor_p->unsubscribe (this);
 
   inherited::shutdown ();
 }
@@ -459,10 +468,9 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   if (inherited::isInitialized_)
   {
     controller_ = NULL;
-    videoModeSet_ = NULL;
+    isFirst_ = true;
   } // end IF
 
-//  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
   struct ARDrone_SessionData* session_data_p = NULL;
@@ -628,28 +636,6 @@ ARDrone_NavDataStream::start (Stream_SessionId_t sessionId_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in Stream_ISessionCB::startCB(), continuing\n")));
   }
-
-//  if (!videoModeSet_)
-//  { ACE_ASSERT (controller_);
-//    try {
-//      controller_->set (ARDRONE_VIDEOMODE_720P);
-//    } catch (...) {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("caught exception in ARDrone_IController::set(%d), returning\n"),
-//                  ARDRONE_VIDEOMODE_720P));
-//      return;
-//    }
-
-//    videoModeSet_ = true;
-//  } // end IF
-
-  try {
-    controller_->init ();
-  } catch (...) {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in ARDrone_IController::init(), returning\n")));
-    return;
-  }
 }
 void
 ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
@@ -689,29 +675,6 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
     inSession_ = false;
   } // end lock scope
-}
-
-void
-ARDrone_NavDataStream::ping ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::ping"));
-
-//  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
-//  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
-//  if (!protocolHandler_impl)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
-
-//    return;
-//  } // end IF
-
-//  // delegate to this module
-//  protocolHandler_impl->handleTimeout (NULL);
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
 }
 
 bool
@@ -802,9 +765,191 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::messageCB"));
 
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
+  if (isFirst_)
+  {
+    isFirst_ = false;
+  } // end IF
+
+  struct _navdata_option_t* option_p = NULL;
+  for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
+       iterator != offsets_in.end ();
+       ++iterator)
+  {
+    option_p =
+      reinterpret_cast<struct _navdata_option_t*> (static_cast<char*> (payload_in) + *iterator);
+    switch (option_p->tag)
+    {
+      case NAVDATA_DEMO_TAG: // 0
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_demo_t));
+        struct _navdata_demo_t* option_2 =
+          reinterpret_cast<struct _navdata_demo_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_DETECT_TAG: // 16
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_detect_t));
+        struct _navdata_vision_detect_t* option_2 =
+          reinterpret_cast<struct _navdata_vision_detect_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_CKS_TAG: // 65535
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_cks_t));
+        struct _navdata_cks_t* option_2 =
+          reinterpret_cast<struct _navdata_cks_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
+                    ACE_TEXT (navdata_stream_name_string_),
+                    option_p->tag));
+        break;
+      }
+    } // end SWITCH
+  } // end FOR
+}
+
+//////////////////////////////////////////
+
+void
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_NavDataStream::onAssociate (REFGUID deviceIdentifier_in,
+#else
+ARDrone_NavDataStream::onAssociate (const std::string& deviceIdentifier_in,
+#endif
+                                    const std::string& SSID_in,
+                                    bool success_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onAssociate"));
+
+  ACE_UNUSED_ARG (deviceIdentifier_in);
+  ACE_UNUSED_ARG (SSID_in);
+
+  // sanity check(s)
+  if (!inherited::configuration_)
+    return;
+  if (!success_in)
+    return;
+
+  // update GUI ?
+  if (inherited::configuration_->configuration_.GtkCBData)
+  {
+    guint event_source_id =
+      g_idle_add (idle_associated_SSID_cb,
+                  inherited::configuration_->configuration_.GtkCBData);
+    if (event_source_id == 0)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
+      return;
+    } // end IF
+  } // end IF
+}
+void
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_NavDataStream::onConnect (REFGUID deviceIdentifier_in,
+#else
+ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
+#endif
+                                  const std::string& SSID_in,
+                                  bool success_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onConnect"));
+
+//  // sanity check(s)
+//  if (!success_in)
+//    return;
+//
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (deviceIdentifier_in),
+//#else
+//  if (!Net_Common_Tools::interfaceToIPAddress (deviceIdentifier_in,
+//#endif
+//                                               localSAP_,
+//                                               peerSAP_))
+//  {
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+//                ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ())));
+//#else
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+//                ACE_TEXT (deviceIdentifier_in.c_str ())));
+//#endif
+//    return;
+//  } // end IF
+//
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+//              ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
+//              ACE_TEXT (SSID_in.c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (localSAP_).c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peerSAP_).c_str ())));
+//#else
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+//              ACE_TEXT (deviceIdentifier_in.c_str ()),
+//              ACE_TEXT (SSID_in.c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (localSAP_).c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peerSAP_).c_str ())));
+//#endif
+}
+void
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_NavDataStream::onHotPlug (REFGUID deviceIdentifier_in,
+#else
+ARDrone_NavDataStream::onHotPlug (const std::string& deviceIdentifier_in,
+#endif
+                                  bool enabled_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onHotPlug"));
+
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": interface %s\n"),
+//              ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
+//              (enabled_in ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled/removed"))));
+//#else
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": interface %s\n"),
+//              ACE_TEXT (deviceIdentifier_in.c_str ()),
+//              (enabled_in ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled/removed"))));
+//#endif
+}
+void
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_NavDataStream::onScanComplete (REFGUID deviceIdentifier_in)
+#else
+ARDrone_NavDataStream::onScanComplete (const std::string& deviceIdentifier_in)
+#endif
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onScanComplete"));
+
+//  // sanity check(s)
+//  if (!isInitialized_ || !isActive_)
+//    return;
+//  ACE_ASSERT (configuration_);
+//  if (!configuration_->autoAssociate)
+//    return;
+//
+//  if (!associate (deviceIdentifier_in,
+//                  configuration_->SSID))
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
+//                ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
+//                ACE_TEXT (configuration_->SSID.c_str ())));
+//#else
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
+//                ACE_TEXT (deviceIdentifier_in.c_str ()),
+//                ACE_TEXT (configuration_->SSID.c_str ())));
+//#endif
 }
 
 //////////////////////////////////////////
@@ -1209,7 +1354,6 @@ ARDrone_MAVLinkStream::messageCB (const struct __mavlink_message& record_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::messageCB"));
 
-  ACE_UNUSED_ARG (record_in);
   ACE_UNUSED_ARG (payload_in);
 
   switch (record_in.msgid)
@@ -1225,6 +1369,13 @@ ARDrone_MAVLinkStream::messageCB (const struct __mavlink_message& record_in,
     { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
       struct __mavlink_sys_status_t* message_p =
           reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_PARAM_VALUE: // 22
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_param_value_t));
+      struct __mavlink_param_value_t* message_p =
+          reinterpret_cast<struct __mavlink_param_value_t*> (payload_in);
       ACE_UNUSED_ARG (message_p);
       break;
     }

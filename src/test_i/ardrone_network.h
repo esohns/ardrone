@@ -58,6 +58,7 @@
 #include "net_configuration.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
+#include "net_wlaninetmonitor.h"
 
 //#include "ardrone_configuration.h"
 #include "ardrone_defines.h"
@@ -161,6 +162,25 @@ typedef Net_Connection_Manager_T<ACE_INET_Addr,
                                  struct ARDrone_ConnectionState,
                                  ARDrone_RuntimeStatistic_t,
                                  struct ARDrone_UserData> ARDrone_ConnectionManager_t;
+
+struct ARDrone_WLANMonitorConfiguration
+ : Net_WLANMonitorConfiguration
+{
+  inline ARDrone_WLANMonitorConfiguration ()
+   : Net_WLANMonitorConfiguration ()
+   , userData (NULL)
+  {
+    autoAssociate = ARDRONE_DEFAULT_SSID_AUTOASSOCIATE;
+  };
+  inline virtual ~ARDrone_WLANMonitorConfiguration () {};
+
+  struct ARDrone_UserData* userData;
+};
+
+typedef Net_WLANInetMonitor_T<ACE_MT_SYNCH,
+                              Common_TimePolicy_t,
+                              struct ARDrone_WLANMonitorConfiguration,
+                              struct ARDrone_UserData> ARDrone_WLANMonitor_t;
 
 extern const char net_stream_name_string_[];
 typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_StreamSessionData_t;
@@ -302,5 +322,7 @@ typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<ARDrone_Async
 
 typedef ACE_Singleton<ARDrone_ConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_CONNECTIONMANAGER_SINGLETON;
+typedef ACE_Singleton<ARDrone_WLANMonitor_t,
+                      ACE_SYNCH_MUTEX> ARDRONE_WLANMONITOR_SINGLETON;
 
 #endif // #ifndef ARDRONE_NETWORK_H
