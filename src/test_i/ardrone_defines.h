@@ -62,6 +62,7 @@
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH          "checkbutton_asynch"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN      "checkbutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE            "checkbutton_save"
+#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_VIDEO           "checkbutton_video"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE     "combobox_display_device"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT     "combobox_display_format"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT        "combobox_save_format"
@@ -75,6 +76,7 @@
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                  "entry_SSID"
 #define ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE      "filechooserbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION         "frame_configuration"
+#define ARDRONE_UI_WIDGET_NAME_FRAME_DISPLAY               "frame_display"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS               "frame_options"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE          "frame_save_options"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE    "liststore_display_device"
@@ -92,8 +94,6 @@
 #define ARDRONE_UI_WIDGET_NAME_STATUSBAR                   "statusbar"
 #define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT        "toggleaction_connect"
-#define ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_CONNECT        "togglebutton_connect"
-//#define ARDRONE_UI_WIDGET_NAME_VBOX_SAVE_OPTIONS           "vbox_save_options"
 #define ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN           "window_fullscreen"
 
 #define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
@@ -116,7 +116,7 @@
 #define ARDRONE_PORT_TCP_VIDEO                             5555
 #define ARDRONE_PORT_UDP_CONTROL_CONFIGURATION             5556  // UDP (drone <-- client)
 #define ARDRONE_PORT_UDP_MAVLINK                           14550 // UDP (drone --> client)
-#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone --> client)
+#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone (<)--> client)
 
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
@@ -162,17 +162,19 @@
 #define ARDRONE_H264_360P_VIDEO_HEIGHT                     368
 #define ARDRONE_H264_720P_VIDEO_WIDTH                      1280
 #define ARDRONE_H264_720P_VIDEO_HEIGHT                     720
-#define ARDRONE_DEFAULT_VIDEO_WIDTH                        ARDRONE_H264_360P_VIDEO_WIDTH
-#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       ARDRONE_H264_360P_VIDEO_HEIGHT
 
 // *** application-related ***
-//#define ARDRONE_TEMPERATURE_BUFFER_SIZE                   1000
-#define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
 #define ARDRONE_CONTROL_LOG_FILE_PREFIX                    "ardrone_control"
 #define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"
 #define ARDRONE_NAVDATA_LOG_FILE_PREFIX                    "ardrone_navdata"
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.avi"
 #define ARDRONE_VIDEO_RAW_FILE_NAME                        "ardrone.rgb"
+
+#define ARDRONE_DEFAULT_SSID_AUTOASSOCIATE                 true
+#define ARDRONE_DEFAULT_VIDEO_DISPLAY                      true
+#define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
+#define ARDRONE_DEFAULT_VIDEO_WIDTH                        ARDRONE_H264_360P_VIDEO_WIDTH
+#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       ARDRONE_H264_360P_VIDEO_HEIGHT
 
 #endif // #ifndef ARDRONE_DEFINES_H

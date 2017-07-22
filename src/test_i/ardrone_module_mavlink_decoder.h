@@ -80,7 +80,6 @@ class ARDrone_Module_MAVLinkDecoder_T
 
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
-  //virtual const ConfigurationType& get () const;
 
   // implement (part of) Stream_ITaskBase
   virtual void handleDataMessage (DataMessageType*&, // data message handle

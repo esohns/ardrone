@@ -32,6 +32,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
 
 /* %not-for-header */
+
 /* %if-c-only */
 /* %if-not-reentrant */
 /* %endif */
@@ -42,7 +43,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 3
+#define YY_FLEX_SUBMINOR_VERSION 1
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -63,72 +64,40 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 /* %endif */
 
 /* %if-c-only */
-    #define yy_create_buffer ARDrone_NavData_Scanner__create_buffer
-
-    #define yy_delete_buffer ARDrone_NavData_Scanner__delete_buffer
-
-    #define yy_scan_buffer ARDrone_NavData_Scanner__scan_buffer
-
-    #define yy_scan_string ARDrone_NavData_Scanner__scan_string
-
-    #define yy_scan_bytes ARDrone_NavData_Scanner__scan_bytes
-
-    #define yy_init_buffer ARDrone_NavData_Scanner__init_buffer
-
-    #define yy_flush_buffer ARDrone_NavData_Scanner__flush_buffer
-
-    #define yy_load_buffer_state ARDrone_NavData_Scanner__load_buffer_state
-
-    #define yy_switch_to_buffer ARDrone_NavData_Scanner__switch_to_buffer
-
-    #define yypush_buffer_state ARDrone_NavData_Scanner_push_buffer_state
-
-    #define yypop_buffer_state ARDrone_NavData_Scanner_pop_buffer_state
-
-    #define yyensure_buffer_stack ARDrone_NavData_Scanner_ensure_buffer_stack
-
-    #define yylex ARDrone_NavData_Scanner_lex
-
-    #define yyrestart ARDrone_NavData_Scanner_restart
-
-    #define yylex_init ARDrone_NavData_Scanner_lex_init
-
-    #define yylex_init_extra ARDrone_NavData_Scanner_lex_init_extra
-
-    #define yylex_destroy ARDrone_NavData_Scanner_lex_destroy
-
-    #define yyget_debug ARDrone_NavData_Scanner_get_debug
-
-    #define yyset_debug ARDrone_NavData_Scanner_set_debug
-
-    #define yyget_extra ARDrone_NavData_Scanner_get_extra
-
-    #define yyset_extra ARDrone_NavData_Scanner_set_extra
-
-    #define yyget_in ARDrone_NavData_Scanner_get_in
-
-    #define yyset_in ARDrone_NavData_Scanner_set_in
-
-    #define yyget_out ARDrone_NavData_Scanner_get_out
-
-    #define yyset_out ARDrone_NavData_Scanner_set_out
-
-    #define yyget_leng ARDrone_NavData_Scanner_get_leng
-
-    #define yyget_text ARDrone_NavData_Scanner_get_text
-
-    #define yyget_lineno ARDrone_NavData_Scanner_get_lineno
-
-    #define yyset_lineno ARDrone_NavData_Scanner_set_lineno
-
-
-        #define yyget_column ARDrone_NavData_Scanner_get_column
-
-        #define yyset_column ARDrone_NavData_Scanner_set_column
-
-
-    #define yywrap ARDrone_NavData_Scanner_wrap
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+        
+    
+    
 /* %endif */
 
 
@@ -136,12 +105,9 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
 
 
-    #define yyalloc ARDrone_NavData_Scanner_alloc
-
-    #define yyrealloc ARDrone_NavData_Scanner_realloc
-
-    #define yyfree ARDrone_NavData_Scanner_free
-
+    
+    
+    
 
 /* %if-c-only */
 
@@ -175,7 +141,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types.
+ * if you want the limit (max/min) macros for int types. 
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -192,7 +158,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t;
+typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 
@@ -243,17 +209,25 @@ typedef unsigned int flex_uint32_t;
 #define yynoreturn
 #endif
 
+
+    
+
+
 /* %not-for-header */
+
 /* Returned upon end-of-file. */
 #define YY_NULL 0
 /* %ok-for-header */
 
 
 /* %not-for-header */
-/* Promotes a possibly negative, possibly signed char to an
- *   integer in range [0..255] for use as an array index.
+
+/* Promotes a possibly negative, possibly signed char to an unsigned
+ * integer for use as an array index.  If the signed char is negative,
+ * we want to instead treat it as an 8-bit unsigned char, hence the
+ * double cast.
  */
-#define YY_SC_TO_UI(c) ((YY_CHAR) (c))
+#define YY_SC_TO_UI(c) ((unsigned int) (unsigned char) c)
 /* %ok-for-header */
 
 
@@ -275,6 +249,8 @@ typedef void* yyscan_t;
 
 
 
+    
+    
 
 
 
@@ -305,7 +281,10 @@ typedef void* yyscan_t;
 
 
 
-
+    
+    
+    
+    
 
 
 
@@ -314,16 +293,28 @@ typedef void* yyscan_t;
  * definition of BEGIN.
  */
 #define BEGIN yyg->yy_start = 1 + 2 *
+
+
+
 /* Translate the current start state into a value that can be later handed
  * to BEGIN to return to the state.  The YYSTATE alias is for lex
  * compatibility.
  */
 #define YY_START ((yyg->yy_start - 1) / 2)
 #define YYSTATE YY_START
+
+
+
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
+
+
+
 /* Special action meaning "start processing a new file". */
 #define YY_NEW_FILE ARDrone_NavData_Scanner_restart(yyin ,yyscanner )
+
+
+
 #define YY_END_OF_BUFFER_CHAR 0
 
 
@@ -370,9 +361,12 @@ typedef size_t yy_size_t;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
 
+
+
+    
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE ARDrone_NavData_Scanner_lex.
+     *       existing scanners that call yyless() from OUTSIDE ARDrone_NavData_Scanner_lex. 
      *       One obvious solution it to make yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-yylineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
@@ -391,97 +385,104 @@ typedef size_t yy_size_t;
                     if ( *p == '\n' )\
                         --yylineno;\
             }while(0)
+    
+
+
 
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
-  do \
-    { \
-    /* Undo effects of setting up yytext. */ \
+	do \
+		{ \
+		/* Undo effects of setting up yytext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
-    *yy_cp = yyg->yy_hold_char; \
-    YY_RESTORE_YY_MORE_OFFSET \
-    yyg->yy_c_buf_p = yy_cp = yy_bp + yyless_macro_arg - YY_MORE_ADJ; \
-    YY_DO_BEFORE_ACTION; /* set up yytext again */ \
-    } \
-  while ( 0 )
+		*yy_cp = yyg->yy_hold_char; \
+		YY_RESTORE_YY_MORE_OFFSET \
+		yyg->yy_c_buf_p = yy_cp = yy_bp + yyless_macro_arg - YY_MORE_ADJ; \
+		YY_DO_BEFORE_ACTION; /* set up yytext again */ \
+		} \
+	while ( 0 )
+
+
+
 #define unput(c) yyunput( c, yyg->yytext_ptr , yyscanner )
 
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
-  {
+	{
 /* %if-c-only */
-  FILE *yy_input_file;
+	FILE *yy_input_file;
 /* %endif */
 
 /* %if-c++-only */
 /* %endif */
 
 
-  char *yy_ch_buf;		/* input buffer */
-  char *yy_buf_pos;		/* current position in input buffer */
+	char *yy_ch_buf;		/* input buffer */
+	char *yy_buf_pos;		/* current position in input buffer */
 
-  /* Size of input buffer in bytes, not including room for EOB
-   * characters.
-   */
-  int yy_buf_size;
+	/* Size of input buffer in bytes, not including room for EOB
+	 * characters.
+	 */
+	int yy_buf_size;
 
-  /* Number of characters read into yy_ch_buf, not including EOB
-   * characters.
-   */
-  int yy_n_chars;
+	/* Number of characters read into yy_ch_buf, not including EOB
+	 * characters.
+	 */
+	int yy_n_chars;
 
-  /* Whether we "own" the buffer - i.e., we know we created it,
-   * and can realloc() it to grow it, and should free() it to
-   * delete it.
-   */
-  int yy_is_our_buffer;
+	/* Whether we "own" the buffer - i.e., we know we created it,
+	 * and can realloc() it to grow it, and should free() it to
+	 * delete it.
+	 */
+	int yy_is_our_buffer;
 
-  /* Whether this is an "interactive" input source; if so, and
-   * if we're using stdio for input, then we want to use getc()
-   * instead of fread(), to make sure we stop fetching input after
-   * each newline.
-   */
-  int yy_is_interactive;
+	/* Whether this is an "interactive" input source; if so, and
+	 * if we're using stdio for input, then we want to use getc()
+	 * instead of fread(), to make sure we stop fetching input after
+	 * each newline.
+	 */
+	int yy_is_interactive;
 
-  /* Whether we're considered to be at the beginning of a line.
-   * If so, '^' rules will be active on the next match, otherwise
-   * not.
-   */
-  int yy_at_bol;
+	/* Whether we're considered to be at the beginning of a line.
+	 * If so, '^' rules will be active on the next match, otherwise
+	 * not.
+	 */
+	int yy_at_bol;
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
+    
 
+	/* Whether to try to fill the input buffer when we reach the
+	 * end of it.
+	 */
+	int yy_fill_buffer;
 
-  /* Whether to try to fill the input buffer when we reach the
-   * end of it.
-   */
-  int yy_fill_buffer;
-
-  int yy_buffer_status;
+	int yy_buffer_status;
 
 #define YY_BUFFER_NEW 0
 #define YY_BUFFER_NORMAL 1
-  /* When an EOF's been seen but there's still some text to process
-   * then we mark the buffer as YY_EOF_PENDING, to indicate that we
-   * shouldn't try reading from the input source any more.  We might
-   * still have a bunch of tokens to match, though, because of
-   * possible backing-up.
-   *
-   * When we actually see the EOF, we change the status to "new"
-   * (via ARDrone_NavData_Scanner_restart()), so that the user can continue scanning by
-   * just pointing yyin at a new input file.
-   */
+	/* When an EOF's been seen but there's still some text to process
+	 * then we mark the buffer as YY_EOF_PENDING, to indicate that we
+	 * shouldn't try reading from the input source any more.  We might
+	 * still have a bunch of tokens to match, though, because of
+	 * possible backing-up.
+	 *
+	 * When we actually see the EOF, we change the status to "new"
+	 * (via ARDrone_NavData_Scanner_restart()), so that the user can continue scanning by
+	 * just pointing yyin at a new input file.
+	 */
 #define YY_BUFFER_EOF_PENDING 2
 
-  };
+	};
 #endif /* !YY_STRUCT_YY_BUFFER_STATE */
 
 /* %if-c-only Standard (non-C++) definition */
 /* %not-for-header */
+
 /* %if-not-reentrant */
 /* %endif */
 /* %ok-for-header */
@@ -498,6 +499,9 @@ struct yy_buffer_state
 #define YY_CURRENT_BUFFER ( yyg->yy_buffer_stack \
                           ? yyg->yy_buffer_stack[yyg->yy_buffer_stack_top] \
                           : NULL)
+
+
+
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
  */
@@ -508,55 +512,68 @@ struct yy_buffer_state
 
 /* %if-not-reentrant */
 /* %not-for-header */
+
 /* %ok-for-header */
 
 /* %endif */
 
-void ARDrone_NavData_Scanner_restart ( FILE *input_file , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__create_buffer ( FILE *file, int size , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_push_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_pop_buffer_state ( yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_restart (FILE *input_file ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__create_buffer (FILE *file,int size ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_push_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_pop_buffer_state (yyscan_t yyscanner );
 
 
-static void ARDrone_NavData_Scanner_ensure_buffer_stack ( yyscan_t yyscanner );
-static void ARDrone_NavData_Scanner__load_buffer_state ( yyscan_t yyscanner );
-static void ARDrone_NavData_Scanner__init_buffer ( YY_BUFFER_STATE b, FILE *file , yyscan_t yyscanner );
+static void ARDrone_NavData_Scanner_ensure_buffer_stack (yyscan_t yyscanner );
+static void ARDrone_NavData_Scanner__load_buffer_state (yyscan_t yyscanner );
+static void ARDrone_NavData_Scanner__init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
+
+
+
 #define YY_FLUSH_BUFFER ARDrone_NavData_Scanner__flush_buffer(YY_CURRENT_BUFFER ,yyscanner)
 
 
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string ( const char *yy_str , yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
 /* %endif */
 
-void *ARDrone_NavData_Scanner_alloc ( yy_size_t , yyscan_t yyscanner );
-void *ARDrone_NavData_Scanner_realloc ( void *, yy_size_t , yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_free ( void * , yyscan_t yyscanner );
+void *ARDrone_NavData_Scanner_alloc (yy_size_t ,yyscan_t yyscanner );
+void *ARDrone_NavData_Scanner_realloc (void *,yy_size_t ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_free (void * ,yyscan_t yyscanner );
 
 
 #define yy_new_buffer ARDrone_NavData_Scanner__create_buffer
+
+
+
 #define yy_set_interactive(is_interactive) \
-  { \
-  if ( ! YY_CURRENT_BUFFER ){ \
+	{ \
+	if ( ! YY_CURRENT_BUFFER ){ \
         ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner); \
-    YY_CURRENT_BUFFER_LVALUE =    \
+		YY_CURRENT_BUFFER_LVALUE =    \
             ARDrone_NavData_Scanner__create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
-  } \
-  YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
-  }
+	} \
+	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
+	}
+
+
+
 #define yy_set_bol(at_bol) \
-  { \
-  if ( ! YY_CURRENT_BUFFER ){\
+	{ \
+	if ( ! YY_CURRENT_BUFFER ){\
         ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner); \
-    YY_CURRENT_BUFFER_LVALUE =    \
+		YY_CURRENT_BUFFER_LVALUE =    \
             ARDrone_NavData_Scanner__create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
-  } \
-  YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
-  }
+	} \
+	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
+	}
+
+
+
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 
@@ -564,7 +581,10 @@ void ARDrone_NavData_Scanner_free ( void * , yyscan_t yyscanner );
 /* Begin user sect3 */
 
 #define FLEX_DEBUG
-typedef flex_uint8_t YY_CHAR;
+
+typedef unsigned char YY_CHAR;
+
+
 
 
 typedef int yy_state_type;
@@ -573,7 +593,7 @@ typedef int yy_state_type;
 
 
 /* %% [1.5] DFA */
-static const flex_int32_t yy_nxt[][256] =
+static yyconst flex_int32_t yy_nxt[][256] =
     {
     {
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
@@ -616,12 +636,12 @@ static const flex_int32_t yy_nxt[][256] =
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
-       18,   18,   18,   18,   18,   19,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
+       18,   18,   18,   18,   18,   18,   19,   18,   18,   18,
 
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
@@ -648,12 +668,12 @@ static const flex_int32_t yy_nxt[][256] =
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
 
-       18,   18,   18,   18,   18,   19,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
+       18,   18,   18,   18,   18,   18,   19,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
        18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
@@ -1187,8 +1207,8 @@ static const flex_int32_t yy_nxt[][256] =
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
-      -19,  -19,   26,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
+      -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,   26,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
       -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,  -19,
@@ -1408,8 +1428,8 @@ static const flex_int32_t yy_nxt[][256] =
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
+      -26,  -26,   32,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
-      -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,   32,
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
       -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,  -26,
 
@@ -1596,12 +1616,12 @@ static const flex_int32_t yy_nxt[][256] =
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
 
+      -32,  -32,  -32,  -32,  -32,   36,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
-      -32,  -32,  -32,  -32,  -32,  -32,   36,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
       -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,  -32,
@@ -1846,10 +1866,10 @@ static const flex_int32_t yy_nxt[][256] =
 /* %if-c-only Standard (non-C++) definition */
 
 
-static yy_state_type yy_get_previous_state ( yyscan_t yyscanner );
-static yy_state_type yy_try_NUL_trans ( yy_state_type current_state  , yyscan_t yyscanner);
-static int yy_get_next_buffer ( yyscan_t yyscanner );
-static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
+static yy_state_type yy_get_previous_state (yyscan_t yyscanner );
+static yy_state_type yy_try_NUL_trans (yy_state_type current_state  ,yyscan_t yyscanner);
+static int yy_get_next_buffer (yyscan_t yyscanner );
+static void yynoreturn yy_fatal_error (yyconst char* msg ,yyscan_t yyscanner );
 
 
 /* %endif */
@@ -1859,24 +1879,27 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
  * corresponding action - sets up yytext.
  */
 #define YY_DO_BEFORE_ACTION \
-  yyg->yytext_ptr = yy_bp; \
+	yyg->yytext_ptr = yy_bp; \
 /* %% [2.0] code to fiddle yytext and yyleng for yymore() goes here \ */\
-  yyleng = (int) (yy_cp - yy_bp); \
-  yyg->yy_hold_char = *yy_cp; \
-  *yy_cp = '\0'; \
+	yyleng = (int) (yy_cp - yy_bp); \
+	yyg->yy_hold_char = *yy_cp; \
+	*yy_cp = '\0'; \
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
-  yyg->yy_c_buf_p = yy_cp;
+	yyg->yy_c_buf_p = yy_cp;
+
+
+
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
 #define YY_NUM_RULES 9
 #define YY_END_OF_BUFFER 10
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
-  {
-  flex_int32_t yy_verify;
-  flex_int32_t yy_nxt;
-  };
-static const flex_int32_t yy_accept[40] =
+	{
+	flex_int32_t yy_verify;
+	flex_int32_t yy_nxt;
+	};
+static yyconst flex_int32_t yy_accept[40] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,   10,    8,    8,    8,
@@ -1886,11 +1909,11 @@ static const flex_int32_t yy_accept[40] =
 
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[10] =
+static yyconst flex_int32_t yy_rule_can_match_eol[10] =
     {   0,
 0, 1, 1, 1, 1, 1, 1, 1, 0,     };
 
-static const yy_state_type yy_NUL_trans[40] =
+static yyconst yy_state_type yy_NUL_trans[40] =
     {   0,
        18,   18,   20,   20,   21,   21,   22,   22,   23,   23,
        24,   24,   25,   25,   18,   18,    0,    0,    0,   27,
@@ -1898,9 +1921,9 @@ static const yy_state_type yy_NUL_trans[40] =
         0,    0,   37,   38,   39,    0,    0,    0,    0
     } ;
 
-static const flex_int32_t yy_rule_linenum[9] =
+static yyconst flex_int32_t yy_rule_linenum[9] =
     {   0,
-       79,   91,  103,  115,  128,  146,  172,  201
+       75,   86,   97,  108,  120,  140,  151,  185
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2018,21 +2041,21 @@ struct yyguts_t
 
 /* %if-c-only */
 
-static int yy_init_globals ( yyscan_t yyscanner );
+static int yy_init_globals (yyscan_t yyscanner );
 
 /* %endif */
 
 /* %if-reentrant */
 
 
+    
 
-
-
+    
 
 
 int ARDrone_NavData_Scanner_lex_init (yyscan_t* scanner);
 
-int ARDrone_NavData_Scanner_lex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
+int ARDrone_NavData_Scanner_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
 
 /* %endif */
 
@@ -2042,66 +2065,66 @@ int ARDrone_NavData_Scanner_lex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_
    These are made visible to non-reentrant scanners for convenience. */
 
 
-int ARDrone_NavData_Scanner_lex_destroy ( yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_lex_destroy (yyscan_t yyscanner );
 
 
 
-int ARDrone_NavData_Scanner_get_debug ( yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_get_debug (yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_debug ( int debug_flag , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_debug (int debug_flag ,yyscan_t yyscanner );
 
 
 
-YY_EXTRA_TYPE ARDrone_NavData_Scanner_get_extra ( yyscan_t yyscanner );
+YY_EXTRA_TYPE ARDrone_NavData_Scanner_get_extra (yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_NavData_Scanner_get_in ( yyscan_t yyscanner );
+FILE *ARDrone_NavData_Scanner_get_in (yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_in  ( FILE * _in_str , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_in  (FILE * _in_str ,yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_NavData_Scanner_get_out ( yyscan_t yyscanner );
+FILE *ARDrone_NavData_Scanner_get_out (yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_out  ( FILE * _out_str , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_out  (FILE * _out_str ,yyscan_t yyscanner );
 
 
 
-      int ARDrone_NavData_Scanner_get_leng ( yyscan_t yyscanner );
+			int ARDrone_NavData_Scanner_get_leng (yyscan_t yyscanner );
 
 
 
-char *ARDrone_NavData_Scanner_get_text ( yyscan_t yyscanner );
+char *ARDrone_NavData_Scanner_get_text (yyscan_t yyscanner );
 
 
 
-int ARDrone_NavData_Scanner_get_lineno ( yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_get_lineno (yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_lineno ( int _line_number , yyscan_t yyscanner );
-
-
-
-
-int ARDrone_NavData_Scanner_get_column  ( yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_lineno (int _line_number ,yyscan_t yyscanner );
 
 
 
 
+int ARDrone_NavData_Scanner_get_column  (yyscan_t yyscanner );
 
-void ARDrone_NavData_Scanner_set_column ( int _column_no , yyscan_t yyscanner );
+
+
+
+
+void ARDrone_NavData_Scanner_set_column (int _column_no ,yyscan_t yyscanner );
 
 
 
@@ -2114,35 +2137,37 @@ void ARDrone_NavData_Scanner_set_column ( int _column_no , yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int ARDrone_NavData_Scanner_wrap ( yyscan_t yyscanner );
+extern "C" int ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner );
 #else
-extern int ARDrone_NavData_Scanner_wrap ( yyscan_t yyscanner );
+extern int ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner );
 #endif
 #endif
 
 /* %not-for-header */
-#ifndef YY_NO_UNPUT
 
+#ifndef YY_NO_UNPUT
+    
 #endif
 /* %ok-for-header */
 
 /* %endif */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
+static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
+static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
 /* %if-c-only Standard (non-C++) definition */
 /* %not-for-header */
+
 #ifdef __cplusplus
-static int yyinput ( yyscan_t yyscanner );
+static int yyinput (yyscan_t yyscanner );
 #else
-static int input ( yyscan_t yyscanner );
+static int input (yyscan_t yyscanner );
 #endif
 /* %ok-for-header */
 
@@ -2189,17 +2214,17 @@ static int input ( yyscan_t yyscanner );
 #ifndef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
 /* %% [5.0] fread()/read() definition of YY_INPUT goes here unless we're doing C++ \ */\
-  errno=0; \
-  while ( (result = (int) read( fileno(yyin), buf, (yy_size_t) max_size )) < 0 ) \
-  { \
-    if( errno != EINTR) \
-    { \
-      YY_FATAL_ERROR( "input in flex scanner failed" ); \
-      break; \
-    } \
-    errno=0; \
-    clearerr(yyin); \
-  }\
+	errno=0; \
+	while ( (result = (int) read( fileno(yyin), buf, max_size )) < 0 ) \
+	{ \
+		if( errno != EINTR) \
+		{ \
+			YY_FATAL_ERROR( "input in flex scanner failed" ); \
+			break; \
+		} \
+		errno=0; \
+		clearerr(yyin); \
+	}\
 \
 /* %if-c++-only C++ definition \ */\
 /* %endif */
@@ -2235,9 +2260,11 @@ static int input ( yyscan_t yyscanner );
 
 /* %if-tables-serialization structures and prototypes */
 /* %not-for-header */
+
 /* %ok-for-header */
 
 /* %not-for-header */
+
 /* %tables-yydmap generated elements */
 /* %endif */
 /* end tables serialization structures and prototypes */
@@ -2287,17 +2314,18 @@ extern int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner);
 
 /* %% [6.0] YY_RULE_SETUP definition goes here */
 #define YY_RULE_SETUP \
-  YY_USER_ACTION
+	YY_USER_ACTION
 
 
 /* %not-for-header */
+
 /** The main scanner function which does all the work.
  */
 YY_DECL
 {
-  yy_state_type yy_current_state;
-  char *yy_cp, *yy_bp;
-  int yy_act;
+	yy_state_type yy_current_state;
+	char *yy_cp, *yy_bp;
+	int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 
@@ -2306,43 +2334,43 @@ YY_DECL
 
 
 
-  if ( !yyg->yy_init )
-    {
-    yyg->yy_init = 1;
+	if ( !yyg->yy_init )
+		{
+		yyg->yy_init = 1;
 
 #ifdef YY_USER_INIT
-    YY_USER_INIT;
+		YY_USER_INIT;
 #endif
 
 
 
-    if ( ! yyg->yy_start )
-      yyg->yy_start = 1;	/* first start state */
+		if ( ! yyg->yy_start )
+			yyg->yy_start = 1;	/* first start state */
 
-    if ( ! yyin )
+		if ( ! yyin )
 /* %if-c-only */
-      yyin = stdin;
+			yyin = stdin;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
-    if ( ! yyout )
+		if ( ! yyout )
 /* %if-c-only */
-      yyout = stdout;
+			yyout = stdout;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
-    if ( ! YY_CURRENT_BUFFER ) {
-      ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner);
-      YY_CURRENT_BUFFER_LVALUE =
-        ARDrone_NavData_Scanner__create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
-    }
+		if ( ! YY_CURRENT_BUFFER ) {
+			ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner);
+			YY_CURRENT_BUFFER_LVALUE =
+				ARDrone_NavData_Scanner__create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
+		}
 
-    ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
-    }
+		ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+		}
 
-  {
+	{
 /* %% [7.0] user's declarations go here */
 
 
@@ -2352,163 +2380,159 @@ YY_DECL
 
   struct _navdata_t& message_r = iparser_in->current ();
 
-  std::stringstream converter;
   static unsigned int option_offset = 0;
-  struct _navdata_option_t current_option_s;
+  static struct _navdata_option_t current_option_s;
 
 
 
-  while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
-    {
+	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
+		{
 /* %% [8.0] yymore()-related code goes here */
-    yy_cp = yyg->yy_c_buf_p;
+		yy_cp = yyg->yy_c_buf_p;
 
-    /* Support of yytext. */
-    *yy_cp = yyg->yy_hold_char;
+		/* Support of yytext. */
+		*yy_cp = yyg->yy_hold_char;
 
-    /* yy_bp points to the position in yy_ch_buf of the start of
-     * the current run.
-     */
-    yy_bp = yy_cp;
+		/* yy_bp points to the position in yy_ch_buf of the start of
+		 * the current run.
+		 */
+		yy_bp = yy_cp;
 
 /* %% [9.0] code to set up and find next match goes here */
-    yy_current_state = yyg->yy_start;
+		yy_current_state = yyg->yy_start;
 yy_match:
-    while ( (yy_current_state = yy_nxt[yy_current_state][ YY_SC_TO_UI(*yy_cp) ]) > 0 )
-      {
-      if ( yy_accept[yy_current_state] )
-        {
-        yyg->yy_last_accepting_state = yy_current_state;
-        yyg->yy_last_accepting_cpos = yy_cp;
-        }
+		while ( (yy_current_state = yy_nxt[yy_current_state][ YY_SC_TO_UI(*yy_cp) ]) > 0 )
+			{
+			if ( yy_accept[yy_current_state] )
+				{
+				yyg->yy_last_accepting_state = yy_current_state;
+				yyg->yy_last_accepting_cpos = yy_cp;
+				}
 
-      ++yy_cp;
-      }
+			++yy_cp;
+			}
 
-    yy_current_state = -yy_current_state;
+		yy_current_state = -yy_current_state;
 
 yy_find_action:
 /* %% [10.0] code to find the action number goes here */
-    yy_act = yy_accept[yy_current_state];
+		yy_act = yy_accept[yy_current_state];
 
-    YY_DO_BEFORE_ACTION;
+		YY_DO_BEFORE_ACTION;
 
 /* %% [11.0] code for yylineno update goes here */
 
-    if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
-      {
-      int yyl;
-      for ( yyl = 0; yyl < yyleng; ++yyl )
-        if ( yytext[yyl] == '\n' )
-
+		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
+			{
+			yy_size_t yyl;
+			for ( yyl = 0; yyl < yyleng; ++yyl )
+				if ( yytext[yyl] == '\n' )
+					   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
 ;
-      }
+			}
 
 
 do_action:	/* This label is used only to access EOF actions. */
 
 /* %% [12.0] debug code goes here */
-    if ( yy_flex_debug )
-      {
-      if ( yy_act == 0 )
-        fprintf( stderr, "--scanner backing up\n" );
-      else if ( yy_act < 9 )
-        fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
-                 (long)yy_rule_linenum[yy_act], yytext );
-      else if ( yy_act == 9 )
-        fprintf( stderr, "--accepting default rule (\"%s\")\n",
-                 yytext );
-      else if ( yy_act == 10 )
-        fprintf( stderr, "--(end of buffer or a NUL)\n" );
-      else
-        fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
-      }
+		if ( yy_flex_debug )
+			{
+			if ( yy_act == 0 )
+				fprintf( stderr, "--scanner backing up\n" );
+			else if ( yy_act < 9 )
+				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
+				         (long)yy_rule_linenum[yy_act], yytext );
+			else if ( yy_act == 9 )
+				fprintf( stderr, "--accepting default rule (\"%s\")\n",
+				         yytext );
+			else if ( yy_act == 10 )
+				fprintf( stderr, "--(end of buffer or a NUL)\n" );
+			else
+				fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
+			}
 
-    switch ( yy_act )
-  { /* beginning of action switch */
+		switch ( yy_act )
+	{ /* beginning of action switch */
 /* %% [13.0] actions go here */
-      case 0: /* must back up */
-      /* undo the effects of YY_DO_BEFORE_ACTION */
-      *yy_cp = yyg->yy_hold_char;
-      yy_cp = yyg->yy_last_accepting_cpos + 1;
-      yy_current_state = yyg->yy_last_accepting_state;
-      goto yy_find_action;
+			case 0: /* must back up */
+			/* undo the effects of YY_DO_BEFORE_ACTION */
+			*yy_cp = yyg->yy_hold_char;
+			yy_cp = yyg->yy_last_accepting_cpos + 1;
+			yy_current_state = yyg->yy_last_accepting_state;
+			goto yy_find_action;
 
 
 case 1:
 YY_RULE_SETUP
-{ option_offset = yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t message_header;
-             converter >> message_header;
-             message_r.header = message_header;
+{ ACE_ASSERT (yyleng == 4);
+             option_offset = yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.header =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (state);
            }
-  YY_BREAK
+	YY_BREAK
 // end <INITIAL>
 
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-{ option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t ardrone_state;
-             converter >> ardrone_state;
-             message_r.ardrone_state = ardrone_state;
+{ ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.ardrone_state =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (_sequence);
            }
-  YY_BREAK
+	YY_BREAK
 // end <state>
 
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-{ option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t sequence;
-             converter >> sequence;
-             message_r.sequence = sequence;
+{ ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             uint32_t* integer_p = reinterpret_cast<uint32_t*> (yytext);
+             message_r.sequence =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (vision);
            }
-  YY_BREAK
+	YY_BREAK
 // end <sequence>
 
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-{ option_offset += yyleng;
-             converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             uint32_t vision_flags;
-             converter >> vision_flags;
-             message_r.vision_defined = vision_flags;
+{ ACE_ASSERT (yyleng == 4);
+             option_offset += yyleng;
+             int32_t* integer_p = reinterpret_cast<int32_t*> (yytext);
+             message_r.vision_defined =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_LONG (*integer_p)
+                                                      : *integer_p);
 
              ACE_OS::memset (&current_option_s, 0, sizeof (struct _navdata_option_t));
              BEGIN (option_id);
            }
-  YY_BREAK
+	YY_BREAK
 // end <vision>
 
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-{ converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             converter >> current_option_s.tag;
+{ ACE_ASSERT (yyleng == 2);
+             uint16_t* integer_p = reinterpret_cast<uint16_t*> (yytext);
+             current_option_s.tag =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
+                                                      : *integer_p);
 
              try {
                iparser_in->addOption (option_offset);
@@ -2518,40 +2542,26 @@ YY_RULE_SETUP
                            option_offset));
                yyterminate ();
              }
+             option_offset += yyleng;
 
              BEGIN (option_size);
            }
-  YY_BREAK
+	YY_BREAK
 // end <option_id>
 
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-{ converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-             converter.clear ();
-             converter << yytext;
-             converter >> current_option_s.size;
-
-//            // *TODO*: iff there is only ever a single option (as the header
-//            //         definition implies), framing the message accordingly
-//            //         would be preferable
-//            ACE_ASSERT (!message_r.options[0].data);
-//            ACE_NEW_NORETURN (message_r.options[0].data,
-//                              uint8_t[message_r.options[0].size]);
-//            message_r.options[0].data =
-//                (uint8_t[])new (std::nothrow) uint8_t[message_r.options[0].size];
-//            if (!message_r.options[0].data)
-//            {
-//              ACE_DEBUG ((LM_CRITICAL,
-//                          ACE_TEXT ("failed to allocate memory (%u byte(s)): \"%m\", aborting\n"),
-//                          message_r.options[0].size));
-//              yyterminate ();
-//            } // end IF
-             option_offset += current_option_s.size;
+{ ACE_ASSERT (yyleng == 2);
+             option_offset += yyleng;
+             uint16_t* integer_p = reinterpret_cast<uint16_t*> (yytext);
+             current_option_s.size =
+               ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
+                                                      : *integer_p);
 
              BEGIN (option_data);
            }
-  YY_BREAK
+	YY_BREAK
 // end <option_size>
 
 case 7:
@@ -2564,27 +2574,32 @@ YY_RULE_SETUP
              *yy_cp = yyg->yy_hold_char;
 
              char c = 0;
-             for (unsigned int i = 0;
-                  i < current_option_s.size;
-                  ++i)
+             for (unsigned int i = (current_option_s.size - 4);
+                  i;
+                  --i)
                c = yyinput (yyscanner);
              ACE_UNUSED_ARG (c);
-
-             struct _navdata_t* message_p = &message_r;
-             try {
-               iparser_in->record (message_p);
-             } catch (...) {
-               ACE_DEBUG ((LM_ERROR,
-                           ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
-               yyterminate ();
-             }
+             option_offset += current_option_s.size - 4;
 
              if (current_option_s.tag != NAVDATA_CKS_TAG)
                BEGIN (option_id);
              else
+             {
+               struct _navdata_t* message_p = &message_r;
+               try {
+                 iparser_in->record (message_p);
+               } catch (...) {
+                 ACE_DEBUG ((LM_ERROR,
+                             ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+                 yyterminate ();
+               }
+               BEGIN (INITIAL);
+               option_offset = 0;
+
                return 0;
+             } // end ELSE
            }
-  YY_BREAK
+	YY_BREAK
 // end <option_data>
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(state):
@@ -2595,157 +2610,158 @@ case YY_STATE_EOF(option_size):
 case YY_STATE_EOF(option_data):
 case YY_STATE_EOF(end_of_frame):
 { return -1; }
-  YY_BREAK
+	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
 { /* *TODO*: use (?s:.) ? */
                          yyterminate (); }
-  YY_BREAK
+	YY_BREAK
 case 9:
 YY_RULE_SETUP
 YY_FATAL_ERROR( "flex scanner jammed" );
-  YY_BREAK
+	YY_BREAK
 
-  case YY_END_OF_BUFFER:
-    {
-    /* Amount of text matched not including the EOB char. */
-    int yy_amount_of_matched_text = (int) (yy_cp - yyg->yytext_ptr) - 1;
+	case YY_END_OF_BUFFER:
+		{
+		/* Amount of text matched not including the EOB char. */
+		int yy_amount_of_matched_text = (int) (yy_cp - yyg->yytext_ptr) - 1;
 
-    /* Undo the effects of YY_DO_BEFORE_ACTION. */
-    *yy_cp = yyg->yy_hold_char;
-    YY_RESTORE_YY_MORE_OFFSET
+		/* Undo the effects of YY_DO_BEFORE_ACTION. */
+		*yy_cp = yyg->yy_hold_char;
+		YY_RESTORE_YY_MORE_OFFSET
 
-    if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW )
-      {
-      /* We're scanning a new file or input source.  It's
-       * possible that this happened because the user
-       * just pointed yyin at a new source and called
-       * ARDrone_NavData_Scanner_lex().  If so, then we have to assure
-       * consistency between YY_CURRENT_BUFFER and our
-       * globals.  Here is the right place to do so, because
-       * this is the first action (other than possibly a
-       * back-up) that will match for the new input source.
-       */
-      yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
+		if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW )
+			{
+			/* We're scanning a new file or input source.  It's
+			 * possible that this happened because the user
+			 * just pointed yyin at a new source and called
+			 * ARDrone_NavData_Scanner_lex().  If so, then we have to assure
+			 * consistency between YY_CURRENT_BUFFER and our
+			 * globals.  Here is the right place to do so, because
+			 * this is the first action (other than possibly a
+			 * back-up) that will match for the new input source.
+			 */
+			yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 /* %if-c-only */
-      YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin;
+			YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
-      YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
-      }
+			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
+			}
 
-    /* Note that here we test for yy_c_buf_p "<=" to the position
-     * of the first EOB in the buffer, since yy_c_buf_p will
-     * already have been incremented past the NUL character
-     * (since all states make transitions on EOB to the
-     * end-of-buffer state).  Contrast this with the test
-     * in input().
-     */
-    if ( yyg->yy_c_buf_p <= &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] )
-      { /* This was really a NUL. */
-      yy_state_type yy_next_state;
+		/* Note that here we test for yy_c_buf_p "<=" to the position
+		 * of the first EOB in the buffer, since yy_c_buf_p will
+		 * already have been incremented past the NUL character
+		 * (since all states make transitions on EOB to the
+		 * end-of-buffer state).  Contrast this with the test
+		 * in input().
+		 */
+		if ( yyg->yy_c_buf_p <= &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] )
+			{ /* This was really a NUL. */
+			yy_state_type yy_next_state;
 
-      yyg->yy_c_buf_p = yyg->yytext_ptr + yy_amount_of_matched_text;
+			yyg->yy_c_buf_p = yyg->yytext_ptr + yy_amount_of_matched_text;
 
-      yy_current_state = yy_get_previous_state( yyscanner );
+			yy_current_state = yy_get_previous_state( yyscanner );
 
-      /* Okay, we're now positioned to make the NUL
-       * transition.  We couldn't have
-       * yy_get_previous_state() go ahead and do it
-       * for us because it doesn't know how to deal
-       * with the possibility of jamming (and we don't
-       * want to build jamming into it because then it
-       * will run more slowly).
-       */
+			/* Okay, we're now positioned to make the NUL
+			 * transition.  We couldn't have
+			 * yy_get_previous_state() go ahead and do it
+			 * for us because it doesn't know how to deal
+			 * with the possibility of jamming (and we don't
+			 * want to build jamming into it because then it
+			 * will run more slowly).
+			 */
 
-      yy_next_state = yy_try_NUL_trans( yy_current_state , yyscanner);
+			yy_next_state = yy_try_NUL_trans( yy_current_state , yyscanner);
 
-      yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
+			yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
 
-      if ( yy_next_state )
-        {
-        /* Consume the NUL. */
-        yy_cp = ++yyg->yy_c_buf_p;
-        yy_current_state = yy_next_state;
-        goto yy_match;
-        }
+			if ( yy_next_state )
+				{
+				/* Consume the NUL. */
+				yy_cp = ++yyg->yy_c_buf_p;
+				yy_current_state = yy_next_state;
+				goto yy_match;
+				}
 
-      else
-        {
+			else
+				{
 /* %% [14.0] code to do back-up for compressed tables and set up yy_cp goes here */
-        yy_cp = yyg->yy_c_buf_p;
-        goto yy_find_action;
-        }
-      }
+				yy_cp = yyg->yy_c_buf_p;
+				goto yy_find_action;
+				}
+			}
 
-    else switch ( yy_get_next_buffer( yyscanner ) )
-      {
-      case EOB_ACT_END_OF_FILE:
-        {
-        yyg->yy_did_buffer_switch_on_eof = 0;
+		else switch ( yy_get_next_buffer( yyscanner ) )
+			{
+			case EOB_ACT_END_OF_FILE:
+				{
+				yyg->yy_did_buffer_switch_on_eof = 0;
 
-        if ( ARDrone_NavData_Scanner_wrap(yyscanner ) )
-          {
-          /* Note: because we've taken care in
-           * yy_get_next_buffer() to have set up
-           * yytext, we can now set up
-           * yy_c_buf_p so that if some total
-           * hoser (like flex itself) wants to
-           * call the scanner after we return the
-           * YY_NULL, it'll still work - another
-           * YY_NULL will get returned.
-           */
-          yyg->yy_c_buf_p = yyg->yytext_ptr + YY_MORE_ADJ;
+				if ( ARDrone_NavData_Scanner_wrap(yyscanner ) )
+					{
+					/* Note: because we've taken care in
+					 * yy_get_next_buffer() to have set up
+					 * yytext, we can now set up
+					 * yy_c_buf_p so that if some total
+					 * hoser (like flex itself) wants to
+					 * call the scanner after we return the
+					 * YY_NULL, it'll still work - another
+					 * YY_NULL will get returned.
+					 */
+					yyg->yy_c_buf_p = yyg->yytext_ptr + YY_MORE_ADJ;
 
-          yy_act = YY_STATE_EOF(YY_START);
-          goto do_action;
-          }
+					yy_act = YY_STATE_EOF(YY_START);
+					goto do_action;
+					}
 
-        else
-          {
-          if ( ! yyg->yy_did_buffer_switch_on_eof )
-            YY_NEW_FILE;
-          }
-        break;
-        }
+				else
+					{
+					if ( ! yyg->yy_did_buffer_switch_on_eof )
+						YY_NEW_FILE;
+					}
+				break;
+				}
 
-      case EOB_ACT_CONTINUE_SCAN:
-        yyg->yy_c_buf_p =
-          yyg->yytext_ptr + yy_amount_of_matched_text;
+			case EOB_ACT_CONTINUE_SCAN:
+				yyg->yy_c_buf_p =
+					yyg->yytext_ptr + yy_amount_of_matched_text;
 
-        yy_current_state = yy_get_previous_state( yyscanner );
+				yy_current_state = yy_get_previous_state( yyscanner );
 
-        yy_cp = yyg->yy_c_buf_p;
-        yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
-        goto yy_match;
+				yy_cp = yyg->yy_c_buf_p;
+				yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
+				goto yy_match;
 
-      case EOB_ACT_LAST_MATCH:
-        yyg->yy_c_buf_p =
-        &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars];
+			case EOB_ACT_LAST_MATCH:
+				yyg->yy_c_buf_p =
+				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars];
 
-        yy_current_state = yy_get_previous_state( yyscanner );
+				yy_current_state = yy_get_previous_state( yyscanner );
 
-        yy_cp = yyg->yy_c_buf_p;
-        yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
-        goto yy_find_action;
-      }
-    break;
-    }
+				yy_cp = yyg->yy_c_buf_p;
+				yy_bp = yyg->yytext_ptr + YY_MORE_ADJ;
+				goto yy_find_action;
+			}
+		break;
+		}
 
-  default:
-    YY_FATAL_ERROR(
-      "fatal flex scanner internal error--no action found" );
-  } /* end of action switch */
-    } /* end of scanning one token */
-  } /* end of user's declarations */
+	default:
+		YY_FATAL_ERROR(
+			"fatal flex scanner internal error--no action found" );
+	} /* end of action switch */
+		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of ARDrone_NavData_Scanner_lex */
 /* %ok-for-header */
 
 
 /* %if-c++-only */
 /* %not-for-header */
+
 /* %ok-for-header */
 
 /* %endif */
@@ -2765,134 +2781,134 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 /* %endif */
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-  char *source = yyg->yytext_ptr;
-  int number_to_move, i;
-  int ret_val;
+	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+	char *source = yyg->yytext_ptr;
+	yy_size_t number_to_move, i;
+	int ret_val;
 
-  if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
-    YY_FATAL_ERROR(
-    "fatal flex scanner internal error--end of buffer missed" );
+	if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
+		YY_FATAL_ERROR(
+		"fatal flex scanner internal error--end of buffer missed" );
 
-  if ( YY_CURRENT_BUFFER_LVALUE->yy_fill_buffer == 0 )
-    { /* Don't try to fill the buffer, so this is an EOF. */
-    if ( yyg->yy_c_buf_p - yyg->yytext_ptr - YY_MORE_ADJ == 1 )
-      {
-      /* We matched a single character, the EOB, so
-       * treat this as a final EOF.
-       */
-      return EOB_ACT_END_OF_FILE;
-      }
+	if ( YY_CURRENT_BUFFER_LVALUE->yy_fill_buffer == 0 )
+		{ /* Don't try to fill the buffer, so this is an EOF. */
+		if ( yyg->yy_c_buf_p - yyg->yytext_ptr - YY_MORE_ADJ == 1 )
+			{
+			/* We matched a single character, the EOB, so
+			 * treat this as a final EOF.
+			 */
+			return EOB_ACT_END_OF_FILE;
+			}
 
-    else
-      {
-      /* We matched some text prior to the EOB, first
-       * process it.
-       */
-      return EOB_ACT_LAST_MATCH;
-      }
-    }
+		else
+			{
+			/* We matched some text prior to the EOB, first
+			 * process it.
+			 */
+			return EOB_ACT_LAST_MATCH;
+			}
+		}
 
-  /* Try to read more data. */
+	/* Try to read more data. */
 
-  /* First move last chars to start of buffer. */
-  number_to_move = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr - 1);
+	/* First move last chars to start of buffer. */
+	number_to_move = (yy_size_t) (yyg->yy_c_buf_p - yyg->yytext_ptr) - 1;
 
-  for ( i = 0; i < number_to_move; ++i )
-    *(dest++) = *(source++);
+	for ( i = 0; i < number_to_move; ++i )
+		*(dest++) = *(source++);
 
-  if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_EOF_PENDING )
-    /* don't do the read, it's not guaranteed to return an EOF,
-     * just force an EOF
-     */
-    YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars = 0;
+	if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_EOF_PENDING )
+		/* don't do the read, it's not guaranteed to return an EOF,
+		 * just force an EOF
+		 */
+		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars = 0;
 
-  else
-    {
-      int num_to_read =
-      YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
+	else
+		{
+			int num_to_read =
+			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
-    while ( num_to_read <= 0 )
-      { /* Not enough room in the buffer - grow it. */
+		while ( num_to_read <= 0 )
+			{ /* Not enough room in the buffer - grow it. */
 
-      /* just a shorter name for the current buffer */
-      YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
+			/* just a shorter name for the current buffer */
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
-      int yy_c_buf_p_offset =
-        (int) (yyg->yy_c_buf_p - b->yy_ch_buf);
+			int yy_c_buf_p_offset =
+				(int) (yyg->yy_c_buf_p - b->yy_ch_buf);
 
-      if ( b->yy_is_our_buffer )
-        {
-        int new_size = b->yy_buf_size * 2;
+			if ( b->yy_is_our_buffer )
+				{
+				int new_size = b->yy_buf_size * 2;
 
-        if ( new_size <= 0 )
-          b->yy_buf_size += b->yy_buf_size / 8;
-        else
-          b->yy_buf_size *= 2;
+				if ( new_size <= 0 )
+					b->yy_buf_size += b->yy_buf_size / 8;
+				else
+					b->yy_buf_size *= 2;
 
-        b->yy_ch_buf = (char *)
-          /* Include room in for 2 EOB chars. */
-          ARDrone_NavData_Scanner_realloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2) ,yyscanner );
-        }
-      else
-        /* Can't grow it, we don't own it. */
-        b->yy_ch_buf = NULL;
+				b->yy_ch_buf = (char *)
+					/* Include room in for 2 EOB chars. */
+					ARDrone_NavData_Scanner_realloc((void *) b->yy_ch_buf,b->yy_buf_size + 2 ,yyscanner );
+				}
+			else
+				/* Can't grow it, we don't own it. */
+				b->yy_ch_buf = NULL;
 
-      if ( ! b->yy_ch_buf )
-        YY_FATAL_ERROR(
-        "fatal error - scanner input buffer overflow" );
+			if ( ! b->yy_ch_buf )
+				YY_FATAL_ERROR(
+				"fatal error - scanner input buffer overflow" );
 
-      yyg->yy_c_buf_p = &b->yy_ch_buf[yy_c_buf_p_offset];
+			yyg->yy_c_buf_p = &b->yy_ch_buf[yy_c_buf_p_offset];
 
-      num_to_read = YY_CURRENT_BUFFER_LVALUE->yy_buf_size -
-            number_to_move - 1;
+			num_to_read = YY_CURRENT_BUFFER_LVALUE->yy_buf_size -
+						number_to_move - 1;
 
-      }
+			}
 
-    if ( num_to_read > YY_READ_BUF_SIZE )
-      num_to_read = YY_READ_BUF_SIZE;
+		if ( num_to_read > YY_READ_BUF_SIZE )
+			num_to_read = YY_READ_BUF_SIZE;
 
-    /* Read in more data. */
-    YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-      yyg->yy_n_chars, num_to_read );
+		/* Read in more data. */
+		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
+			yyg->yy_n_chars, num_to_read );
 
-    YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
-    }
+		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
+		}
 
-  if ( yyg->yy_n_chars == 0 )
-    {
-    if ( number_to_move == YY_MORE_ADJ )
-      {
-      ret_val = EOB_ACT_END_OF_FILE;
-      ARDrone_NavData_Scanner_restart(yyin  ,yyscanner);
-      }
+	if ( yyg->yy_n_chars == 0 )
+		{
+		if ( number_to_move == YY_MORE_ADJ )
+			{
+			ret_val = EOB_ACT_END_OF_FILE;
+			ARDrone_NavData_Scanner_restart(yyin  ,yyscanner);
+			}
 
-    else
-      {
-      ret_val = EOB_ACT_LAST_MATCH;
-      YY_CURRENT_BUFFER_LVALUE->yy_buffer_status =
-        YY_BUFFER_EOF_PENDING;
-      }
-    }
+		else
+			{
+			ret_val = EOB_ACT_LAST_MATCH;
+			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status =
+				YY_BUFFER_EOF_PENDING;
+			}
+		}
 
-  else
-    ret_val = EOB_ACT_CONTINUE_SCAN;
+	else
+		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-  if ((yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
-    /* Extend the array by 50%, plus the number we really need. */
-    int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
-    YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) ARDrone_NavData_Scanner_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size ,yyscanner );
-    if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
-      YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
-  }
+	if ((int) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+		/* Extend the array by 50%, plus the number we really need. */
+		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) ARDrone_NavData_Scanner_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
+		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
+			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+	}
 
-  yyg->yy_n_chars += number_to_move;
-  YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] = YY_END_OF_BUFFER_CHAR;
-  YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] = YY_END_OF_BUFFER_CHAR;
+	yyg->yy_n_chars += number_to_move;
+	YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] = YY_END_OF_BUFFER_CHAR;
+	YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] = YY_END_OF_BUFFER_CHAR;
 
-  yyg->yytext_ptr = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[0];
+	yyg->yytext_ptr = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[0];
 
-  return ret_val;
+	return ret_val;
 }
 
 
@@ -2900,35 +2916,36 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 /* %if-c-only */
 /* %not-for-header */
+
     static yy_state_type yy_get_previous_state (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
-  yy_state_type yy_current_state;
-  char *yy_cp;
+	yy_state_type yy_current_state;
+	char *yy_cp;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 /* %% [15.0] code to get the start state into yy_current_state goes here */
-  yy_current_state = yyg->yy_start;
+	yy_current_state = yyg->yy_start;
 
-  for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
-    {
+	for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
+		{
 /* %% [16.0] code to find the next state goes here */
-    if ( *yy_cp )
-      {
-      yy_current_state = yy_nxt[yy_current_state][YY_SC_TO_UI(*yy_cp)];
-      }
-    else
-      yy_current_state = yy_NUL_trans[yy_current_state];
-    if ( yy_accept[yy_current_state] )
-      {
-      yyg->yy_last_accepting_state = yy_current_state;
-      yyg->yy_last_accepting_cpos = yy_cp;
-      }
-    }
+		if ( *yy_cp )
+			{
+			yy_current_state = yy_nxt[yy_current_state][YY_SC_TO_UI(*yy_cp)];
+			}
+		else
+			yy_current_state = yy_NUL_trans[yy_current_state];
+		if ( yy_accept[yy_current_state] )
+			{
+			yyg->yy_last_accepting_state = yy_current_state;
+			yyg->yy_last_accepting_cpos = yy_cp;
+			}
+		}
 
-  return yy_current_state;
+	return yy_current_state;
 }
 
 
@@ -2943,25 +2960,25 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 /* %if-c++-only */
 /* %endif */
 {
-  int yy_is_jam;
+	int yy_is_jam;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner; /* This var may be unused depending upon options. */
 /* %% [17.0] code to find the next state, and perhaps do backing up, goes here */
-  char *yy_cp = yyg->yy_c_buf_p;
+	char *yy_cp = yyg->yy_c_buf_p;
 
-  yy_current_state = yy_NUL_trans[yy_current_state];
-  yy_is_jam = (yy_current_state == 0);
+	yy_current_state = yy_NUL_trans[yy_current_state];
+	yy_is_jam = (yy_current_state == 0);
 
-  if ( ! yy_is_jam )
-    {
-    if ( yy_accept[yy_current_state] )
-      {
-      yyg->yy_last_accepting_state = yy_current_state;
-      yyg->yy_last_accepting_cpos = yy_cp;
-      }
-    }
+	if ( ! yy_is_jam )
+		{
+		if ( yy_accept[yy_current_state] )
+			{
+			yyg->yy_last_accepting_state = yy_current_state;
+			yyg->yy_last_accepting_cpos = yy_cp;
+			}
+		}
 
-  (void)yyg;
-  return yy_is_jam ? 0 : yy_current_state;
+	(void)yyg;
+	return yy_is_jam ? 0 : yy_current_state;
 }
 
 
@@ -2983,78 +3000,78 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 /* %if-c++-only */
 /* %endif */
 {
-  int c;
+	int c;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  *yyg->yy_c_buf_p = yyg->yy_hold_char;
+	*yyg->yy_c_buf_p = yyg->yy_hold_char;
 
-  if ( *yyg->yy_c_buf_p == YY_END_OF_BUFFER_CHAR )
-    {
-    /* yy_c_buf_p now points to the character we want to return.
-     * If this occurs *before* the EOB characters, then it's a
-     * valid NUL; if not, then we've hit the end of the buffer.
-     */
-    if ( yyg->yy_c_buf_p < &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] )
-      /* This was really a NUL. */
-      *yyg->yy_c_buf_p = '\0';
+	if ( *yyg->yy_c_buf_p == YY_END_OF_BUFFER_CHAR )
+		{
+		/* yy_c_buf_p now points to the character we want to return.
+		 * If this occurs *before* the EOB characters, then it's a
+		 * valid NUL; if not, then we've hit the end of the buffer.
+		 */
+		if ( yyg->yy_c_buf_p < &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] )
+			/* This was really a NUL. */
+			*yyg->yy_c_buf_p = '\0';
 
-    else
-      { /* need more input */
-      int offset = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr);
-      ++yyg->yy_c_buf_p;
+		else
+			{ /* need more input */
+			int offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			++yyg->yy_c_buf_p;
 
-      switch ( yy_get_next_buffer( yyscanner ) )
-        {
-        case EOB_ACT_LAST_MATCH:
-          /* This happens because yy_g_n_b()
-           * sees that we've accumulated a
-           * token and flags that we need to
-           * try matching the token before
-           * proceeding.  But for input(),
-           * there's no matching to consider.
-           * So convert the EOB_ACT_LAST_MATCH
-           * to EOB_ACT_END_OF_FILE.
-           */
+			switch ( yy_get_next_buffer( yyscanner ) )
+				{
+				case EOB_ACT_LAST_MATCH:
+					/* This happens because yy_g_n_b()
+					 * sees that we've accumulated a
+					 * token and flags that we need to
+					 * try matching the token before
+					 * proceeding.  But for input(),
+					 * there's no matching to consider.
+					 * So convert the EOB_ACT_LAST_MATCH
+					 * to EOB_ACT_END_OF_FILE.
+					 */
 
-          /* Reset buffer status. */
-          ARDrone_NavData_Scanner_restart(yyin ,yyscanner);
+					/* Reset buffer status. */
+					ARDrone_NavData_Scanner_restart(yyin ,yyscanner);
 
-          /*FALLTHROUGH*/
+					/*FALLTHROUGH*/
 
-        case EOB_ACT_END_OF_FILE:
-          {
-          if ( ARDrone_NavData_Scanner_wrap(yyscanner ) )
-            return 0;
+				case EOB_ACT_END_OF_FILE:
+					{
+					if ( ARDrone_NavData_Scanner_wrap(yyscanner ) )
+						return 0;
 
-          if ( ! yyg->yy_did_buffer_switch_on_eof )
-            YY_NEW_FILE;
+					if ( ! yyg->yy_did_buffer_switch_on_eof )
+						YY_NEW_FILE;
 #ifdef __cplusplus
-          return yyinput(yyscanner);
+					return yyinput(yyscanner);
 #else
-          return input(yyscanner);
+					return input(yyscanner);
 #endif
-          }
+					}
 
-        case EOB_ACT_CONTINUE_SCAN:
-          yyg->yy_c_buf_p = yyg->yytext_ptr + offset;
-          break;
-        }
-      }
-    }
+				case EOB_ACT_CONTINUE_SCAN:
+					yyg->yy_c_buf_p = yyg->yytext_ptr + offset;
+					break;
+				}
+			}
+		}
 
-  c = *(unsigned char *) yyg->yy_c_buf_p;	/* cast for 8-bit char's */
-  *yyg->yy_c_buf_p = '\0';	/* preserve yytext */
-  yyg->yy_hold_char = *++yyg->yy_c_buf_p;
+	c = *(unsigned char *) yyg->yy_c_buf_p;	/* cast for 8-bit char's */
+	*yyg->yy_c_buf_p = '\0';	/* preserve yytext */
+	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
 
 /* %% [19.0] update BOL and yylineno */
-  if ( c == '\n' )
-
+	if ( c == '\n' )
+		   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
 ;
 
-  return c;
+	return c;
 }
 /* %if-c-only */
 #endif	/* ifndef YY_NO_INPUT */
@@ -3073,14 +3090,14 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  if ( ! YY_CURRENT_BUFFER ){
+	if ( ! YY_CURRENT_BUFFER ){
         ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner);
-    YY_CURRENT_BUFFER_LVALUE =
+		YY_CURRENT_BUFFER_LVALUE =
             ARDrone_NavData_Scanner__create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
-  }
+	}
 
-  ARDrone_NavData_Scanner__init_buffer(YY_CURRENT_BUFFER,input_file ,yyscanner);
-  ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+	ARDrone_NavData_Scanner__init_buffer(YY_CURRENT_BUFFER,input_file ,yyscanner);
+	ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
 }
 
 /* %if-c++-only */
@@ -3098,32 +3115,32 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  /* TODO. We should be able to replace this entire function body
-   * with
-   *		ARDrone_NavData_Scanner_pop_buffer_state();
-   *		ARDrone_NavData_Scanner_push_buffer_state(new_buffer);
+	/* TODO. We should be able to replace this entire function body
+	 * with
+	 *		ARDrone_NavData_Scanner_pop_buffer_state();
+	 *		ARDrone_NavData_Scanner_push_buffer_state(new_buffer);
      */
-  ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner);
-  if ( YY_CURRENT_BUFFER == new_buffer )
-    return;
+	ARDrone_NavData_Scanner_ensure_buffer_stack (yyscanner);
+	if ( YY_CURRENT_BUFFER == new_buffer )
+		return;
 
-  if ( YY_CURRENT_BUFFER )
-    {
-    /* Flush out information for old buffer. */
-    *yyg->yy_c_buf_p = yyg->yy_hold_char;
-    YY_CURRENT_BUFFER_LVALUE->yy_buf_pos = yyg->yy_c_buf_p;
-    YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
-    }
+	if ( YY_CURRENT_BUFFER )
+		{
+		/* Flush out information for old buffer. */
+		*yyg->yy_c_buf_p = yyg->yy_hold_char;
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_pos = yyg->yy_c_buf_p;
+		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
+		}
 
-  YY_CURRENT_BUFFER_LVALUE = new_buffer;
-  ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+	YY_CURRENT_BUFFER_LVALUE = new_buffer;
+	ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
 
-  /* We don't actually know whether we did this switch during
-   * EOF (ARDrone_NavData_Scanner_wrap()) processing, but the only time this flag
-   * is looked at is after ARDrone_NavData_Scanner_wrap() is called, so it's safe
-   * to go ahead and always set it.
-   */
-  yyg->yy_did_buffer_switch_on_eof = 1;
+	/* We don't actually know whether we did this switch during
+	 * EOF (ARDrone_NavData_Scanner_wrap()) processing, but the only time this flag
+	 * is looked at is after ARDrone_NavData_Scanner_wrap() is called, so it's safe
+	 * to go ahead and always set it.
+	 */
+	yyg->yy_did_buffer_switch_on_eof = 1;
 }
 
 
@@ -3134,14 +3151,14 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
-  yyg->yytext_ptr = yyg->yy_c_buf_p = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
+	yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
+	yyg->yytext_ptr = yyg->yy_c_buf_p = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
 /* %if-c-only */
-  yyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
+	yyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
-  yyg->yy_hold_char = *yyg->yy_c_buf_p;
+	yyg->yy_hold_char = *yyg->yy_c_buf_p;
 }
 
 /** Allocate and initialize an input buffer state.
@@ -3156,26 +3173,26 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 /* %if-c++-only */
 /* %endif */
 {
-  YY_BUFFER_STATE b;
+	YY_BUFFER_STATE b;
+    
+	b = (YY_BUFFER_STATE) ARDrone_NavData_Scanner_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+	if ( ! b )
+		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__create_buffer()" );
 
-  b = (YY_BUFFER_STATE) ARDrone_NavData_Scanner_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
-  if ( ! b )
-    YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__create_buffer()" );
+	b->yy_buf_size = (yy_size_t)size;
 
-  b->yy_buf_size = size;
+	/* yy_ch_buf has to be 2 characters longer than the size given because
+	 * we need to put in 2 end-of-buffer characters.
+	 */
+	b->yy_ch_buf = (char *) ARDrone_NavData_Scanner_alloc(b->yy_buf_size + 2 ,yyscanner );
+	if ( ! b->yy_ch_buf )
+		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__create_buffer()" );
 
-  /* yy_ch_buf has to be 2 characters longer than the size given because
-   * we need to put in 2 end-of-buffer characters.
-   */
-  b->yy_ch_buf = (char *) ARDrone_NavData_Scanner_alloc((yy_size_t) (b->yy_buf_size + 2) ,yyscanner );
-  if ( ! b->yy_ch_buf )
-    YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__create_buffer()" );
+	b->yy_is_our_buffer = 1;
 
-  b->yy_is_our_buffer = 1;
+	ARDrone_NavData_Scanner__init_buffer(b,file ,yyscanner);
 
-  ARDrone_NavData_Scanner__init_buffer(b,file ,yyscanner);
-
-  return b;
+	return b;
 }
 
 /* %if-c++-only */
@@ -3193,16 +3210,16 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  if ( ! b )
-    return;
+	if ( ! b )
+		return;
 
-  if ( b == YY_CURRENT_BUFFER ) /* Not sure if we should pop here. */
-    YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
+	if ( b == YY_CURRENT_BUFFER ) /* Not sure if we should pop here. */
+		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
-  if ( b->yy_is_our_buffer )
-    ARDrone_NavData_Scanner_free((void *) b->yy_ch_buf ,yyscanner );
+	if ( b->yy_is_our_buffer )
+		ARDrone_NavData_Scanner_free((void *) b->yy_ch_buf ,yyscanner );
 
-  ARDrone_NavData_Scanner_free((void *) b ,yyscanner );
+	ARDrone_NavData_Scanner_free((void *) b ,yyscanner );
 }
 
 
@@ -3217,17 +3234,17 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 
 {
-  int oerrno = errno;
+	int oerrno = errno;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  ARDrone_NavData_Scanner__flush_buffer(b ,yyscanner);
+	ARDrone_NavData_Scanner__flush_buffer(b ,yyscanner);
 
 /* %if-c-only */
-  b->yy_input_file = file;
+	b->yy_input_file = file;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
-  b->yy_fill_buffer = 1;
+	b->yy_fill_buffer = 1;
 
     /* If b is the current buffer, then ARDrone_NavData_Scanner__init_buffer was _probably_
      * called from ARDrone_NavData_Scanner_restart() or through yy_get_next_buffer.
@@ -3240,14 +3257,14 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 
 /* %if-c-only */
 
-
+    
         b->yy_is_interactive = 0;
-
+    
 
 /* %endif */
 /* %if-c++-only */
 /* %endif */
-  errno = oerrno;
+	errno = oerrno;
 }
 
 /** Discard all buffered characters. On the next scan, YY_INPUT will be called.
@@ -3261,25 +3278,25 @@ static void ARDrone_NavData_Scanner__load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  if ( ! b )
-    return;
+	if ( ! b )
+		return;
 
-  b->yy_n_chars = 0;
+	b->yy_n_chars = 0;
 
-  /* We always need two end-of-buffer characters.  The first causes
-   * a transition to the end-of-buffer state.  The second causes
-   * a jam in that state.
-   */
-  b->yy_ch_buf[0] = YY_END_OF_BUFFER_CHAR;
-  b->yy_ch_buf[1] = YY_END_OF_BUFFER_CHAR;
+	/* We always need two end-of-buffer characters.  The first causes
+	 * a transition to the end-of-buffer state.  The second causes
+	 * a jam in that state.
+	 */
+	b->yy_ch_buf[0] = YY_END_OF_BUFFER_CHAR;
+	b->yy_ch_buf[1] = YY_END_OF_BUFFER_CHAR;
 
-  b->yy_buf_pos = &b->yy_ch_buf[0];
+	b->yy_buf_pos = &b->yy_ch_buf[0];
 
-  b->yy_at_bol = 1;
-  b->yy_buffer_status = YY_BUFFER_NEW;
+	b->yy_at_bol = 1;
+	b->yy_buffer_status = YY_BUFFER_NEW;
 
-  if ( b == YY_CURRENT_BUFFER )
-    ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+	if ( b == YY_CURRENT_BUFFER )
+		ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
 }
 
 /* %if-c-or-c++ */
@@ -3296,28 +3313,28 @@ void ARDrone_NavData_Scanner_push_buffer_state (YY_BUFFER_STATE new_buffer , yys
 /* %endif */
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  if (new_buffer == NULL)
-    return;
+	if (new_buffer == NULL)
+		return;
 
-  ARDrone_NavData_Scanner_ensure_buffer_stack(yyscanner);
+	ARDrone_NavData_Scanner_ensure_buffer_stack(yyscanner);
 
-  /* This block is copied from ARDrone_NavData_Scanner__switch_to_buffer. */
-  if ( YY_CURRENT_BUFFER )
-    {
-    /* Flush out information for old buffer. */
-    *yyg->yy_c_buf_p = yyg->yy_hold_char;
-    YY_CURRENT_BUFFER_LVALUE->yy_buf_pos = yyg->yy_c_buf_p;
-    YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
-    }
+	/* This block is copied from ARDrone_NavData_Scanner__switch_to_buffer. */
+	if ( YY_CURRENT_BUFFER )
+		{
+		/* Flush out information for old buffer. */
+		*yyg->yy_c_buf_p = yyg->yy_hold_char;
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_pos = yyg->yy_c_buf_p;
+		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
+		}
 
-  /* Only push if top exists. Otherwise, replace top. */
-  if (YY_CURRENT_BUFFER)
-    yyg->yy_buffer_stack_top++;
-  YY_CURRENT_BUFFER_LVALUE = new_buffer;
+	/* Only push if top exists. Otherwise, replace top. */
+	if (YY_CURRENT_BUFFER)
+		yyg->yy_buffer_stack_top++;
+	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-  /* copied from ARDrone_NavData_Scanner__switch_to_buffer. */
-  ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
-  yyg->yy_did_buffer_switch_on_eof = 1;
+	/* copied from ARDrone_NavData_Scanner__switch_to_buffer. */
+	ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+	yyg->yy_did_buffer_switch_on_eof = 1;
 }
 /* %endif */
 
@@ -3334,18 +3351,18 @@ void ARDrone_NavData_Scanner_pop_buffer_state (yyscan_t yyscanner)
 /* %endif */
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  if (!YY_CURRENT_BUFFER)
-    return;
+	if (!YY_CURRENT_BUFFER)
+		return;
 
-  ARDrone_NavData_Scanner__delete_buffer(YY_CURRENT_BUFFER ,yyscanner);
-  YY_CURRENT_BUFFER_LVALUE = NULL;
-  if (yyg->yy_buffer_stack_top > 0)
-    --yyg->yy_buffer_stack_top;
+	ARDrone_NavData_Scanner__delete_buffer(YY_CURRENT_BUFFER ,yyscanner);
+	YY_CURRENT_BUFFER_LVALUE = NULL;
+	if (yyg->yy_buffer_stack_top > 0)
+		--yyg->yy_buffer_stack_top;
 
-  if (YY_CURRENT_BUFFER) {
-    ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
-    yyg->yy_did_buffer_switch_on_eof = 1;
-  }
+	if (YY_CURRENT_BUFFER) {
+		ARDrone_NavData_Scanner__load_buffer_state(yyscanner );
+		yyg->yy_did_buffer_switch_on_eof = 1;
+	}
 }
 /* %endif */
 
@@ -3360,47 +3377,47 @@ static void ARDrone_NavData_Scanner_ensure_buffer_stack (yyscan_t yyscanner)
 /* %if-c++-only */
 /* %endif */
 {
-  yy_size_t num_to_alloc;
+	int num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-  if (!yyg->yy_buffer_stack) {
+	if (!yyg->yy_buffer_stack) {
 
-    /* First allocation is just for 2 elements, since we don't know if this
-     * scanner will even need a stack. We use 2 instead of 1 to avoid an
-     * immediate realloc on the next call.
+		/* First allocation is just for 2 elements, since we don't know if this
+		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
+		 * immediate realloc on the next call.
          */
       num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
-    yyg->yy_buffer_stack = (struct yy_buffer_state**)ARDrone_NavData_Scanner_alloc
-                (num_to_alloc * sizeof(struct yy_buffer_state*)
-                , yyscanner);
-    if ( ! yyg->yy_buffer_stack )
-      YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner_ensure_buffer_stack()" );
+		yyg->yy_buffer_stack = (struct yy_buffer_state**)ARDrone_NavData_Scanner_alloc
+								(num_to_alloc * sizeof(struct yy_buffer_state*)
+								, yyscanner);
+		if ( ! yyg->yy_buffer_stack )
+			YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner_ensure_buffer_stack()" );
+								  
+		
+		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
+				
+		yyg->yy_buffer_stack_max = num_to_alloc;
+		yyg->yy_buffer_stack_top = 0;
+		return;
+	}
 
+	if (yyg->yy_buffer_stack_top >= (yyg->yy_buffer_stack_max) - 1){
 
-    memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
+		/* Increase the buffer to prepare for a possible push. */
+		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
-    yyg->yy_buffer_stack_max = num_to_alloc;
-    yyg->yy_buffer_stack_top = 0;
-    return;
-  }
+		num_to_alloc = yyg->yy_buffer_stack_max + grow_size;
+		yyg->yy_buffer_stack = (struct yy_buffer_state**)ARDrone_NavData_Scanner_realloc
+								(yyg->yy_buffer_stack,
+								num_to_alloc * sizeof(struct yy_buffer_state*)
+								, yyscanner);
+		if ( ! yyg->yy_buffer_stack )
+			YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner_ensure_buffer_stack()" );
 
-  if (yyg->yy_buffer_stack_top >= (yyg->yy_buffer_stack_max) - 1){
-
-    /* Increase the buffer to prepare for a possible push. */
-    yy_size_t grow_size = 8 /* arbitrary grow size */;
-
-    num_to_alloc = yyg->yy_buffer_stack_max + grow_size;
-    yyg->yy_buffer_stack = (struct yy_buffer_state**)ARDrone_NavData_Scanner_realloc
-                (yyg->yy_buffer_stack,
-                num_to_alloc * sizeof(struct yy_buffer_state*)
-                , yyscanner);
-    if ( ! yyg->yy_buffer_stack )
-      YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner_ensure_buffer_stack()" );
-
-    /* zero only the new slots.*/
-    memset(yyg->yy_buffer_stack + yyg->yy_buffer_stack_max, 0, grow_size * sizeof(struct yy_buffer_state*));
-    yyg->yy_buffer_stack_max = num_to_alloc;
-  }
+		/* zero only the new slots.*/
+		memset(yyg->yy_buffer_stack + yyg->yy_buffer_stack_max, 0, grow_size * sizeof(struct yy_buffer_state*));
+		yyg->yy_buffer_stack_max = num_to_alloc;
+	}
 }
 /* %endif */
 
@@ -3413,35 +3430,35 @@ static void ARDrone_NavData_Scanner_ensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object.
+ * @return the newly allocated buffer state object. 
  */
 YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
-  YY_BUFFER_STATE b;
+	YY_BUFFER_STATE b;
+    
+	if ( size < 2 ||
+	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
+	     base[size-1] != YY_END_OF_BUFFER_CHAR )
+		/* They forgot to leave room for the EOB's. */
+		return NULL;
 
-  if ( size < 2 ||
-       base[size-2] != YY_END_OF_BUFFER_CHAR ||
-       base[size-1] != YY_END_OF_BUFFER_CHAR )
-    /* They forgot to leave room for the EOB's. */
-    return NULL;
+	b = (YY_BUFFER_STATE) ARDrone_NavData_Scanner_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+	if ( ! b )
+		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__scan_buffer()" );
 
-  b = (YY_BUFFER_STATE) ARDrone_NavData_Scanner_alloc(sizeof( struct yy_buffer_state ) ,yyscanner );
-  if ( ! b )
-    YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__scan_buffer()" );
+	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
+	b->yy_buf_pos = b->yy_ch_buf = base;
+	b->yy_is_our_buffer = 0;
+	b->yy_input_file = NULL;
+	b->yy_n_chars = b->yy_buf_size;
+	b->yy_is_interactive = 0;
+	b->yy_at_bol = 1;
+	b->yy_fill_buffer = 0;
+	b->yy_buffer_status = YY_BUFFER_NEW;
 
-  b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
-  b->yy_buf_pos = b->yy_ch_buf = base;
-  b->yy_is_our_buffer = 0;
-  b->yy_input_file = NULL;
-  b->yy_n_chars = b->yy_buf_size;
-  b->yy_is_interactive = 0;
-  b->yy_at_bol = 1;
-  b->yy_fill_buffer = 0;
-  b->yy_buffer_status = YY_BUFFER_NEW;
+	ARDrone_NavData_Scanner__switch_to_buffer(b ,yyscanner );
 
-  ARDrone_NavData_Scanner__switch_to_buffer(b ,yyscanner );
-
-  return b;
+	return b;
 }
 /* %endif */
 
@@ -3457,10 +3474,10 @@ YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer  (char * base, yy_size_t  s
  * @note If you want to scan bytes that may contain NUL values, then use
  *       ARDrone_NavData_Scanner__scan_bytes() instead.
  */
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string (const char * yystr , yyscan_t yyscanner)
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
-
-  return ARDrone_NavData_Scanner__scan_bytes(yystr,(int) strlen(yystr) ,yyscanner);
+    
+	return ARDrone_NavData_Scanner__scan_bytes(yystr,(int) strlen(yystr) ,yyscanner);
 }
 /* %endif */
 
@@ -3475,34 +3492,34 @@ YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string (const char * yystr , yysca
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
-  YY_BUFFER_STATE b;
-  char *buf;
-  yy_size_t n;
-  int i;
+	YY_BUFFER_STATE b;
+	char *buf;
+	yy_size_t n;
+	yy_size_t i;
+    
+	/* Get memory for full buffer, including space for trailing EOB's. */
+	n = (yy_size_t) _yybytes_len + 2;
+	buf = (char *) ARDrone_NavData_Scanner_alloc(n ,yyscanner );
+	if ( ! buf )
+		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__scan_bytes()" );
 
-  /* Get memory for full buffer, including space for trailing EOB's. */
-  n = (yy_size_t) (_yybytes_len + 2);
-  buf = (char *) ARDrone_NavData_Scanner_alloc(n ,yyscanner );
-  if ( ! buf )
-    YY_FATAL_ERROR( "out of dynamic memory in ARDrone_NavData_Scanner__scan_bytes()" );
+	for ( i = 0; i < _yybytes_len; ++i )
+		buf[i] = yybytes[i];
 
-  for ( i = 0; i < _yybytes_len; ++i )
-    buf[i] = yybytes[i];
+	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-  buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
+	b = ARDrone_NavData_Scanner__scan_buffer(buf,n ,yyscanner);
+	if ( ! b )
+		YY_FATAL_ERROR( "bad buffer in ARDrone_NavData_Scanner__scan_bytes()" );
 
-  b = ARDrone_NavData_Scanner__scan_buffer(buf,n ,yyscanner);
-  if ( ! b )
-    YY_FATAL_ERROR( "bad buffer in ARDrone_NavData_Scanner__scan_bytes()" );
+	/* It's okay to grow etc. this buffer, and we should throw it
+	 * away when we're done.
+	 */
+	b->yy_is_our_buffer = 1;
 
-  /* It's okay to grow etc. this buffer, and we should throw it
-   * away when we're done.
-   */
-  b->yy_is_our_buffer = 1;
-
-  return b;
+	return b;
 }
 /* %endif */
 
@@ -3521,12 +3538,12 @@ YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes  (const char * yybytes, int 
 #endif
 
 /* %if-c-only */
-static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
+static void yynoreturn yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  (void)yyg;
-  (void) fprintf( stderr, "%s\n", msg );
-  exit( YY_EXIT_FAILURE );
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	(void) fprintf( stderr, "%s\n", msg );
+	exit( YY_EXIT_FAILURE );
 }
 /* %endif */
 /* %if-c++-only */
@@ -3536,18 +3553,18 @@ static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 
 #undef yyless
 #define yyless(n) \
-  do \
-    { \
-    /* Undo effects of setting up yytext. */ \
+	do \
+		{ \
+		/* Undo effects of setting up yytext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
-    yytext[yyleng] = yyg->yy_hold_char; \
-    yyg->yy_c_buf_p = yytext + yyless_macro_arg; \
-    yyg->yy_hold_char = *yyg->yy_c_buf_p; \
-    *yyg->yy_c_buf_p = '\0'; \
-    yyleng = yyless_macro_arg; \
-    } \
-  while ( 0 )
+		yytext[yyleng] = yyg->yy_hold_char; \
+		yyg->yy_c_buf_p = yytext + yyless_macro_arg; \
+		yyg->yy_hold_char = *yyg->yy_c_buf_p; \
+		*yyg->yy_c_buf_p = '\0'; \
+		yyleng = yyless_macro_arg; \
+		} \
+	while ( 0 )
 
 
 
@@ -3574,11 +3591,11 @@ YY_EXTRA_TYPE ARDrone_NavData_Scanner_get_extra  (yyscan_t yyscanner)
 int ARDrone_NavData_Scanner_get_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
-
+    
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yylineno;
 }
 
@@ -3591,11 +3608,11 @@ int ARDrone_NavData_Scanner_get_lineno  (yyscan_t yyscanner)
 int ARDrone_NavData_Scanner_get_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
-
+    
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yycolumn;
 }
 
@@ -3668,11 +3685,11 @@ void ARDrone_NavData_Scanner_set_lineno (int  _line_number , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-
+    
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "ARDrone_NavData_Scanner_set_lineno called with no buffer" );
-
+    
     yylineno = _line_number;
 }
 
@@ -3687,11 +3704,11 @@ void ARDrone_NavData_Scanner_set_column (int  _column_no , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-
+    
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "ARDrone_NavData_Scanner_set_column called with no buffer" );
-
+    
     yycolumn = _column_no;
 }
 
@@ -3751,7 +3768,9 @@ void ARDrone_NavData_Scanner_set_debug (int  _bdebug , yyscan_t yyscanner)
  * the ONLY reentrant function that doesn't take the scanner as the last argument.
  * That's why we explicitly handle the declaration, instead of using our macros.
  */
+
 int ARDrone_NavData_Scanner_lex_init(yyscan_t* ptr_yy_globals)
+
 {
     if (ptr_yy_globals == NULL){
         errno = EINVAL;
@@ -3779,7 +3798,9 @@ int ARDrone_NavData_Scanner_lex_init(yyscan_t* ptr_yy_globals)
  * The user defined value in the first argument will be available to ARDrone_NavData_Scanner_alloc in
  * the yyextra field.
  */
+
 int ARDrone_NavData_Scanner_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
+
 {
     struct yyguts_t dummy_yyguts;
 
@@ -3789,20 +3810,20 @@ int ARDrone_NavData_Scanner_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_
         errno = EINVAL;
         return 1;
     }
-
+	
     *ptr_yy_globals = (yyscan_t) ARDrone_NavData_Scanner_alloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-
+	
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-
+    
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-
+    
     ARDrone_NavData_Scanner_set_extra (yy_user_defined, *ptr_yy_globals);
-
+    
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -3817,7 +3838,7 @@ static int yy_init_globals (yyscan_t yyscanner)
      */
 
 
-
+    
 
     yyg->yy_buffer_stack = NULL;
     yyg->yy_buffer_stack_top = 0;
@@ -3860,15 +3881,15 @@ int ARDrone_NavData_Scanner_lex_destroy  (yyscan_t yyscanner)
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     /* Pop the buffer stack, destroying each element. */
-  while(YY_CURRENT_BUFFER){
-    ARDrone_NavData_Scanner__delete_buffer(YY_CURRENT_BUFFER ,yyscanner );
-    YY_CURRENT_BUFFER_LVALUE = NULL;
-    ARDrone_NavData_Scanner_pop_buffer_state(yyscanner);
-  }
+	while(YY_CURRENT_BUFFER){
+		ARDrone_NavData_Scanner__delete_buffer(YY_CURRENT_BUFFER ,yyscanner );
+		YY_CURRENT_BUFFER_LVALUE = NULL;
+		ARDrone_NavData_Scanner_pop_buffer_state(yyscanner);
+	}
 
-  /* Destroy the stack itself. */
-  ARDrone_NavData_Scanner_free(yyg->yy_buffer_stack ,yyscanner);
-  yyg->yy_buffer_stack = NULL;
+	/* Destroy the stack itself. */
+	ARDrone_NavData_Scanner_free(yyg->yy_buffer_stack ,yyscanner);
+	yyg->yy_buffer_stack = NULL;
 
 
     /* Destroy the start condition stack. */
@@ -3900,27 +3921,27 @@ int ARDrone_NavData_Scanner_lex_destroy  (yyscan_t yyscanner)
 
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char* s1, const char * s2, int n , yyscan_t yyscanner)
+static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  (void)yyg;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
 
-  int i;
-  for ( i = 0; i < n; ++i )
-    s1[i] = s2[i];
+	int i;
+	for ( i = 0; i < n; ++i )
+		s1[i] = s2[i];
 }
 #endif
 
 
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (const char * s , yyscan_t yyscanner)
+static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 {
-  int n;
-  for ( n = 0; s[n]; ++n )
-    ;
+	int n;
+	for ( n = 0; s[n]; ++n )
+		;
 
-  return n;
+	return n;
 }
 #endif
 
@@ -3928,35 +3949,35 @@ static int yy_flex_strlen (const char * s , yyscan_t yyscanner)
 
 void *ARDrone_NavData_Scanner_alloc (yy_size_t  size , yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  (void)yyg;
-  return malloc(size);
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	return malloc(size);
 }
 
 
 
 void *ARDrone_NavData_Scanner_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  (void)yyg;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
 
-  /* The cast to (char *) in the following accommodates both
-   * implementations that use char* generic pointers, and those
-   * that use void* generic pointers.  It works with the latter
-   * because both ANSI C and C++ allow castless assignment from
-   * any pointer type to void*, and deal with argument conversions
-   * as though doing an assignment.
-   */
-  return realloc(ptr, size);
+	/* The cast to (char *) in the following accommodates both
+	 * implementations that use char* generic pointers, and those
+	 * that use void* generic pointers.  It works with the latter
+	 * because both ANSI C and C++ allow castless assignment from
+	 * any pointer type to void*, and deal with argument conversions
+	 * as though doing an assignment.
+	 */
+	return realloc(ptr, size);
 }
 
 
 
 void ARDrone_NavData_Scanner_free (void * ptr , yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  (void)yyg;
-  free( (char *) ptr );	/* see ARDrone_NavData_Scanner_realloc() for (char *) cast */
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	free( (char *) ptr );	/* see ARDrone_NavData_Scanner_realloc() for (char *) cast */
 }
 
 
@@ -3969,6 +3990,7 @@ void ARDrone_NavData_Scanner_free (void * ptr , yyscan_t yyscanner)
 
 
 /* %ok-for-header */
+
 
 
 

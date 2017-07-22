@@ -184,7 +184,6 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 #endif
   } // end IF
 
-//  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
   struct ARDrone_SessionData* session_data_p = NULL;

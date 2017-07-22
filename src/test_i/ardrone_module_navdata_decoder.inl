@@ -20,7 +20,7 @@
 
 #include "ace/Log_Msg.h"
 
-#include "stream_dec_defines.h"
+#include "net_defines.h"
 
 #include "ardrone_macros.h"
 #include "ardrone_navdata_scanner.h"
@@ -45,10 +45,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 #endif
  : inherited (stream_in)
  , buffer_ (NULL)
- , isFirst_ (true)
- , scannerState_ (NULL)
  , bufferState_ (NULL)
- , useYYScanBuffer_ (STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
+ , isFirst_ (true)
+ , numberOfOptions_ (0)
+ , scannerState_ (NULL)
+ , useYYScanBuffer_ (NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::ARDrone_Module_NavDataDecoder_T"));
 
@@ -58,7 +59,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   if (result)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to yylex_init_extra: \"%m\", returning\n")));
+                ACE_TEXT ("%s: failed to yylex_init_extra: \"%m\", returning\n"),
+                inherited::mod_->name ()));
     return;
   } // end IF
   ACE_ASSERT (scannerState_);
@@ -87,7 +89,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   if (ARDrone_NavData_Scanner_lex_destroy (scannerState_))
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to yylex_destroy(): \"%m\", continuing\n")));
+                ACE_TEXT ("%s: failed to yylex_destroy(): \"%m\", continuing\n"),
+                inherited::mod_->name ()));
 }
 
 template <ACE_SYNCH_DECL,
@@ -109,6 +112,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::initialize"));
 
+  int result = -1;
+
   // sanity check(s)
   // *TODO*: remove type inferences
   ACE_ASSERT (configuration_in.parserConfiguration);
@@ -116,10 +121,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   if (inherited::isInitialized_)
   {
-    ACE_DEBUG ((LM_WARNING,
-                ACE_TEXT ("re-initializing...\n")));
-
-    //allocator_ = NULL;
     if (buffer_)
       buffer_->release ();
     buffer_ = NULL;
@@ -133,12 +134,19 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
     isFirst_ = true;
 
-    useYYScanBuffer_ = STREAM_DECODER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER;
+    useYYScanBuffer_ = NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER;
   } // end IF
 
-  // *TODO*: remove type inferences
-  allocator_ =
-      configuration_in.streamConfiguration->configuration_.messageAllocator;
+  ACE_ASSERT (inherited::msg_queue_);
+  result = inherited::msg_queue_->activate ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Message_Queue::activate(): \"%m\", aborting\n"),
+                inherited::mod_->name ()));
+    return false;
+  } // end IF
+
   // trace ?
   ARDrone_NavData_Scanner_set_debug (configuration_in.debugScanner,
                                      scannerState_);
@@ -167,12 +175,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::handleDataMessage"));
 
   int result = -1;
-  ACE_Message_Block* message_block_p = NULL;
-//  ACE_Message_Block* message_block_2 = NULL;
-  bool do_scan_end = false;
-  unsigned int offset = (isFirst_ ? 0 : 3);
-  typename DataMessageType::DATA_T* message_data_container_p = NULL;
-  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
 
   // initialize return value(s)
   // *NOTE*: the default behavior is to pass all messages along
@@ -180,111 +182,29 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   //             as such
   passMessageDownstream_out = false;
 
-  // sanity check(s)
-  ACE_ASSERT (!buffer_);
-
-  buffer_ = message_inout;
-
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (buffer_->capacity () - buffer_->length () >=
-              STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE);
-  *(buffer_->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-  *(buffer_->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
+  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
+  *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
+  *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
-  message_block_p = buffer_;
-
-  if (buffer_->isInitialized ())
-    goto scan;
-
-  ACE_NEW_NORETURN (message_data_p,
-                    typename DataMessageType::DATA_T::DATA_T ());
-  if (!message_data_p)
+  result = inherited::msg_queue_->enqueue_tail (message_inout,
+                                                NULL);
+  if (result == -1)
   {
-    ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
-                inherited::mod_->name ()));
-    goto error;
+    int error = ACE_OS::last_error ();
+    if (error != ESHUTDOWN)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+
+    // clean up
+    message_inout->release ();
+    message_inout = NULL;
+
+    return;
   } // end IF
-  message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
-  ACE_OS::memset (&message_data_p->NavData,
-                  0,
-                  sizeof (struct _navdata_t));
-  ACE_NEW_NORETURN (message_data_container_p,
-                    typename DataMessageType::DATA_T (message_data_p));
-  if (!message_data_container_p)
-  {
-    ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
-                inherited::mod_->name ()));
-    goto error;
-  } // end IF
-  message_data_p = NULL;
-  buffer_->initialize (message_data_container_p,
-                       NULL);
-  message_data_container_p = NULL;
-
-scan:
-  if (!scan_begin (message_block_p->rd_ptr () + offset,
-                   message_block_p->length () - offset))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ARDrone_Module_NavDataDecoder_T::scan_begin(), aborting\n")));
-    goto error;
-  } // end IF
-  do_scan_end = true;
-
-  // initialize scanner ?
-  if (isFirst_)
-  { /* column is only valid if an input buffer exists. */
-    ARDrone_NavData_Scanner_set_column (1, scannerState_);
-    ARDrone_NavData_Scanner_set_lineno (1, scannerState_);
-  } // end IF
-
-  // parse data fragment
-  try {
-    result = ARDrone_NavData_Scanner_lex (scannerState_,
-                                          this);
-  } catch (...) {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in yylex(), continuing\n")));
-    result = 1;
-  }
-  switch (result)
-  {
-    case -1:
-    {
-      // *NOTE*: most probable reason: connection
-      //         has been closed --> session end
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: failed to parse NavData messages (result was: %d), aborting\n"),
-                  inherited::mod_->name (),
-                  result));
-      goto error;
-    }
-    default:
-    {
-      // clean up
-      scan_end ();
-      do_scan_end = false;
-
-      // more data ?
-      if (buffer_)
-        goto scan;
-
-      break;
-    }
-  } // end SWITCH
-
-  return;
-
-error:
-  if (do_scan_end)
-    scan_end ();
-  if (message_data_p)
-    delete message_data_p;
-  if (message_data_container_p)
-    message_data_container_p->decrease ();
+  message_inout = NULL;
 }
 
 template <ACE_SYNCH_DECL,
@@ -306,6 +226,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::handleSessionMessage"));
 
+  int result = -1;
+
   // don't care (implies yes per default, if part of a stream)
   ACE_UNUSED_ARG (passMessageDownstream_out);
 
@@ -316,6 +238,46 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   {
     case STREAM_SESSION_MESSAGE_BEGIN:
     {
+      result = inherited::activate ();
+      if (result == -1)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to ACE_Task_T::activate(): \"%m\", aborting\n"),
+                    inherited::mod_->name ()));
+        goto error;
+      } // end IF
+
+      goto continue_;
+
+error:
+      this->notify (STREAM_SESSION_MESSAGE_ABORT);
+
+      break;
+
+continue_:
+      break;
+    }
+    case STREAM_SESSION_MESSAGE_END:
+    {
+      if (inherited::thr_count_)
+        inherited::stop (false, // wait for completion ?
+                         true); // locked access ?
+      else
+      {
+        ACE_ASSERT (inherited::msg_queue_);
+        result = inherited::msg_queue_->deactivate ();
+        if (result == -1)
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: failed to ACE_Message_Queue::deactivate(): \"%m\", continuing\n"),
+                      inherited::mod_->name ()));
+      } // end ELSE
+
+      if (buffer_)
+      {
+        buffer_->release ();
+        buffer_ = NULL;
+      } // end IF
+
       break;
     }
     default:
@@ -344,24 +306,35 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // sanity check(s)
   ACE_ASSERT (buffer_);
   ACE_ASSERT (record_inout);
-  ACE_ASSERT (record_inout->options[0].size);
 
   // frame the NavData message data
   int result = -1;
-//  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
-//  typename DataMessageType::DATA_T* message_data_container_p = NULL;
-  unsigned int missing_bytes = sizeof (struct _navdata_t);
+  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+  typename DataMessageType::DATA_T* message_data_container_p = NULL;
+  unsigned int missing_bytes =
+    sizeof (struct _navdata_t) - sizeof (struct _navdata_option_t);
 
-  for (struct _navdata_option_t* options_p = record_inout->options;
-       options_p;
-       options_p += options_p->size)
+  const typename DataMessageType::DATA_T& message_data_container_r =
+    buffer_->get ();
+  const typename DataMessageType::DATA_T::DATA_T& message_data_r =
+    message_data_container_r.get ();
+  ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+  struct _navdata_option_t* options_p =
+    reinterpret_cast<struct _navdata_option_t*> (buffer_->rd_ptr () + missing_bytes);
+  for (ARDrone_NavDataOptionOffsetsIterator_t iterator = message_data_r.NavData.NavDataOptionOffsets.begin ();
+       iterator != message_data_r.NavData.NavDataOptionOffsets.end ();
+       ++iterator)
   {
-    missing_bytes += options_p->size;
+    missing_bytes +=
+      ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (options_p->size)
+                                             : options_p->size);
     if (options_p->tag == NAVDATA_CKS_TAG)
       break;
+    options_p =
+      reinterpret_cast<struct _navdata_option_t*> (buffer_->rd_ptr () + missing_bytes);
   } // end FOR
-
   ACE_ASSERT (buffer_->total_length () >= missing_bytes);
+
   unsigned int trailing_bytes = 0;
   unsigned int length = 0;
   unsigned int bytes_to_skip = 0;
@@ -397,33 +370,10 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     message_block_p->rd_ptr (length - trailing_bytes);
   } // end IF
 
-//  ACE_NEW_NORETURN (message_data_p,
-//                    typename DataMessageType::DATA_T::DATA_T ());
-//  if (!message_data_p)
-//  {
-//    ACE_DEBUG ((LM_CRITICAL,
-//                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
-//                inherited::mod_->name ()));
-//    goto error;
-//  } // end IF
-//  message_data_p->NavDataMessage = record_inout;
-//  record_inout = NULL;
-//  ACE_NEW_NORETURN (message_data_container_p,
-//                    typename DataMessageType::DATA_T (message_data_p));
-//  if (!message_data_container_p)
-//  {
-//    ACE_DEBUG ((LM_CRITICAL,
-//                ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
-//                inherited::mod_->name ()));
-//    goto error;
-//  } // end IF
-//  message_data_p = NULL;
-
-//  // *TODO*: initialize the whole continuation
-//  buffer_->initialize (message_data_container_p,
-//                       NULL);
-//  message_data_container_p = NULL;
-
+  // validate header
+  ACE_ASSERT (record_inout->header == NAVDATA_HEADER);
+  // *TODO*: verify checksum
+  
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -443,20 +393,45 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   {
     buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
     ACE_ASSERT (buffer_);
+
+    ACE_NEW_NORETURN (message_data_p,
+                      typename DataMessageType::DATA_T::DATA_T ());
+    if (!message_data_p)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+      goto error;
+    } // end IF
+    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+    ACE_OS::memset (&message_data_p->NavData,
+                    0,
+                    sizeof (struct _navdata_t));
+    ACE_NEW_NORETURN (message_data_container_p,
+                      typename DataMessageType::DATA_T (message_data_p));
+    if (!message_data_container_p)
+    {
+      ACE_DEBUG ((LM_CRITICAL,
+                  ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                  inherited::mod_->name ()));
+      goto error;
+    } // end IF
+    message_data_p = NULL;
+    buffer_->initialize (message_data_container_p,
+                         NULL);
+    message_data_container_p = NULL;
+    buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
   } // end IF
 
   return;
 
 error:
-//  if (message_data_p)
-//    delete message_data_p;
-//  if (message_data_container_p)
-//    message_data_container_p->decrease ();
-  if (record_inout)
-  {
-    delete record_inout;
-    record_inout = NULL;
-  } // end IF
+  if (message_block_p)
+    message_block_p->release ();
+  if (message_data_p)
+    delete message_data_p;
+  if (message_data_container_p)
+    message_data_container_p->decrease ();
 }
 
 template <ACE_SYNCH_DECL,
@@ -479,7 +454,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   // *NOTE*: the output format has been "adjusted" to fit in with bison error-reporting
   ACE_DEBUG ((LM_ERROR,
-              ACE_TEXT ("%s: failed to parse message: \"%s\"...\n"),
+              ACE_TEXT ("%s: failed to parse message: \"%s\"\n"),
               inherited::mod_->name (),
               ACE_TEXT (message_in.c_str ())));
 //   ACE_DEBUG((LM_ERROR,
@@ -511,12 +486,15 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ACE_UNUSED_ARG (unlink_in);
 
   // sanity check(s)
-  ACE_ASSERT (buffer_);
   ACE_ASSERT (scannerState_);
 
-  // retrieve trailing chunk
   ACE_Message_Block* message_block_p = buffer_;
   ACE_Message_Block* message_block_2 = NULL;
+
+  // retrieve trailing chunk
+  if (!buffer_)
+    goto continue_;
+
   do
   {
     message_block_2 = message_block_p->cont ();
@@ -525,15 +503,19 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     else
       break;
   } while (true);
-
   ACE_ASSERT (!message_block_p->cont ());
+
+continue_:
   waitBuffer (); // <-- wait for data
-  message_block_2 = message_block_p->cont ();
+
+  message_block_2 = message_block_p ? message_block_p->cont ()
+                                    : buffer_;
   if (!message_block_2)
   {
     // *NOTE*: most probable reason: received session end
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("no data after ARDrone_Module_NavDataDecoder_T::waitBuffer(), aborting\n")));
+                ACE_TEXT ("%s: no data after ARDrone_Module_MAVLinkDecoder_T::waitBuffer(), aborting\n"),
+                inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -545,8 +527,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // initialize next buffer
 
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >=
-              STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE);
+  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
   *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
   *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
@@ -555,7 +536,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                    message_block_2->length ()))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ARDrone_Module_NavDataDecoder_T::scan_begin(), aborting\n")));
+                ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -587,8 +569,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_p = NULL;
   bool done = false;
   SessionMessageType* session_message_p = NULL;
-//  enum Stream_SessionMessageType session_message_type =
-//      STREAM_SESSION_MESSAGE_INVALID;
   bool is_data = false;
   bool stop_processing = false;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
@@ -609,7 +589,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       int error = ACE_OS::last_error ();
       if (error != ESHUTDOWN)
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE_Message_Queue::dequeue_head(): \"%m\", returning\n")));
+                    ACE_TEXT ("%s: failed to ACE_Message_Queue::dequeue_head(): \"%m\", returning\n"),
+                    inherited::mod_->name ()));
       return;
     } // end IF
     ACE_ASSERT (message_block_p);
@@ -618,7 +599,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     {
       case ACE_Message_Block::MB_DATA:
       case ACE_Message_Block::MB_PROTO:
-        is_data = true; break;
+        is_data = true;
+        break;
+      case ACE_Message_Block::MB_STOP:
+        done = true; // session has finished --> abort
+        break;
       case ACE_Message_Block::MB_USER:
       {
         session_message_p = dynamic_cast<SessionMessageType*> (message_block_p);
@@ -629,7 +614,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
             case STREAM_SESSION_MESSAGE_END:
             {
               done = true; // session has finished --> abort
-
               break;
             }
             default:
@@ -648,7 +632,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       default:
         break;
     } // end SWITCH
-    if (is_data) break;
+    if (is_data)
+      break;
 
     // requeue message ?
     if (message_block_p)
@@ -657,7 +642,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       if (result == -1)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n")));
+                    ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
+                    inherited::mod_->name ()));
         return;
       } // end IF
       message_block_p = NULL;
@@ -710,6 +696,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     buffer_->initialize (message_data_container_p,
                          NULL);
     message_data_container_p = NULL;
+    buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
   } // end ELSE
 }
 
@@ -740,7 +727,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // create/initialize a new buffer state
   bufferState_ =
     (useYYScanBuffer_ ? ARDrone_NavData_Scanner__scan_buffer (const_cast<char*> (data_in),
-                                                              length_in + STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE,
+                                                              length_in + NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
                                                               scannerState_)
                       : ARDrone_NavData_Scanner__scan_bytes (data_in,
                                                              length_in,
@@ -791,4 +778,185 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ARDrone_NavData_Scanner__delete_buffer (bufferState_,
                                           scannerState_);
   bufferState_ = NULL;
+}
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType>
+int
+ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
+                                TimePolicyType,
+                                ConfigurationType,
+                                ControlMessageType,
+                                DataMessageType,
+                                SessionMessageType,
+                                SessionDataContainerType>::svc (void)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::svc"));
+
+  // sanity check(s)
+  ACE_ASSERT (scannerState_);
+
+  ACE_Message_Block* message_block_p = NULL;
+  int result = -1;
+  int error = 0;
+  typename DataMessageType::DATA_T* message_data_container_p = NULL;
+  typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+  bool do_scan_end = false;
+
+  do
+  {
+    message_block_p = NULL;
+    result = inherited::getq (message_block_p,
+                              NULL);
+    if (result == -1)
+    {
+      error = ACE_OS::last_error ();
+      if (error != EWOULDBLOCK) // Win32: 10035
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: worker thread (ID: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
+                    inherited::mod_->name ()));
+      break;
+    } // end IF
+    ACE_ASSERT (message_block_p);
+
+    switch (message_block_p->msg_type ())
+    {
+      case ACE_Message_Block::MB_STOP:
+      {
+        // *NOTE*: when close()d manually (i.e. user abort), 'finished' will
+        //         not have been set at this stage
+
+        message_block_p->release ();
+
+        result = 0;
+
+        goto done;
+      }
+      default:
+      { ACE_ASSERT (!buffer_);
+        buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
+        ACE_ASSERT (buffer_);
+
+        if (buffer_->isInitialized ())
+        {
+          // sanity check(s)
+          message_data_container_p =
+            &const_cast<typename DataMessageType::DATA_T&> (buffer_->get ());
+          message_data_p =
+            &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->get ());
+          ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+
+          goto continue_;
+        } // end IF
+
+        ACE_NEW_NORETURN (message_data_p,
+                          typename DataMessageType::DATA_T::DATA_T ());
+        if (!message_data_p)
+        {
+          ACE_DEBUG ((LM_CRITICAL,
+                      ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                      inherited::mod_->name ()));
+          goto error;
+        } // end IF
+        message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+        ACE_OS::memset (&message_data_p->NavData,
+                        0,
+                        sizeof (struct _navdata_t));
+        ACE_NEW_NORETURN (message_data_container_p,
+                          typename DataMessageType::DATA_T (message_data_p));
+        if (!message_data_container_p)
+        {
+          ACE_DEBUG ((LM_CRITICAL,
+                      ACE_TEXT ("%s: failed to allocate memory: \"%m\", returning\n"),
+                      inherited::mod_->name ()));
+          goto error;
+        } // end IF
+        message_data_p = NULL;
+        buffer_->initialize (message_data_container_p,
+                             NULL);
+        message_data_container_p = NULL;
+        buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+
+continue_:
+        if (!scan_begin (buffer_->rd_ptr (),
+                         buffer_->length ()))
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                      inherited::mod_->name ()));
+          goto error;
+        } // end IF
+        do_scan_end = true;
+
+        // initialize scanner ?
+        if (isFirst_)
+        {
+          isFirst_ = false;
+
+          /* column is only valid if an input buffer exists. */
+          ARDrone_NavData_Scanner_set_column (1, scannerState_);
+          ARDrone_NavData_Scanner_set_lineno (1, scannerState_);
+        } // end IF
+
+        // parse data fragment
+        try {
+          result = ARDrone_NavData_Scanner_lex (scannerState_,
+                                                this);
+        } catch (...) {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),
+                      inherited::mod_->name ()));
+          result = 1;
+        }
+        switch (result)
+        {
+          case -1:
+          {
+            // *NOTE*: most probable reason: connection
+            //         has been closed --> session end
+            ACE_DEBUG ((LM_DEBUG,
+                        ACE_TEXT ("%s: failed to parse NavData message(s) (result was: %d), aborting\n"),
+                        inherited::mod_->name (),
+                        result));
+            goto error;
+          }
+          default:
+          {
+            // clean up
+            scan_end ();
+            do_scan_end = false;
+
+            // more data ?
+            if (buffer_)
+              goto continue_;
+
+            break;
+          }
+        } // end SWITCH
+
+        break;
+
+error:
+        if (message_data_p)
+          delete message_data_p;
+        if (message_data_container_p)
+          message_data_container_p->decrease ();
+        if (message_block_p)
+          message_block_p->release ();
+        if (do_scan_end)
+          scan_end ();
+
+        goto done;
+      }
+    } // end SWITCH
+  } while (true);
+  result = -1;
+
+done:
+  return result;
 }

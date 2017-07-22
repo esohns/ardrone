@@ -64,20 +64,20 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
   ACE_ASSERT (GtkCBData_);
 
   if (sessionData_in.isNavData)
+  {
     NavDataSessionId_ = sessionID_in;
 
-  if (sessionData_in.isNavData ||
-      GtkCBData_->videoOnly)
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    guint event_source_id = g_idle_add (idle_session_start_cb,
-                                        GtkCBData_);
-    if (event_source_id == 0)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
-      return;
-    } // end IF
-    GtkCBData_->eventSourceIds.insert (event_source_id);
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+      guint event_source_id = g_idle_add (idle_session_start_cb,
+                                          GtkCBData_);
+      if (event_source_id == 0)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
+        return;
+      } // end IF
+      GtkCBData_->eventSourceIds.insert (event_source_id);
+    } // end lock scope
   } // end IF
 }
 
@@ -123,11 +123,13 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 //}
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const ARDrone_Message& message_in)
+                              const ARDrone_Message& message_in,
+                              bool& passMessageDownstream_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
   ACE_UNUSED_ARG (sessionID_in);
+  passMessageDownstream_out = false;
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
@@ -140,14 +142,19 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   switch (message_in.type ())
   {
     case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
-      message_event = false;
-      break; // do not register outbound messages
+    {
+      passMessageDownstream_out = true;
+      message_event = false; // do not register outbound messages
+      break;
+    }
     case ARDRONE_MESSAGE_VIDEOFRAME:
+    {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
       refresh_display = true;
 #endif
       break;
+    }
     case ARDRONE_MESSAGE_MAVLINKMESSAGE:
     { ACE_ASSERT (MAVLinkNotify_);
 
@@ -294,17 +301,18 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
-  if ((sessionID_in == NavDataSessionId_) ||
-      GtkCBData_->videoOnly)
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    guint event_source_id = g_idle_add (idle_session_end_cb,
-                                        GtkCBData_);
-    if (event_source_id == 0)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
-      return;
-    } // end IF
-    GtkCBData_->eventSourceIds.insert (event_source_id);
-  } // end lock scope
+  if (sessionID_in == NavDataSessionId_)
+  {
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+      guint event_source_id = g_idle_add (idle_session_end_cb,
+                                          GtkCBData_);
+      if (event_source_id == 0)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
+        return;
+      } // end IF
+      GtkCBData_->eventSourceIds.insert (event_source_id);
+    } // end lock scope
+  } // end IF
 }

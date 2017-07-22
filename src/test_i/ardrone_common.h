@@ -36,13 +36,23 @@
 #include "stream_data_base.h"
 
 #include "net_iparser.h"
+#include "net_iwlanmonitor.h"
 
+#include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
 
 typedef std::vector<unsigned int> ARDrone_NavDataOptionOffsets_t;
 typedef ARDrone_NavDataOptionOffsets_t::const_iterator ARDrone_NavDataOptionOffsetsIterator_t;
 struct ARDrone_NavData
 {
+  ARDrone_NavData ()
+   : NavData ()
+   , NavDataOptionOffsets ()
+  {
+    ACE_OS::memset (&NavData, 0, sizeof (struct _navdata_t));
+    NavDataOptionOffsets.reserve (10);
+  };
+
   // *IMPORTANT NOTE*: the options are not parsed; use the offsets
   struct _navdata_t              NavData;
   ARDrone_NavDataOptionOffsets_t NavDataOptionOffsets;
@@ -50,6 +60,13 @@ struct ARDrone_NavData
 
 struct ARDrone_VideoFrame
 {
+  ARDrone_VideoFrame ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   : sample (NULL)
+   , sampleTime (0.0)
+#endif
+  {};
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IMediaSample* sample;
   double        sampleTime;
@@ -91,17 +108,7 @@ struct ARDrone_MessageData
     switch (messageType)
     {
       case ARDRONE_MESSAGE_NAVDATAMESSAGE:
-      {
-        for (struct _navdata_option_t* options_p = &NavData.NavData.options[0];
-             options_p;
-             ++options_p)
-        {
-          delete [] options_p->data;
-          if (options_p->tag == NAVDATA_CKS_TAG)
-            break;
-        } // end FOR
         break;
-      }
       case ARDRONE_MESSAGE_MAVLINKMESSAGE:
         break;
       case ARDRONE_MESSAGE_VIDEOFRAME:
@@ -120,13 +127,11 @@ struct ARDrone_MessageData
   inline void operator+= (struct ARDrone_MessageData rhs_in)
   { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
-  enum ARDrone_MessageType    messageType;
-  union
-  {
-    struct __mavlink_message  MAVLinkData;
-    struct ARDrone_NavData    NavData;
-    struct ARDrone_VideoFrame videoFrame;
-  };
+  enum ARDrone_MessageType  messageType;
+
+  struct __mavlink_message  MAVLinkData;
+  struct ARDrone_NavData    NavData;
+  struct ARDrone_VideoFrame videoFrame;
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
@@ -141,8 +146,6 @@ class ARDrone_MAVLink_IParser
                               struct __mavlink_message> IPARSER_T;
 
   using IPARSER_T::error;
-
-  inline virtual ~ARDrone_MAVLink_IParser () {};
 };
 
 class ARDrone_NavData_IParser
@@ -157,41 +160,34 @@ class ARDrone_NavData_IParser
 
   using IPARSER_T::error;
 
-  inline virtual ~ARDrone_NavData_IParser () {};
-
   virtual void addOption (unsigned int) = 0; // offset
 };
 
 class ARDrone_IMAVLinkNotify
 {
  public:
-  virtual ~ARDrone_IMAVLinkNotify () {};
-
   virtual void messageCB (const struct __mavlink_message&, // message record
                           void*) = 0;                      // payload handle
 };
 class ARDrone_INavDataNotify
 {
  public:
-  virtual ~ARDrone_INavDataNotify () {};
-
   virtual void messageCB (const struct _navdata_t&,              // message record
                           const ARDrone_NavDataOptionOffsets_t&, // option offsets
                           void*) = 0;                            // payload handle
 };
 
 class ARDrone_IController
+ : virtual public ARDrone_IStateMachine_NavData_t
 {
  public:
-  virtual ~ARDrone_IController () {};
-
   virtual void ids (uint8_t,      // session id
                     uint8_t,      // user id
                     uint8_t) = 0; // application id
 
-  virtual void init () = 0;
-  virtual void start () = 0;
-  virtual void resetWatchdog () = 0;
+  virtual void init () = 0; // send initial packet
+  virtual void start () = 0; // switch from 'bootstrap' to 'demo' mode
+  virtual void resetWatchdog () = 0; // reset com watchdog (every 50ms)
 
   virtual void trim () = 0;
 

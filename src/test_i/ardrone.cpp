@@ -182,58 +182,54 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("currently available options:")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-a [IPv4]    : ARDrone address (dotted decimal) [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-a [IPv4]   : drone IP address (dotted decimal) [")
             << ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_IP_ADDRESS)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-b           : buffer size (bytes) [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-b          : buffer size (bytes) [")
             << ARDRONE_MESSAGE_BUFFER_SIZE
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-c           : show console [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-c          : show console [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
 #endif
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d           : debug parser(s) [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug parser(s) [")
             << STREAM_DECODER_DEFAULT_LEX_TRACE
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-f           : fullscreen display [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-f          : display video full-screen (: windowed) [")
             << ARDRONE_DEFAULT_VIDEO_FULLSCREEN
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-g           : video only [")
-            << false
-            << ACE_TEXT_ALWAYS_CHAR ("])")
-            << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-l           : log to a file [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-l          : log to a file [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-m           : use media foundation [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-m          : use media foundation framework (: directshow) [")
             << (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #else
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-n           : network interface [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-n          : network interface [")
             << ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #endif
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-p [port#]   : ARDrone video port (UDP) [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-p [UDP]    : drone video port [")
             << ARDRONE_PORT_TCP_VIDEO
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-r           : use reactor [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-r          : use reactor [")
             << NET_EVENT_USE_REACTOR
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-s           : ARDrone SSID")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-s          : drone WLAN SSID")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-t           : trace information [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-t          : trace information [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
@@ -243,11 +239,11 @@ do_printUsage (const std::string& programName_in)
   std::string UI_file = path;
   UI_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   UI_file += ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-u[[STRING]] : interface definition file [\"")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-u[[STRING]]: interface definition file [\"")
             << UI_file
             << ACE_TEXT_ALWAYS_CHAR ("\"] {\"\" --> no GUI}")
             << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-v           : print version information and exit [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-v          : print version information and exit [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
@@ -263,7 +259,6 @@ do_processArguments (int argc_in,
 #endif
                      bool& debugScanner_out,
                      bool& fullScreen_out,
-                     bool& videoOnly_out,
                      bool& logToFile_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& useMediaFoundation_out,
@@ -307,7 +302,6 @@ do_processArguments (int argc_in,
 #endif
   debugScanner_out            = STREAM_DECODER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
-  videoOnly_out               = false;
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   useMediaFoundation_out      =
@@ -333,9 +327,9 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:b:cdfglmp:rs:tu::v"),
+                               ACE_TEXT ("a:b:cdflmp:rs:tu::v"),
 #else
-                               ACE_TEXT ("a:b:dfgln:p:rs:tu::v"),
+                               ACE_TEXT ("a:b:dfln:p:rs:tu::v"),
 #endif
                                1,                          // skip command name
                                1,                          // report parsing errors
@@ -390,11 +384,6 @@ do_processArguments (int argc_in,
       case 'f':
       {
         fullScreen_out = true;
-        break;
-      }
-      case 'g':
-      {
-        videoOnly_out = true;
         break;
       }
       case 'l':
@@ -912,6 +901,7 @@ do_work (int argc_in,
          bool debugScanner_in,
          bool fullScreen_in,
          bool useReactor_in,
+         const std::string& SSID_in,
          const std::string& UIInterfaceDefinitionFile_in,
          struct ARDrone_GtkCBData& CBData_in,
          const ACE_Sig_Set& signalSet_in,
@@ -944,6 +934,9 @@ do_work (int argc_in,
                                                 &heap_allocator,
                                                 true); // block
 
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
   ARDrone_ConnectionManager_t* connection_manager_p =
     ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connection_manager_p);
@@ -957,6 +950,18 @@ do_work (int argc_in,
   ARDrone_NavDataStream navdata_stream;
   ARDrone_VideoStream_t video_stream;
   ARDrone_AsynchVideoStream_t asynch_video_stream;
+  ARDrone_ConnectionConfigurationIterator_t iterator_2;
+  Common_Timer_Manager_t* timer_manager_p = NULL;
+  struct Common_TimerConfiguration timer_configuration;
+  int group_id = -1;
+  struct Common_DispatchThreadData thread_data;
+  ARDrone_GTK_Manager_t* gtk_manager_p = NULL;
+  struct ARDrone_ConnectionConfiguration connection_configuration;
+  struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
+  ARDrone_StreamConfiguration_t::ITERATOR_T control_modulehandlerconfiguration_iterator;
+  ARDrone_StreamConfiguration_t::ITERATOR_T mavlink_modulehandlerconfiguration_iterator;
+  ARDrone_StreamConfiguration_t::ITERATOR_T navdata_modulehandlerconfiguration_iterator;
+  ARDrone_StreamConfiguration_t::ITERATOR_T video_modulehandlerconfiguration_iterator;
 
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration);
@@ -998,6 +1003,8 @@ do_work (int argc_in,
   (*mavlink_streamconfiguration_iterator).second.moduleConfiguration_.notify =
     &mavlink_stream;
 
+  (*navdata_streamconfiguration_iterator).second.configuration_.GtkCBData =
+    &CBData_in;
   (*navdata_streamconfiguration_iterator).second.configuration_.initializeNavData =
     &event_handler;
   (*navdata_streamconfiguration_iterator).second.moduleConfiguration_.notify =
@@ -1020,8 +1027,24 @@ do_work (int argc_in,
     &video_stream;
 
   // ******************* socket configuration data ****************************
+  CBData_in.configuration->WLANMonitorConfiguration.SSID = SSID_in;
+  CBData_in.configuration->WLANMonitorConfiguration.userData =
+    CBData_in.configuration->userData;
+  if (!WLAN_monitor_p->initialize (CBData_in.configuration->WLANMonitorConfiguration))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLANMonitor_T::initialize(), returning\n")));
+    goto clean;
+  } // end IF
+  WLAN_monitor_p->start ();
+  if (!WLAN_monitor_p->isRunning ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLANMonitor_T::start(), returning\n")));
+    goto clean;
+  } // end IF
+
   // *TODO*: bind to a specific interface
-  struct ARDrone_ConnectionConfiguration connection_configuration;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
     address_in;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
@@ -1044,7 +1067,7 @@ do_work (int argc_in,
     &((*control_streamconfiguration_iterator).second);
   CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
                                                                             connection_configuration));
-  ARDrone_ConnectionConfigurationIterator_t iterator_2 =
+  iterator_2 =
     CBData_in.configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
   ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
   (*iterator_2).second.socketHandlerConfiguration.connectionConfiguration =
@@ -1169,7 +1192,6 @@ do_work (int argc_in,
 //  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
 
   // ******************** stream configuration data ***************************
-  struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
   modulehandler_configuration.connectionManager = connection_manager_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   modulehandler_configuration.consoleMode = UIInterfaceDefinitionFile_in.empty ();
@@ -1188,7 +1210,7 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), returning\n")));
-    return;
+    goto clean;
   } // end IF
   ACE_ASSERT (modulehandler_configuration.format);
 
@@ -1217,16 +1239,16 @@ do_work (int argc_in,
                                                                          modulehandler_configuration));
   //(*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
   //                                                                     modulehandler_configuration));
-  ARDrone_StreamConfiguration_t::ITERATOR_T control_modulehandlerconfiguration_iterator =
+  control_modulehandlerconfiguration_iterator =
       (*control_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (control_modulehandlerconfiguration_iterator != (*control_streamconfiguration_iterator).second.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T mavlink_modulehandlerconfiguration_iterator =
+  mavlink_modulehandlerconfiguration_iterator =
       (*mavlink_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (mavlink_modulehandlerconfiguration_iterator != (*mavlink_streamconfiguration_iterator).second.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T navdata_modulehandlerconfiguration_iterator =
+  navdata_modulehandlerconfiguration_iterator =
       (*navdata_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (navdata_modulehandlerconfiguration_iterator != (*navdata_streamconfiguration_iterator).second.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T video_modulehandlerconfiguration_iterator =
+  video_modulehandlerconfiguration_iterator =
       (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (video_modulehandlerconfiguration_iterator != (*video_streamconfiguration_iterator).second.end ());
 
@@ -1261,7 +1283,7 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), returning\n")));
-    return;
+    goto clean;
   } // end IF
   ACE_ASSERT ((*video_modulehandlerconfiguration_iterator).second.format);
 
@@ -1312,7 +1334,7 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize heap allocator, returning\n")));
-    return;
+    goto clean;
   } // end IF
 
   // step2: initialize connection manager
@@ -1320,14 +1342,9 @@ do_work (int argc_in,
   connection_manager_p->set ((*iterator_2).second,
                              CBData_in.configuration->userData); // passed to all handlers
 
-  Common_Timer_Manager_t* timer_manager_p =
+  timer_manager_p =
       COMMON_TIMERMANAGER_SINGLETON::instance ();
   ACE_ASSERT (timer_manager_p);
-  struct Common_TimerConfiguration timer_configuration;
-  int group_id = -1;
-  struct Common_DispatchThreadData thread_data;
-
-  ARDrone_GTK_Manager_t* gtk_manager_p = NULL;
 
   // step3: initialize event dispatch
   enum Common_ProactorType proactor_type;
@@ -1436,6 +1453,14 @@ do_work (int argc_in,
     goto clean;
   } // end IF
 
+  // *NOTE*: initialize the NavData stream early so it can process WLAN status
+  //         updates
+  if (!navdata_stream.initialize ((*navdata_streamconfiguration_iterator).second))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize NavData stream, returning\n")));
+    goto clean;
+  } // end IF
   if (UIInterfaceDefinitionFile_in.empty ())
   {
 //    // *TODO*: verify the given address
@@ -1471,12 +1496,6 @@ do_work (int argc_in,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to initialize MAVLink stream, returning\n")));
-      goto clean;
-    } // end IF
-    if (!navdata_stream.initialize ((*navdata_streamconfiguration_iterator).second))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize NavData stream, returning\n")));
       goto clean;
     } // end IF
     if (useReactor_in)
@@ -1580,10 +1599,14 @@ do_work (int argc_in,
   return;
 
 clean:
+  if (WLAN_monitor_p)
+    WLAN_monitor_p->stop (true,  // wait for completion ?
+                          true); // locked access ?
   Common_Tools::finalizeEventDispatch (useReactor_in,
                                        !useReactor_in,
                                        group_id);
-  timer_manager_p->stop ();
+  if (timer_manager_p)
+    timer_manager_p->stop ();
   if (!UIInterfaceDefinitionFile_in.empty ())
     ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
 }
@@ -1606,7 +1629,6 @@ ACE_TMAIN (int argc_in,
 #endif
   bool debug_scanner;
   bool fullscreen_display;
-  bool video_only;
   bool log_to_file;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -1633,6 +1655,7 @@ ACE_TMAIN (int argc_in,
   ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
                                                 argv_in);
   struct ARDrone_GtkProgressData gtk_progress_data;
+  struct ARDrone_ModuleHandlerConfiguration video_modulehandler_configuration;
   ARDrone_SignalHandler signal_handler;
   struct ARDrone_Configuration configuration;
   struct ARDrone_UserData user_data;
@@ -1695,17 +1718,15 @@ ACE_TMAIN (int argc_in,
 #endif
   debug_scanner          = STREAM_DECODER_DEFAULT_LEX_TRACE;
   fullscreen_display     = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
-  video_only             = false;
   log_to_file            = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   device_identifier_string =
     ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN);
 #endif
-  port_number  = ARDRONE_PORT_TCP_VIDEO;
+  port_number = ARDRONE_PORT_TCP_VIDEO;
   use_reactor = NET_EVENT_USE_REACTOR;
-  SSID_string     =
-    ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
+  SSID_string = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   trace_information      = false;
   print_version_and_exit = false;
 
@@ -1737,7 +1758,7 @@ ACE_TMAIN (int argc_in,
     goto error;
   } // end IF
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("default ARDrone video port (UDP) address: %s...\n"),
+              ACE_TEXT ("video port (UDP-)address: %s\n"),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (address).c_str ())));
   path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
@@ -1755,7 +1776,6 @@ ACE_TMAIN (int argc_in,
 #endif
                             debug_scanner,
                             fullscreen_display,
-                            video_only,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             use_mediafoundation,
@@ -1856,16 +1876,19 @@ ACE_TMAIN (int argc_in,
   video_streamconfiguration_iterator =
     configuration.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
   ACE_ASSERT (video_streamconfiguration_iterator != configuration.streamConfigurations.end ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  video_modulehandler_configuration.filterConfiguration =
+    &configuration.directShowFilterConfiguration;
+#endif
   (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                       ARDrone_ModuleHandlerConfiguration ()));
+                                                                       video_modulehandler_configuration));
   video_modulehandlerconfiguration_iterator =
     (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (video_modulehandlerconfiguration_iterator != (*video_streamconfiguration_iterator).second.end ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  (*video_modulehandlerconfiguration_iterator).second.filterConfiguration =
-    &configuration.directShowFilterConfiguration;
-  (*video_modulehandlerconfiguration_iterator).second.filterConfiguration->pinConfiguration =
-    &configuration.directShowPinConfiguration;
+#else
+  configuration.WLANMonitorConfiguration.deviceIdentifier =
+      device_identifier_string;
 #endif
 
   // step7: initialize user interface, if any
@@ -1885,17 +1908,11 @@ ACE_TMAIN (int argc_in,
     std::make_pair (interface_definition_file, static_cast<GtkBuilder*> (NULL));
   gtk_cb_data.finalizationHook = idle_finalize_ui_cb;
   gtk_cb_data.initializationHook = idle_initialize_ui_cb;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-  gtk_cb_data.device = device_identifier_string;
-#endif
   gtk_cb_data.progressData = &gtk_progress_data;
-  gtk_cb_data.SSID = SSID_string;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   gtk_cb_data.useMediaFoundation = use_mediafoundation;
 #endif
   gtk_cb_data.userData = &gtk_cb_data;
-  gtk_cb_data.videoOnly = video_only;
   gtk_progress_data.GTKState = &gtk_cb_data;
   ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                              argv_in,
@@ -1936,6 +1953,7 @@ ACE_TMAIN (int argc_in,
            debug_scanner,
            fullscreen_display,
            use_reactor,
+           SSID_string,
            interface_definition_file,
            ///////////////////////////////
            gtk_cb_data,

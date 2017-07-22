@@ -120,6 +120,7 @@ struct ARDrone_Configuration
 {
   inline ARDrone_Configuration ()
    : signalHandlerConfiguration ()
+   , WLANMonitorConfiguration ()
    , connectionConfigurations ()
    , parserConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -130,10 +131,16 @@ struct ARDrone_Configuration
    , streamSubscribers ()
    , streamSubscribersLock ()
    , userData (NULL)
-  {};
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    directShowFilterConfiguration.pinConfiguration =
+      &directShowPinConfiguration;
+#endif
+  };
 
   struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
 
+  struct ARDrone_WLANMonitorConfiguration                       WLANMonitorConfiguration;
   ARDrone_ConnectionConfigurations_t                            connectionConfigurations;
   struct Common_ParserConfiguration                             parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -240,13 +247,9 @@ struct ARDrone_GtkCBData
 {
  inline ARDrone_GtkCBData ()
   : Common_UI_GTKState ()
-  , autoAssociate (true)
   , configuration (NULL)
   , controlStream (NULL)
- #if defined (ACE_WIN32) || defined (ACE_WIN64)
- #else
-  , device (ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN))
- #endif
+  , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
   , eventStack ()
   , frameCounter (0)
   , localSAP ()
@@ -265,9 +268,7 @@ struct ARDrone_GtkCBData
   , pixelBuffer (NULL)
 #endif
   , progressData (NULL)
-  , SSID (ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID))
   , timeStamp (ACE_Time_Value::zero)
-  , videoOnly (false)
   , videoStream (NULL)
  {
 #if defined (GTKGL_SUPPORT)
@@ -283,16 +284,12 @@ struct ARDrone_GtkCBData
  };
 #endif
 
- bool                            autoAssociate;
  struct ARDrone_Configuration*   configuration;
  // *NOTE*: on the host ("server"), use the device bias registers instead !
  // *TODO*: implement a client->server protocol to do this
  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
  ARDrone_ControlStreamBase_t*    controlStream;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
- std::string                     device;
-#endif
+ bool                            enableVideo;
  ARDrone_Events_t                eventStack;
  unsigned int                    frameCounter;
  ACE_INET_Addr                   localSAP;
@@ -311,23 +308,21 @@ struct ARDrone_GtkCBData
  GdkPixbuf*                      pixelBuffer;
 #endif
  struct ARDrone_GtkProgressData* progressData;
- std::string                     SSID;
  ACE_Time_Value                  timeStamp;
- bool                            videoOnly;
  ARDrone_VideoStreamBase_t*      videoStream;
 };
 
 struct ARDrone_ThreadData
 {
   inline ARDrone_ThreadData ()
-   : CBData (NULL)
+   : GtkCBData (NULL)
    , eventSourceID (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , useMediaFoundation (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
 #endif
   {};
 
-  struct ARDrone_GtkCBData* CBData;
+  struct ARDrone_GtkCBData* GtkCBData;
   guint                     eventSourceID;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool                      useMediaFoundation;
