@@ -21,6 +21,8 @@
 #ifndef ARDRONE_DEFINES_H
 #define ARDRONE_DEFINES_H
 
+#include "ace/config-lite.h"
+
 // *** OpenGL-related
 #define ARDRONE_OPENGL_DOUBLE_BUFFERED                     true
 #define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
@@ -105,6 +107,10 @@
 
 // *** network-related ***
 #define ARDRONE_DEFAULT_WLAN_SSID                          "ardrone2_291480"
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#define ARDRONE_DEFAULT_WLAN_SSID_BYTE_ARRAY               { 'a', 'r', 'd', 'r', 'o', 'n', 'e', '2', '_', '2', '9', '1', '4', '8', '0' }
+#endif
 #define ARDRONE_DEFAULT_IP_ADDRESS                         "192.168.1.1"
 
 #define ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS         5

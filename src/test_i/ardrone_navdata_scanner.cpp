@@ -4004,7 +4004,10 @@ ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner)
 {
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_NavData_Scanner_wrap"));
 
-  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
+  // sanity check(s)
+  ACE_ASSERT (yyscanner);
+//  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
+//  ACE_UNUSED_ARG (yyg);
   ARDrone_NavData_IParser* iscanner_p =
     ARDrone_NavData_Scanner_get_extra (yyscanner);
 
