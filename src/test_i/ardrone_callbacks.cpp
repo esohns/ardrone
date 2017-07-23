@@ -407,7 +407,7 @@ load_display_devices (GtkListStore* listStore_in)
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to ACE_Process_Options::command_line(\"%s\"): \"%m\", aborting\n"),
 //                ACE_TEXT (command_line_string.c_str ())));
-//    return false;
+//    goto error;
 //  } // end IF
 //  ACE_Process_Manager* process_manager_p = ACE_Process_Manager::instance ();
 //  ACE_ASSERT (process_manager_p);
@@ -418,53 +418,19 @@ load_display_devices (GtkListStore* listStore_in)
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to ACE_Process_Manager::spawn(\"%s\"): \"%m\", aborting\n"),
 //                ACE_TEXT (command_line_string.c_str ())));
-//    return false;
+//    goto error;
 //  } // end IF
 //  ACE_exitcode exit_status = -1;
 //  if (process_manager_p->wait (process_pid, &exit_status) == ACE_INVALID_PID)
 //  {
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to ACE_Process_Manager::wait(): \"%m\", aborting\n")));
-//    return false;
+//    goto error;
 //  } // end IF
 
   std::string display_records_string;
-#if defined (DEBUG_DEBUGGER)
-  // *TODO*: cannot debug this (gdb crashes)
-#else
-  result = ACE_OS::system (ACE_TEXT (command_line_string.c_str ()));
-//  result = execl ("/bin/sh", "sh", "-c", command, (char *) 0);
-  if ((result == -1)      ||
-      !WIFEXITED (result) ||
-      WEXITSTATUS (result))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_OS::system(\"%s\"): \"%m\" (result was: %d), aborting\n"),
-                ACE_TEXT (command_line_string.c_str ()),
-                WEXITSTATUS (result)));
-    return false;
-  } // end IF
+  bool delete_temporary_file = false;
   unsigned char* data_p = NULL;
-  if (!Common_File_Tools::load (filename_string,
-                                data_p))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_File_Tools::load(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT (filename_string.c_str ())));
-    return false;
-  } // end IF
-  if (!Common_File_Tools::deleteFile (filename_string))
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
-                ACE_TEXT (filename_string.c_str ())));
-
-  display_records_string = reinterpret_cast<char*> (data_p);
-  delete [] data_p;
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("xrandr data: \"%s\"\n"),
-//              ACE_TEXT (display_record_string.c_str ())));
-#endif
-
   std::istringstream converter;
   char buffer [BUFSIZ];
   std::string regex_string =
@@ -474,6 +440,42 @@ load_display_devices (GtkListStore* listStore_in)
   converter.str (display_records_string);
   std::string buffer_string;
   GtkTreeIter iterator;
+
+  // *NOTE*: (qtcreator) gdb fails to debug this (hangs) unless you disable the
+  //         "Debug all children" option
+  result = ACE_OS::system (ACE_TEXT (command_line_string.c_str ()));
+  //  result = execl ("/bin/sh", "sh", "-c", command, (char *) 0);
+  if ((result == -1)      ||
+      !WIFEXITED (result) ||
+      WEXITSTATUS (result))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_OS::system(\"%s\"): \"%m\" (result was: %d), aborting\n"),
+                ACE_TEXT (command_line_string.c_str ()),
+                WEXITSTATUS (result)));
+    goto error;
+  } // end IF
+  delete_temporary_file = true;
+  if (!Common_File_Tools::load (filename_string,
+                                data_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_File_Tools::load(\"%s\"): \"%m\", aborting\n"),
+                ACE_TEXT (filename_string.c_str ())));
+    goto error;
+  } // end IF
+  ACE_ASSERT (data_p);
+  if (!Common_File_Tools::deleteFile (filename_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
+                ACE_TEXT (filename_string.c_str ())));
+  delete_temporary_file = false;
+  display_records_string = reinterpret_cast<char*> (data_p);
+  delete [] data_p; data_p = NULL;
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("xrandr data: \"%s\"\n"),
+//              ACE_TEXT (display_record_string.c_str ())));
+
   do
   {
     converter.getline (buffer, sizeof (buffer));
@@ -495,6 +497,21 @@ load_display_devices (GtkListStore* listStore_in)
                         0, ACE_TEXT (match_results[1].str ().c_str ()),
                         -1);
   } while (!converter.fail ());
+
+  goto continue_;
+
+error:
+  if (delete_temporary_file)
+    if (!Common_File_Tools::deleteFile (filename_string))
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
+                  ACE_TEXT (filename_string.c_str ())));
+  if (data_p)
+    delete [] data_p;
+
+  return false;
+
+continue_:
 #endif
 
   return true;
