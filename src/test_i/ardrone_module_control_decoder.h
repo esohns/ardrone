@@ -29,8 +29,8 @@
 #include "stream_task_base_synch.h"
 
 #include "ardrone_common.h"
+#include "ardrone_control_scanner.h"
 #include "ardrone_types.h"
-#include "ardrone_navdata_scanner.h"
 
 // forward declaration(s)
 class ACE_Message_Block;
