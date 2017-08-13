@@ -45,6 +45,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
  , buffer_ (NULL)
  , header_ ()
  , headerDecoded_ (false)
+ , videoMode_ (ARDRONE_VIDEOMODE_INVALID)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::ARDrone_Module_PaVEDecoder_T"));
 
@@ -109,6 +110,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
     if (buffer_)
       buffer_->release ();
     buffer_ = NULL;
+    videoMode_ = ARDRONE_VIDEOMODE_INVALID;
   } // end IF
 
   // *TODO*: remove type inferences
@@ -141,6 +143,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_p, *message_block_2 = NULL;
   unsigned int skipped_bytes, trailing_bytes = 0;
   unsigned int length = 0;
+  unsigned int buffered_bytes, missing_bytes, bytes_to_copy;
+  enum ARDrone_VideoMode video_mode_e = ARDRONE_VIDEOMODE_INVALID;
 
   // initialize return value(s)
   // *NOTE*: the default behavior is to pass all messages along
@@ -164,7 +168,6 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   else
     buffer_ = message_inout;
 
-  unsigned int buffered_bytes, missing_bytes, bytes_to_copy;
 next:
   buffered_bytes = buffer_->total_length ();
   message_block_p = buffer_;
@@ -213,6 +216,37 @@ next:
 
     headerDecoded_ = true;
   } // end IF
+
+  // update video mode ?
+  video_mode_e =
+    ((header_.display_width == ARDRONE_H264_360P_VIDEO_WIDTH) ? ARDRONE_VIDEOMODE_360P
+                                                              : ARDRONE_VIDEOMODE_720P);
+  if (videoMode_ == ARDRONE_VIDEOMODE_INVALID)
+    videoMode_ = video_mode_e;
+  else
+  {
+    if (videoMode_ != video_mode_e)
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: detected video mode change (was: %d, is: %d)...\n"),
+                  inherited::mod_->name (),
+                  videoMode_, video_mode_e));
+      videoMode_ = video_mode_e;
+
+      // notify downstream
+      SessionDataContainerType* session_data_container_p =
+        inherited::sessionData_;
+      if (session_data_container_p)
+        session_data_container_p->increase ();
+      if (!inherited::putSessionMessage (STREAM_SESSION_MESSAGE_RESIZE,
+                                         session_data_container_p,
+                                         NULL))
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to Stream_TaskBase_T::putSessionMessage(%d), continuing\n"),
+                    inherited::mod_->name (),
+                    STREAM_SESSION_MESSAGE_RESIZE));
+    } // end IF
+  } // end ELSE
 
   // --> wait for more data ?
   missing_bytes = header_.header_size - missing_bytes;

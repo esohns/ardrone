@@ -37,17 +37,26 @@
 #include "ardrone_types.h"
 
 class ARDrone_Module_EventHandler
- : public Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
-                                         Common_TimePolicy_t,
-                                         struct ARDrone_ModuleHandlerConfiguration,
-                                         ARDrone_ControlMessage_t,
-                                         ARDrone_Message,
-                                         ARDrone_SessionMessage,
-                                         Stream_SessionId_t,
-                                         struct ARDrone_SessionData>
+ : public Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
+                                          Common_TimePolicy_t,
+                                          struct ARDrone_ModuleHandlerConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_SessionMessage,
+                                          Stream_SessionId_t,
+                                          struct ARDrone_SessionData>
 {
+  typedef Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
+                                          Common_TimePolicy_t,
+                                          struct ARDrone_ModuleHandlerConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_SessionMessage,
+                                          Stream_SessionId_t,
+                                          struct ARDrone_SessionData> inherited;
+
  public:
-  ARDrone_Module_EventHandler (ISTREAM_T*); // stream handle
+  ARDrone_Module_EventHandler (typename inherited::ISTREAM_T*); // stream handle
   virtual ~ARDrone_Module_EventHandler ();
 
   // implement Common_IClone_T
@@ -55,25 +64,16 @@ class ARDrone_Module_EventHandler
                    Common_TimePolicy_t>* clone ();
 
  private:
-  typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
-                                         Common_TimePolicy_t,
-                                         struct ARDrone_ModuleHandlerConfiguration,
-                                         ARDrone_ControlMessage_t,
-                                         ARDrone_Message,
-                                         ARDrone_SessionMessage,
-                                         Stream_SessionId_t,
-                                         struct ARDrone_SessionData> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler (const ARDrone_Module_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler& operator= (const ARDrone_Module_EventHandler&))
 };
 
 // declare module
-DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
-                              enum Stream_SessionMessageType,            // session event type
-                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-                              Stream_INotify_t,                          // stream notification interface type
-                              ARDrone_Module_EventHandler);              // writer type
+DATASTREAM_MODULE_INPUT_ONLY_A (struct ARDrone_SessionData,                // session data type
+                                enum Stream_SessionMessageType,            // session event type
+                                struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                                Stream_INotify_t,                          // stream notification interface type
+                                ARDrone_Module_EventHandler);              // writer type
 
 #endif

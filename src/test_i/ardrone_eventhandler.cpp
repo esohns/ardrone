@@ -123,13 +123,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 //}
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const ARDrone_Message& message_in,
-                              bool& passMessageDownstream_out)
+                              const ARDrone_Message& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
   ACE_UNUSED_ARG (sessionID_in);
-  passMessageDownstream_out = false;
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
@@ -143,7 +141,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   {
     case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
     {
-      passMessageDownstream_out = true;
       message_event = false; // do not register outbound messages
       break;
     }

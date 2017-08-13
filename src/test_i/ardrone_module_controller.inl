@@ -21,6 +21,7 @@
 #include "ace/Log_Msg.h"
 
 //#include "ATcodec/ATcodec_api.h"
+#include "Soft/Common/ardrone_api.h"
 #include "VLIB/video_codec.h"
 
 #include "ardrone_callbacks.h"
@@ -79,37 +80,12 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 #endif
  : inherited (stream_in)
  , inherited2 ()
+ , deviceState_ (0)
  , isFirst_ (true)
+ , previousState_ (NAVDATA_STATE_INVALID)
  , videoModeSet_ (false)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));
-
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType,
-          typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
-          typename ConnectionManagerType,
-          typename ConnectorType>
-ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType,
-                            WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
-                            ConnectionManagerType,
-                            ConnectorType>::~ARDrone_Module_Controller_T ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::~ARDrone_Module_Controller_T"));
 
 }
 
@@ -142,7 +118,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   if (inherited::isInitialized_)
   {
+    deviceState_ = 0;
     isFirst_ = true;
+    previousState_ = NAVDATA_STATE_INVALID;
     videoModeSet_ = false;
   } // end IF
 
@@ -192,21 +170,22 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   const typename DataMessageType::DATA_T::DATA_T& data_r =
     data_container_r.get ();
   ACE_ASSERT (data_r.messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+  deviceState_ = data_r.NavData.NavData.ardrone_state;
 
   if (isFirst_)
   {
+    // *NOTE*: the device may still be acknowleging a control command from a
+    //         previous session --> disable it first
+    if (deviceState_ & ARDRONE_COMMAND_MASK)
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: resetting control command ACK flag...\n"),
+                  inherited::mod_->name ()));
+      resetACKFlag ();
+    } // end IF
+
     isFirst_ = false;
 
-    // *NOTE*: depending on previous communications, the device may/may not be
-    //         in bootstrap mode
-    if (data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP)
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: drone is currently in bootstrap mode; requesting NavData demo mode\n"),
-                  inherited::mod_->name ()));
-    else
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: requesting NavData demo mode\n"),
-                  inherited::mod_->name ()));
     try {
       start ();
     } catch (...) {
@@ -217,26 +196,23 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     }
   } // end IF
 
-  switch (inherited2::state_)
+  // received acknowledgement ?
+  if (deviceState_ & ARDRONE_COMMAND_MASK)
+  { // *NOTE*: the command ACK flag needs to be reset manually
+    if (inherited2::state_ != NAVDATA_STATE_COMMAND_ACK)
+      change (NAVDATA_STATE_COMMAND_ACK);
+  } // end IF
+  else if (inherited2::state_ == NAVDATA_STATE_COMMAND_ACK)
   {
-    case NAVDATA_STATE_BOOTSTRAP:
-    {
-      if (data_r.NavData.NavData.ardrone_state & ARDRONE_COMMAND_MASK)
-        inherited2::change (NAVDATA_STATE_COMMAND_ACK);
-      break;
-    }
-    case NAVDATA_STATE_SET_PARAMETER:
-    {
-      if (data_r.NavData.NavData.ardrone_state & ARDRONE_COMMAND_MASK)
-        inherited2::change (NAVDATA_STATE_READY);
-      break;
-    }
-    default:
-      break;
-  } // end SWITCH
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("%s: received command acknowlegement\n"),
+                inherited::mod_->name ()));
+
+    change (NAVDATA_STATE_COMMAND_NACK);
+  } // end ELSE IF
 
   // reset watchdog ?
-  if (data_r.NavData.NavData.ardrone_state & ARDRONE_COM_WATCHDOG_MASK)
+  if (state_ & ARDRONE_COM_WATCHDOG_MASK)
   {
     try {
       resetWatchdog ();
@@ -294,6 +270,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   {
     case STREAM_SESSION_MESSAGE_BEGIN:
     {
+      // reset message sequence number generator
+      OWN_TYPE_T::currentID = 1;
+
       try {
         init ();
       } catch (...) {
@@ -302,11 +281,54 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     inherited::mod_->name ()));
         return;
       }
-
       break;
     }
     case STREAM_SESSION_MESSAGE_END:
+    {
+      ConnectionConfigurationIteratorType iterator;
+      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
+      Common_IReset* ireset_p = NULL;
+
+       if (!inherited::configuration_)
+          goto continue_;
+
+      // reset the connection configuration
+      iterator =
+        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
+      if (iterator == inherited::configuration_->connectionConfigurations->end ())
+        iterator =
+          inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
+      ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
+      socket_configuration_p =
+        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
+      ACE_ASSERT (socket_configuration_p);
+      socket_configuration_p->address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                       1);
+      socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_NAVDATA;
+
+      if (!inherited::connection_)
+        goto continue_;
+
+      ireset_p = dynamic_cast<Common_IReset*> (inherited::connection_);
+      ACE_ASSERT (ireset_p);
+      try {
+        ireset_p->reset ();
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: caught exception in Common_IReset::reset(), continuing\n"),
+                    inherited::mod_->name ()));
+      }
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: reset target address to %s\n"),
+                  inherited::mod_->name (),
+                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->address).c_str ())));
+
+continue_:
+      change (NAVDATA_STATE_INVALID);
+
       break;
+    }
     default:
       break;
   } // end SWITCH
@@ -385,7 +407,7 @@ error:
 
       break;
     }
-    case NAVDATA_STATE_BOOTSTRAP:
+    case NAVDATA_STATE_CONFIG:
     {
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
@@ -393,7 +415,6 @@ error:
 
       // step1: the UDP control port is 5556 (not 5554)
       //        --> update the connection configuration
-
       ConnectionConfigurationIteratorType iterator =
         inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
       if (iterator == inherited::configuration_->connectionConfigurations->end ())
@@ -406,6 +427,7 @@ error:
       ACE_ASSERT (socket_configuration_p);
       socket_configuration_p->address.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
                                                        1);
+      socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_CONTROL_CONFIGURATION;
       Common_IReset* ireset_p =
         dynamic_cast<Common_IReset*> (inherited::connection_);
       ACE_ASSERT (ireset_p);
@@ -421,6 +443,46 @@ error:
                   inherited::mod_->name (),
                   ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->address).c_str ())));
 
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: requesting device configuration data\n"),
+                  inherited::mod_->name ()));
+
+      command_string =
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+      command_string +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
+      command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+      converter << (OWN_TYPE_T::currentID).value ();
+      (OWN_TYPE_T::currentID)++;
+      command_string += converter.str ();
+      command_string += ACE_TEXT_ALWAYS_CHAR (",");
+      converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+      converter.clear ();
+      converter << CFG_GET_CONTROL_MODE;
+      command_string += converter.str ();
+      command_string += ACE_TEXT_ALWAYS_CHAR (",");
+      converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+      converter.clear ();
+      converter << 0;
+      command_string += converter.str ();
+      command_string += ACE_TEXT_ALWAYS_CHAR ("\r");
+
+      if (!sendATCommand (command_string))
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                    inherited::mod_->name (),
+                    ACE_TEXT (command_string.c_str ())));
+
+      break;
+    }
+    case NAVDATA_STATE_MODE:
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: switching navdata mode: %s\n"),
+                  inherited::mod_->name (),
+                  (ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("full")
+                                                          : ACE_TEXT_ALWAYS_CHAR ("demo"))));
+
       command_string =
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
       command_string +=
@@ -431,12 +493,14 @@ error:
       command_string += converter.str ();
       command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
       command_string +=
-          ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_GENERAL_STRING);
+          ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_GENERAL_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR (":");
       command_string +=
-        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_DEMO_STRING);
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_SETTING_MODE_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
-      command_string += ACE_TEXT_ALWAYS_CHAR ("TRUE");
+      command_string +=
+        (ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("FALSE")
+                                                : ACE_TEXT_ALWAYS_CHAR ("TRUE"));
       command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
 
       if (!sendATCommand (command_string))
@@ -447,16 +511,60 @@ error:
 
       break;
     }
-    case NAVDATA_STATE_COMMAND_ACK:
+    case NAVDATA_STATE_OPTIONS:
     {
+      uint32_t navdata_options_u =
+        (NAVDATA_OPTION_MASK (NAVDATA_DEMO_TAG)            |
+         NAVDATA_OPTION_MASK (NAVDATA_TIME_TAG)            |
+         NAVDATA_OPTION_MASK (NAVDATA_RAW_MEASURES_TAG)    |
+         NAVDATA_OPTION_MASK (NAVDATA_PHYS_MEASURES_TAG)   |
+         NAVDATA_OPTION_MASK (NAVDATA_GYROS_OFFSETS_TAG)   |
+         NAVDATA_OPTION_MASK (NAVDATA_EULER_ANGLES_TAG)    |
+         NAVDATA_OPTION_MASK (NAVDATA_REFERENCES_TAG)      |
+         NAVDATA_OPTION_MASK (NAVDATA_TRIMS_TAG)           |
+         NAVDATA_OPTION_MASK (NAVDATA_RC_REFERENCES_TAG)   |
+         NAVDATA_OPTION_MASK (NAVDATA_PWM_TAG)             |
+         NAVDATA_OPTION_MASK (NAVDATA_ALTITUDE_TAG)        |
+         NAVDATA_OPTION_MASK (NAVDATA_VISION_RAW_TAG)      |
+         NAVDATA_OPTION_MASK (NAVDATA_VISION_OF_TAG)       |
+         NAVDATA_OPTION_MASK (NAVDATA_VISION_TAG)          |
+         NAVDATA_OPTION_MASK (NAVDATA_VISION_PERF_TAG)     |
+         NAVDATA_OPTION_MASK (NAVDATA_TRACKERS_SEND_TAG)   |
+         NAVDATA_OPTION_MASK (NAVDATA_VISION_DETECT_TAG)   |
+         NAVDATA_OPTION_MASK (NAVDATA_WATCHDOG_TAG)        |
+         NAVDATA_OPTION_MASK (NAVDATA_ADC_DATA_FRAME_TAG)  |
+         NAVDATA_OPTION_MASK (NAVDATA_VIDEO_STREAM_TAG)    |
+         NAVDATA_OPTION_MASK (NAVDATA_GAMES_TAG)           |
+         NAVDATA_OPTION_MASK (NAVDATA_PRESSURE_RAW_TAG)    |
+         NAVDATA_OPTION_MASK (NAVDATA_MAGNETO_TAG)         |
+         NAVDATA_OPTION_MASK (NAVDATA_WIND_TAG)            |
+         NAVDATA_OPTION_MASK (NAVDATA_KALMAN_PRESSURE_TAG) |
+         NAVDATA_OPTION_MASK (NAVDATA_HDVIDEO_STREAM_TAG)  |
+         NAVDATA_OPTION_MASK (NAVDATA_WIFI_TAG));
+
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: requesting navdata options: 0x%x\n"),
+                  inherited::mod_->name (),
+                  navdata_options_u));
+
       command_string =
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
       command_string +=
-        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+      converter << (OWN_TYPE_T::currentID).value ();
+      (OWN_TYPE_T::currentID)++;
+      command_string += converter.str ();
+      command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
+      command_string +=
+          ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_GENERAL_STRING);
+      command_string += ACE_TEXT_ALWAYS_CHAR (":");
+      command_string +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_SETTING_OPTIONS_STRING);
+      command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
       converter.str (ACE_TEXT_ALWAYS_CHAR (""));
       converter.clear ();
-      converter << 0;
+      converter << navdata_options_u;
       command_string += converter.str ();
       command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
 
@@ -466,8 +574,6 @@ error:
                     inherited::mod_->name (),
                     ACE_TEXT (command_string.c_str ())));
 
-      change (NAVDATA_STATE_READY);
-
       break;
     }
     case NAVDATA_STATE_READY:
@@ -475,7 +581,7 @@ error:
       if (!videoModeSet_)
       {
         ACE_DEBUG ((LM_DEBUG,
-                    ACE_TEXT ("%s: NavData initialized, setting video mode...\n"),
+                    ACE_TEXT ("%s: navdata initialized, setting video mode...\n"),
                     inherited::mod_->name ()));
 
         try {
@@ -492,14 +598,71 @@ error:
 
       break;
     }
-    case NAVDATA_STATE_SET_PARAMETER:
+    case NAVDATA_STATE_COMMAND_ACK:
+    {
+      // step0: remember previous state
+      previousState_ = inherited2::state_;
+
+      // step1: confirm command ACK receipt
+      resetACKFlag ();
+
       break;
+    }
+    case NAVDATA_STATE_COMMAND_NACK:
+    {
+      // switch to next state
+      enum ARDRone_NavDataState next_state_e = previousState_;
+      switch (previousState_)
+      {
+        case NAVDATA_STATE_CONFIG:
+        {
+          // *NOTE*: the device may (still) be in 'bootstrap' mode
+          if (deviceState_ & ARDRONE_NAVDATA_BOOTSTRAP)
+          {
+            ACE_DEBUG ((LM_DEBUG,
+                        ACE_TEXT ("%s: switching to navdata mode\n"),
+                        inherited::mod_->name ()));
+            next_state_e = NAVDATA_STATE_MODE;
+          } // end IF
+          else
+            next_state_e = NAVDATA_STATE_OPTIONS;
+          break;
+        }
+        case NAVDATA_STATE_MODE:
+          next_state_e = NAVDATA_STATE_OPTIONS; break;
+        case NAVDATA_STATE_OPTIONS:
+        case NAVDATA_STATE_READY:
+          next_state_e = NAVDATA_STATE_READY; break;
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: unknown/invalid previous state (was: \"%s\"), continuing\n"),
+                      inherited::mod_->name (),
+                      ACE_TEXT (inherited2::stateToString (previousState_).c_str ())));
+          ACE_ASSERT (false);
+          break;
+        }
+      } // end SWITCH
+
+      { ACE_GUARD (ACE_NULL_SYNCH::MUTEX, aGuard, *(inherited2::stateLock_));
+        inherited2::state_ = NAVDATA_STATE_COMMAND_NACK;
+      } // end lock scope
+      change (next_state_e);
+
+      ACE_ASSERT (inherited2::condition_);
+      int result = inherited2::condition_->broadcast ();
+      if (result == -1)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_SYNCH_CONDITION_T::broadcast(): \"%m\", continuing\n")));
+
+      break;
+    }
     default:
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: invalid/unknown state (was: \"%s\"), returning\n"),
                   inherited::mod_->name (),
-                  ACE_TEXT (inherited2::state2String (newState_in).c_str ())));
+                  ACE_TEXT (inherited2::stateToString (newState_in).c_str ())));
       break;
     }
   } // end SWITCH
@@ -555,6 +718,61 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   } // end IF
 
   return true;
+}
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename WLANMonitorType,
+          typename ConnectionConfigurationIteratorType,
+          typename ConnectionManagerType,
+          typename ConnectorType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            WLANMonitorType,
+                            ConnectionConfigurationIteratorType,
+                            ConnectionManagerType,
+                            ConnectorType>::resetACKFlag ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::resetACKFlag"));
+
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << (OWN_TYPE_T::currentID).value ();
+  (OWN_TYPE_T::currentID)++;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR (",");
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << ACK_CONTROL_MODE;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR (",");
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << 0;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\r");
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
 }
 
 template <ACE_SYNCH_DECL,
@@ -885,11 +1103,13 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   command_string += converter.str ();
   command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
   command_string +=
-      ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING);
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_VIDEO_STRING);
   command_string += ACE_TEXT_ALWAYS_CHAR (":");
   command_string +=
-    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING);
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_SETTING_CODEC_STRING);
   command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
   switch (videoMode_in)
   {
     case ARDRONE_VIDEOMODE_360P:
@@ -920,6 +1140,4 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
                 inherited::mod_->name (),
                 ACE_TEXT (command_string.c_str ())));
-
-  change (NAVDATA_STATE_SET_PARAMETER);
 }

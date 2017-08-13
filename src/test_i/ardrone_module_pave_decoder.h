@@ -25,7 +25,7 @@
 
 #include "common_time_common.h"
 
-#include "stream_task_base_synch.h"
+#include "stream_task_base_asynch.h"
 
 #include "ardrone_types.h"
 
@@ -44,27 +44,27 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename SessionDataContainerType>
 class ARDrone_Module_PaVEDecoder_T
- : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
-                                 TimePolicyType,
-                                 ConfigurationType,
-                                 ControlMessageType,
-                                 DataMessageType,
-                                 SessionMessageType,
-                                 Stream_SessionId_t,
-                                 enum Stream_ControlType,
-                                 enum Stream_SessionMessageType,
-                                 struct Stream_UserData>
+ : public Stream_TaskBaseAsynch_T<ACE_SYNCH_USE,
+                                  TimePolicyType,
+                                  ConfigurationType,
+                                  ControlMessageType,
+                                  DataMessageType,
+                                  SessionMessageType,
+                                  Stream_SessionId_t,
+                                  enum Stream_ControlType,
+                                  enum Stream_SessionMessageType,
+                                  struct ARDrone_UserData>
 {
-  typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
-                                 TimePolicyType,
-                                 ConfigurationType,
-                                 ControlMessageType,
-                                 DataMessageType,
-                                 SessionMessageType,
-                                 Stream_SessionId_t,
-                                 enum Stream_ControlType,
-                                 enum Stream_SessionMessageType,
-                                 struct Stream_UserData> inherited;
+  typedef Stream_TaskBaseAsynch_T<ACE_SYNCH_USE,
+                                  TimePolicyType,
+                                  ConfigurationType,
+                                  ControlMessageType,
+                                  DataMessageType,
+                                  SessionMessageType,
+                                  Stream_SessionId_t,
+                                  enum Stream_ControlType,
+                                  enum Stream_SessionMessageType,
+                                  struct ARDrone_UserData> inherited;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -102,6 +102,7 @@ class ARDrone_Module_PaVEDecoder_T
   parrot_video_encapsulation_t                   header_;
 #endif
   bool                                           headerDecoded_;
+  enum ARDrone_VideoMode                         videoMode_; // current-
 };
 
 // include template definition

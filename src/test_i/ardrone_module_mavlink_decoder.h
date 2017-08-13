@@ -55,7 +55,7 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  Stream_SessionId_t,
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
-                                 struct Stream_UserData>
+                                 struct ARDrone_UserData>
  , public ARDrone_MAVLink_IParser
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
@@ -67,7 +67,7 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  Stream_SessionId_t,
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
-                                 struct Stream_UserData> inherited;
+                                 struct ARDrone_UserData> inherited;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile

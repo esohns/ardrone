@@ -92,7 +92,7 @@ class ARDrone_Module_Controller_T
 #else
   ARDrone_Module_Controller_T (typename inherited::ISTREAM_T*); // stream handle
 #endif
-  virtual ~ARDrone_Module_Controller_T ();
+  inline virtual ~ARDrone_Module_Controller_T () {};
 
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
@@ -109,7 +109,7 @@ class ARDrone_Module_Controller_T
                     uint8_t); // application id
 
   inline virtual void init () { inherited2::change (NAVDATA_STATE_INITIAL); };
-  inline virtual void start () { inherited2::change (NAVDATA_STATE_BOOTSTRAP); };
+  inline virtual void start () { inherited2::change (NAVDATA_STATE_CONFIG); };
   virtual void resetWatchdog ();
 
   virtual void trim ();
@@ -142,6 +142,7 @@ class ARDrone_Module_Controller_T
   virtual bool wait (const ACE_Time_Value* = NULL);
 
   // helper methods
+  void resetACKFlag ();
   bool sendATCommand (const std::string&); // AT command string
 
   // atomic ID generator
@@ -149,8 +150,10 @@ class ARDrone_Module_Controller_T
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentID;
 
-  bool isFirst_;
-  bool videoModeSet_;
+  uint32_t                  deviceState_;
+  bool                      isFirst_;
+  enum ARDRone_NavDataState previousState_;
+  bool                      videoModeSet_;
 };
 
 // include template definition

@@ -21,6 +21,8 @@
 #ifndef ARDRONE_COMMON_H
 #define ARDRONE_COMMON_H
 
+#include <map>
+#include <string>
 #include <vector>
 
 #include "ace/config-lite.h"
@@ -40,6 +42,9 @@
 
 #include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
+
+typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
+typedef ARDrone_DeviceConfiguration_t::const_iterator ARDrone_DeviceConfigurationIterator_t;
 
 typedef std::vector<unsigned int> ARDrone_NavDataOptionOffsets_t;
 typedef ARDrone_NavDataOptionOffsets_t::const_iterator ARDrone_NavDataOptionOffsetsIterator_t;
@@ -135,6 +140,18 @@ struct ARDrone_MessageData
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
+class ARDrone_Control_IParser
+ : public Net_IRecordParser_T<struct Common_ParserConfiguration,
+                              ARDrone_DeviceConfiguration_t>
+ , public Net_IScanner_T<ARDrone_Control_IParser>
+{
+ public:
+  // convenient types
+  typedef Net_IRecordParser_T<struct Common_ParserConfiguration,
+                              ARDrone_DeviceConfiguration_t> IPARSER_T;
+
+  using IPARSER_T::error;
+};
 class ARDrone_MAVLink_IParser
  : public Net_IRecordParser_T<struct Common_ParserConfiguration,
                               struct __mavlink_message>
@@ -147,7 +164,6 @@ class ARDrone_MAVLink_IParser
 
   using IPARSER_T::error;
 };
-
 class ARDrone_NavData_IParser
  : public Net_IRecordParser_T<struct Common_ParserConfiguration,
                               struct _navdata_t>

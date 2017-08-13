@@ -514,7 +514,7 @@ continue_:
   {
     // *NOTE*: most probable reason: received session end
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: no data after ARDrone_Module_MAVLinkDecoder_T::waitBuffer(), aborting\n"),
+                ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
                 inherited::mod_->name ()));
     return false;
   } // end IF
@@ -536,13 +536,10 @@ continue_:
                    message_block_2->length ()))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                ACE_TEXT ("%s: failed to scan_begin(), aborting\n"),
                 inherited::mod_->name ()));
     return false;
   } // end IF
-
-  //ACE_DEBUG ((LM_DEBUG,
-  //            ACE_TEXT ("switched input buffers...\n")));
 
   return true;
 }

@@ -46,50 +46,46 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 
   Stream_Module_t* module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
-//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-//                                                    NULL,
-//                                                    false),
+//                  ARDrone_Module_FileWriter_Module (this,
+//                                                    ACE_TEXT_ALWAYS_CHAR ("FileWriter")),
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
-                                              NULL,
-                                              false),
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
+                  ARDrone_Module_ControlDecoder_Module (this,
+                                                        ACE_TEXT_ALWAYS_CHAR ("ControlDecoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-//  ACE_NEW_RETURN (module_p,
-//                  ARDrone_Module_ControlDecoder_Module (ACE_TEXT_ALWAYS_CHAR ("ControlDecoder"),
-//                                                        NULL,
-//                                                        false),
-//                  false);
-//  modules_out.push_back (module_p);
-//  module_p = NULL;
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_StatisticReport_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchStatisticReport_Module (this,
+                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
+  modules_out.push_back (module_p);
+  module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_TCPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
-                                                     NULL,
-                                                     false),
+                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchTCPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
-                                                           NULL,
-                                                           false),
+                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
                     false);
   modules_out.push_back (module_p);
 
@@ -393,65 +389,55 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_Controller_Module (this,
-                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
-                                                      NULL,
-                                                      false),
+                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchController_Module (this,
-                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"),
-                                                            NULL,
-                                                            false),
+                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
                     false);
   modules_out.push_back (module_p);
   module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
-//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-//                                                    NULL,
-//                                                    false),
+//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter")),
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
-                                              NULL,
-                                              false),
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_StatisticReport_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchStatisticReport_Module (this,
+                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_NavDataDecoder_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR ("NavDataDecoder"),
-                                                        NULL,
-                                                        false),
+                                                        ACE_TEXT_ALWAYS_CHAR ("NavDataDecoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
-                                                     NULL,
-                                                     false),
+                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource"),
-                                                           NULL,
-                                                           false),
+                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
                     false);
   modules_out.push_back (module_p);
 
@@ -786,10 +772,186 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
         ACE_UNUSED_ARG (option_2);
         break;
       }
+      case NAVDATA_TIME_TAG: // 1
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_time_t));
+        struct _navdata_time_t* option_2 =
+          reinterpret_cast<struct _navdata_time_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_RAW_MEASURES_TAG: // 2
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_raw_measures_t));
+        struct _navdata_raw_measures_t* option_2 =
+          reinterpret_cast<struct _navdata_raw_measures_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PHYS_MEASURES_TAG: // 3
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_phys_measures_t));
+        struct _navdata_phys_measures_t* option_2 =
+          reinterpret_cast<struct _navdata_phys_measures_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_GYROS_OFFSETS_TAG: // 4
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_gyros_offsets_t));
+        struct _navdata_gyros_offsets_t* option_2 =
+          reinterpret_cast<struct _navdata_gyros_offsets_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_EULER_ANGLES_TAG: // 5
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_euler_angles_t));
+        struct _navdata_euler_angles_t* option_2 =
+          reinterpret_cast<struct _navdata_euler_angles_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_REFERENCES_TAG: // 6
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_references_t));
+        struct _navdata_references_t* option_2 =
+          reinterpret_cast<struct _navdata_references_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_TRIMS_TAG: // 7
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_trims_t));
+        struct _navdata_trims_t* option_2 =
+          reinterpret_cast<struct _navdata_trims_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_RC_REFERENCES_TAG: // 8
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_rc_references_t));
+        struct _navdata_rc_references_t* option_2 =
+          reinterpret_cast<struct _navdata_rc_references_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PWM_TAG: // 9
+      { unsigned int size_i = sizeof (struct _navdata_pwm_t);
+        ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
+        struct _navdata_pwm_t* option_2 =
+          reinterpret_cast<struct _navdata_pwm_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ALTITUDE_TAG: // 10
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_altitude_t));
+        struct _navdata_altitude_t* option_2 =
+          reinterpret_cast<struct _navdata_altitude_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_RAW_TAG: // 11
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_raw_t));
+        struct _navdata_vision_raw_t* option_2 =
+          reinterpret_cast<struct _navdata_vision_raw_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_OF_TAG: // 12
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_of_t));
+        struct _navdata_vision_of_t* option_2 =
+          reinterpret_cast<struct _navdata_vision_of_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_TAG: // 13
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_t));
+        struct _navdata_vision_t* option_2 =
+          reinterpret_cast<struct _navdata_vision_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_PERF_TAG: // 14
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_perf_t));
+        struct _navdata_vision_perf_t* option_2 =
+          reinterpret_cast<struct _navdata_vision_perf_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_TRACKERS_SEND_TAG: // 15
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_trackers_send_t));
+        struct _navdata_trackers_send_t* option_2 =
+          reinterpret_cast<struct _navdata_trackers_send_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
       case NAVDATA_VISION_DETECT_TAG: // 16
       { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_detect_t));
         struct _navdata_vision_detect_t* option_2 =
           reinterpret_cast<struct _navdata_vision_detect_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_WATCHDOG_TAG: // 17
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_watchdog_t));
+        struct _navdata_watchdog_t* option_2 =
+          reinterpret_cast<struct _navdata_watchdog_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ADC_DATA_FRAME_TAG: // 18
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_adc_data_frame_t));
+        struct _navdata_adc_data_frame_t* option_2 =
+          reinterpret_cast<struct _navdata_adc_data_frame_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VIDEO_STREAM_TAG: // 19
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_video_stream_t));
+        struct _navdata_video_stream_t* option_2 =
+          reinterpret_cast<struct _navdata_video_stream_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_GAMES_TAG: // 20
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_games_t));
+        struct _navdata_games_t* option_2 =
+          reinterpret_cast<struct _navdata_games_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PRESSURE_RAW_TAG: // 21
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_pressure_raw_t));
+        struct _navdata_pressure_raw_t* option_2 =
+          reinterpret_cast<struct _navdata_pressure_raw_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_MAGNETO_TAG: // 22
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_magneto_t));
+        struct _navdata_magneto_t* option_2 =
+          reinterpret_cast<struct _navdata_magneto_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_WIND_TAG: // 23
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_wind_speed_t));
+        struct _navdata_wind_speed_t* option_2 =
+          reinterpret_cast<struct _navdata_wind_speed_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_KALMAN_PRESSURE_TAG: // 24
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_kalman_pressure_t));
+        struct _navdata_kalman_pressure_t* option_2 =
+          reinterpret_cast<struct _navdata_kalman_pressure_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_HDVIDEO_STREAM_TAG: // 25
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_hdvideo_stream_t));
+        struct _navdata_hdvideo_stream_t* option_2 =
+          reinterpret_cast<struct _navdata_hdvideo_stream_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_WIFI_TAG: // 26
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_wifi_t));
+        struct _navdata_wifi_t* option_2 =
+          reinterpret_cast<struct _navdata_wifi_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
@@ -835,6 +997,8 @@ ARDrone_NavDataStream::onAssociate (const std::string& deviceIdentifier_in,
     return;
 
   // update GUI ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  // *TODO*: move this to onConnect() (see below)
   if (inherited::configuration_->configuration_.GtkCBData)
   {
     guint event_source_id =
@@ -847,6 +1011,7 @@ ARDrone_NavDataStream::onAssociate (const std::string& deviceIdentifier_in,
       return;
     } // end IF
   } // end IF
+#endif
 }
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -859,45 +1024,74 @@ ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onConnect"));
 
-//  // sanity check(s)
-//  if (!success_in)
-//    return;
-//
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (deviceIdentifier_in),
-//#else
-//  if (!Net_Common_Tools::interfaceToIPAddress (deviceIdentifier_in,
-//#endif
-//                                               localSAP_,
-//                                               peerSAP_))
-//  {
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-//                ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ())));
-//#else
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-//                ACE_TEXT (deviceIdentifier_in.c_str ())));
-//#endif
-//    return;
-//  } // end IF
-//
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-//              ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
-//              ACE_TEXT (SSID_in.c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (localSAP_).c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peerSAP_).c_str ())));
-//#else
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-//              ACE_TEXT (deviceIdentifier_in.c_str ()),
-//              ACE_TEXT (SSID_in.c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (localSAP_).c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peerSAP_).c_str ())));
-//#endif
+  ACE_UNUSED_ARG (deviceIdentifier_in);
+  ACE_UNUSED_ARG (SSID_in);
+
+  // sanity check(s)
+  if (!inherited::configuration_)
+    return;
+  if (!success_in)
+    return;
+
+  // debug info
+  ACE_INET_Addr local_SAP, peer_SAP;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_WLANMonitor_t* wlan_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (wlan_monitor_p);
+  if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (deviceIdentifier_in),
+#else
+  if (!Net_Common_Tools::interfaceToIPAddress (deviceIdentifier_in,
+#endif
+                                               local_SAP,
+                                               peer_SAP))
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                ACE_TEXT (Net_Common_Tools::interfaceToString (wlan_monitor_p->get_2 (),
+                                                               deviceIdentifier_in).c_str ())));
+#else
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                ACE_TEXT (deviceIdentifier_in.c_str ())));
+#endif
+    return;
+  } // end IF
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+              ACE_TEXT (Net_Common_Tools::interfaceToString (wlan_monitor_p->get_2 (),
+                                                             deviceIdentifier_in).c_str ()),
+              ACE_TEXT (SSID_in.c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+#else
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+              ACE_TEXT (deviceIdentifier_in.c_str ()),
+              ACE_TEXT (SSID_in.c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+#endif
+
+  // update GUI ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  // *TODO*: move this to onConnect() (see below)
+  if (inherited::configuration_->configuration_.GtkCBData)
+  {
+    guint event_source_id =
+      g_idle_add (idle_associated_SSID_cb,
+                  inherited::configuration_->configuration_.GtkCBData);
+    if (event_source_id == 0)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
+      return;
+    } // end IF
+  } // end IF
+#endif
 }
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -977,51 +1171,46 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
 
   Stream_Module_t* module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
-//                  ARDrone_Module_FileWriter_Module (ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-//                                                    NULL,
-//                                                    false),
+//                  ARDrone_Module_FileWriter_Module (this,
+//                                                    ACE_TEXT_ALWAYS_CHAR ("FileWriter")),
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
 #if defined (_DEBUG)
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump"),
-                                              NULL,
-                                              false),
+                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_StatisticReport_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchStatisticReport_Module (this,
+                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_MAVLinkDecoder_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR ("MAVLinkDecoder"),
-                                                        NULL,
-                                                        false),
+                                                        ACE_TEXT_ALWAYS_CHAR ("MAVLinkDecoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
-                                                     NULL,
-                                                     false),
+                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"),
-                                                           NULL,
-                                                           false),
+                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
                     false);
   modules_out.push_back (module_p);
 

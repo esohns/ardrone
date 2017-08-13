@@ -139,49 +139,6 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
-  <object class="GtkFileChooserDialog" id="filechooserdialog_save">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">choose a directory...</property>
-    <property name="role">GtkFileChooserDialog</property>
-    <property name="modal">True</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="icon">ardrone_small.png</property>
-    <property name="type_hint">dialog</property>
-    <property name="action">select-folder</property>
-    <property name="local_only">False</property>
-    <property name="preview_widget_active">False</property>
-    <property name="show_hidden">True</property>
-    <property name="use_preview_label">False</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="filechooserdialog-vbox2">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="filechooserdialog-action_area2">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkAboutDialog" id="dialog_about">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -403,10 +360,13 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="can_default">True</property>
+                                                <property name="receives_default">True</property>
                                                 <property name="has_tooltip">True</property>
                                                 <property name="tooltip_text" translatable="yes">WLAN interface</property>
                                                 <property name="model">liststore_wlan_interface</property>
                                                 <property name="tearoff_title">WLAN interface</property>
+                                                <property name="has_frame">False</property>
+                                                <property name="focus_on_click">False</property>
                                                 <signal name="changed" handler="combobox_wlan_interface_changed_cb" swapped="no"/>
                                               </object>
                                               <packing>
@@ -442,7 +402,9 @@
                                             <child>
                                               <object class="GtkEntry" id="entry_address">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
+                                                <property name="sensitive">False</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="receives_default">True</property>
                                                 <property name="has_tooltip">True</property>
                                                 <property name="tooltip_text" translatable="yes">address</property>
                                                 <property name="max_length">15</property>
@@ -468,8 +430,8 @@
                                             <child>
                                               <object class="GtkSpinButton" id="spinbutton_port">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="can_default">True</property>
+                                                <property name="sensitive">False</property>
+                                                <property name="can_focus">False</property>
                                                 <property name="receives_default">True</property>
                                                 <property name="has_tooltip">True</property>
                                                 <property name="tooltip_text" translatable="yes">port</property>
@@ -538,8 +500,8 @@
                                                 </child>
                                               </object>
                                               <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">True</property>
+                                                <property name="expand">False</property>
+                                                <property name="fill">False</property>
                                                 <property name="position">4</property>
                                               </packing>
                                             </child>
@@ -577,6 +539,7 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="can_default">True</property>
+                                                <property name="receives_default">True</property>
                                                 <property name="has_tooltip">True</property>
                                                 <property name="tooltip_text" translatable="yes">display device</property>
                                                 <property name="model">liststore_display_device</property>
@@ -596,6 +559,7 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="can_default">True</property>
+                                                <property name="receives_default">True</property>
                                                 <property name="has_tooltip">True</property>
                                                 <property name="tooltip_text" translatable="yes">display format</property>
                                                 <property name="model">liststore_display_format</property>
@@ -660,7 +624,9 @@
                                             <child>
                                               <object class="GtkFileChooserButton" id="filechooserbutton_save">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="can_default">True</property>
+                                                <property name="receives_default">True</property>
                                                 <property name="tooltip_text" translatable="yes">save folder</property>
                                                 <property name="action">select-folder</property>
                                                 <property name="local_only">False</property>
@@ -1297,6 +1263,49 @@
   </object>
   <object class="GtkEntryCompletion" id="entrycompletion_address">
     <property name="inline_completion">True</property>
+  </object>
+  <object class="GtkFileChooserDialog" id="filechooserdialog_save">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">choose a directory...</property>
+    <property name="role">GtkFileChooserDialog</property>
+    <property name="modal">True</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon">ardrone_small.png</property>
+    <property name="type_hint">dialog</property>
+    <property name="action">select-folder</property>
+    <property name="local_only">False</property>
+    <property name="preview_widget_active">False</property>
+    <property name="show_hidden">True</property>
+    <property name="use_preview_label">False</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="filechooserdialog-vbox2">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="filechooserdialog-action_area2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
   </object>
   <object class="GtkListStore" id="liststore_display_device">
     <columns>

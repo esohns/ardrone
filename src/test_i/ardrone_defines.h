@@ -23,33 +23,33 @@
 
 #include "ace/config-lite.h"
 
-// *** OpenGL-related
-#define ARDRONE_OPENGL_DOUBLE_BUFFERED                     true
-#define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
-#define ARDRONE_OPENGL_AXES_SIZE                           0.2 // percentage --> 10%
-// fonts
-//#define ARDRONE_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
-#define ARDRONE_OPENGL_FONT_AXES                           GLUT_STROKE_MONO_ROMAN
-#define ARDRONE_OPENGL_FONT_FPS                            GLUT_BITMAP_HELVETICA_12
-// camera calibration
-#define ARDRONE_OPENGL_CAMERA_ROTATION_FACTOR              0.8F
-#define ARDRONE_OPENGL_CAMERA_TRANSLATION_FACTOR           0.01F
-#define ARDRONE_OPENGL_CAMERA_ZOOM_FACTOR                  0.03F
-// defaults
-#define ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM                 5.0F
-// perspective(s)
-#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    60.0
-#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
-#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    100.0
-#define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
-#define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
+//// *** OpenGL-related
+//#define ARDRONE_OPENGL_DOUBLE_BUFFERED                     true
+//#define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
+//#define ARDRONE_OPENGL_AXES_SIZE                           0.2 // percentage --> 10%
+//// fonts
+////#define ARDRONE_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
+//#define ARDRONE_OPENGL_FONT_AXES                           GLUT_STROKE_MONO_ROMAN
+//#define ARDRONE_OPENGL_FONT_FPS                            GLUT_BITMAP_HELVETICA_12
+//// camera calibration
+//#define ARDRONE_OPENGL_CAMERA_ROTATION_FACTOR              0.8F
+//#define ARDRONE_OPENGL_CAMERA_TRANSLATION_FACTOR           0.01F
+//#define ARDRONE_OPENGL_CAMERA_ZOOM_FACTOR                  0.03F
+//// defaults
+//#define ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM                 5.0F
+//// perspective(s)
+//#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    60.0
+//#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
+//#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    100.0
+//#define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
+//#define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
 
 // *** Gtk UI-related ***
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.glade"
 #define ARDRONE_UI_INITIALIZATION_DELAY                    100 // ms
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
 // *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
-#define ARDRONE_UI_WIDGET_GL_REFRESH_INTERVAL              1000.0F / 30.0F // Hz
+//#define ARDRONE_UI_WIDGET_GL_REFRESH_INTERVAL              1000.0F / 30.0F // Hz
 #define ARDRONE_UI_PROCESSING_THREAD_NAME                  "stream processor"
 
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_WIDTH  320
@@ -69,7 +69,6 @@
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT     "combobox_display_format"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT        "combobox_save_format"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE     "combobox_wlan_interface"
-//#define ARDRONE_UI_WIDGET_NAME_CURVE                      "curve"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT                "dialog_about"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_MAIN                 "dialog_main"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN      "drawingarea_fullscreen"
@@ -94,13 +93,13 @@
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES  "spinbutton_session_messages"
 #define ARDRONE_UI_WIDGET_NAME_SPINNER                     "spinner"
 #define ARDRONE_UI_WIDGET_NAME_STATUSBAR                   "statusbar"
-#define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
+//#define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT        "toggleaction_connect"
 #define ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN           "window_fullscreen"
 
-#define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
-#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_BASE                "#FFFFFF" // white
-#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_TEXT                "#000000" // black
+//#define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
+//#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_BASE                "#FFFFFF" // white
+//#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_TEXT                "#000000" // black
 
 #define ARDRONE_UI_STATUSBAR_CONTEXT_DATA                  "data"
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION           "information"
@@ -127,22 +126,32 @@
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
 // *** protocol-related ***
-#define ARDRONE_PROTOCOL_DEFAULT_SESSION_ID                1
-#define ARDRONE_PROTOCOL_DEFAULT_USER_ID                   1
-#define ARDRONE_PROTOCOL_DEFAULT_APPLICATION_ID            1
+//#define ARDRONE_PROTOCOL_DEFAULT_SESSION_ID                1
+//#define ARDRONE_PROTOCOL_DEFAULT_USER_ID                   1
+//#define ARDRONE_PROTOCOL_DEFAULT_APPLICATION_ID            1
 
-#define ARDRONE_PROTOCOL_AT_PREFIX_STRING                  "AT*"
-#define ARDRONE_PROTOCOL_AT_COMMAND_RESET_WATCHDOG_STRING  "COMWDG"
-#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING          "CONFIG"
-#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_IDS_STRING      "CONFIG_IDS"
-#define ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING         "CTRL"
-#define ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING           "FTRIM"
-#define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH         1024 // #characters
+// control
+#define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH          1024 // #characters
 
-#define ARDRONE_PROTOCOL_AT_COMMAND_GENERAL_STRING         "general"
-#define ARDRONE_PROTOCOL_AT_COMMAND_VIDEO_STRING           "video"
-#define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_DEMO_STRING  "navdata_demo"
-#define ARDRONE_PROTOCOL_AT_COMMAND_PARAMETER_CODEC_STRING "video_codec"
+#define ARDRONE_PROTOCOL_AT_PREFIX_STRING                   "AT*"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING           "CONFIG"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_IDS_STRING       "CONFIG_IDS"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING          "CTRL"
+#define ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING            "FTRIM"
+#define ARDRONE_PROTOCOL_AT_COMMAND_RESET_WATCHDOG_STRING   "COMWDG"
+
+#define ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_GENERAL_STRING "general"
+#define ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_VIDEO_STRING   "video"
+#define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_MODE_STRING     "navdata_demo"
+#define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_CODEC_STRING    "video_codec"
+#define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_OPTIONS_STRING  "navdata_options"
+
+// navdata
+#if defined (_DEBUG)
+#define ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS               true
+#else
+#define ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS               false
+#endif
 
 // *** stream-related ***
 //#define ARDRONE_MESSAGE_BUFFER_SIZE                        65535 // bytes
@@ -165,6 +174,7 @@
 //         resolution
 // *TODO*: do not use static values; compute these with ffmpeg
 #define ARDRONE_H264_360P_VIDEO_WIDTH                      640
+// *TODO*: for some reason, ffmpeg codec returns 368, not 360; find out why
 #define ARDRONE_H264_360P_VIDEO_HEIGHT                     368
 #define ARDRONE_H264_720P_VIDEO_WIDTH                      1280
 #define ARDRONE_H264_720P_VIDEO_HEIGHT                     720

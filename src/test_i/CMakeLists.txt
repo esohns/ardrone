@@ -159,6 +159,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/linux)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACE)
  include_directories (${PKG_CAP_INCLUDE_DIRS})
  if (GTK3_SUPPORT)
@@ -175,8 +176,10 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dec)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dev)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/file)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/misc)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/net)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/vis)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/client_server)
@@ -191,6 +194,7 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/win32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
@@ -231,8 +235,10 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/dec)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/dev)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/file)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/misc)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/net)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/vis)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/client_server)
@@ -251,6 +257,8 @@ set (ardrone_EXE_SRCS
      ardrone_common.cpp
      ardrone_common.h
      ardrone_configuration.h
+     ardrone_control_scanner.cpp
+     ardrone_control_scanner.h
      ardrone_defines.h
      ardrone_eventhandler.cpp
      ardrone_eventhandler.h
@@ -259,6 +267,9 @@ set (ardrone_EXE_SRCS
      ardrone_message.h
      ardrone_mavlink_scanner.cpp
      ardrone_mavlink_scanner.h
+     ardrone_module_control_decoder.cpp
+     ardrone_module_control_decoder.h
+     ardrone_module_control_decoder.inl
      ardrone_module_controller.cpp
      ardrone_module_controller.h
      ardrone_module_controller.inl
@@ -293,6 +304,7 @@ set (ardrone_EXE_SRCS
      stdafx.cpp
      stdafx.h)
 set (ardrone_SCRIPTS
+     scripts/control_scanner.l
      scripts/mavlink_scanner.l
      scripts/navdata_scanner.l)
 
@@ -404,6 +416,7 @@ install (FILES
          etc/settings.ini
          DESTINATION etc/gtk-3.0 COMPONENT config)
 install (FILES
+         scripts/control_scanner.l
          scripts/mavlink_scanner.l
          scripts/navdata_scanner.l
          DESTINATION etc COMPONENT dev)

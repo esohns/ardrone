@@ -83,17 +83,13 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_FileWriter_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR ("FileWriter"),
-                                                    NULL,
-                                                    false),
+                                                    ACE_TEXT_ALWAYS_CHAR ("FileWriter")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_AVIEncoder_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR ("AVIEncoder"),
-                                                    NULL,
-                                                    false),
+                                                    ACE_TEXT_ALWAYS_CHAR ("AVIEncoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -101,58 +97,50 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   if (inherited::configuration_->configuration_.useMediaFoundation)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_MediaFoundationDisplay_Module (this,
-                                                                  ACE_TEXT_ALWAYS_CHAR ("Display"),
-                                                                  NULL,
-                                                                  false),
+                                                                  ACE_TEXT_ALWAYS_CHAR ("Display")),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_DirectShowDisplay_Module (this,
-                                                             ACE_TEXT_ALWAYS_CHAR ("Display"),
-                                                             NULL,
-                                                             false),
+                                                             ACE_TEXT_ALWAYS_CHAR ("Display")),
                     false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #else
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Display_Module (this,
-                                                 ACE_TEXT_ALWAYS_CHAR ("Display"),
-                                                 NULL,
-                                                 false),
+                                                 ACE_TEXT_ALWAYS_CHAR ("Display")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_H264Decoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("H264Decoder"),
-                                                     NULL,
-                                                     false),
+                                                     ACE_TEXT_ALWAYS_CHAR ("H264Decoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport"),
-                                                         NULL,
-                                                         false),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_StatisticReport_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchStatisticReport_Module (this,
+                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                    false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_PaVEDecoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder"),
-                                                     NULL,
-                                                     false),
+                                                     ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder")),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   SourceModuleType (this,
-                                    ACE_TEXT_ALWAYS_CHAR ("VideoSource"),
-                                    NULL,
-                                    false),
+                                    ACE_TEXT_ALWAYS_CHAR ("VideoSource")),
                   false);
   modules_out.push_back (module_p);
 

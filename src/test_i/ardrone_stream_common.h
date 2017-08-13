@@ -274,7 +274,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , filterConfiguration (NULL)
    , format (NULL)
    , graphBuilder (NULL)
-   , push (COMMON_DEFAULT_WIN32_DIRECTSHOW_USE_PUSH_SOURCE_FILTER)
+   , push (MODULE_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
    , rendererNodeId (0)
    , session (NULL)
    , window (NULL)
@@ -331,7 +331,7 @@ struct ARDrone_ModuleHandlerConfiguration
   IDirect3DDevice9Ex*                            direct3DDevice;      // display module
   struct _GUID                                   filterCLSID;         // display module
   struct ARDrone_DirectShow_FilterConfiguration* filterConfiguration; // display module
-  struct _AMMediaType*                           format;              // display module
+  struct _AMMediaType*                           format;              // H264 decoder/display module
   IGraphBuilder*                                 graphBuilder;        // display module
   bool                                           push;                // display module
   TOPOID                                         rendererNodeId;
@@ -341,7 +341,7 @@ struct ARDrone_ModuleHandlerConfiguration
   //IMFVideoDisplayControl*                    windowController;
 #else
   GdkRectangle                                   area;            // display module
-  enum AVPixelFormat                             format;          // display module
+  enum AVPixelFormat                             format;          // H264 decoder/display module
   struct AVRational                              frameRate;       // AVI encoder module
   GdkPixbuf*                                     pixelBuffer;     // display module
   ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
@@ -383,5 +383,10 @@ struct ARDrone_StreamConfiguration
 typedef std::map<std::string,
                  ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
+
+typedef struct Stream_Statistic ARDrone_Statistic_t;
+
+typedef Stream_StatisticHandler_Reactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Reactor_t;
+typedef Stream_StatisticHandler_Proactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Proactor_t;
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H
