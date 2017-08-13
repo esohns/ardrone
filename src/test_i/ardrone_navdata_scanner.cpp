@@ -14,7 +14,7 @@ YY_DECL;
 
 void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
-#define YY_NO_UNISTD_H
+//#define YY_NO_UNISTD_H
 
 //#define FLEXINT_H
 
@@ -2569,7 +2569,7 @@ case 7:
 YY_RULE_SETUP
 { yyless (0);
 
-             // skip ahead message_r.len bytes
+             // skip ahead current_option_s.size bytes
              /* undo the effects of YY_DO_BEFORE_ACTION */
              *yy_cp = yyg->yy_hold_char;
 

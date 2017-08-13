@@ -78,10 +78,11 @@ extern "C"
 #include "stream_allocatorheap.h"
 
 #include "stream_dec_tools.h"
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#include "stream_dev_directshow_tools.h"
-//#endif
+
 #include "stream_dev_tools.h"
+
+#include "stream_lib_common.h"
+#include "stream_lib_defines.h"
 
 #include "net_defines.h"
 
@@ -210,7 +211,7 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-m          : use media foundation framework (: directshow) [")
-            << (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
+            << (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #else
@@ -305,7 +306,7 @@ do_processArguments (int argc_in,
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   useMediaFoundation_out      =
-    (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION);
+    (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION);
 #else
   interface_out               =
     ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN);
@@ -925,9 +926,7 @@ do_work (int argc_in,
                                       UIInterfaceDefinitionFile_in.empty ());
   std::string module_name = ACE_TEXT_ALWAYS_CHAR ("EventHandler");
   ARDrone_Module_EventHandler_Module event_handler_module (NULL,
-                                                           module_name,
-                                                           NULL,
-                                                           true);
+                                                           module_name);
 
   Stream_AllocatorHeap_T<struct ARDrone_AllocatorConfiguration> heap_allocator;
   ARDrone_MessageAllocator_t message_allocator (ARDRONE_MAXIMUM_NUMBER_OF_INFLIGHT_MESSAGES,
@@ -1237,8 +1236,8 @@ do_work (int argc_in,
                                                                          modulehandler_configuration));
   (*navdata_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
                                                                          modulehandler_configuration));
-  //(*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-  //                                                                     modulehandler_configuration));
+  (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"),
+                                                                       modulehandler_configuration));
   control_modulehandlerconfiguration_iterator =
       (*control_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (control_modulehandlerconfiguration_iterator != (*control_streamconfiguration_iterator).second.end ());
@@ -1744,7 +1743,7 @@ ACE_TMAIN (int argc_in,
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool use_mediafoundation   =
-    (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION);
+    (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION);
 #endif
   result =
     address.set (static_cast<u_short> (ARDRONE_PORT_TCP_VIDEO),                // (TCP) port number

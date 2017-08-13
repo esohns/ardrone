@@ -51,12 +51,11 @@ ARDrone_Module_EventHandler:: clone ()
   Stream_Module_t* module_p = NULL;
   ACE_NEW_NORETURN (module_p,
                     ARDrone_Module_EventHandler_Module (NULL,
-                                                        ACE_TEXT_ALWAYS_CHAR (inherited::name ()),
-                                                        NULL,
-                                                        false));
+                                                        ACE_TEXT_ALWAYS_CHAR (inherited::name ())));
   if (!module_p)
     ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("failed to allocate memory(%u): %m, aborting\n"),
+                ACE_TEXT ("%s: failed to allocate memory(%u): %m, aborting\n"),
+                inherited::mod_->name (),
                 sizeof (ARDrone_Module_EventHandler_Module)));
   else
   {
@@ -68,7 +67,8 @@ ARDrone_Module_EventHandler:: clone ()
     if (!eventHandler_impl)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("dynamic_cast<ARDrone_Module_EventHandler> failed, aborting\n")));
+                  ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_EventHandler> failed, aborting\n"),
+                  inherited::mod_->name ()));
 
       // clean up
       delete module_p;

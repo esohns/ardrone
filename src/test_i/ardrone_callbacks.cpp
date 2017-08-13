@@ -79,6 +79,7 @@ extern "C"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_dev_directshow_tools.h"
+#include "stream_dev_tools.h"
 #endif
 
 #include "stream_vis_common.h"
@@ -437,7 +438,6 @@ load_display_devices (GtkListStore* listStore_in)
       ACE_TEXT_ALWAYS_CHAR ("^(.+) (?:connected)(?: primary)? (.+) \\((?:(.+)\\w*)+\\) ([[:digit:]]+)mm x ([[:digit:]]+)mm$");
   std::regex regex (regex_string);
   std::smatch match_results;
-  converter.str (display_records_string);
   std::string buffer_string;
   GtkTreeIter iterator;
 
@@ -476,6 +476,7 @@ load_display_devices (GtkListStore* listStore_in)
 //              ACE_TEXT ("xrandr data: \"%s\"\n"),
 //              ACE_TEXT (display_record_string.c_str ())));
 
+  converter.str (display_records_string);
   do
   {
     converter.getline (buffer, sizeof (buffer));
@@ -2153,92 +2154,92 @@ idle_update_info_display_cb (gpointer userData_in)
   return G_SOURCE_CONTINUE;
 }
 
-gboolean
-idle_update_log_display_cb (gpointer userData_in)
-{
-  STREAM_TRACE (ACE_TEXT ("::idle_update_log_display_cb"));
-
-  struct ARDrone_GtkCBData* data_p =
-    static_cast<struct ARDrone_GtkCBData*> (userData_in);
-
-  // sanity check(s)
-  ACE_ASSERT (data_p);
-
-  ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->logStackLock, G_SOURCE_REMOVE);
-
-  Common_UI_GTKBuildersIterator_t iterator =
-      data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
-  // sanity check(s)
-  ACE_ASSERT (iterator != data_p->builders.end ());
-
-  GtkTextView* view_p =
-    GTK_TEXT_VIEW (gtk_builder_get_object ((*iterator).second.second,
-                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG)));
-  ACE_ASSERT (view_p);
-  GtkTextBuffer* buffer_p = gtk_text_view_get_buffer (view_p);
-  ACE_ASSERT (buffer_p);
-
-  GtkTextIter text_iterator;
-  gtk_text_buffer_get_end_iter (buffer_p,
-                                &text_iterator);
-
-  gchar* string_p = NULL;
-  // sanity check
-  if (data_p->logStack.empty ())
-    return G_SOURCE_CONTINUE;
-
-  // step1: convert text
-  for (Common_MessageStackConstIterator_t iterator_2 = data_p->logStack.begin ();
-       iterator_2 != data_p->logStack.end ();
-       ++iterator_2)
-  {
-    string_p = Common_UI_Tools::Locale2UTF8 (*iterator_2);
-    if (!string_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to convert message text (was: \"%s\"), aborting\n"),
-                  ACE_TEXT ((*iterator_2).c_str ())));
-      return G_SOURCE_REMOVE;
-    } // end IF
-
-    // step2: display text
-    gtk_text_buffer_insert (buffer_p,
-                            &text_iterator,
-                            string_p,
-                            -1);
-
-    // clean up
-    g_free (string_p);
-  } // end FOR
-
-  data_p->logStack.clear ();
-
-  // step3: scroll the view accordingly
-//  // move the iterator to the beginning of line, so it doesn't scroll
-//  // in horizontal direction
-//  gtk_text_iter_set_line_offset (&text_iterator, 0);
-
-//  // ...and place the mark at iter. The mark will stay there after insertion
-//  // because it has "right" gravity
-//  GtkTextMark* text_mark_p =
-//      gtk_text_buffer_get_mark (buffer_p,
-//                                ACE_TEXT_ALWAYS_CHAR (TEST_I_STREAM_UI_GTK_SCROLLMARK_NAME));
-////  gtk_text_buffer_move_mark (buffer_p,
-////                             text_mark_p,
-////                             &text_iterator);
-
-//  // scroll the mark onscreen
-//  gtk_text_view_scroll_mark_onscreen (view_p,
-//                                      text_mark_p);
-  //GtkAdjustment* adjustment_p =
-  //    GTK_ADJUSTMENT (gtk_builder_get_object ((*iterator).second.second,
-  //                                            ACE_TEXT_ALWAYS_CHAR (TEST_I_STREAM_UI_GTK_ADJUSTMENT_NAME)));
-  //ACE_ASSERT (adjustment_p);
-  //gtk_adjustment_set_value (adjustment_p,
-  //                          adjustment_p->upper - adjustment_p->page_size));
-
-  return G_SOURCE_CONTINUE;
-}
+//gboolean
+//idle_update_log_display_cb (gpointer userData_in)
+//{
+//  STREAM_TRACE (ACE_TEXT ("::idle_update_log_display_cb"));
+//
+//  struct ARDrone_GtkCBData* data_p =
+//    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+//
+//  // sanity check(s)
+//  ACE_ASSERT (data_p);
+//
+//  ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->logStackLock, G_SOURCE_REMOVE);
+//
+//  Common_UI_GTKBuildersIterator_t iterator =
+//      data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+//  // sanity check(s)
+//  ACE_ASSERT (iterator != data_p->builders.end ());
+//
+//  GtkTextView* view_p =
+//    GTK_TEXT_VIEW (gtk_builder_get_object ((*iterator).second.second,
+//                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG)));
+//  ACE_ASSERT (view_p);
+//  GtkTextBuffer* buffer_p = gtk_text_view_get_buffer (view_p);
+//  ACE_ASSERT (buffer_p);
+//
+//  GtkTextIter text_iterator;
+//  gtk_text_buffer_get_end_iter (buffer_p,
+//                                &text_iterator);
+//
+//  gchar* string_p = NULL;
+//  // sanity check
+//  if (data_p->logStack.empty ())
+//    return G_SOURCE_CONTINUE;
+//
+//  // step1: convert text
+//  for (Common_MessageStackConstIterator_t iterator_2 = data_p->logStack.begin ();
+//       iterator_2 != data_p->logStack.end ();
+//       ++iterator_2)
+//  {
+//    string_p = Common_UI_Tools::Locale2UTF8 (*iterator_2);
+//    if (!string_p)
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("failed to convert message text (was: \"%s\"), aborting\n"),
+//                  ACE_TEXT ((*iterator_2).c_str ())));
+//      return G_SOURCE_REMOVE;
+//    } // end IF
+//
+//    // step2: display text
+//    gtk_text_buffer_insert (buffer_p,
+//                            &text_iterator,
+//                            string_p,
+//                            -1);
+//
+//    // clean up
+//    g_free (string_p);
+//  } // end FOR
+//
+//  data_p->logStack.clear ();
+//
+//  // step3: scroll the view accordingly
+////  // move the iterator to the beginning of line, so it doesn't scroll
+////  // in horizontal direction
+////  gtk_text_iter_set_line_offset (&text_iterator, 0);
+//
+////  // ...and place the mark at iter. The mark will stay there after insertion
+////  // because it has "right" gravity
+////  GtkTextMark* text_mark_p =
+////      gtk_text_buffer_get_mark (buffer_p,
+////                                ACE_TEXT_ALWAYS_CHAR (TEST_I_STREAM_UI_GTK_SCROLLMARK_NAME));
+//////  gtk_text_buffer_move_mark (buffer_p,
+//////                             text_mark_p,
+//////                             &text_iterator);
+//
+////  // scroll the mark onscreen
+////  gtk_text_view_scroll_mark_onscreen (view_p,
+////                                      text_mark_p);
+//  //GtkAdjustment* adjustment_p =
+//  //    GTK_ADJUSTMENT (gtk_builder_get_object ((*iterator).second.second,
+//  //                                            ACE_TEXT_ALWAYS_CHAR (TEST_I_STREAM_UI_GTK_ADJUSTMENT_NAME)));
+//  //ACE_ASSERT (adjustment_p);
+//  //gtk_adjustment_set_value (adjustment_p,
+//  //                          adjustment_p->upper - adjustment_p->page_size));
+//
+//  return G_SOURCE_CONTINUE;
+//}
 
 gboolean
 idle_update_video_display_cb (gpointer userData_in)
@@ -2835,6 +2836,8 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
       video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
+      video_info_header_p->bmiHeader.biSizeImage =
+        DIBSIZE (video_info_header_p->bmiHeader);
 #else
       (*iterator_5).second.sourceFormat.height =
         ARDRONE_H264_360P_VIDEO_HEIGHT;
@@ -2848,6 +2851,8 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
       video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
+      video_info_header_p->bmiHeader.biSizeImage =
+        DIBSIZE (video_info_header_p->bmiHeader);
 #else
       (*iterator_5).second.sourceFormat.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
       (*iterator_5).second.sourceFormat.width = ARDRONE_H264_720P_VIDEO_WIDTH;
@@ -3051,7 +3056,7 @@ continue_:
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" [%d/%d/%d/%d]: %dx%d\n"),
+              ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
               ACE_TEXT ((*iterator_5).second.device.c_str ()),
               (*iterator_5).second.area.left,
               (*iterator_5).second.area.right,

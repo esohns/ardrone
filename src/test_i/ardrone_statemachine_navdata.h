@@ -32,12 +32,18 @@
 enum ARDRone_NavDataState
 {
   NAVDATA_STATE_INVALID = -1,
-  NAVDATA_STATE_INITIAL = 0,   // send initial packet to receive basic state information
-  NAVDATA_STATE_BOOTSTRAP,     // first state packet arrives --> switch to demo mode
-  NAVDATA_STATE_COMMAND_ACK,   // mode switch command ACK arrives --> send ACK_CONTROL_MODE
+  // *NOTE*: --> port 5554
+  NAVDATA_STATE_INITIAL = 0,   // send initialization packet
+  // -------------------------------------
+  // *NOTE*: --> port 5556
+  NAVDATA_STATE_CONFIG,        // first packet arrives --> request configuration
+  NAVDATA_STATE_MODE,          // [switch to demo/full mode iff in bootstrap]
+  NAVDATA_STATE_OPTIONS,       // modeswitch complete --> select navdata options
   NAVDATA_STATE_READY,         // initialization complete
+  //NAVDATA_STATE_SET_PARAMETER, // setting parameter (e.g. video birate/codec/...)
   ////////////////////////////////////////
-  NAVDATA_STATE_SET_PARAMETER, // setting configuration parameter (e.g. video birate/codec/...)
+  NAVDATA_STATE_COMMAND_ACK,   // command ACK arrives --> send ACK_CONTROL_MODE
+  NAVDATA_STATE_COMMAND_NACK,  // command ACK cleared --> proceed
   ////////////////////////////////////////
   NAVDATA_STATE_MAX
 };
@@ -53,7 +59,7 @@ class ARDrone_StateMachine_NavData
   // implement (part of) Common_IStateMachine_T
   virtual void initialize ();
   inline virtual void reset () { initialize (); };
-  virtual std::string state2String (enum ARDRone_NavDataState) const;
+  virtual std::string stateToString (enum ARDRone_NavDataState) const;
 
  protected:
   // implement (part of) Common_IStateMachine_T

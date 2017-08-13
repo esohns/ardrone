@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef ARDRONE_MODULE_NAVDATA_DECODER_H
-#define ARDRONE_MODULE_NAVDATA_DECODER_H
+#ifndef ARDRONE_MODULE_CONTROL_DECODER_H
+#define ARDRONE_MODULE_CONTROL_DECODER_H
 
 #include "ace/Global_Macros.h"
 
@@ -46,7 +46,7 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           ////////////////////////////////
           typename SessionDataContainerType>
-class ARDrone_Module_NavDataDecoder_T
+class ARDrone_Module_ControlDecoder_T
  : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
                                  ConfigurationType,
@@ -57,7 +57,7 @@ class ARDrone_Module_NavDataDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData>
- , public ARDrone_NavData_IParser
+ , public ARDrone_Control_IParser
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -73,11 +73,11 @@ class ARDrone_Module_NavDataDecoder_T
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_Module_NavDataDecoder_T (ISTREAM_T*); // stream handle
+  ARDrone_Module_ControlDecoder_T (ISTREAM_T*); // stream handle
 #else
-  ARDrone_Module_NavDataDecoder_T (typename inherited::ISTREAM_T*); // stream handle
+  ARDrone_Module_ControlDecoder_T (typename inherited::ISTREAM_T*); // stream handle
 #endif
-  virtual ~ARDrone_Module_NavDataDecoder_T ();
+  virtual ~ARDrone_Module_ControlDecoder_T ();
 
   //// override (part of) Stream_IModuleHandler_T
   virtual bool initialize (const ConfigurationType&,
@@ -90,11 +90,10 @@ class ARDrone_Module_NavDataDecoder_T
   virtual void handleSessionMessage (SessionMessageType*&, // session message handle
                                      bool&);               // return value: pass message downstream ?
 
-  inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->get ().get ()).NavData.NavDataOptionOffsets.push_back (offset_in); };
-  // implement ARDrone_NavData_IParser
-  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->get ().get ().NavData.NavData); };
+  // implement ARDrone_Control_IParser
+  inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; };
   inline virtual bool hasFinished () const { return true; };
-  virtual void record (struct _navdata_t*&); // record handle
+  virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
   inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
   inline virtual void dump_state () const {};
   inline virtual void error (const yy::location&,
@@ -107,14 +106,14 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual void set (ARDrone_NavData_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual void set (ARDrone_Control_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
   inline virtual ACE_Message_Block* buffer () { return buffer_; };
-  inline virtual bool debugScanner () const { return ARDrone_NavData_Scanner_get_debug (scannerState_); };
+  inline virtual bool debugScanner () const { return ARDrone_Control_Scanner_get_debug (scannerState_); };
   inline virtual bool isBlocking () const { return true; };
   virtual void error (const std::string&);
-  inline virtual void offset (unsigned int offset_in) { ARDrone_NavData_Scanner_set_column (offset_in, scannerState_); };
-  inline virtual unsigned int offset () const { return ARDrone_NavData_Scanner_get_column (scannerState_); };
+  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, scannerState_); };
+  inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (scannerState_); };
   // *IMPORTANT NOTE*: when the parser detects a frame end, it inserts a new
   //                   buffer to the continuation and passes 'true'
   //                   --> separate the current frame from the next
@@ -122,9 +121,9 @@ class ARDrone_Module_NavDataDecoder_T
   virtual void waitBuffer ();
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T ())
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T (const ARDrone_Module_NavDataDecoder_T&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T& operator= (const ARDrone_Module_NavDataDecoder_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T ())
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T (const ARDrone_Module_ControlDecoder_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T& operator= (const ARDrone_Module_ControlDecoder_T&))
 
   // override some ACE_Task_T methods
   int svc (void);
@@ -134,16 +133,15 @@ class ARDrone_Module_NavDataDecoder_T
                    unsigned int); // buffer size
   void scan_end ();
 
-  DataMessageType*        buffer_;
-  struct yy_buffer_state* bufferState_;
-  bool                    isFirst_;
-  unsigned int            numberOfOptions_; // current-
-  yyscan_t                scannerState_;
-  //std::string             scannerTables_;
-  bool                    useYYScanBuffer_;
+  DataMessageType*              buffer_;
+  struct yy_buffer_state*       bufferState_;
+  ARDrone_DeviceConfiguration_t configuration_;
+  bool                          isFirst_;
+  yyscan_t                      scannerState_;
+  bool                          useYYScanBuffer_;
 };
 
 // include template definition
-#include "ardrone_module_navdata_decoder.inl"
+#include "ardrone_module_control_decoder.inl"
 
 #endif

@@ -15,7 +15,7 @@ YY_DECL;
 
 void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
-#define YY_NO_UNISTD_H
+//#define YY_NO_UNISTD_H
 
 //#define FLEXINT_H
 }

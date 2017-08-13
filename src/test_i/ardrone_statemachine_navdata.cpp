@@ -85,8 +85,9 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
     {
       switch (newState_in)
       {
+        case NAVDATA_STATE_INVALID:
         // good case
-        case NAVDATA_STATE_BOOTSTRAP:
+        case NAVDATA_STATE_CONFIG:
         {
           inherited::change (newState_in);
           return true;
@@ -97,10 +98,14 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
-    case NAVDATA_STATE_BOOTSTRAP:
+    case NAVDATA_STATE_CONFIG:
+    case NAVDATA_STATE_MODE:
+    case NAVDATA_STATE_OPTIONS:
+    case NAVDATA_STATE_READY:
     {
       switch (newState_in)
       {
+        case NAVDATA_STATE_INVALID:
         // good case
         case NAVDATA_STATE_COMMAND_ACK:
         {
@@ -113,35 +118,30 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
+    //case NAVDATA_STATE_SET_PARAMETER:
+    //{
+    //  switch (newState_in)
+    //  {
+    //    case NAVDATA_STATE_INVALID:
+    //    // good case
+    //    case NAVDATA_STATE_COMMAND_ACK:
+    //    {
+    //      inherited::change (newState_in);
+    //      return true;
+    //    }
+    //    default:
+    //      break;
+    //  } // end SWITCH
+
+    //  break;
+    //}
     case NAVDATA_STATE_COMMAND_ACK:
     {
       switch (newState_in)
       {
+        case NAVDATA_STATE_INVALID:
         // good case
-        case NAVDATA_STATE_READY:
-        {
-          inherited::change (newState_in);
-
-          ACE_ASSERT (inherited::condition_);
-          int result = inherited::condition_->broadcast ();
-          if (result == -1)
-            ACE_DEBUG ((LM_ERROR,
-                        ACE_TEXT ("failed to ACE_SYNCH_CONDITION_T::broadcast(): \"%m\", continuing\n")));
-
-          return true;
-        }
-        default:
-          break;
-      } // end SWITCH
-
-      break;
-    }
-    case NAVDATA_STATE_READY:
-    {
-      switch (newState_in)
-      {
-        // good case(s)
-        case NAVDATA_STATE_SET_PARAMETER:
+        case NAVDATA_STATE_COMMAND_NACK:
         {
           inherited::change (newState_in);
           return true;
@@ -152,11 +152,14 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
-    case NAVDATA_STATE_SET_PARAMETER:
+    case NAVDATA_STATE_COMMAND_NACK:
     {
       switch (newState_in)
       {
+        case NAVDATA_STATE_INVALID:
         // good case
+        case NAVDATA_STATE_MODE:
+        case NAVDATA_STATE_OPTIONS:
         case NAVDATA_STATE_READY:
         {
           inherited::change (newState_in);
@@ -173,16 +176,16 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
   } // end SWITCH
   ACE_DEBUG ((LM_ERROR,
               ACE_TEXT ("unknown/invalid state switch: \"%s\" --> \"%s\" --> check implementation !, aborting\n"),
-              ACE_TEXT (state2String (inherited::state_).c_str ()),
-              ACE_TEXT (state2String (newState_in).c_str ())));
+              ACE_TEXT (stateToString (inherited::state_).c_str ()),
+              ACE_TEXT (stateToString (newState_in).c_str ())));
 
   return false;
 }
 
 std::string
-ARDrone_StateMachine_NavData::state2String (enum ARDRone_NavDataState state_in) const
+ARDrone_StateMachine_NavData::stateToString (enum ARDRone_NavDataState state_in) const
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::state2String"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::stateToString"));
 
   // initialize return value(s)
   std::string result = ACE_TEXT_ALWAYS_CHAR ("INVALID");
@@ -192,30 +195,21 @@ ARDrone_StateMachine_NavData::state2String (enum ARDRone_NavDataState state_in) 
     case NAVDATA_STATE_INVALID:
       break;
     case NAVDATA_STATE_INITIAL:
-    {
-      result = ACE_TEXT_ALWAYS_CHAR ("INITIAL");
-      break;
-    }
-    case NAVDATA_STATE_BOOTSTRAP:
-    {
-      result = ACE_TEXT_ALWAYS_CHAR ("BOOTSTRAP");
-      break;
-    }
-    case NAVDATA_STATE_COMMAND_ACK:
-    {
-      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_ACK");
-      break;
-    }
+      result = ACE_TEXT_ALWAYS_CHAR ("INITIAL"); break;
+    case NAVDATA_STATE_CONFIG:
+      result = ACE_TEXT_ALWAYS_CHAR ("CONFIG"); break;
+    case NAVDATA_STATE_MODE:
+      result = ACE_TEXT_ALWAYS_CHAR ("MODE"); break;
+    case NAVDATA_STATE_OPTIONS:
+      result = ACE_TEXT_ALWAYS_CHAR ("OPTIONS"); break;
     case NAVDATA_STATE_READY:
-    {
-      result = ACE_TEXT_ALWAYS_CHAR ("READY");
-      break;
-    }
-    case NAVDATA_STATE_SET_PARAMETER:
-    {
-      result = ACE_TEXT_ALWAYS_CHAR ("SET_PARAMETER");
-      break;
-    }
+      result = ACE_TEXT_ALWAYS_CHAR ("READY"); break;
+    //case NAVDATA_STATE_SET_PARAMETER:
+    //  result = ACE_TEXT_ALWAYS_CHAR ("SET_PARAMETER"); break;
+    case NAVDATA_STATE_COMMAND_ACK:
+      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_ACK"); break;
+    case NAVDATA_STATE_COMMAND_NACK:
+      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_NACK"); break;
     default:
     {
       ACE_DEBUG ((LM_ERROR,

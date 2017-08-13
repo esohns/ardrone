@@ -17,7 +17,7 @@ PROJECT_ROOT=$(dirname $0)/..
 #[ ! -d ./${PROJECT_ROOT} ] && echo "ERROR: invalid directory (was: ${PROJECT_ROOT}), aborting" && exit 1
 SCRIPTS_DIR=${PROJECT_ROOT}/scripts
 [ ! -d ${SCRIPTS_DIR} ] && echo "ERROR: invalid directory (was: ${SCRIPTS_DIR}), aborting" && exit 1
-FILES="mavlink_scanner.l navdata_scanner.l"
+FILES="control_scanner.l mavlink_scanner.l navdata_scanner.l"
 for FILE in $FILES
 do
  [ ! -f ${SCRIPTS_DIR}/${FILE} ] && echo "ERROR: invalid file (was: ${SCRIPTS_DIR}/${FILE}), aborting" && exit 1
@@ -32,7 +32,7 @@ do
  [ $? -ne 0 ] && echo "ERROR: failed to flex \"${FILE}\", aborting" && exit 1
 done
 
-FILES="ardrone_mavlink_scanner.cpp ardrone_mavlink_scanner.h ardrone_navdata_scanner.cpp ardrone_navdata_scanner.h"
+FILES="ardrone_control_scanner.cpp ardrone_control_scanner.h ardrone_mavlink_scanner.cpp ardrone_mavlink_scanner.h ardrone_navdata_scanner.cpp ardrone_navdata_scanner.h"
 
 # move the files into the project directory
 for FILE in $FILES

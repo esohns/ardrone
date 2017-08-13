@@ -38,6 +38,8 @@
 
 #include "stream_module_io_stream.h"
 
+#include "stream_stat_statistic_handler.h"
+
 #include "net_asynch_tcpsockethandler.h"
 #include "net_asynch_udpsockethandler.h"
 #include "net_common.h"
@@ -60,7 +62,6 @@
 #include "net_iconnectionmanager.h"
 #include "net_wlaninetmonitor.h"
 
-//#include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_types.h"
 
@@ -69,12 +70,14 @@ class ARDrone_Message;
 class ARDrone_SessionMessage;
 struct ARDrone_ConnectionConfiguration;
 struct ARDrone_ConnectionState;
-typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
+typedef struct Stream_Statistic ARDrone_Statistic_t;
+typedef Stream_StatisticHandler_Reactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Reactor_t;
+typedef Stream_StatisticHandler_Proactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Proactor_t;
 struct ARDrone_UserData;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  struct ARDrone_ConnectionConfiguration,
                                  struct ARDrone_ConnectionState,
-                                 ARDrone_RuntimeStatistic_t,
+                                 ARDrone_Statistic_t,
                                  struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 
 struct ARDrone_ConnectionConfiguration;
@@ -147,7 +150,7 @@ struct ARDrone_ConnectionState
   // *TODO*: consider making this a separate entity (i.e. a pointer)
   struct ARDrone_Configuration* configuration;
 
-  //ARDrone_RuntimeStatistic_t    currentStatistic;
+  //ARDrone_Statistic_t    currentStatistic;
 
   struct ARDrone_UserData*      userData;
 };
@@ -155,12 +158,12 @@ struct ARDrone_ConnectionState
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
                           struct ARDrone_ConnectionState,
-                          ARDrone_RuntimeStatistic_t> ARDrone_IConnection_t;
+                          ARDrone_Statistic_t> ARDrone_IConnection_t;
 
 typedef Net_Connection_Manager_T<ACE_INET_Addr,
                                  struct ARDrone_ConnectionConfiguration,
                                  struct ARDrone_ConnectionState,
-                                 ARDrone_RuntimeStatistic_t,
+                                 ARDrone_Statistic_t,
                                  struct ARDrone_UserData> ARDrone_ConnectionManager_t;
 
 struct ARDrone_WLANMonitorConfiguration
@@ -195,7 +198,8 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       enum Stream_StateMachine_ControlState,
                                       struct ARDrone_StreamState,
                                       struct ARDrone_StreamConfiguration,
-                                      ARDrone_RuntimeStatistic_t,
+                                      ARDrone_Statistic_t,
+                                      ARDrone_StatisticHandler_Reactor_t,
                                       struct ARDrone_AllocatorConfiguration,
                                       struct Stream_ModuleConfiguration,
                                       struct ARDrone_ModuleHandlerConfiguration,
@@ -207,13 +211,35 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       ACE_INET_Addr,
                                       ARDrone_ConnectionManager_t,
                                       struct ARDrone_UserData> ARDrone_NetStream_t;
+typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
+                                      Common_TimePolicy_t,
+                                      net_stream_name_string_,
+                                      enum Stream_ControlType,
+                                      enum Stream_SessionMessageType,
+                                      enum Stream_StateMachine_ControlState,
+                                      struct ARDrone_StreamState,
+                                      struct ARDrone_StreamConfiguration,
+                                      ARDrone_Statistic_t,
+                                      ARDrone_StatisticHandler_Proactor_t,
+                                      struct ARDrone_AllocatorConfiguration,
+                                      struct Stream_ModuleConfiguration,
+                                      struct ARDrone_ModuleHandlerConfiguration,
+                                      struct ARDrone_SessionData,
+                                      ARDrone_StreamSessionData_t,
+                                      ARDrone_ControlMessage_t,
+                                      ARDrone_Message,
+                                      ARDrone_SessionMessage,
+                                      ACE_INET_Addr,
+                                      ARDrone_ConnectionManager_t,
+                                      struct ARDrone_UserData> ARDrone_AsynchNetStream_t;
 
 typedef Net_StreamTCPSocketBase_T<Net_TCPSocketHandler_T<struct ARDrone_SocketHandlerConfiguration,
                                                          ACE_SOCK_STREAM>,
                                   ACE_INET_Addr,
                                   struct ARDrone_ConnectionConfiguration,
                                   struct ARDrone_ConnectionState,
-                                  ARDrone_RuntimeStatistic_t,
+                                  ARDrone_Statistic_t,
+                                  ARDrone_StatisticHandler_Reactor_t,
                                   ARDrone_NetStream_t,
                                   struct ARDrone_UserData,
                                   struct Stream_ModuleConfiguration,
@@ -222,8 +248,9 @@ typedef Net_StreamAsynchTCPSocketBase_T<Net_AsynchTCPSocketHandler_T<struct ARDr
                                         ACE_INET_Addr,
                                         struct ARDrone_ConnectionConfiguration,
                                         struct ARDrone_ConnectionState,
-                                        ARDrone_RuntimeStatistic_t,
-                                        ARDrone_NetStream_t,
+                                        ARDrone_Statistic_t,
+                                        ARDrone_StatisticHandler_Proactor_t,
+                                        ARDrone_AsynchNetStream_t,
                                         struct ARDrone_UserData,
                                         struct Stream_ModuleConfiguration,
                                         struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchTCPHandler_t;
@@ -233,7 +260,8 @@ typedef Net_StreamUDPSocketBase_T<Net_UDPSocketHandler_T<Net_SOCK_Dgram,
                                   ACE_INET_Addr,
                                   struct ARDrone_ConnectionConfiguration,
                                   struct ARDrone_ConnectionState,
-                                  ARDrone_RuntimeStatistic_t,
+                                  ARDrone_Statistic_t,
+                                  ARDrone_StatisticHandler_Reactor_t,
                                   struct ARDrone_SocketHandlerConfiguration,
                                   ARDrone_NetStream_t,
                                   struct ARDrone_UserData,
@@ -244,9 +272,10 @@ typedef Net_StreamAsynchUDPSocketBase_T<Net_AsynchUDPSocketHandler_T<struct ARDr
                                         ACE_INET_Addr,
                                         struct ARDrone_ConnectionConfiguration,
                                         struct ARDrone_ConnectionState,
-                                        ARDrone_RuntimeStatistic_t,
+                                        ARDrone_Statistic_t,
+                                        ARDrone_StatisticHandler_Proactor_t,
                                         struct ARDrone_SocketHandlerConfiguration,
-                                        ARDrone_NetStream_t,
+                                        ARDrone_AsynchNetStream_t,
                                         struct ARDrone_UserData,
                                         struct Stream_ModuleConfiguration,
                                         struct ARDrone_ModuleHandlerConfiguration> ARDrone_AsynchUDPHandler_t;
@@ -257,7 +286,7 @@ typedef Net_IConnector_T<ACE_INET_Addr,
 typedef Net_Client_Connector_T<Net_TCPConnectionBase_T<ARDrone_TCPHandler_t,
                                                        struct ARDrone_ConnectionConfiguration,
                                                        struct ARDrone_ConnectionState,
-                                                       ARDrone_RuntimeStatistic_t,
+                                                       ARDrone_Statistic_t,
                                                        struct ARDrone_SocketHandlerConfiguration,
                                                        struct Net_ListenerConfiguration,
                                                        ARDrone_NetStream_t,
@@ -266,7 +295,7 @@ typedef Net_Client_Connector_T<Net_TCPConnectionBase_T<ARDrone_TCPHandler_t,
                                ACE_INET_Addr,
                                struct ARDrone_ConnectionConfiguration,
                                struct ARDrone_ConnectionState,
-                               ARDrone_RuntimeStatistic_t,
+                               ARDrone_Statistic_t,
                                struct Net_TCPSocketConfiguration,
                                struct ARDrone_SocketHandlerConfiguration,
                                ARDrone_NetStream_t,
@@ -274,7 +303,7 @@ typedef Net_Client_Connector_T<Net_TCPConnectionBase_T<ARDrone_TCPHandler_t,
 typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<ARDrone_UDPHandler_t,
                                                        struct ARDrone_ConnectionConfiguration,
                                                        struct ARDrone_ConnectionState,
-                                                       ARDrone_RuntimeStatistic_t,
+                                                       ARDrone_Statistic_t,
                                                        struct ARDrone_SocketHandlerConfiguration,
                                                        ARDrone_NetStream_t,
                                                        struct ARDrone_UserData>,
@@ -282,7 +311,7 @@ typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<ARDrone_UDPHandler_t,
                                ACE_INET_Addr,
                                struct ARDrone_ConnectionConfiguration,
                                struct ARDrone_ConnectionState,
-                               ARDrone_RuntimeStatistic_t,
+                               ARDrone_Statistic_t,
                                struct Net_UDPSocketConfiguration,
                                struct ARDrone_SocketHandlerConfiguration,
                                ARDrone_NetStream_t,
@@ -291,33 +320,33 @@ typedef Net_Client_Connector_T<Net_UDPConnectionBase_T<ARDrone_UDPHandler_t,
 typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<ARDrone_AsynchTCPHandler_t,
                                                                    struct ARDrone_ConnectionConfiguration,
                                                                    struct ARDrone_ConnectionState,
-                                                                   ARDrone_RuntimeStatistic_t,
+                                                                   ARDrone_Statistic_t,
                                                                    struct ARDrone_SocketHandlerConfiguration,
                                                                    struct Net_ListenerConfiguration,
-                                                                   ARDrone_NetStream_t,
+                                                                   ARDrone_AsynchNetStream_t,
                                                                    struct ARDrone_UserData>,
                                      ACE_INET_Addr,
                                      struct ARDrone_ConnectionConfiguration,
                                      struct ARDrone_ConnectionState,
-                                     ARDrone_RuntimeStatistic_t,
+                                     ARDrone_Statistic_t,
                                      struct Net_TCPSocketConfiguration,
                                      struct ARDrone_SocketHandlerConfiguration,
-                                     ARDrone_NetStream_t,
+                                     ARDrone_AsynchNetStream_t,
                                      struct ARDrone_UserData> ARDrone_AsynchTCPConnector_t;
 typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<ARDrone_AsynchUDPHandler_t,
                                                                    struct ARDrone_ConnectionConfiguration,
                                                                    struct ARDrone_ConnectionState,
-                                                                   ARDrone_RuntimeStatistic_t,
+                                                                   ARDrone_Statistic_t,
                                                                    struct ARDrone_SocketHandlerConfiguration,
-                                                                   ARDrone_NetStream_t,
+                                                                   ARDrone_AsynchNetStream_t,
                                                                    struct ARDrone_UserData>,
                                      ACE_INET_Addr,
                                      struct ARDrone_ConnectionConfiguration,
                                      struct ARDrone_ConnectionState,
-                                     ARDrone_RuntimeStatistic_t,
+                                     ARDrone_Statistic_t,
                                      struct Net_UDPSocketConfiguration,
                                      struct ARDrone_SocketHandlerConfiguration,
-                                     ARDrone_NetStream_t,
+                                     ARDrone_AsynchNetStream_t,
                                      struct ARDrone_UserData> ARDrone_AsynchUDPConnector_t;
 
 typedef ACE_Singleton<ARDrone_ConnectionManager_t,

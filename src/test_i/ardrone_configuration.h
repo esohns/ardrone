@@ -43,19 +43,19 @@
 
 #include "stream_common.h"
 
+#include "stream_lib_common.h"
+#include "stream_lib_defines.h"
+
 #include "net_configuration.h"
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
-//#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 // forward declarations
 class ARDrone_MAVLinkMessage;
-//class ARDrone_MAVLinkStream;
 class ARDrone_NavDataMessage;
-//class ARDrone_NavDataStream;
 
 struct ARDrone_AllocatorConfiguration
  : Stream_AllocatorConfiguration
@@ -81,17 +81,17 @@ struct ARDrone_AllocatorConfiguration
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_FilterConfiguration
- : Stream_Miscellaneous_DirectShow_FilterConfiguration
+ : Stream_MediaFramework_DirectShow_FilterConfiguration
 {
   inline ARDrone_DirectShow_FilterConfiguration ()
-   : Stream_Miscellaneous_DirectShow_FilterConfiguration ()
+   : Stream_MediaFramework_DirectShow_FilterConfiguration ()
    , module (NULL)
    , pinConfiguration (NULL)
   {};
 
   // *TODO*: specify this as part of the network protocol header/handshake
-  Stream_Module_t*                                               module; // handle
-  struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
+  Stream_Module_t*                                                module; // handle
+  struct Stream_MediaFramework_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
 };
 #endif
 
@@ -138,20 +138,20 @@ struct ARDrone_Configuration
 #endif
   };
 
-  struct ARDrone_SignalHandlerConfiguration                     signalHandlerConfiguration;
+  struct ARDrone_SignalHandlerConfiguration                      signalHandlerConfiguration;
 
-  struct ARDrone_WLANMonitorConfiguration                       WLANMonitorConfiguration;
-  ARDrone_ConnectionConfigurations_t                            connectionConfigurations;
-  struct Common_ParserConfiguration                             parserConfiguration;
+  struct ARDrone_WLANMonitorConfiguration                        WLANMonitorConfiguration;
+  ARDrone_ConnectionConfigurations_t                             connectionConfigurations;
+  struct Common_ParserConfiguration                              parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_FilterConfiguration                 directShowFilterConfiguration;
-  struct Stream_Miscellaneous_DirectShow_FilterPinConfiguration directShowPinConfiguration;
+  struct ARDrone_DirectShow_FilterConfiguration                  directShowFilterConfiguration;
+  struct Stream_MediaFramework_DirectShow_FilterPinConfiguration directShowPinConfiguration;
 #endif
-  ARDrone_StreamConfigurations_t                                streamConfigurations;
-  ARDrone_Subscribers_t                                         streamSubscribers;
-  ACE_SYNCH_RECURSIVE_MUTEX                                     streamSubscribersLock;
+  ARDrone_StreamConfigurations_t                                 streamConfigurations;
+  ARDrone_Subscribers_t                                          streamSubscribers;
+  ACE_SYNCH_RECURSIVE_MUTEX                                      streamSubscribersLock;
 
-  struct ARDrone_UserData*                                      userData;
+  struct ARDrone_UserData*                                       userData;
 };
 
 //////////////////////////////////////////
@@ -269,6 +269,9 @@ struct ARDrone_GtkCBData
 #endif
   , progressData (NULL)
   , timeStamp (ACE_Time_Value::zero)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
+#endif
   , videoStream (NULL)
  {
 #if defined (GTKGL_SUPPORT)
@@ -309,6 +312,9 @@ struct ARDrone_GtkCBData
 #endif
  struct ARDrone_GtkProgressData* progressData;
  ACE_Time_Value                  timeStamp;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ bool                            useMediaFoundation;
+#endif
  ARDrone_VideoStreamBase_t*      videoStream;
 };
 
@@ -318,7 +324,7 @@ struct ARDrone_ThreadData
    : GtkCBData (NULL)
    , eventSourceID (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , useMediaFoundation (COMMON_DEFAULT_WIN32_MEDIA_FRAMEWORK == COMMON_WIN32_FRAMEWORK_MEDIAFOUNDATION)
+   , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
 #endif
   {};
 

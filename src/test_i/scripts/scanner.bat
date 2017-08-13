@@ -18,22 +18,33 @@ echo invalid file ^(was: "%FlexEXE%"^)^, exiting
 goto Failed
 
 :Next
-%FlexEXE% --noline avi_scanner.l 2>scanner_report_scanner.txt
+%FlexEXE% --noline control_scanner.l 2>control_scanner_report_scanner.txt
 if %ERRORLEVEL% NEQ 0 (
- echo failed to generate scanner from avi_scanner.l^, exiting
+ echo failed to generate scanner from control_scanner.l^, exiting
  set RC=%ERRORLEVEL%
  goto Failed
 )
 
-%FlexEXE% --noline h264_nal_bisector.l 2>scanner_report_scanner.txt
+%FlexEXE% --noline mavlink_scanner.l 2>mavlink_scanner_report_scanner.txt
 if %ERRORLEVEL% NEQ 0 (
- echo failed to generate scanner from h264_nal_bisector.l^, exiting
+ echo failed to generate scanner from mavlink_scanner.l^, exiting
  set RC=%ERRORLEVEL%
  goto Failed
 )
 
-@move /Y stream_dec_riff_scanner.cpp .. >NUL
-@move /Y stream_dec_riff_scanner.h .. >NUL
+%FlexEXE% --noline navdata_scanner.l 2>navdata_scanner_report_scanner.txt
+if %ERRORLEVEL% NEQ 0 (
+ echo failed to generate scanner from navdata_scanner.l^, exiting
+ set RC=%ERRORLEVEL%
+ goto Failed
+)
+
+@move /Y ardrone_control_scanner.cpp .. >NUL
+@move /Y ardrone_control_scanner.h .. >NUL
+@move /Y ardrone_mavlink_scanner.cpp .. >NUL
+@move /Y ardrone_mavlink_scanner.h .. >NUL
+@move /Y ardrone_navdata_scanner.cpp .. >NUL
+@move /Y ardrone_navdata_scanner.h .. >NUL
 if %ERRORLEVEL% NEQ 0 (
  echo failed to move scanner file^(s^)^, exiting
  set RC=%ERRORLEVEL%
