@@ -306,6 +306,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::record"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
   ACE_ASSERT (buffer_);
   ACE_ASSERT (record_inout);
 
@@ -319,6 +320,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+  const typename SessionDataContainerType::DATA_T& session_data_r =
+    inherited::sessionData_->get ();
 //  unsigned char byte_c = 0x00;
 //  ACE_UINT16 checksum_i = 0;
 //  ACE_UINT16 checksum_swapped = 0;
@@ -400,7 +403,6 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 //    goto error;
 //  } // end IF
 
-  //buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -430,7 +432,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       goto error;
     } // end IF
-    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINK;
     ACE_OS::memset (&message_data_p->MAVLinkData,
                     0,
                     sizeof (struct __mavlink_message));
@@ -445,9 +447,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_data_p = NULL;
     buffer_->initialize (message_data_container_p,
+                         session_data_r.sessionId,
                          NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
+    buffer_->set (ARDRONE_MESSAGE_MAVLINK);
+    //buffer_->set_2 (inherited::stream_);
   } // end IF
 
   return;
@@ -597,11 +601,16 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   bool stop_processing = false;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+  typename SessionDataContainerType::DATA_T* session_data_p = NULL;
 
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
-  //// sanity check(s)
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
   //ACE_ASSERT (blockInParse_);
+
+  session_data_p =
+    &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->get ());
 
   // 1. wait for data
   do
@@ -699,7 +708,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       return;
     } // end IF
-    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+    message_data_p->messageType = ARDRONE_MESSAGE_MAVLINK;
     ACE_OS::memset (&message_data_p->MAVLinkData,
                     0,
                     sizeof (struct __mavlink_message));
@@ -718,9 +727,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_data_p = NULL;
     buffer_->initialize (message_data_container_p,
+                         session_data_p->sessionId,
                          NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
+    buffer_->set (ARDRONE_MESSAGE_MAVLINK);
+    //buffer_->set_2 (inherited::stream_);
   } // end ELSE
 }
 
@@ -869,6 +880,12 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         if (buffer_->isInitialized ())
           goto continue_;
 
+        // sanity check(s)
+        ACE_ASSERT (inherited::sessionData_);
+
+        const SessionMessageType::DATA_T::DATA_T& session_data_r =
+          inherited::sessionData_->get ();
+
         ACE_NEW_NORETURN (message_data_p,
                           typename DataMessageType::DATA_T::DATA_T ());
         if (!message_data_p)
@@ -878,7 +895,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                       inherited::mod_->name ()));
           goto error;
         } // end IF
-        message_data_p->messageType = ARDRONE_MESSAGE_MAVLINKMESSAGE;
+        message_data_p->messageType = ARDRONE_MESSAGE_MAVLINK;
         ACE_OS::memset (&message_data_p->MAVLinkData,
                         0,
                         sizeof (struct __mavlink_message));
@@ -893,9 +910,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         } // end IF
         message_data_p = NULL;
         buffer_->initialize (message_data_container_p,
+                             session_data_r.sessionId,
                              NULL);
         message_data_container_p = NULL;
-        buffer_->set (ARDRONE_MESSAGE_MAVLINKMESSAGE);
+        buffer_->set (ARDRONE_MESSAGE_MAVLINK);
+        //buffer_->set_2 (inherited::stream_);
 
 continue_:
         if (!scan_begin (buffer_->rd_ptr (),

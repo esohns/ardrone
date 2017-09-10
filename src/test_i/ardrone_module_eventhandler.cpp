@@ -28,15 +28,104 @@
 
 ARDrone_Module_EventHandler::ARDrone_Module_EventHandler (ISTREAM_T* stream_in)
  : inherited (stream_in)
+ , streams_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::ARDrone_Module_EventHandler"));
 
 }
 
-ARDrone_Module_EventHandler::~ARDrone_Module_EventHandler ()
+void
+ARDrone_Module_EventHandler::handleDataMessage (ARDrone_Message*& message_inout,
+                                                bool& passMessageDownstream_out)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::~ARDrone_Module_EventHandler"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleDataMessage"));
 
+  inherited::handleDataMessage (message_inout,
+                                passMessageDownstream_out);
+  if (!passMessageDownstream_out)
+    return;
+
+  //enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+  //switch (message_inout->type ())
+  //{
+  //  case ARDRONE_MESSAGE_ATCOMMAND:
+  //    stream_type_e = ARDRONE_STREAM_NAVDATA; break;
+  //  case ARDRONE_MESSAGE_CONTROL:
+  //    stream_type_e = ARDRONE_STREAM_CONTROL; break;
+  //  case ARDRONE_MESSAGE_MAVLINK:
+  //    stream_type_e = ARDRONE_STREAM_MAVLINK; break;
+  //  case ARDRONE_MESSAGE_NAVDATA:
+  //    stream_type_e = ARDRONE_STREAM_NAVDATA; break;
+  //  case ARDRONE_MESSAGE_VIDEO:
+  //    stream_type_e = ARDRONE_STREAM_VIDEO; break;
+  //  default:
+  //  {
+  //    ACE_DEBUG ((LM_ERROR,
+  //                ACE_TEXT ("%s: invalid/unknown message type (was: %d), returning\n"),
+  //                inherited::mod_->name (),
+  //                message_inout->type ()));
+  //    return;
+  //  }
+  //} // end SWITCH
+
+  if (message_inout->type () != ARDRONE_MESSAGE_ATCOMMAND)
+  {
+    message_inout->release ();
+    message_inout = NULL;
+    passMessageDownstream_out = false;
+  } // end IF
+}
+void
+ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& message_inout,
+                                                   bool& passMessageDownstream_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleSessionMessage"));
+
+  Stream_SessionId_t session_id = message_inout->sessionId ();
+  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
+  const ARDrone_StreamSessionData_t& session_data_container_r =
+    message_inout->get ();
+  struct ARDrone_SessionData& session_data_r =
+    const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
+  if (iterator == streams_.end ())
+    streams_.insert (std::make_pair (session_id,
+                                     session_data_r.state->type));
+
+  if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
+  {
+    // retain statistic data for each stream separately
+    // *TODO*: consider moving this into a base-class
+    SESSION_DATA_ITERATOR_T iterator_2;
+    struct ARDrone_SessionData* session_data_p = NULL;
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
+      iterator_2 = inherited::sessionData_.find (session_id);
+      if (iterator_2 == inherited::sessionData_.end ())
+        goto continue_;
+      ACE_ASSERT ((*iterator_2).second);
+      session_data_p =
+        &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->get ());
+      ACE_ASSERT (session_data_p->lock);
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_p->lock);
+        // *NOTE*: this merges and combines the statistic data
+        session_data_p->statistic += session_data_r.statistic;
+      } // end lock scope
+    } // end lock scope
+
+    // update message session data
+    ACE_ASSERT (iterator != streams_.end ());
+    ARDroneStreamStatisticIterator_t iterator_3;
+    ACE_ASSERT (session_data_r.lock);
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_r.lock);
+      // *TODO*: consider locking session_data_p here
+      session_data_r.statistic = session_data_p->statistic;
+    } // end lock scope
+  } // end IF
+
+continue_:
+  inherited::handleSessionMessage (message_inout,
+                                   passMessageDownstream_out);
+  if (!passMessageDownstream_out)
+    return;
 }
 
 ACE_Task<ACE_MT_SYNCH,

@@ -62,7 +62,7 @@ extern "C"
 #include "net_iconnectionmanager.h"
 
 #include "ardrone_modules_common.h"
-//#include "ardrone_stream.h"
+#include "ardrone_types.h"
 
 // forward declarations
 class ARDrone_MAVLinkMessage;
@@ -76,29 +76,43 @@ struct ARDrone_StreamState
  : Stream_State
 {
   inline ARDrone_StreamState ()
-   : currentSessionData (NULL)
+   : sessionData (NULL)
+   , type (ARDRONE_STREAM_INVALID)
    , userData (NULL)
   {};
 
-  struct ARDrone_SessionData* currentSessionData;
+  struct ARDrone_StreamState operator+= (const struct ARDrone_StreamState& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_State::operator+= (rhs_in);
+
+    // *NOTE*: the idea is to 'merge' the data
+    //*sessionData += *rhs_in.sessionData;
+    type = (type != ARDRONE_STREAM_INVALID ? type : rhs_in.type);
+
+    userData = (userData ? userData : rhs_in.userData);
+
+    return *this;
+  };
+
+  struct ARDrone_SessionData* sessionData;
+  enum ARDrone_StreamType     type;
+
   struct ARDrone_UserData*    userData;
 };
 
 struct ARDrone_ConnectionState;
-typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
 struct ARDrone_SessionData
  : Stream_SessionData
 {
-  inline ARDrone_SessionData ()
+  ARDrone_SessionData ()
    : Stream_SessionData ()
    , connectionState (NULL)
-   , currentStatistic ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , direct3DDevice (NULL)
+   , direct3DManagerResetToken (0)
    , format (NULL)
    , graphBuilder (NULL)
-   //, rendererNodeId (0)
-   , resetToken (0)
    , session (NULL)
    , windowController (NULL)
 #else
@@ -106,8 +120,8 @@ struct ARDrone_SessionData
    , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
    , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
 #endif
-   , isNavData (false)
    , state (NULL)
+   , statistic ()
    , targetFileName ()
    , userData (NULL)
   {
@@ -122,13 +136,13 @@ struct ARDrone_SessionData
 #endif
   };
 
-  inline struct ARDrone_SessionData operator+= (const struct ARDrone_SessionData& rhs_in)
+  struct ARDrone_SessionData operator+= (const struct ARDrone_SessionData& rhs_in)
   {
     // *NOTE*: the idea is to 'merge' the data
     Stream_SessionData::operator+= (rhs_in);
 
     // *NOTE*: the idea is to 'merge' the data
-    currentStatistic += rhs_in.currentStatistic;
+    statistic += rhs_in.statistic;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     // *NOTE*: always use upstream data, if available
     ULONG reference_count = 0;
@@ -141,7 +155,7 @@ struct ARDrone_SessionData
       } // end IF
       reference_count = rhs_in.direct3DDevice->AddRef ();
       direct3DDevice = rhs_in.direct3DDevice;
-      resetToken = rhs_in.resetToken;
+      direct3DManagerResetToken = rhs_in.direct3DManagerResetToken;
     } // end IF
     bool format_is_empty = (!format || (format->majortype == GUID_NULL));
     if (format_is_empty && rhs_in.format)
@@ -157,8 +171,6 @@ struct ARDrone_SessionData
       reference_count = rhs_in.graphBuilder->AddRef ();
       graphBuilder = rhs_in.graphBuilder;
     } // end IF
-    //rendererNodeId = (rendererNodeId ? rendererNodeId : rhs_in.rendererNodeId);
-    //session = (session ? session : rhs_in.session);
     if (rhs_in.windowController)
     {
       if (windowController)
@@ -174,7 +186,6 @@ struct ARDrone_SessionData
     height = (height ? height : rhs_in.height);
     width = (width ? width : rhs_in.width);
 #endif
-    isNavData = (isNavData ? isNavData : rhs_in.isNavData);
     state = (state ? state : rhs_in.state);
     targetFileName =
       (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
@@ -185,14 +196,13 @@ struct ARDrone_SessionData
   };
 
   struct ARDrone_ConnectionState* connectionState;
-  ARDrone_RuntimeStatistic_t      currentStatistic;
-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  // *TODO*: mediafoundation only, remove ASAP
   IDirect3DDevice9Ex*             direct3DDevice;
+  // *TODO*: mediafoundation only, remove ASAP
+  UINT                            direct3DManagerResetToken; // direct 3D manager 'id'
   struct _AMMediaType*            format;
   IGraphBuilder*                  graphBuilder;
-  //TOPOID                          rendererNodeId;
-  UINT                            resetToken; // direct 3D manager 'id'
   IMFMediaSession*                session;
   IVideoWindow*                   windowController;
 #else
@@ -201,8 +211,8 @@ struct ARDrone_SessionData
   unsigned int                    width;
 #endif
 
-  bool                            isNavData;
   struct ARDrone_StreamState*     state;
+  struct ARDrone_Statistic        statistic;
   std::string                     targetFileName;
 
   struct ARDrone_UserData*        userData;
@@ -230,16 +240,15 @@ typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
 struct ARDrone_ConnectionState;
-typedef Stream_Statistic ARDrone_RuntimeStatistic_t;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
                           struct ARDrone_ConnectionState,
-                          ARDrone_RuntimeStatistic_t> ARDrone_IConnection_t;
+                          struct ARDrone_Statistic> ARDrone_IConnection_t;
 struct ARDrone_UserData;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  struct ARDrone_ConnectionConfiguration,
                                  struct ARDrone_ConnectionState,
-                                 ARDrone_RuntimeStatistic_t,
+                                 struct ARDrone_Statistic,
                                  struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 struct ARDrone_DirectShow_FilterConfiguration;
 struct ARDrone_StreamState;
@@ -291,6 +300,7 @@ struct ARDrone_ModuleHandlerConfiguration
 #endif
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
    , inbound (true)
+   , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
    , printProgressDot (false)
    , pushStatisticMessages (true)
    , streamConfiguration (NULL)
@@ -350,6 +360,7 @@ struct ARDrone_ModuleHandlerConfiguration
 #endif
   bool                                           fullScreen;            // display module
   bool                                           inbound;               // statistic/IO module
+  std::string                                    outboundStreamName;    // event handler module
   bool                                           printProgressDot;      // file writer module
   bool                                           pushStatisticMessages; // statistic module
   ARDrone_StreamConfiguration_t*                 streamConfiguration;   // net source/target modules
@@ -384,9 +395,7 @@ typedef std::map<std::string,
                  ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
 
-typedef struct Stream_Statistic ARDrone_Statistic_t;
-
-typedef Stream_StatisticHandler_Reactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Reactor_t;
-typedef Stream_StatisticHandler_Proactor_T<ARDrone_Statistic_t> ARDrone_StatisticHandler_Proactor_t;
+typedef Stream_StatisticHandler_Reactor_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_Reactor_t;
+typedef Stream_StatisticHandler_Proactor_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_Proactor_t;
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H

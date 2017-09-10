@@ -351,7 +351,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
               inherited::mod_->name (),
               ACE_TEXT (message_in.c_str ())));
 //   ACE_DEBUG((LM_ERROR,
-//              ACE_TEXT("failed to parse \"%s\": \"%s\"...\n"),
+//              ACE_TEXT("failed to parse \"%s\": \"%s\"\n"),
 //              std::string(fragment_->rd_ptr(), fragment_->length()).c_str(),
 //              message_in.c_str()));
 
@@ -463,11 +463,16 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   bool stop_processing = false;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
+  typename SessionDataContainerType::DATA_T* session_data_p = NULL;
 
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
-  //// sanity check(s)
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
   //ACE_ASSERT (blockInParse_);
+
+  session_data_p =
+    &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->get ());
 
   // 1. wait for data
   do
@@ -565,7 +570,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       return;
     } // end IF
-    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+    message_data_p->messageType = ARDRONE_MESSAGE_CONTROL;
     ACE_OS::memset (&message_data_p->NavData,
                     0,
                     sizeof (struct _navdata_t));
@@ -584,9 +589,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_data_p = NULL;
     buffer_->initialize (message_data_container_p,
+                         session_data_p->sessionId,
                          NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+    buffer_->set (ARDRONE_MESSAGE_CONTROL);
+    //buffer_->set_2 (inherited::stream_);
   } // end ELSE
 }
 
@@ -632,11 +639,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
     return false;
   } // end IF
 //  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("parsing fragment #%d --> %d byte(s)...\n"),
+//              ACE_TEXT ("parsing fragment #%d --> %d byte(s)\n"),
 //              counter++,
 //              fragment_->length ()));
 
-//  // *WARNING*: contrary (!) to the documentation, still need to switch_buffers()...
+//  // *WARNING*: contrary (!) to the documentation, still need to switch_buffers()
 //  HTTP_Scanner__switch_to_buffer (bufferState_,
 //                                  scannerState_);
 
@@ -734,12 +741,12 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
 
         if (buffer_->isInitialized ())
         {
-          // sanity check(s)
-          message_data_container_p =
-            &const_cast<typename DataMessageType::DATA_T&> (buffer_->get ());
-          message_data_p =
-            &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->get ());
-          ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+          //// sanity check(s)
+          //message_data_container_p =
+          //  &const_cast<typename DataMessageType::DATA_T&> (buffer_->get ());
+          //message_data_p =
+          //  &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->get ());
+          //ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_CONTROL);
 
           goto continue_;
         } // end IF
@@ -753,7 +760,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                       inherited::mod_->name ()));
           goto error;
         } // end IF
-        message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+        message_data_p->messageType = ARDRONE_MESSAGE_CONTROL;
         ACE_OS::memset (&message_data_p->NavData,
                         0,
                         sizeof (struct _navdata_t));
@@ -768,9 +775,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
         } // end IF
         message_data_p = NULL;
         buffer_->initialize (message_data_container_p,
+                             buffer_->sessionId (),
                              NULL);
         message_data_container_p = NULL;
-        buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+        buffer_->set (ARDRONE_MESSAGE_CONTROL);
+        //buffer_->set_2 (inherited::stream_);
 
 continue_:
         if (!scan_begin (buffer_->rd_ptr (),

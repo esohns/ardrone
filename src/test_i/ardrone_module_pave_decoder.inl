@@ -41,7 +41,6 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
 #endif
  : inherited (stream_in)
- , allocator_ (NULL)
  , buffer_ (NULL)
  , header_ ()
  , headerDecoded_ (false)
@@ -99,22 +98,13 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::initialize"));
 
-  // sanity check(s)
-  // *TODO*: remove type inferences
-  ACE_ASSERT (configuration_in.parserConfiguration);
-  ACE_ASSERT (configuration_in.streamConfiguration);
-
   if (inherited::isInitialized_)
   {
-    allocator_ = NULL;
     if (buffer_)
       buffer_->release ();
     buffer_ = NULL;
     videoMode_ = ARDRONE_VIDEOMODE_INVALID;
   } // end IF
-
-  // *TODO*: remove type inferences
-  allocator_ = allocator_in;
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
@@ -228,7 +218,7 @@ next:
     if (videoMode_ != video_mode_e)
     {
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: detected video mode change (was: %d, is: %d)...\n"),
+                  ACE_TEXT ("%s: detected video mode change (was: %d, is: %d)\n"),
                   inherited::mod_->name (),
                   videoMode_, video_mode_e));
       videoMode_ = video_mode_e;
@@ -309,7 +299,8 @@ next:
   else
     message_block_2 = NULL;
   ACE_ASSERT (buffer_->total_length () == header_.payload_size);
-  buffer_->set (ARDRONE_MESSAGE_VIDEOFRAME);
+  buffer_->set (ARDRONE_MESSAGE_VIDEO);
+  //buffer_->set_2 (inherited::stream_);
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {

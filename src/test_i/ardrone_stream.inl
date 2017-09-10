@@ -43,6 +43,7 @@ ARDrone_VideoStream_T<SourceModuleType>::ARDrone_VideoStream_T ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ARDrone_VideoStream_T"));
 
+  inherited::state_.type = ARDRONE_STREAM_VIDEO;
 }
 
 template <typename SourceModuleType>
@@ -194,6 +195,8 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
+
+  // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
   // things to be done here:
@@ -202,12 +205,13 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   // - push them onto the stream (tail-first)
   session_data_p =
     &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  session_data_p->sessionID = configuration_in.configuration_.sessionID;
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
   configuration_p =
     dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+
+  // sanity check(s)
   ACE_ASSERT (configuration_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (configuration_p->filterConfiguration);
@@ -333,7 +337,7 @@ ARDrone_VideoStream_T<SourceModuleType>::ping ()
 
 template <typename SourceModuleType>
 bool
-ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::collect"));
 
@@ -341,8 +345,8 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& da
   ACE_ASSERT (inherited::sessionData_);
 
   int result = -1;
-  ARDrone_SessionData& session_data_r =
-      const_cast<ARDrone_SessionData&> (inherited::sessionData_->get ());
+  struct ARDrone_SessionData& session_data_r =
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)
@@ -373,7 +377,7 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& da
     } // end IF
   } // end IF
 
-  session_data_r.currentStatistic.timeStamp = COMMON_TIME_NOW;
+  session_data_r.statistic.timeStamp = COMMON_TIME_NOW;
 
   // delegate to the statistic module
   bool result_2 = false;
@@ -387,7 +391,7 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (ARDrone_RuntimeStatistic_t& da
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
   else
-    session_data_r.currentStatistic = data_out;
+    session_data_r.statistic = data_out;
 
   if (session_data_r.lock)
   {
@@ -406,13 +410,11 @@ ARDrone_VideoStream_T<SourceModuleType>::report () const
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::report"));
 
-  ACE_ASSERT (inherited::state_.currentSessionData);
-
   ACE_DEBUG ((LM_INFO,
-              ACE_TEXT ("*** [session: %u] RUNTIME STATISTICS ***\n--> Stream Statistics @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
-              inherited::state_.currentSessionData->sessionID,
-              &(inherited::state_.currentSessionData->lastCollectionTimeStamp),
-              inherited::state_.currentSessionData->currentStatistic.dataMessages,
-              inherited::state_.currentSessionData->currentStatistic.droppedFrames,
-              inherited::state_.currentSessionData->currentStatistic.bytes));
+              ACE_TEXT ("*** [session: %d] RUNTIME STATISTIC ***\n--> stream statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTIC ***\\END\n"),
+              (inherited::state_.sessionData ? static_cast<int> (inherited::state_.sessionData->sessionId) : -1),
+              &(inherited::state_.sessionData->lastCollectionTimeStamp),
+              inherited::state_.sessionData->statistic.dataMessages,
+              inherited::state_.sessionData->statistic.droppedFrames,
+              inherited::state_.sessionData->statistic.bytes));
 }

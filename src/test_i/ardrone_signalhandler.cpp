@@ -33,15 +33,19 @@
 
 ARDrone_SignalHandler::ARDrone_SignalHandler ()
  : inherited (this) // event handler handle
+ , connector_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::ARDrone_SignalHandler"));
 
 }
 
-ARDrone_SignalHandler::~ARDrone_SignalHandler ()
+bool
+ARDrone_SignalHandler::initialize (const struct ARDrone_SignalHandlerConfiguration& configuration_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::~ARDrone_SignalHandler"));
+  // *TODO*: remove type inference
+  connector_ = configuration_in.connector;
 
+  return inherited::initialize (configuration_in);
 }
 
 void
@@ -50,7 +54,7 @@ ARDrone_SignalHandler::handle (int signal_in)
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::handle"));
 
   // sanity check(s)
-  ACE_ASSERT (inherited::configuration_);
+  ACE_ASSERT (inherited::isInitialized_);
 
   bool stop_event_dispatching = false;
   bool connect = false;
@@ -64,7 +68,7 @@ ARDrone_SignalHandler::handle (int signal_in)
 #endif
     {
       //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("shutting down...\n")));
+      //            ACE_TEXT ("shutting down\n")));
 
       // shutdown...
       stop_event_dispatching = true;
@@ -72,7 +76,7 @@ ARDrone_SignalHandler::handle (int signal_in)
       break;
     }
 // *PORTABILITY*: on Windows SIGUSRx are not defined
-// --> use SIGBREAK (21) and SIGTERM (15) instead...
+// --> use SIGBREAK (21) and SIGTERM (15) instead
 #if !defined (ACE_WIN32) && !defined (ACE_WIN64)
     case SIGUSR1:
 #else
@@ -90,7 +94,7 @@ ARDrone_SignalHandler::handle (int signal_in)
 #endif
     case SIGTERM:
     {
-//      // (try to) abort a connection...
+//      // (try to) abort a connection
 //      abort = true;
 
       break;
@@ -110,16 +114,16 @@ ARDrone_SignalHandler::handle (int signal_in)
 //  // ...abort ?
 //  if (abort)
 //  {
-//    // close any connections...
+//    // close any connections
 //    CONNECTIONMANAGER_SINGLETON::instance ()->abortConnections ();
 //  } // end IF
 
   // ...connect ?
   if (connect &&
-      inherited::configuration_->interfaceHandle)
+      connector_)
   {
     try {
-      inherited::configuration_->interfaceHandle->connect (inherited::configuration_->peerAddress);
+      connector_->connect (inherited::configuration_->peerAddress);
     } catch (...) {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("caught exception in ARDrone_IConnector_t::connect(), returning\n")));
@@ -131,17 +135,21 @@ ARDrone_SignalHandler::handle (int signal_in)
   if (stop_event_dispatching)
   {
     // stop everything, i.e.
-    // - leave reactor event loop handling signals, sockets, (maintenance) timers...
+    // - leave reactor event loop handling signals, sockets, (maintenance) timers
     // --> (try to) terminate in a well-behaved manner
 
     // step1: close open connection attempt(s)
-    if (inherited::configuration_->interfaceHandle)
+    if (connector_ &&
+        !connector_->useReactor ())
     {
+      ARDrone_IAsynchConnector_t* iasynch_connector_p =
+        dynamic_cast<ARDrone_IAsynchConnector_t*> (connector_);
+      ACE_ASSERT (iasynch_connector_p);
       try {
-        inherited::configuration_->interfaceHandle->abort ();
+        iasynch_connector_p->abort ();
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("caught exception in ARDrone_IConnector_t::abort(), returning\n")));
+                    ACE_TEXT ("caught exception in ARDrone_IAsynchConnector_t::abort(), returning\n")));
         return;
       }
     } // end IF

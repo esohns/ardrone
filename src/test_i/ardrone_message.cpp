@@ -41,19 +41,22 @@ ARDrone_Message::ARDrone_Message (unsigned int messageSize_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::ARDrone_Message"));
 
+  inherited::type_ = ARDRONE_MESSAGE_INVALID;
 }
 
 // *NOTE*: this is implicitly invoked by clone()
-ARDrone_Message::ARDrone_Message (ACE_Data_Block* dataBlock_in,
+ARDrone_Message::ARDrone_Message (Stream_SessionId_t sessionId_in,
+                                  ACE_Data_Block* dataBlock_in,
                                   ACE_Allocator* messageAllocator_in,
                                   bool incrementMessageCounter_in)
- : inherited (dataBlock_in,               // 'own' this data block reference
+ : inherited (sessionId_in,               // session id
+              dataBlock_in,               // 'own' this data block reference
               messageAllocator_in,        // allocator
               incrementMessageCounter_in) // increment message counter ?
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::ARDrone_Message"));
 
-  inherited::type_ = ARDRONE_MESSAGE_VIDEOFRAME;
+  inherited::type_ = ARDRONE_MESSAGE_INVALID;
 }
 
 // *NOTE*: this is implicitly invoked by duplicate()
@@ -69,12 +72,14 @@ ARDrone_Message::~ARDrone_Message ()
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::~ARDrone_Message"));
 
   // *NOTE*: called just BEFORE 'this' is passed back to the allocator
+
+  inherited::type_ = ARDRONE_MESSAGE_INVALID;
 }
 
 std::string
-ARDrone_Message::CommandType2String (int command_in)
+ARDrone_Message::CommandTypeToString (int command_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::CommandType2String"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::CommandTypeToString"));
 
   std::string result = ACE_TEXT ("INVALID");
 
@@ -93,11 +98,43 @@ ARDrone_Message::CommandType2String (int command_in)
 
   return result;
 }
+void
+ARDrone_Message::MessageTypeToString (enum ARDrone_MessageType messageType_in,
+                                      std::string& string_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::MessageTypeToString"));
+
+  // initialize return value(s)
+  string_out = ACE_TEXT_ALWAYS_CHAR ("INVALID");
+
+  switch (messageType_in)
+  {
+    case ARDRONE_MESSAGE_ATCOMMAND:
+      string_out = ACE_TEXT_ALWAYS_CHAR ("ATCOMMAND"); break;
+    case ARDRONE_MESSAGE_CONTROL:
+      string_out = ACE_TEXT_ALWAYS_CHAR ("CONTROL"); break;
+    case ARDRONE_MESSAGE_MAVLINK:
+      string_out = ACE_TEXT_ALWAYS_CHAR ("MAVLINK"); break;
+    case ARDRONE_MESSAGE_NAVDATA:
+      string_out = ACE_TEXT_ALWAYS_CHAR ("NAVDATA"); break;
+    case ARDRONE_MESSAGE_VIDEO:
+      string_out = ACE_TEXT_ALWAYS_CHAR ("VIDEO"); break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid message type (was %d), returning\n"),
+                  messageType_in));
+      break;
+    }
+  } // end SWITCH
+}
 
 ACE_Message_Block*
 ARDrone_Message::clone (ACE_Message_Block::Message_Flags flags_in) const
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Message::clone"));
+
+  ACE_UNUSED_ARG (flags_in);
 
   int result = -1;
   size_t current_size = 0;
@@ -111,7 +148,7 @@ ARDrone_Message::clone (ACE_Message_Block::Message_Flags flags_in) const
   current_size = inherited::data_block_->size ();
   // *NOTE*: ACE_Data_Block::clone() does not retain the value of 'cur_size_'
   //         --> reset it
-  // *TODO*: submit a patch for bug #4219 to ACE
+  // *TODO*: resolve ACE bugzilla issue #4219
   ACE_Data_Block* data_block_p = inherited::data_block_->clone (0);
   if (!data_block_p)
   {
@@ -144,13 +181,15 @@ ARDrone_Message::clone (ACE_Message_Block::Message_Flags flags_in) const
     ACE_NEW_MALLOC_NORETURN (result_p,
                              static_cast<ARDrone_Message*> (inherited::message_block_allocator_->calloc (sizeof (ARDrone_Message),
                                                                                                          '\0')),
-                             ARDrone_Message (data_block_p,
+                             ARDrone_Message (inherited::sessionId_,
+                                              data_block_p,
                                               inherited::message_block_allocator_,
                                               true));
   } // end IF
   else
     ACE_NEW_NORETURN (result_p,
-                      ARDrone_Message (data_block_p,
+                      ARDrone_Message (inherited::sessionId_,
+                                       data_block_p,
                                        NULL,
                                        true));
   if (!result_p)
@@ -170,6 +209,9 @@ ARDrone_Message::clone (ACE_Message_Block::Message_Flags flags_in) const
   // set read-/write pointers
   result_p->rd_ptr (inherited::rd_ptr_);
   result_p->wr_ptr (inherited::wr_ptr_);
+
+  // set message type
+  result_p->set (inherited::type_);
 
   // clone any continuations
   if (inherited::cont_)
@@ -283,7 +325,7 @@ ARDrone_Message::dump_state (void) const
 
   switch (inherited::type_)
   {
-    case ARDRONE_MESSAGE_VIDEOFRAME:
+    case ARDRONE_MESSAGE_ATCOMMAND:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),
@@ -291,7 +333,7 @@ ARDrone_Message::dump_state (void) const
                   inherited::length ()));
       break;
     }
-    case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+    case ARDRONE_MESSAGE_MAVLINK:
     {
       if (!inherited::data_)
       {
@@ -313,7 +355,7 @@ ARDrone_Message::dump_state (void) const
       //            message_data_r.MAVLinkData.sysid));
       break;
     }
-    case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+    case ARDRONE_MESSAGE_NAVDATA:
     {
       if (!inherited::data_)
       {
@@ -380,6 +422,14 @@ ARDrone_Message::dump_state (void) const
       //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
       //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
 
+      break;
+    }
+    case ARDRONE_MESSAGE_VIDEO:
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("[%u]: %u byte(s)\n"),
+                  inherited::id_,
+                  inherited::length ()));
       break;
     }
     default:

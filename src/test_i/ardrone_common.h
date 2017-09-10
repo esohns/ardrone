@@ -90,13 +90,13 @@ struct ARDrone_MessageData
     messageType = data_in.messageType;
     switch (messageType)
     {
-      case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+      case ARDRONE_MESSAGE_NAVDATA:
         NavData = data_in.NavData;
         break;
-      case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+      case ARDRONE_MESSAGE_MAVLINK:
         MAVLinkData = data_in.MAVLinkData;
         break;
-      case ARDRONE_MESSAGE_VIDEOFRAME:
+      case ARDRONE_MESSAGE_VIDEO:
         videoFrame = data_in.videoFrame;
         break;
       default:
@@ -112,11 +112,11 @@ struct ARDrone_MessageData
   {
     switch (messageType)
     {
-      case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+      case ARDRONE_MESSAGE_NAVDATA:
         break;
-      case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+      case ARDRONE_MESSAGE_MAVLINK:
         break;
-      case ARDRONE_MESSAGE_VIDEOFRAME:
+      case ARDRONE_MESSAGE_VIDEO:
       {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         if (videoFrame.sample)

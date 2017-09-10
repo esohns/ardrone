@@ -751,9 +751,9 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (session_data_p);
     converter.clear ();
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-    converter << session_data_p->sessionID;
+    converter << session_data_p->sessionId;
 
-//    // set context ID
+    // set context id
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     gdk_threads_enter ();
@@ -1220,16 +1220,67 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
                                 !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
 
+
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_CONTROL)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
                              std::numeric_limits<unsigned int>::max ());
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_CONTROL)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_NAVDATA)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_NAVDATA)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_MAVLINK)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_MAVLINK)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_VIDEO)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_VIDEO)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_range (spin_button_p,
+                             0.0,
+                             std::numeric_limits<unsigned int>::max ());
+
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
@@ -1237,13 +1288,6 @@ idle_initialize_ui_cb (gpointer userData_in)
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATA)));
-  ACE_ASSERT (spin_button_p);
-  gtk_spin_button_set_range (spin_button_p,
-                             0.0,
-                             std::numeric_limits<unsigned int>::max ());
-  spin_button_p =
-    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
@@ -1256,7 +1300,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 
   GtkProgressBar* progress_bar_p =
     GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   ACE_ASSERT (progress_bar_p);
   gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
   gint width, height;
@@ -1871,7 +1915,7 @@ idle_session_end_cb (gpointer userData_in)
 
   //  GtkProgressBar* progress_bar_p =
   //    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-  //                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+  //                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   //  ACE_ASSERT (progress_bar_p);
   //  // *NOTE*: this disables "activity mode" (in Gtk2)
   //  gtk_progress_bar_set_fraction (progress_bar_p, 0.0);
@@ -1977,23 +2021,74 @@ idle_reset_ui_cb (gpointer userData_in)
 
   GtkSpinButton* spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_CONTROL)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_value (spin_button_p, 0.0);
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES)));
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_CONTROL)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_value (spin_button_p, 0.0);
+  GtkProgressBar* progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_CONTROL)));
+  ACE_ASSERT (progress_bar_p);
+  gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_NAVDATA)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_NAVDATA)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
+  ACE_ASSERT (progress_bar_p);
+  gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_MAVLINK)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_MAVLINK)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
+  ACE_ASSERT (progress_bar_p);
+  gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_VIDEO)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  spin_button_p =
+    GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_VIDEO)));
+  ACE_ASSERT (spin_button_p);
+  gtk_spin_button_set_value (spin_button_p, 0.0);
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
+  ACE_ASSERT (progress_bar_p);
+  gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
+
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATA)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_value (spin_button_p, 0.0);
 
-  GtkProgressBar* progress_bar_p =
+  progress_bar_p =
     GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   ACE_ASSERT (progress_bar_p);
   gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
 
@@ -2022,6 +2117,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   GtkSpinButton* spin_button_p = NULL;
   bool is_session_message = false;
+
   ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
 
   // sanity check(s)
@@ -2032,24 +2128,20 @@ idle_update_info_display_cb (gpointer userData_in)
        iterator_2 != data_p->eventStack.end ();
        ++iterator_2)
   {
-    switch (*iterator_2)
+    switch ((*iterator_2).second)
     {
       case ARDRONE_EVENT_CONNECT:
       {
         spin_button_p =
             GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS)));
-        if (spin_button_p) // target ?
-          gtk_spin_button_spin (spin_button_p,
-                                GTK_SPIN_STEP_FORWARD,
-                                1.0);
-
-        spin_button_p =
-          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
         ACE_ASSERT (spin_button_p);
+        gtk_spin_button_spin (spin_button_p,
+                              GTK_SPIN_STEP_FORWARD,
+                              1.0);
 
         is_session_message = true;
+
         break;
       }
       case ARDRONE_EVENT_DISCONNECT:
@@ -2057,20 +2149,16 @@ idle_update_info_display_cb (gpointer userData_in)
         spin_button_p =
             GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_CONNECTIONS)));
-        if (spin_button_p) // target ?
-          gtk_spin_button_spin (spin_button_p,
-                                GTK_SPIN_STEP_BACKWARD,
-                                1.0);
-
-        spin_button_p =
-          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
         ACE_ASSERT (spin_button_p);
+        gtk_spin_button_spin (spin_button_p,
+                              GTK_SPIN_STEP_BACKWARD,
+                              1.0);
 
         is_session_message = true;
+
         break;
       }
-      case ARDRONE_EVENT_MESSAGE:
+      case ARDRONE_EVENT_MESSAGE_DATA:
       {
         spin_button_p =
           GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -2079,20 +2167,15 @@ idle_update_info_display_cb (gpointer userData_in)
         gtk_spin_button_set_value (spin_button_p,
                                    static_cast<gdouble> (data_p->progressData->statistic.bytes));
 
-        spin_button_p =
-            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES)));
-        ACE_ASSERT (spin_button_p);
-
+        break;
+      }
+      case ARDRONE_EVENT_MESSAGE_SESSION:
+      {
+        is_session_message = true;
         break;
       }
       case ARDRONE_EVENT_RESIZE:
       {
-        spin_button_p =
-            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
-        ACE_ASSERT (spin_button_p);
-
         GtkDrawingArea* drawing_area_p =
             GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
@@ -2124,16 +2207,7 @@ idle_update_info_display_cb (gpointer userData_in)
                                      width, height);
 
         is_session_message = true;
-        break;
-      }
-      case ARDRONE_EVENT_SESSION_MESSAGE:
-      {
-        spin_button_p =
-            GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES)));
-        ACE_ASSERT (spin_button_p);
 
-        is_session_message = true;
         break;
       }
       default:
@@ -2144,7 +2218,50 @@ idle_update_info_display_cb (gpointer userData_in)
         break;
       }
     } // end SWITCH
-    ACE_UNUSED_ARG (is_session_message);
+
+    switch ((*iterator_2).first)
+    {
+      case ARDRONE_STREAM_CONTROL:
+      {
+        spin_button_p =
+          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_CONTROL)
+                                                                       : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_CONTROL))));
+        break;
+      }
+      case ARDRONE_STREAM_NAVDATA:
+      {
+        spin_button_p =
+          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_NAVDATA)
+                                                                       : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_NAVDATA))));
+        break;
+      }
+      case ARDRONE_STREAM_MAVLINK:
+      {
+        spin_button_p =
+          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_MAVLINK)
+                                                                       : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_MAVLINK))));
+        break;
+      }
+      case ARDRONE_STREAM_VIDEO:
+      {
+        spin_button_p =
+          GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_VIDEO)
+                                                                       : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_DATAMESSAGES_VIDEO))));
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown stream type (was: %d), continuing\n"),
+                    (*iterator_2).first));
+        continue;
+      }
+    } // end SWITCH
+    ACE_ASSERT (spin_button_p);
     gtk_spin_button_spin (spin_button_p,
                           GTK_SPIN_STEP_FORWARD,
                           1.0);
@@ -2359,7 +2476,7 @@ idle_update_progress_cb (gpointer userData_in)
 
   GtkProgressBar* progress_bar_p =
     GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   ACE_ASSERT (progress_bar_p);
 
   if (done)
@@ -2377,11 +2494,12 @@ idle_update_progress_cb (gpointer userData_in)
   ACE_TCHAR buffer[BUFSIZ];
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   float fps, speed = 0.0F;
+  std::string magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
     fps   = data_p->statistic.messagesPerSecond;
     speed = data_p->statistic.bytesPerSecond;
   } // end lock scope
-  std::string magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
   if (speed)
   {
     if (speed >= 1024.0F)
@@ -2394,7 +2512,8 @@ idle_update_progress_cb (gpointer userData_in)
       speed /= 1024.0F;
       magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
     } // end IF
-    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f fps | %.2f %s"),
+    //ACE_OS::memset (buffer, 0, sizeof (buffer));
+    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
                               fps, speed, magnitude_string.c_str ());
     if (result < 0)
       ACE_DEBUG ((LM_ERROR,
@@ -2404,8 +2523,153 @@ idle_update_progress_cb (gpointer userData_in)
                               ACE_TEXT_ALWAYS_CHAR (buffer));
   gtk_progress_bar_pulse (progress_bar_p);
 
-  // --> reschedule
-  return G_SOURCE_CONTINUE;
+  ARDroneStreamStatisticConstIterator_t iterator_4;
+  ACE_OS::memset (buffer, 0, sizeof (buffer));
+  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_CONTROL)));
+  ACE_ASSERT (progress_bar_p);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_CONTROL);
+    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    fps   = (*iterator_4).second.messagesPerSecond;
+    speed = (*iterator_4).second.bytesPerSecond;
+  } // end lock scope
+  if (speed)
+  {
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+    } // end IF
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+    } // end IF
+    //ACE_OS::memset (buffer, 0, sizeof (buffer));
+    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                              fps, speed, magnitude_string.c_str ());
+    if (result < 0)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
+  } // end IF
+  gtk_progress_bar_set_text (progress_bar_p,
+                             ACE_TEXT_ALWAYS_CHAR (buffer));
+  gtk_progress_bar_pulse (progress_bar_p);
+
+  ACE_OS::memset (buffer, 0, sizeof (buffer));
+  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
+  ACE_ASSERT (progress_bar_p);
+
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_NAVDATA);
+    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    fps   = (*iterator_4).second.messagesPerSecond;
+    speed = (*iterator_4).second.bytesPerSecond;
+  } // end lock scope
+  if (speed)
+  {
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+    } // end IF
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+    } // end IF
+    //ACE_OS::memset (buffer, 0, sizeof (buffer));
+    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                              fps, speed, magnitude_string.c_str ());
+    if (result < 0)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
+  } // end IF
+  gtk_progress_bar_set_text (progress_bar_p,
+                              ACE_TEXT_ALWAYS_CHAR (buffer));
+  gtk_progress_bar_pulse (progress_bar_p);
+
+  ACE_OS::memset (buffer, 0, sizeof (buffer));
+  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
+  ACE_ASSERT (progress_bar_p);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_MAVLINK);
+    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    fps   = (*iterator_4).second.messagesPerSecond;
+    speed = (*iterator_4).second.bytesPerSecond;
+  } // end lock scope
+  if (speed)
+  {
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+    } // end IF
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+    } // end IF
+    //ACE_OS::memset (buffer, 0, sizeof (buffer));
+    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                              fps, speed, magnitude_string.c_str ());
+    if (result < 0)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
+  } // end IF
+  gtk_progress_bar_set_text (progress_bar_p,
+                             ACE_TEXT_ALWAYS_CHAR (buffer));
+  gtk_progress_bar_pulse (progress_bar_p);
+
+  ACE_OS::memset (buffer, 0, sizeof (buffer));
+  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+
+  progress_bar_p =
+    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
+  ACE_ASSERT (progress_bar_p);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_VIDEO);
+    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    fps   = (*iterator_4).second.messagesPerSecond;
+    speed = (*iterator_4).second.bytesPerSecond;
+  } // end lock scope
+  if (speed)
+  {
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+    } // end IF
+    if (speed >= 1024.0F)
+    {
+      speed /= 1024.0F;
+      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+    } // end IF
+    //ACE_OS::memset (buffer, 0, sizeof (buffer));
+    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                              fps, speed, magnitude_string.c_str ());
+    if (result < 0)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
+  } // end IF
+  gtk_progress_bar_set_text (progress_bar_p,
+                             ACE_TEXT_ALWAYS_CHAR (buffer));
+  gtk_progress_bar_pulse (progress_bar_p);
+
+  return G_SOURCE_CONTINUE; // --> reschedule
 }
 
 /////////////////////////////////////////
@@ -3123,7 +3387,7 @@ continue_:
 
   progress_bar_p =
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   ACE_ASSERT (progress_bar_p);
   gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), true);
 
@@ -3237,7 +3501,7 @@ error:
 
   progress_bar_p =
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESS_BAR)));
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR)));
   ACE_ASSERT (progress_bar_p);
   gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), false);
 
@@ -3381,6 +3645,31 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   } // end IF
   else
   {
+    GtkEntry* entry_p = 
+      GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
+    ACE_ASSERT (entry_p);
+    ACE_INET_Addr interface_address, gateway_address;
+    if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier),
+                                                 interface_address,
+                                                 gateway_address))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+      return;
+    } // end IF
+    if (gateway_address.is_any ())
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("\"%s\" does not currently have any gateway address, returning\n"),
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+      return;
+    } // end IF
+    gtk_entry_set_text (entry_p,
+                        Net_Common_Tools::IPAddressToString (gateway_address,
+                                                             true).c_str ());
+
     GtkToggleAction* toggle_action_p =
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));

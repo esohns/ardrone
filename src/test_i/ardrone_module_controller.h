@@ -148,7 +148,7 @@ class ARDrone_Module_Controller_T
   // atomic ID generator
   typedef ACE_Atomic_Op<ACE_SYNCH_MUTEX,
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
-  static SEQUENCENUMBER_GENERATOR_T currentID;
+  static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
 
   uint32_t                  deviceState_;
   bool                      isFirst_;

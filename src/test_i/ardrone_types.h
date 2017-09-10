@@ -22,6 +22,8 @@
 #define ARDRONE_TYPES_H
 
 #include <deque>
+#include <map>
+#include <utility>
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -31,6 +33,8 @@
 
 #include "ace/Message_Block.h"
 
+#include "stream_common.h"
+
 #include "net_common.h"
 
 #include "ardrone_defines.h"
@@ -38,26 +42,39 @@
 enum ARDrone_MessageType : int
 {
   ARDRONE_MESSAGE_INVALID = -1,
-  ARDRONE_MESSAGE_ATCOMMANDMESSAGE = ACE_Message_Block::MB_PROTO,
-  ARDRONE_MESSAGE_VIDEOFRAME,
-  ARDRONE_MESSAGE_MAVLINKMESSAGE,
-  ARDRONE_MESSAGE_NAVDATAMESSAGE,
+  ARDRONE_MESSAGE_ATCOMMAND = ACE_Message_Block::MB_PROTO, // outbound navdata
+  ARDRONE_MESSAGE_CONTROL,
+  ARDRONE_MESSAGE_MAVLINK,
+  ARDRONE_MESSAGE_NAVDATA,
+  ARDRONE_MESSAGE_VIDEO,
   ///////////////////////////////////////
   ARDRONE_MESSAGE_MAX
 };
 
-enum ARDrone_Event : int
+enum ARDrone_StreamType : int
+{
+  ARDRONE_STREAM_INVALID = -1,
+  ARDRONE_STREAM_CONTROL,
+  ARDRONE_STREAM_MAVLINK,
+  ARDRONE_STREAM_NAVDATA,
+  ARDRONE_STREAM_VIDEO,
+  ///////////////////////////////////////
+  ARDRONE_STREAM_MAX
+};
+
+enum ARDrone_EventType : int
 {
   ARDRONE_EVENT_INVALID = -1,
   ARDRONE_EVENT_CONNECT,
   ARDRONE_EVENT_DISCONNECT,
-  ARDRONE_EVENT_MESSAGE,
+  ARDRONE_EVENT_MESSAGE_DATA,
+  ARDRONE_EVENT_MESSAGE_SESSION,
   ARDRONE_EVENT_RESIZE,
-  ARDRONE_EVENT_SESSION_MESSAGE,
   ///////////////////////////////////////
   ARDRONE_EVENT_MAX
 };
-typedef std::deque<enum ARDrone_Event> ARDrone_Events_t;
+typedef std::deque<std::pair <enum ARDrone_StreamType,
+                              enum ARDrone_EventType> > ARDrone_Events_t;
 typedef ARDrone_Events_t::const_iterator ARDrone_EventsIterator_t;
 
 //struct ARDRone_SensorBias
@@ -134,6 +151,54 @@ enum ARDrone_VideoMode : int
   ARDRONE_VIDEOMODE_720P,
   ///////////////////////////////////////
   ARDRONE_VIDEOMODE_MAX
+};
+
+typedef std::map<enum ARDrone_StreamType, struct Stream_Statistic> ARDroneStreamStatistic_t;
+typedef ARDroneStreamStatistic_t::const_iterator ARDroneStreamStatisticConstIterator_t;
+typedef ARDroneStreamStatistic_t::iterator ARDroneStreamStatisticIterator_t;
+struct ARDrone_Statistic
+ : Stream_Statistic
+{
+  ARDrone_Statistic ()
+   : Stream_Statistic ()
+   , streamStatistic ()
+  {
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_CONTROL, struct Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_MAVLINK, struct Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_NAVDATA, struct Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_VIDEO, struct Stream_Statistic ()));
+  };
+
+  struct ARDrone_Statistic operator+= (const struct ARDrone_Statistic& rhs_in)
+  {
+    // *NOTE*: the idea is to merge and combine the data
+
+    // step1: merge the session data
+    ARDroneStreamStatisticIterator_t iterator;
+    for (ARDroneStreamStatisticConstIterator_t iterator_2 = rhs_in.streamStatistic.begin ();
+         iterator_2 != rhs_in.streamStatistic.end ();
+         ++iterator_2)
+    {
+      iterator = streamStatistic.find ((*iterator_2).first);
+      ACE_ASSERT (iterator != streamStatistic.end ());
+      (*iterator).second += (*iterator_2).second;
+      (*iterator).second.bytesPerSecond = (*iterator_2).second.bytesPerSecond;
+      (*iterator).second.messagesPerSecond =
+        (*iterator_2).second.messagesPerSecond;
+      (*iterator).second.timeStamp = (*iterator_2).second.timeStamp;
+    } // end FOR
+
+    // step2: combine the session data
+    this->Stream_Statistic::Stream_Statistic ();
+    for (ARDroneStreamStatisticConstIterator_t iterator_2 = streamStatistic.begin ();
+         iterator_2 != streamStatistic.end ();
+         ++iterator_2)
+      *static_cast<struct Stream_Statistic*> (this) += (*iterator_2).second;
+
+    return *this;
+  };
+
+  ARDroneStreamStatistic_t streamStatistic;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H
