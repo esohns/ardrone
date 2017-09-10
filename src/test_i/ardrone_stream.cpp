@@ -29,6 +29,7 @@ ARDrone_ControlStream::ARDrone_ControlStream ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::ARDrone_ControlStream"));
 
+  inherited::state_.type = ARDRONE_STREAM_CONTROL;
 }
 
 ARDrone_ControlStream::~ARDrone_ControlStream ()
@@ -121,6 +122,8 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
+
+  // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
   // things to be done here:
@@ -129,17 +132,6 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - push them onto the stream (tail-first)
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  session_data_r.sessionID = configuration_in.configuration_.sessionID;
-  //  ACE_ASSERT (configuration_in.moduleConfiguration);
-  //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
-//  ARDrone_ModuleHandlerConfigurationsIterator_t iterator =
-//      const_cast<struct ARDrone_StreamConfiguration&> (configuration_in).moduleHandlerConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
-//  ACE_ASSERT (iterator != configuration_in.moduleHandlerConfigurations.end ());
-//  struct ARDrone_ModuleHandlerConfiguration* configuration_p =
-//      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> ((*iterator).second);
-//  ACE_ASSERT (configuration_p);
-//  ACE_ASSERT (configuration_p->subscribers);
-//  configuration_p->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
 
@@ -229,7 +221,7 @@ ARDrone_ControlStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 
   ACE_UNUSED_ARG (event_in);
@@ -243,7 +235,7 @@ ARDrone_ControlStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 }
 
@@ -271,7 +263,7 @@ ARDrone_ControlStream::ping ()
 }
 
 bool
-ARDrone_ControlStream::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::collect"));
 
@@ -308,7 +300,7 @@ ARDrone_ControlStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     } // end IF
   } // end IF
 
-  session_data_r.currentStatistic.timeStamp = COMMON_TIME_NOW;
+  session_data_r.statistic.timeStamp = COMMON_TIME_NOW;
 
   // delegate to the statistic module
   bool result_2 = false;
@@ -322,7 +314,7 @@ ARDrone_ControlStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
   else
-    session_data_r.currentStatistic = data_out;
+    session_data_r.statistic = data_out;
 
   if (session_data_r.lock)
   {
@@ -340,15 +332,13 @@ ARDrone_ControlStream::report () const
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::report"));
 
-  ACE_ASSERT (inherited::state_.currentSessionData);
-
   ACE_DEBUG ((LM_INFO,
-              ACE_TEXT ("*** [session: %u] RUNTIME STATISTIC ***\n--> Stream Statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
-              inherited::state_.currentSessionData->sessionID,
-              &(inherited::state_.currentSessionData->lastCollectionTimeStamp),
-              inherited::state_.currentSessionData->currentStatistic.dataMessages,
-              inherited::state_.currentSessionData->currentStatistic.droppedFrames,
-              inherited::state_.currentSessionData->currentStatistic.bytes));
+              ACE_TEXT ("*** [session: %d] RUNTIME STATISTIC ***\n--> stream statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTIC ***\\END\n"),
+              (inherited::state_.sessionData ? static_cast<int> (inherited::state_.sessionData->sessionId) : -1),
+              &(inherited::state_.sessionData->lastCollectionTimeStamp),
+              inherited::state_.sessionData->statistic.dataMessages,
+              inherited::state_.sessionData->statistic.droppedFrames,
+              inherited::state_.sessionData->statistic.bytes));
 }
 
 //////////////////////////////////////////
@@ -360,6 +350,8 @@ ARDrone_NavDataStream::ARDrone_NavDataStream ()
  , isFirst_ (true)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::ARDrone_NavDataStream"));
+
+  inherited::state_.type = ARDRONE_STREAM_NAVDATA;
 
   ARDrone_WLANMonitor_t* WLAN_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
@@ -478,6 +470,8 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
+
+  // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
   // things to be done here:
@@ -486,16 +480,19 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - push them onto the stream (tail-first)
   session_data_p =
     &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  session_data_p->isNavData = true;
-  session_data_p->sessionID = configuration_in.configuration_.sessionID;
-  //  configuration_in.moduleConfiguration->streamState = &inherited::state_;
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+
+  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
+
   configuration_p =
       dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+
+  // sanity check(s)
   ACE_ASSERT (configuration_p);
   ACE_ASSERT (configuration_p->subscribers);
+
   configuration_p->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
@@ -608,7 +605,8 @@ ARDrone_NavDataStream::start (Stream_SessionId_t sessionId_in,
   ACE_UNUSED_ARG (sessionId_in);
 
   // sanity check(s)
-  if (!sessionData_in.isNavData)
+  ACE_ASSERT (sessionData_in.state);
+  if (sessionData_in.state->type != ARDRONE_STREAM_NAVDATA)
     return;
 
   ACE_ASSERT (inherited2::lock_);
@@ -633,7 +631,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 
   ACE_UNUSED_ARG (event_in);
@@ -647,7 +645,7 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 
   try {
@@ -664,7 +662,7 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
 }
 
 bool
-ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::collect"));
 
@@ -701,7 +699,7 @@ ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     } // end IF
   } // end IF
 
-  session_data_r.currentStatistic.timeStamp = COMMON_TIME_NOW;
+  session_data_r.statistic.timeStamp = COMMON_TIME_NOW;
 
   // delegate to the statistic module
   bool result_2 = false;
@@ -715,7 +713,7 @@ ARDrone_NavDataStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
   else
-    session_data_r.currentStatistic = data_out;
+    session_data_r.statistic = data_out;
 
   if (session_data_r.lock)
   {
@@ -733,15 +731,13 @@ ARDrone_NavDataStream::report () const
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::report"));
 
-  ACE_ASSERT (inherited::state_.currentSessionData);
-
   ACE_DEBUG ((LM_INFO,
-              ACE_TEXT ("*** [session: %u] RUNTIME STATISTIC ***\n--> Stream Statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
-              inherited::state_.currentSessionData->sessionID,
-              &(inherited::state_.currentSessionData->lastCollectionTimeStamp),
-              inherited::state_.currentSessionData->currentStatistic.dataMessages,
-              inherited::state_.currentSessionData->currentStatistic.droppedFrames,
-              inherited::state_.currentSessionData->currentStatistic.bytes));
+              ACE_TEXT ("*** [session: %d] RUNTIME STATISTIC ***\n--> stream statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTIC ***\\END\n"),
+              (inherited::state_.sessionData ? static_cast<int> (inherited::state_.sessionData->sessionId) : -1),
+              &(inherited::state_.sessionData->lastCollectionTimeStamp),
+              inherited::state_.sessionData->statistic.dataMessages,
+              inherited::state_.sessionData->statistic.droppedFrames,
+              inherited::state_.sessionData->statistic.bytes));
 }
 
 void
@@ -1154,6 +1150,7 @@ ARDrone_MAVLinkStream::ARDrone_MAVLinkStream ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ARDrone_MAVLinkStream"));
 
+  inherited::state_.type = ARDRONE_STREAM_MAVLINK;
 }
 
 ARDrone_MAVLinkStream::~ARDrone_MAVLinkStream ()
@@ -1231,7 +1228,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-//  struct ARDrone_SessionData* session_data_p = NULL;
+  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -1250,22 +1247,29 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
+
+  // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
   // things to be done here:
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
   // - push them onto the stream (tail-first)
-//  session_data_p =
-//    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
-  //session_data_r.sessionID = configuration_in.sessionID;
+  session_data_p =
+    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+
+  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
+
   configuration_p =
       dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+
+  // sanity check(s)
   ACE_ASSERT (configuration_p);
   ACE_ASSERT (configuration_p->subscribers);
+
   configuration_p->subscribers->push_back (this);
 
   // ---------------------------------------------------------------------------
@@ -1376,12 +1380,12 @@ ARDrone_MAVLinkStream::start (Stream_SessionId_t sessionId_in,
   ACE_UNUSED_ARG (sessionId_in);
 
   // sanity check(s)
-  if (sessionData_in.isNavData)
+  ACE_ASSERT (sessionData_in.state);
+  if (sessionData_in.state->type != ARDRONE_STREAM_MAVLINK)
     return;
 
   ACE_ASSERT (inherited2::lock_);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
-
     inSession_ = true;
   } // end lock scope
 
@@ -1402,7 +1406,7 @@ ARDrone_MAVLinkStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 
   ACE_UNUSED_ARG (event_in);
@@ -1416,7 +1420,7 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->get ();
-  if (!session_data_r.sessionID != sessionId_in)
+  if (!session_data_r.sessionId != sessionId_in)
     return;
 
   try {
@@ -1457,7 +1461,7 @@ ARDrone_MAVLinkStream::ping ()
 }
 
 bool
-ARDrone_MAVLinkStream::collect (ARDrone_RuntimeStatistic_t& data_out)
+ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::collect"));
 
@@ -1494,7 +1498,7 @@ ARDrone_MAVLinkStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     } // end IF
   } // end IF
 
-  session_data_r.currentStatistic.timeStamp = COMMON_TIME_NOW;
+  session_data_r.statistic.timeStamp = COMMON_TIME_NOW;
 
   // delegate to the statistic module
   bool result_2 = false;
@@ -1508,7 +1512,7 @@ ARDrone_MAVLinkStream::collect (ARDrone_RuntimeStatistic_t& data_out)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
   else
-    session_data_r.currentStatistic = data_out;
+    session_data_r.statistic = data_out;
 
   if (session_data_r.lock)
   {
@@ -1526,15 +1530,13 @@ ARDrone_MAVLinkStream::report () const
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::report"));
 
-  ACE_ASSERT (inherited::state_.currentSessionData);
-
   ACE_DEBUG ((LM_INFO,
-              ACE_TEXT ("*** [session: %u] RUNTIME STATISTIC ***\n--> Stream Statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTICS ***\\END\n"),
-              inherited::state_.currentSessionData->sessionID,
-              &(inherited::state_.currentSessionData->lastCollectionTimeStamp),
-              inherited::state_.currentSessionData->currentStatistic.dataMessages,
-              inherited::state_.currentSessionData->currentStatistic.droppedFrames,
-              inherited::state_.currentSessionData->currentStatistic.bytes));
+              ACE_TEXT ("*** [session: %u] RUNTIME STATISTIC ***\n--> stream statistic @ %#D<--\n (data) messages: %u\n dropped messages: %u\n bytes total: %.0f\n*** RUNTIME STATISTIC ***\\END\n"),
+              (inherited::state_.sessionData ? static_cast<int> (inherited::state_.sessionData->sessionId) : -1),
+              &(inherited::state_.sessionData->lastCollectionTimeStamp),
+              inherited::state_.sessionData->statistic.dataMessages,
+              inherited::state_.sessionData->statistic.droppedFrames,
+              inherited::state_.sessionData->statistic.bytes));
 }
 
 void

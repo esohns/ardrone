@@ -35,7 +35,10 @@ class ARDrone_SignalHandler
 {
  public:
   ARDrone_SignalHandler ();
-  virtual ~ARDrone_SignalHandler ();
+  inline virtual ~ARDrone_SignalHandler () {};
+
+  // override Common_IInitialize_T
+  virtual bool initialize (const struct ARDrone_SignalHandlerConfiguration&);
 
   // implement Common_ISignal
   virtual void handle (int); // signal
@@ -45,6 +48,8 @@ class ARDrone_SignalHandler
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler (const ARDrone_SignalHandler&));
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
+
+  ARDrone_IConnector_t* connector_;
 };
 
 #endif

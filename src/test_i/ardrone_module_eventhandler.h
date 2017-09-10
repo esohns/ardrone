@@ -21,6 +21,8 @@
 #ifndef ARDRONE_MODULE_EVENTHANDLER_H
 #define ARDRONE_MODULE_EVENTHANDLER_H
 
+#include <map>
+
 #include "ace/Global_Macros.h"
 #include "ace/Synch_Traits.h"
 
@@ -57,7 +59,13 @@ class ARDrone_Module_EventHandler
 
  public:
   ARDrone_Module_EventHandler (typename inherited::ISTREAM_T*); // stream handle
-  virtual ~ARDrone_Module_EventHandler ();
+  inline virtual ~ARDrone_Module_EventHandler () {};
+
+  // override (part of) Stream_ITaskBase_T
+  virtual void handleDataMessage (ARDrone_Message*&, // data message handle
+                                  bool&);            // return value: pass message downstream ?
+  virtual void handleSessionMessage (ARDrone_SessionMessage*&, // session message handle
+                                     bool&);                   // return value: pass message downstream ?
 
   // implement Common_IClone_T
   virtual ACE_Task<ACE_MT_SYNCH,
@@ -67,6 +75,11 @@ class ARDrone_Module_EventHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler (const ARDrone_Module_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler& operator= (const ARDrone_Module_EventHandler&))
+
+  typedef std::map<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_MAP_T;
+  typedef SESSIONID_TO_STREAM_MAP_T::iterator SESSIONID_TO_STREAM_MAP_ITERATOR_T;
+
+  SESSIONID_TO_STREAM_MAP_T streams_;
 };
 
 // declare module

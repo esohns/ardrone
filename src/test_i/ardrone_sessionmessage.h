@@ -50,14 +50,17 @@ class ARDrone_SessionMessage
                                                  ARDrone_SessionMessage>;
 
  public:
-  // *NOTE*: assume lifetime responsibility for the second argument !
-  ARDrone_SessionMessage (enum Stream_SessionMessageType, // session message type
+  // *NOTE*: assume lifetime responsibility for the third argument
+  ARDrone_SessionMessage (Stream_SessionId_t,             // session id
+                          enum Stream_SessionMessageType, // session message type
                           ARDrone_StreamSessionData_t*&,  // session data handle
                           struct ARDrone_UserData*);      // user data handle
-  // *NOTE*: to be used by message allocators...
-  ARDrone_SessionMessage (ACE_Allocator*); // message allocator
-  ARDrone_SessionMessage (ACE_Data_Block*, // data block
-                          ACE_Allocator*); // message allocator
+  // *NOTE*: to be used by message allocators
+  ARDrone_SessionMessage (Stream_SessionId_t, // session id
+                          ACE_Allocator*);    // message allocator
+  ARDrone_SessionMessage (Stream_SessionId_t, // session id
+                          ACE_Data_Block*,    // data block to use
+                          ACE_Allocator*);    // message allocator
   virtual ~ARDrone_SessionMessage ();
 
   // override from ACE_Message_Block

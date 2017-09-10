@@ -105,7 +105,7 @@ const char video_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("VideoStream");
 const char control_stream_name_string_[] =
   ACE_TEXT_ALWAYS_CHAR ("ControlStream");
 const char navdata_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("NavDataStream");
+  ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING);
 const char mavlink_stream_name_string_[] =
   ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream");
 

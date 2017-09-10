@@ -54,7 +54,7 @@ class ARDrone_VideoStream_T
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -72,7 +72,7 @@ class ARDrone_VideoStream_T
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -95,7 +95,7 @@ class ARDrone_VideoStream_T
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
   virtual void report () const;
 
  private:
@@ -127,7 +127,7 @@ class ARDrone_ControlStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -145,7 +145,7 @@ class ARDrone_ControlStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -168,7 +168,7 @@ class ARDrone_ControlStream
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
   virtual void report () const;
 
  private:
@@ -199,7 +199,7 @@ class ARDrone_NavDataStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -224,7 +224,7 @@ class ARDrone_NavDataStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -247,7 +247,7 @@ class ARDrone_NavDataStream
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
   virtual void report () const;
 
   // implement ARDrone_INavDataNotify
@@ -323,7 +323,7 @@ class ARDrone_MAVLinkStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -347,7 +347,7 @@ class ARDrone_MAVLinkStream
                         enum Stream_StateMachine_ControlState,
                         struct ARDrone_StreamState,
                         struct ARDrone_StreamConfiguration,
-                        ARDrone_RuntimeStatistic_t,
+                        struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
                         struct ARDrone_ModuleHandlerConfiguration,
@@ -370,7 +370,7 @@ class ARDrone_MAVLinkStream
 
   // implement Common_IStatistic_T
   // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (ARDrone_RuntimeStatistic_t&); // return value: statistic data
+  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
   virtual void report () const;
 
   // implement ARDrone_IMAVLinkNotify

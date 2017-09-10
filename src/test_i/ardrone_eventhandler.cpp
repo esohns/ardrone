@@ -38,18 +38,12 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
  , GtkCBData_ (GtkCBData_in)
  , MAVLinkNotify_ (NULL)
  , NavDataNotify_ (NULL)
- , NavDataSessionId_ (0)
+ , streams_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
-}
-
-ARDrone_EventHandler::~ARDrone_EventHandler ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::~ARDrone_EventHandler"));
-
 }
 
 void
@@ -58,15 +52,16 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
-  ACE_UNUSED_ARG (sessionID_in);
-
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (sessionData_in.state);
 
-  if (sessionData_in.isNavData)
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+    streams_.insert (std::make_pair (sessionID_in, sessionData_in.state->type));
+  } // end lock scope
+
+  if (sessionData_in.state->type == ARDRONE_STREAM_NAVDATA)
   {
-    NavDataSessionId_ = sessionID_in;
-
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
       guint event_source_id = g_idle_add (idle_session_start_cb,
                                           GtkCBData_);
@@ -83,46 +78,6 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
 
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-                              const enum Stream_SessionMessageType& messageType_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
-
-  ACE_UNUSED_ARG (sessionID_in);
-  ACE_UNUSED_ARG (messageType_in);
-}
-
-//void
-//ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-//                              const ARDrone_MAVLinkMessage& message_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
-
-//  // sanity check(s)
-//  ACE_ASSERT (GtkCBData_);
-//  //ACE_ASSERT (GtkCBData_->progressData);
-
-//  ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
-//  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
-//  GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
-//}
-//void
-//ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
-//                              const ARDrone_NavDataMessage& message_in)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
-
-//  // sanity check(s)
-//  ACE_ASSERT (GtkCBData_);
-//  //ACE_ASSERT (GtkCBData_->progressData);
-
-//  ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-
-//  //GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
-//  GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
-//}
-void
-ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                               const ARDrone_Message& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
@@ -133,26 +88,26 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   ACE_ASSERT (GtkCBData_);
 
   bool message_event = true;
+  enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+  ARDroneStreamStatisticIterator_t iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   bool refresh_display = false;
 #endif
   switch (message_in.type ())
   {
-    case ARDRONE_MESSAGE_ATCOMMANDMESSAGE:
+    case ARDRONE_MESSAGE_ATCOMMAND:
     {
       message_event = false; // do not register outbound messages
+      //stream_type_e = ARDRONE_STREAM_NAVDATA;
       break;
     }
-    case ARDRONE_MESSAGE_VIDEOFRAME:
+    case ARDRONE_MESSAGE_CONTROL:
     {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-      refresh_display = true;
-#endif
+      stream_type_e = ARDRONE_STREAM_CONTROL;
       break;
     }
-    case ARDRONE_MESSAGE_MAVLINKMESSAGE:
+    case ARDRONE_MESSAGE_MAVLINK:
     { ACE_ASSERT (MAVLinkNotify_);
 
       const ARDrone_MessageData_t& data_container_r = message_in.get ();
@@ -167,9 +122,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                     ACE_TEXT ("caught exception in ARDrone_IMAVLinkNotify::messageCB(), returning\n")));
       }
 
+      stream_type_e = ARDRONE_STREAM_MAVLINK;
+
       break;
     }
-    case ARDRONE_MESSAGE_NAVDATAMESSAGE:
+    case ARDRONE_MESSAGE_NAVDATA:
     { ACE_ASSERT (NavDataNotify_);
 
       const ARDrone_MessageData_t& data_container_r = message_in.get ();
@@ -185,6 +142,19 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                     ACE_TEXT ("caught exception in ARDrone_INavDataNotify::messageCB(), returning\n")));
       }
 
+      stream_type_e = ARDRONE_STREAM_NAVDATA;
+
+      break;
+    }
+    case ARDRONE_MESSAGE_VIDEO:
+    {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+      refresh_display = true;
+#endif
+
+      stream_type_e = ARDRONE_STREAM_VIDEO;
+
       break;
     }
     default:
@@ -198,7 +168,14 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 
   if (message_event)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    GtkCBData_->eventStack.push_back (ARDRONE_EVENT_MESSAGE);
+    iterator =
+      GtkCBData_->progressData->statistic.streamStatistic.find (stream_type_e);
+    ACE_ASSERT (iterator != GtkCBData_->progressData->statistic.streamStatistic.end ());
+    (*iterator).second.bytes += message_in.total_length ();
+    GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
+
+    GtkCBData_->eventStack.push_back (std::make_pair (stream_type_e,
+                                                      ARDRONE_EVENT_MESSAGE_DATA));
   } // end lock scope
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -223,27 +200,69 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
-  ACE_UNUSED_ARG (sessionID_in);
+  int result = -1;
+  enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+  enum ARDrone_EventType event_e = ARDRONE_EVENT_MESSAGE_SESSION;
+  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
+  ARDroneStreamStatisticIterator_t iterator_2;
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
+
+  // update mapping ?
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+    if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
+    {
+      const ARDrone_StreamSessionData_t& session_data_container_r =
+        message_in.get ();
+      struct ARDrone_SessionData& session_data_r =
+        const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
+      iterator =
+        std::find_if (streams_.begin (), streams_.end (),
+                      std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
+                                    session_data_r.state->type));
+      ACE_ASSERT (iterator != streams_.end ());
+      if ((*iterator).first != sessionID_in)
+      {
+        //ACE_DEBUG ((LM_DEBUG,
+        //            ACE_TEXT ("updating session id (was: %u) --> %u\n"),
+        //            (*iterator).first,
+        //            sessionID_in));
+        streams_.erase (iterator);
+        streams_.insert (std::make_pair (sessionID_in,
+                                         session_data_r.state->type));
+        //(*iterator).first = sessionID_in;
+      } // end IF
+    } // end IF
+    iterator = streams_.find (sessionID_in);
+    // sanity check(s)
+    if (iterator == streams_.end ())
+    { // most probable reason: statistic messages arriving out-of-session
+      //ACE_DEBUG ((LM_DEBUG,
+      //            ACE_TEXT ("session message (type: %d): invalid session id (was: %u), returning\n"),
+      //            message_in.type (),
+      //            sessionID_in));
+      return;
+    } // end IF
+    stream_type_e = (*iterator).second;
+  } // end lock scope
+
+  // sanity check(s)
   ACE_ASSERT (GtkCBData_->progressData);
 
-  int result = -1;
-  enum ARDrone_Event event = ARDRONE_EVENT_SESSION_MESSAGE;
   switch (message_in.type ())
   {
     case STREAM_SESSION_MESSAGE_CONNECT:
-      event = ARDRONE_EVENT_CONNECT;
+      event_e = ARDRONE_EVENT_CONNECT;
       break;
     case STREAM_SESSION_MESSAGE_DISCONNECT:
-      event = ARDRONE_EVENT_DISCONNECT;
+      event_e = ARDRONE_EVENT_DISCONNECT;
       break;
     case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
       break;
     case STREAM_SESSION_MESSAGE_RESIZE:
-      event = ARDRONE_EVENT_RESIZE;
+      event_e = ARDRONE_EVENT_RESIZE;
       break;
     case STREAM_SESSION_MESSAGE_UNLINK:
       break;
@@ -263,7 +282,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       } // end IF
 
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-        GtkCBData_->progressData->statistic = session_data_r.currentStatistic;
+        // *NOTE*: this merges and combines the statistic data
+        GtkCBData_->progressData->statistic += session_data_r.statistic;
       } // end lock scope
 
       if (session_data_r.lock)
@@ -286,7 +306,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   } // end SWITCH
 
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    GtkCBData_->eventStack.push_back (event);
+    GtkCBData_->eventStack.push_back (std::make_pair (stream_type_e,
+                                                      event_e));
   } // end lock scope
 }
 
@@ -298,7 +319,17 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
-  if (sessionID_in == NavDataSessionId_)
+  enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+
+  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+    iterator = streams_.find (sessionID_in);
+    ACE_ASSERT (iterator != streams_.end ());
+    stream_type_e = (*iterator).second;
+    streams_.erase (iterator);
+  } // end lock scope
+
+  if (stream_type_e == ARDRONE_STREAM_NAVDATA)
   {
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
       guint event_source_id = g_idle_add (idle_session_end_cb,

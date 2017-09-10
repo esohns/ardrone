@@ -94,7 +94,6 @@ class ARDrone_Module_PaVEDecoder_T
   // helper methods
   DataMessageType* allocateMessage (unsigned int); // requested size
 
-  Stream_IAllocator*                             allocator_;
   DataMessageType*                               buffer_; // <-- continuation chain
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_ParrotVideoEncapsulation_Header header_;

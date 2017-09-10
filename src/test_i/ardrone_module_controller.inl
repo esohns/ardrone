@@ -50,7 +50,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::currentID = 1;
+                            ConnectorType>::currentNavDataMessageId = 1;
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
@@ -169,7 +169,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     message_inout->get ();
   const typename DataMessageType::DATA_T::DATA_T& data_r =
     data_container_r.get ();
-  ACE_ASSERT (data_r.messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+  ACE_ASSERT (data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
   deviceState_ = data_r.NavData.NavData.ardrone_state;
 
   if (isFirst_)
@@ -271,7 +271,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     case STREAM_SESSION_MESSAGE_BEGIN:
     {
       // reset message sequence number generator
-      OWN_TYPE_T::currentID = 1;
+      OWN_TYPE_T::currentNavDataMessageId = 1;
 
       try {
         init ();
@@ -378,7 +378,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
         return;
       } // end IF
-      message_p->set (ARDRONE_MESSAGE_ATCOMMANDMESSAGE);
+      message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
+      //message_p->set_2 (inherited::stream_);
       unsigned char buffer_a[] = { 0x01, 0x00, 0x00, 0x00 };
       result = message_p->copy (reinterpret_cast<char*> (buffer_a),
                                 sizeof (buffer_a));
@@ -452,8 +453,8 @@ error:
       command_string +=
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("=");
-      converter << (OWN_TYPE_T::currentID).value ();
-      (OWN_TYPE_T::currentID)++;
+      converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+      OWN_TYPE_T::currentNavDataMessageId++;
       command_string += converter.str ();
       command_string += ACE_TEXT_ALWAYS_CHAR (",");
       converter.str (ACE_TEXT_ALWAYS_CHAR (""));
@@ -488,8 +489,8 @@ error:
       command_string +=
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("=");
-      converter << (OWN_TYPE_T::currentID).value ();
-      (OWN_TYPE_T::currentID)++;
+      converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+      OWN_TYPE_T::currentNavDataMessageId++;
       command_string += converter.str ();
       command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
       command_string +=
@@ -552,8 +553,8 @@ error:
       command_string +=
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("=");
-      converter << (OWN_TYPE_T::currentID).value ();
-      (OWN_TYPE_T::currentID)++;
+      converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+      OWN_TYPE_T::currentNavDataMessageId++;
       command_string += converter.str ();
       command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
       command_string +=
@@ -753,8 +754,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONTROL_STRING);
   command_string += ACE_TEXT_ALWAYS_CHAR ("=");
-  converter << (OWN_TYPE_T::currentID).value ();
-  (OWN_TYPE_T::currentID)++;
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
   command_string += converter.str ();
   command_string += ACE_TEXT_ALWAYS_CHAR (",");
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
@@ -811,7 +812,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
-  message_p->set (ARDRONE_MESSAGE_ATCOMMANDMESSAGE);
+  message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
+  //message_p->set_2 (inherited::stream_);
   int result = message_p->copy (commandString_in.c_str (),
                                 commandString_in.size ());
   if (result == -1)
@@ -883,8 +885,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_IDS_STRING);
   command_string +=
     ACE_TEXT_ALWAYS_CHAR ("=");
-  converter << OWN_TYPE_T::currentID.value ();
-  OWN_TYPE_T::currentID++;
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
   command_string += converter.str ();
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (",");
@@ -988,8 +990,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING);
   command_string +=
     ACE_TEXT_ALWAYS_CHAR ("=");
-  converter << OWN_TYPE_T::currentID.value ();
-  OWN_TYPE_T::currentID++;
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
   command_string += converter.str ();
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (",");
@@ -1098,8 +1100,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
   command_string += ACE_TEXT_ALWAYS_CHAR ("=");
-  converter << (OWN_TYPE_T::currentID).value ();
-  (OWN_TYPE_T::currentID)++;
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
   command_string += converter.str ();
   command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
   command_string +=

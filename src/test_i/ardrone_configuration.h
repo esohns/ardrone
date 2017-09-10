@@ -96,20 +96,20 @@ struct ARDrone_DirectShow_FilterConfiguration
 #endif
 
 struct ARDrone_SocketHandlerConfiguration;
-typedef Net_IConnector_T<ACE_INET_Addr,
-                         struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
+//typedef Net_IConnector_T<ACE_INET_Addr,
+//                         struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
 struct ARDrone_SignalHandlerConfiguration
  : Common_SignalHandlerConfiguration
 {
  inline ARDrone_SignalHandlerConfiguration ()
   : Common_SignalHandlerConfiguration ()
   , actionTimerID (-1)
-  , interfaceHandle (NULL)
+  , connector (NULL)
   , peerAddress ()
   {};
 
   long                  actionTimerID;
-  ARDrone_IConnector_t* interfaceHandle;
+  ARDrone_IConnector_t* connector;
   ACE_INET_Addr         peerAddress;
 };
 
@@ -167,7 +167,7 @@ struct ARDrone_GtkProgressData
    , statistic ()
   {};
 
-  ARDrone_RuntimeStatistic_t statistic;
+  struct ARDrone_Statistic statistic;
 };
 
 extern const char video_stream_name_string_[];
@@ -179,7 +179,7 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       enum Stream_StateMachine_ControlState,
                       struct ARDrone_StreamState,
                       struct ARDrone_StreamConfiguration,
-                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_Statistic,
                       struct ARDrone_AllocatorConfiguration,
                       struct Stream_ModuleConfiguration,
                       struct ARDrone_ModuleHandlerConfiguration,
@@ -197,7 +197,7 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       enum Stream_StateMachine_ControlState,
                       struct ARDrone_StreamState,
                       struct ARDrone_StreamConfiguration,
-                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_Statistic,
                       struct ARDrone_AllocatorConfiguration,
                       struct Stream_ModuleConfiguration,
                       struct ARDrone_ModuleHandlerConfiguration,
@@ -215,7 +215,7 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       enum Stream_StateMachine_ControlState,
                       struct ARDrone_StreamState,
                       struct ARDrone_StreamConfiguration,
-                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_Statistic,
                       struct ARDrone_AllocatorConfiguration,
                       struct Stream_ModuleConfiguration,
                       struct ARDrone_ModuleHandlerConfiguration,
@@ -233,7 +233,7 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
                       enum Stream_StateMachine_ControlState,
                       struct ARDrone_StreamState,
                       struct ARDrone_StreamConfiguration,
-                      ARDrone_RuntimeStatistic_t,
+                      struct ARDrone_Statistic,
                       struct ARDrone_AllocatorConfiguration,
                       struct Stream_ModuleConfiguration,
                       struct ARDrone_ModuleHandlerConfiguration,

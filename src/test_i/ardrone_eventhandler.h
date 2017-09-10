@@ -21,6 +21,9 @@
 #ifndef ARDRONE_EVENTHANDLER_H
 #define ARDRONE_EVENTHANDLER_H
 
+#include <map>
+#include <utility>
+
 #include "ace/Global_Macros.h"
 
 #include "common_iinitialize.h"
@@ -29,7 +32,7 @@
 
 #include "ardrone_message.h"
 #include "ardrone_sessionmessage.h"
-//#include "ardrone_types.h"
+#include "ardrone_types.h"
 
 // forward declarations
 struct ARDrone_GtkCBData;
@@ -43,13 +46,13 @@ class ARDrone_EventHandler
  public:
   ARDrone_EventHandler (struct ARDrone_GtkCBData*, // Gtk state
                         bool = false);             // console mode ?
-  virtual ~ARDrone_EventHandler ();
+  inline virtual ~ARDrone_EventHandler () {};
 
   // implement Stream_ISessionDataNotify_T
   virtual void start (Stream_SessionId_t,          // session id
                       const ARDrone_SessionData&); // session data
-  virtual void notify (Stream_SessionId_t,                     // session id
-                       const enum Stream_SessionMessageType&); // event (state/status change, ...)
+  inline virtual void notify (Stream_SessionId_t,                        // session id
+                              const enum Stream_SessionMessageType&) {}; // event (state/status change, ...)
   virtual void notify (Stream_SessionId_t,      // session id
                        const ARDrone_Message&); // data
   virtual void notify (Stream_SessionId_t,             // session id
@@ -65,11 +68,22 @@ class ARDrone_EventHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler (const ARDrone_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler& operator= (const ARDrone_EventHandler&))
 
+  typedef std::map<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_MAP_T;
+  typedef SESSIONID_TO_STREAM_MAP_T::iterator SESSIONID_TO_STREAM_MAP_ITERATOR_T;
+  typedef std::pair<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_PAIR_T;
+  struct SESSIONID_TO_STREAM_MAP_FIND_S
+   : public std::binary_function<SESSIONID_TO_STREAM_PAIR_T,
+                                 enum ARDrone_StreamType,
+                                 bool>
+  {
+    inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; };
+  };
+
   bool                      consoleMode_;
   struct ARDrone_GtkCBData* GtkCBData_;
   ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
   ARDrone_INavDataNotify*   NavDataNotify_;
-  Stream_SessionId_t        NavDataSessionId_;
+  SESSIONID_TO_STREAM_MAP_T streams_;
 };
 
 #endif

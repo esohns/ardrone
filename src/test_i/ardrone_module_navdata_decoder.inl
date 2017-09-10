@@ -304,6 +304,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::record"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
   ACE_ASSERT (buffer_);
   ACE_ASSERT (record_inout);
 
@@ -318,7 +319,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     buffer_->get ();
   const typename DataMessageType::DATA_T::DATA_T& message_data_r =
     message_data_container_r.get ();
-  ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+  ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
   struct _navdata_option_t* options_p =
     reinterpret_cast<struct _navdata_option_t*> (buffer_->rd_ptr () + missing_bytes);
   for (ARDrone_NavDataOptionOffsetsIterator_t iterator = message_data_r.NavData.NavDataOptionOffsets.begin ();
@@ -334,6 +335,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       reinterpret_cast<struct _navdata_option_t*> (buffer_->rd_ptr () + missing_bytes);
   } // end FOR
   ACE_ASSERT (buffer_->total_length () >= missing_bytes);
+  const typename SessionDataContainerType::DATA_T& session_data_r =
+    inherited::sessionData_->get ();
 
   unsigned int trailing_bytes = 0;
   unsigned int length = 0;
@@ -403,7 +406,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       goto error;
     } // end IF
-    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATA;
     ACE_OS::memset (&message_data_p->NavData,
                     0,
                     sizeof (struct _navdata_t));
@@ -418,9 +421,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_data_p = NULL;
     buffer_->initialize (message_data_container_p,
+                         session_data_r.sessionId,
                          NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+    buffer_->set (ARDRONE_MESSAGE_NAVDATA);
+    //buffer_->set_2 (inherited::stream_);
   } // end IF
 
   return;
@@ -672,7 +677,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       return;
     } // end IF
-    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+    message_data_p->messageType = ARDRONE_MESSAGE_NAVDATA;
     ACE_OS::memset (&message_data_p->NavData,
                     0,
                     sizeof (struct _navdata_t));
@@ -691,9 +696,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_data_p = NULL;
     buffer_->initialize (message_data_container_p,
+                         buffer_->sessionId (),
                          NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+    buffer_->set (ARDRONE_MESSAGE_NAVDATA);
+    //buffer_->set_2 (inherited::stream_);
   } // end ELSE
 }
 
@@ -846,7 +853,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
             &const_cast<typename DataMessageType::DATA_T&> (buffer_->get ());
           message_data_p =
             &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->get ());
-          ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATAMESSAGE);
+          ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATA);
 
           goto continue_;
         } // end IF
@@ -860,7 +867,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                       inherited::mod_->name ()));
           goto error;
         } // end IF
-        message_data_p->messageType = ARDRONE_MESSAGE_NAVDATAMESSAGE;
+        message_data_p->messageType = ARDRONE_MESSAGE_NAVDATA;
         ACE_OS::memset (&message_data_p->NavData,
                         0,
                         sizeof (struct _navdata_t));
@@ -875,9 +882,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
         } // end IF
         message_data_p = NULL;
         buffer_->initialize (message_data_container_p,
+                             buffer_->sessionId (),
                              NULL);
         message_data_container_p = NULL;
-        buffer_->set (ARDRONE_MESSAGE_NAVDATAMESSAGE);
+        buffer_->set (ARDRONE_MESSAGE_NAVDATA);
+        //buffer_->set_2 (inherited::stream_);
 
 continue_:
         if (!scan_begin (buffer_->rd_ptr (),

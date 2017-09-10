@@ -26,10 +26,12 @@
 
 #include "ardrone_macros.h"
 
-ARDrone_SessionMessage::ARDrone_SessionMessage (enum Stream_SessionMessageType messageType_in,
+ARDrone_SessionMessage::ARDrone_SessionMessage (Stream_SessionId_t sessionId_in,
+                                                enum Stream_SessionMessageType messageType_in,
                                                 ARDrone_StreamSessionData_t*& sessionData_inout,
                                                 struct ARDrone_UserData* userData_in)
- : inherited (messageType_in,
+ : inherited (sessionId_in, 
+              messageType_in,
               sessionData_inout,
               userData_in)
 {
@@ -44,16 +46,20 @@ ARDrone_SessionMessage::ARDrone_SessionMessage (const ARDrone_SessionMessage& me
 
 }
 
-ARDrone_SessionMessage::ARDrone_SessionMessage (ACE_Allocator* messageAllocator_in)
- : inherited (messageAllocator_in)
+ARDrone_SessionMessage::ARDrone_SessionMessage (Stream_SessionId_t sessionId_in,
+                                                ACE_Allocator* messageAllocator_in)
+ : inherited (sessionId_in,
+              messageAllocator_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SessionMessage::ARDrone_SessionMessage"));
 
 }
 
-ARDrone_SessionMessage::ARDrone_SessionMessage (ACE_Data_Block* dataBlock_in,
+ARDrone_SessionMessage::ARDrone_SessionMessage (Stream_SessionId_t sessionId_in,
+                                                ACE_Data_Block* dataBlock_in,
                                                 ACE_Allocator* messageAllocator_in)
- : inherited (dataBlock_in,
+ : inherited (sessionId_in,
+              dataBlock_in,
               messageAllocator_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SessionMessage::ARDrone_SessionMessage"));

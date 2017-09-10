@@ -24,8 +24,7 @@
 #include <string>
 
 #include "ace/Global_Macros.h"
-
-#include "common_iget.h"
+#include "ace/Synch_Traits.h"
 
 #include "stream_common.h"
 #include "stream_control_message.h"
@@ -51,7 +50,6 @@ class ARDrone_Message
                                    enum ARDrone_MessageType,
                                    ARDrone_MessageData_t,
                                    int>
- , public Common_ISet_T<enum ARDrone_MessageType>
 {
   // enable access to specific private ctors
   friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
@@ -66,7 +64,9 @@ class ARDrone_Message
   virtual ~ARDrone_Message ();
 
   inline virtual int command () const { return 0; }; // return value: message type
-  static std::string CommandType2String (int);
+  static std::string CommandTypeToString (int);
+  static void MessageTypeToString (enum ARDrone_MessageType, // message type
+                                   std::string&);            // corresp. string
 
   // overrides from ACE_Message_Block
   // *NOTE*: these use the allocator (if any)
@@ -77,17 +77,15 @@ class ARDrone_Message
 
   virtual void dump_state (void) const;
 
-  // implement Common_ISet_T
-  inline virtual void set (const enum ARDrone_MessageType messageType_in) { inherited::type_ = messageType_in; };
-
  protected:
   // ctor to be used by clone() and derived classes
   // *NOTE*: clone()ing and passing the new data block --> "deep" copy
   // *NOTE*: fire-and-forget the first argument (i.e. does NOT increment the
   //         data block reference count)
-  ARDrone_Message (ACE_Data_Block*, // data block handle
-                   ACE_Allocator*,  // message allocator
-                   bool = true);    // increment running message counter ?
+  ARDrone_Message (Stream_SessionId_t, // session id
+                   ACE_Data_Block*,    // data block to use
+                   ACE_Allocator*,     // message allocator
+                   bool = true);       // increment running message counter ?
 
   // copy ctor to be used by duplicate() and derived classes. Increments the
   // reference count of the current data block --> "shallow" copy
