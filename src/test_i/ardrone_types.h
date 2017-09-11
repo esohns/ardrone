@@ -163,10 +163,14 @@ struct ARDrone_Statistic
    : Stream_Statistic ()
    , streamStatistic ()
   {
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_CONTROL, struct Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_MAVLINK, struct Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_NAVDATA, struct Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_VIDEO, struct Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_CONTROL,
+                                            Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_MAVLINK,
+                                            Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_NAVDATA,
+                                            Stream_Statistic ()));
+    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_VIDEO,
+                                            Stream_Statistic ()));
   };
 
   struct ARDrone_Statistic operator+= (const struct ARDrone_Statistic& rhs_in)
@@ -189,7 +193,7 @@ struct ARDrone_Statistic
     } // end FOR
 
     // step2: combine the session data
-    this->Stream_Statistic::Stream_Statistic ();
+    Stream_Statistic ();
     for (ARDroneStreamStatisticConstIterator_t iterator_2 = streamStatistic.begin ();
          iterator_2 != streamStatistic.end ();
          ++iterator_2)

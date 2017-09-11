@@ -21,11 +21,14 @@
 #ifndef ARDRONE_MODULE_MAVLINK_DECODER_H
 #define ARDRONE_MODULE_MAVLINK_DECODER_H
 
+#include "mavlink.h"
+
 #include "ace/Global_Macros.h"
 
+#include "common.h"
 #include "common_time_common.h"
 
-#include "stream_task_base_synch.h"
+#include "stream_misc_parser.h"
 
 #include "ardrone_common.h"
 #include "ardrone_types.h"
@@ -46,26 +49,31 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename SessionDataContainerType>
 class ARDrone_Module_MAVLinkDecoder_T
- : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
+ : public Stream_Module_Parser_T<ACE_SYNCH_USE,
                                  TimePolicyType,
                                  ConfigurationType,
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_SessionId_t,
-                                 enum Stream_ControlType,
+                                 Net_IScanner_T<ARDrone_MAVLink_IParser>,
+                                 Net_IRecordParser_T<struct Common_ParserConfiguration,
+                                                     struct __mavlink_message>,
+                                 struct Common_ParserConfiguration,
+                                 ARDrone_MAVLink_IParser,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData>
- , public ARDrone_MAVLink_IParser
 {
-  typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
+  typedef Stream_Module_Parser_T<ACE_SYNCH_USE,
                                  TimePolicyType,
                                  ConfigurationType,
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_SessionId_t,
-                                 enum Stream_ControlType,
+                                 Net_IScanner_T<ARDrone_MAVLink_IParser>,
+                                 Net_IRecordParser_T<struct Common_ParserConfiguration,
+                                                     struct __mavlink_message>,
+                                 struct Common_ParserConfiguration,
+                                 ARDrone_MAVLink_IParser,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData> inherited;
 
