@@ -22,7 +22,6 @@
 #include "ace/Log_Msg.h"
 
 //#include "checksum.h"
-//#include "mavlink.h"
 
 #include "net_defines.h"
 
@@ -842,6 +841,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   bool do_scan_end = false;
+  const typename SessionMessageType::DATA_T::DATA_T& session_data_p = NULL;
 
   do
   {
@@ -883,8 +883,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         // sanity check(s)
         ACE_ASSERT (inherited::sessionData_);
 
-        const SessionMessageType::DATA_T::DATA_T& session_data_r =
-          inherited::sessionData_->get ();
+        session_data_p = &inherited::sessionData_->get ();
 
         ACE_NEW_NORETURN (message_data_p,
                           typename DataMessageType::DATA_T::DATA_T ());
@@ -910,7 +909,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         } // end IF
         message_data_p = NULL;
         buffer_->initialize (message_data_container_p,
-                             session_data_r.sessionId,
+                             session_data_p->sessionId,
                              NULL);
         message_data_container_p = NULL;
         buffer_->set (ARDRONE_MESSAGE_MAVLINK);

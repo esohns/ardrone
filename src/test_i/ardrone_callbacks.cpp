@@ -3650,20 +3650,32 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
     ACE_ASSERT (entry_p);
     ACE_INET_Addr interface_address, gateway_address;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
     if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier),
+#else
+    if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier,
+#endif
                                                  interface_address,
                                                  gateway_address))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                   ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+#else
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ())));
+#endif
       return;
     } // end IF
     if (gateway_address.is_any ())
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("\"%s\" does not currently have any gateway address, returning\n"),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                   ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+#else
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ())));
+#endif
       return;
     } // end IF
     gtk_entry_set_text (entry_p,

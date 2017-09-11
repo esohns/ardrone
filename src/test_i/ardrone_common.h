@@ -35,6 +35,8 @@
 
 #include "navdata_common.h"
 
+#include "common.h"
+
 #include "stream_data_base.h"
 
 #include "net_iparser.h"
