@@ -5,7 +5,6 @@
 
 // forward declarations
 typedef void* yyscan_t;
-#endif
 
 template <typename ConfigurationType,
           typename RecordType>
@@ -14,11 +13,15 @@ struct Common_ParserConfiguration;
 typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
 typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
+template <typename ParserInterfaceType>
+class Common_ILexScanner_T;
+typedef Common_ILexScanner_T<ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+#endif
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_Control_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_Control_IParser_t* iparser_in)
+                             ARDrone_Control_IScanner_t* iscanner_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -1389,7 +1392,7 @@ static yyconst flex_int32_t yy_rule_linenum[8] =
 
 
 
-#define YY_EXTRA_TYPE ARDrone_Control_IParser_t*
+#define YY_EXTRA_TYPE ARDrone_Control_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
@@ -1777,9 +1780,11 @@ YY_DECL
 
 
   // sanity check(s)
-  ACE_ASSERT (iparser_in);
-
-  ARDrone_DeviceConfiguration_t& configuration_r = iparser_in->current ();
+  ACE_ASSERT (iscanner_in);
+  ARDrone_Control_IParser_t* iparser_p =
+      const_cast<ARDrone_Control_IParser_t*> (iscanner_in->get ());
+  ACE_ASSERT (iparser_p);
+  ARDrone_DeviceConfiguration_t& configuration_r = iparser_p->current ();
 
   static std::string current_key_string;
 
@@ -3281,7 +3286,7 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   ACE_ASSERT (yyscanner);
 //  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
 //  ACE_UNUSED_ARG (yyg);
-  ARDrone_Control_IParser_t* iscanner_p =
+  ARDrone_Control_IScanner_t* iscanner_p =
     ARDrone_Control_Scanner_get_extra (yyscanner);
 
   // sanity check(s)
@@ -3314,7 +3319,7 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   {
     // *NOTE*: most probable reason: received session end message
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to Common_IScanner::switchBuffer(), aborting\n")));
+                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
     return 1;
   } // end IF
 

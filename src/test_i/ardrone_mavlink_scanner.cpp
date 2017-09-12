@@ -1,14 +1,23 @@
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 typedef void* yyscan_t;
-#endif
 
-class ARDrone_MAVLink_IParser;
+template <typename ConfigurationType,
+          typename RecordType>
+class Stream_IYaccStreamParser_T;
+struct Common_ParserConfiguration;
+struct __mavlink_message;
+typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
+template <typename ParserInterfaceType>
+class Common_ILexScanner_T;
+typedef Common_ILexScanner_T<ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
+#endif
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_MAVLink_IParser* iparser_in)
+                             ARDrone_MAVLink_IScanner_t* iscanner_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -1670,7 +1679,7 @@ static yyconst flex_int32_t yy_rule_linenum[10] =
 
 
 
-#define YY_EXTRA_TYPE ARDrone_MAVLink_IParser*
+#define YY_EXTRA_TYPE ARDrone_MAVLink_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
@@ -2055,14 +2064,15 @@ YY_DECL
 	{
 /* %% [7.0] user's declarations go here */
 
-
-
   // sanity check(s)
-  ACE_ASSERT (iparser_in);
+  ACE_ASSERT (iscanner_in);
+
+  ARDrone_MAVLink_IParser_t* iparser_p =
+    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_in->get ());
+  // sanity check(s)
+  ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
-
-
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2131,7 +2141,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-{ message_p = &iparser_in->current ();
+{ message_p = &iparser_p->current ();
 
                                     BEGIN (length); }
 	YY_BREAK
@@ -2230,10 +2240,11 @@ YY_RULE_SETUP
                                       message_p->checksum =
                                           ACE_SWAP_WORD (message_p->checksum);
 
+                                    ACE_ASSERT (iparser_p);
                                     struct __mavlink_message* message_2 =
                                         message_p;
                                     try {
-                                      iparser_in->record (message_2);
+                                      iparser_p->record (message_2);
                                     } catch (...) {
                                       ACE_DEBUG ((LM_ERROR,
                                                   ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
@@ -3634,7 +3645,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_MAVLink_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  ARDrone_MAVLink_IParser* iscanner_p =
+  ARDrone_MAVLink_IScanner_t* iscanner_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
 
   // sanity check(s)

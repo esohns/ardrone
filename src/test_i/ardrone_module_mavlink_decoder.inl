@@ -72,8 +72,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::record"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::fragment_);
   ACE_ASSERT (inherited::sessionData_);
-  ACE_ASSERT (buffer_);
   ACE_ASSERT (record_inout);
 
   // frame the MAVLink message data
@@ -82,7 +82,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   unsigned int remaining_bytes_2 = MAVLINK_NUM_HEADER_BYTES;
   unsigned int length = 0;
   unsigned int trailing_bytes_total, trailing_bytes = 0;
-  ACE_Message_Block* message_block_p = buffer_;
+  ACE_Message_Block* message_block_p = inherited::fragment_;
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
@@ -101,12 +101,12 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     remaining_bytes_2 -= length;
   } // end WHILE
 
-  length = buffer_->total_length ();
+  length = inherited::fragment_->total_length ();
   if (length > remaining_bytes)
   {
     trailing_bytes_total = length - remaining_bytes;
 
-    message_block_2 = buffer_;
+    message_block_2 = inherited::fragment_;
     for (;
          message_block_2;
          message_block_2 = message_block_2->cont ())
@@ -132,7 +132,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     } // end IF
     message_block_2->length (message_block_2->length () - trailing_bytes);
     message_block_2->cont (NULL);
-    ACE_ASSERT (buffer_->total_length () ==
+    ACE_ASSERT (inherited::fragment_->total_length () ==
                 static_cast<unsigned int> (record_inout->len +
                                            MAVLINK_NUM_CHECKSUM_BYTES));
     message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
@@ -169,7 +169,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 //    goto error;
 //  } // end IF
 
-  result = inherited::put_next (buffer_, NULL);
+  result = inherited::put_next (inherited::fragment_, NULL);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -177,17 +177,17 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                 inherited::mod_->name ()));
 
     // clean up
-    buffer_->release ();
-    buffer_ = NULL;
+    inherited::fragment_->release ();
+    inherited::fragment_ = NULL;
 
     goto error;
   } // end IF
-  buffer_ = NULL;
+  inherited::fragment_ = NULL;
 
   if (message_block_p)
   {
-    buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
-    ACE_ASSERT (buffer_);
+    inherited::fragment_ = dynamic_cast<DataMessageType*> (message_block_p);
+    ACE_ASSERT (inherited::fragment_);
 
     ACE_NEW_NORETURN (message_data_p,
                       typename DataMessageType::DATA_T::DATA_T ());
@@ -212,12 +212,12 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       goto error;
     } // end IF
     message_data_p = NULL;
-    buffer_->initialize (message_data_container_p,
-                         session_data_r.sessionId,
-                         NULL);
+    inherited::fragment_->initialize (message_data_container_p,
+                                      session_data_r.sessionId,
+                                      NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_MAVLINK);
-    //buffer_->set_2 (inherited::stream_);
+    inherited::fragment_->set (ARDRONE_MESSAGE_MAVLINK);
+    //inherited::fragment_->set_2 (inherited::stream_);
   } // end IF
 
   return;
@@ -374,9 +374,9 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     return;
 
   // 2. append data ?
-  if (buffer_)
+  if (inherited::fragment_)
   {
-    ACE_Message_Block* message_block_2 = buffer_;
+    ACE_Message_Block* message_block_2 = inherited::fragment_;
     for (;
          message_block_2->cont ();
          message_block_2 = message_block_2->cont ());
@@ -384,8 +384,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   } // end IF
   else
   {
-    buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
-    ACE_ASSERT (buffer_);
+    inherited::fragment_ = dynamic_cast<DataMessageType*> (message_block_p);
+    ACE_ASSERT (inherited::fragment_);
 
     ACE_NEW_NORETURN (message_data_p,
                       typename DataMessageType::DATA_T::DATA_T ());
@@ -414,12 +414,12 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       return;
     } // end IF
     message_data_p = NULL;
-    buffer_->initialize (message_data_container_p,
-                         session_data_p->sessionId,
-                         NULL);
+    inherited::fragment_->initialize (message_data_container_p,
+                                      session_data_p->sessionId,
+                                      NULL);
     message_data_container_p = NULL;
-    buffer_->set (ARDRONE_MESSAGE_MAVLINK);
-    //buffer_->set_2 (inherited::stream_);
+    inherited::fragment_->set (ARDRONE_MESSAGE_MAVLINK);
+    //inherited::fragment_->set_2 (inherited::stream_);
   } // end ELSE
 }
 
@@ -437,25 +437,25 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::scan_begin (const char* data_in,
-                                                                       unsigned int length_in)
+                                SessionDataContainerType>::begin (const char* data_in,
+                                                                  unsigned int length_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::scan_begin"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::begin"));
 
   // sanity check(s)
-  ACE_ASSERT (!bufferState_);
-  ACE_ASSERT (scannerState_);
+  ACE_ASSERT (!inherited::buffer_);
+  ACE_ASSERT (inherited::state_);
   ACE_ASSERT (data_in);
 
   // create/initialize a new buffer state
-  bufferState_ =
-    (useYYScanBuffer_ ? ARDrone_MAVLink_Scanner__scan_buffer (const_cast<char*> (data_in),
-                                                              length_in + NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
-                                                              scannerState_)
-                      : ARDrone_MAVLink_Scanner__scan_bytes (data_in,
-                                                             length_in,
-                                                             scannerState_));
-  if (!bufferState_)
+  inherited::buffer_ =
+    (inherited::useYYScanBuffer_ ? ARDrone_MAVLink_Scanner__scan_buffer (const_cast<char*> (data_in),
+                                                                         length_in + STREAM_MISC_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
+                                                                         inherited::state_)
+                                 : ARDrone_MAVLink_Scanner__scan_bytes (data_in,
+                                                                        length_in,
+                                                                        inherited::state_));
+  if (!inherited::buffer_)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to yy_scan_[buffer/bytes](0x%@, %u): \"%m\", aborting\n"),
@@ -465,13 +465,9 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     return false;
   } // end IF
 //  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("parsing fragment #%d --> %d byte(s)...\n"),
+//              ACE_TEXT ("parsing fragment #%d --> %d byte(s)\n"),
 //              counter++,
-//              fragment_->length ()));
-
-//  // *WARNING*: contrary (!) to the documentation, still need to switch_buffers()...
-//  HTTP_Scanner__switch_to_buffer (bufferState_,
-//                                  scannerState_);
+//              inherited::fragment_->length ()));
 
   return true;
 }
@@ -490,17 +486,17 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::scan_end ()
+                                SessionDataContainerType>::end ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::scan_end"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::end"));
 
   // sanity check(s)
-  ACE_ASSERT (bufferState_);
+  ACE_ASSERT (inherited::buffer_);
 
   // clean state
-  ARDrone_MAVLink_Scanner__delete_buffer (bufferState_,
-                                          scannerState_);
-  bufferState_ = NULL;
+  ARDrone_MAVLink_Scanner__delete_buffer (inherited::buffer_,
+                                          inherited::state_);
+  inherited::buffer_ = NULL;
 }
 
 template <ACE_SYNCH_DECL,
@@ -522,7 +518,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::svc"));
 
   // sanity check(s)
-  ACE_ASSERT (scannerState_);
+  ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = NULL;
   int result = -1;
@@ -530,7 +526,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   bool do_scan_end = false;
-  const typename SessionMessageType::DATA_T::DATA_T& session_data_p = NULL;
+  const typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
 
   do
   {
@@ -562,11 +558,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
         goto done;
       }
       default:
-      { ACE_ASSERT (!buffer_);
-        buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
-        ACE_ASSERT (buffer_);
+      { ACE_ASSERT (!inherited::fragment_);
+        inherited::fragment_ = dynamic_cast<DataMessageType*> (message_block_p);
+        ACE_ASSERT (inherited::fragment_);
 
-        if (buffer_->isInitialized ())
+        if (inherited::fragment_->isInitialized ())
           goto continue_;
 
         // sanity check(s)
@@ -597,16 +593,16 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
           goto error;
         } // end IF
         message_data_p = NULL;
-        buffer_->initialize (message_data_container_p,
-                             session_data_p->sessionId,
-                             NULL);
+        inherited::fragment_->initialize (message_data_container_p,
+                                          session_data_p->sessionId,
+                                          NULL);
         message_data_container_p = NULL;
-        buffer_->set (ARDRONE_MESSAGE_MAVLINK);
-        //buffer_->set_2 (inherited::stream_);
+        inherited::fragment_->set (ARDRONE_MESSAGE_MAVLINK);
+        //inherited::fragment_->set_2 (inherited::stream_);
 
 continue_:
-        if (!scan_begin (buffer_->rd_ptr (),
-                         buffer_->length ()))
+        if (!begin (inherited::fragment_->rd_ptr (),
+                    inherited::fragment_->length ()))
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
@@ -616,18 +612,18 @@ continue_:
         do_scan_end = true;
 
         // initialize scanner ?
-        if (isFirst_)
+        if (inherited::isFirst_)
         {
-          isFirst_ = false;
+          inherited::isFirst_ = false;
 
           /* column is only valid if an input buffer exists. */
-          ARDrone_MAVLink_Scanner_set_column (1, scannerState_);
-          ARDrone_MAVLink_Scanner_set_lineno (1, scannerState_);
+          ARDrone_MAVLink_Scanner_set_column (1, inherited::state_);
+          ARDrone_MAVLink_Scanner_set_lineno (1, inherited::state_);
         } // end IF
 
         // parse data fragment
         try {
-          result = ARDrone_MAVLink_Scanner_lex (scannerState_,
+          result = ARDrone_MAVLink_Scanner_lex (inherited::state_,
                                                 this);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
@@ -650,11 +646,11 @@ continue_:
           default:
           {
             // clean up
-            scan_end ();
+            end ();
             do_scan_end = false;
 
             // more data ?
-            if (buffer_)
+            if (inherited::fragment_)
               goto continue_;
 
             break;
@@ -671,7 +667,7 @@ error:
         if (message_block_p)
           message_block_p->release ();
         if (do_scan_end)
-          scan_end ();
+          end ();
 
         goto done;
       }

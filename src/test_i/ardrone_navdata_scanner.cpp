@@ -1,14 +1,17 @@
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 typedef void* yyscan_t;
-#endif
 
 class ARDrone_NavData_IParser;
+template <typename ParserInterfaceType>
+class Common_ILexScanner_T;
+typedef Common_ILexScanner_T<ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
+#endif
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_NavData_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_NavData_IParser* iparser_in)
+                             ARDrone_NavData_IScanner_t* iscanner_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -1988,7 +1991,7 @@ static yyconst flex_int32_t yy_rule_linenum[9] =
 
 
 
-#define YY_EXTRA_TYPE ARDrone_NavData_IParser*
+#define YY_EXTRA_TYPE ARDrone_NavData_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
@@ -2373,17 +2376,18 @@ YY_DECL
 	{
 /* %% [7.0] user's declarations go here */
 
-
-
   // sanity check(s)
-  ACE_ASSERT (iparser_in);
+  ACE_ASSERT (iscanner_in);
 
-  struct _navdata_t& message_r = iparser_in->current ();
+  ARDrone_NavData_IParser* iparser_p =
+    const_cast<ARDrone_NavData_IParser*> (iscanner_in->get ());
+  // sanity check(s)
+  ACE_ASSERT (iparser_p);
+
+  struct _navdata_t& message_r = iparser_p->current ();
 
   static unsigned int option_offset = 0;
   static struct _navdata_option_t current_option_s;
-
-
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2534,8 +2538,9 @@ YY_RULE_SETUP
                ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
                                                       : *integer_p);
 
+             ACE_ASSERT (iparser_p);
              try {
-               iparser_in->addOption (option_offset);
+               iparser_p->addOption (option_offset);
              } catch (...) {
                ACE_DEBUG ((LM_ERROR,
                            ACE_TEXT ("failed to ARDrone_NavData_IParser::addOption(%u), aborting\n"),
@@ -2585,12 +2590,13 @@ YY_RULE_SETUP
                BEGIN (option_id);
              else
              {
+               ACE_ASSERT (iparser_p);
                struct _navdata_t* message_p = &message_r;
                try {
-                 iparser_in->record (message_p);
+                 iparser_p->record (message_p);
                } catch (...) {
                  ACE_DEBUG ((LM_ERROR,
-                             ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+                             ACE_TEXT ("failed to Stream_IYaccStreamParser_T::record(), aborting\n")));
                  yyterminate ();
                }
                BEGIN (INITIAL);
@@ -4008,7 +4014,7 @@ ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner)
   ACE_ASSERT (yyscanner);
 //  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
 //  ACE_UNUSED_ARG (yyg);
-  ARDrone_NavData_IParser* iscanner_p =
+  ARDrone_NavData_IScanner_t* iscanner_p =
     ARDrone_NavData_Scanner_get_extra (yyscanner);
 
   // sanity check(s)

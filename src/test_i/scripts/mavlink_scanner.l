@@ -2,14 +2,23 @@
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 typedef void* yyscan_t;
-#endif
 
-class ARDrone_MAVLink_IParser;
+template <typename ConfigurationType,
+          typename RecordType>
+class Stream_IYaccStreamParser_T;
+struct Common_ParserConfiguration;
+struct __mavlink_message;
+typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
+template <typename ParserInterfaceType>
+class Common_ILexScanner_T;
+typedef Common_ILexScanner_T<ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
+#endif
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_MAVLink_IParser* iparser_in)
+                             ARDrone_MAVLink_IScanner_t* iscanner_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -43,7 +52,7 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="ARDrone_MAVLink_IParser*"
+%option extra-type="ARDrone_MAVLink_IScanner_t*"
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
@@ -63,13 +72,18 @@ V09_START_CODE         \x55
 
 %{
   // sanity check(s)
-  ACE_ASSERT (iparser_in);
+  ACE_ASSERT (iscanner_in);
+
+  ARDrone_MAVLink_IParser_t* iparser_p =
+    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_in->get ());
+  // sanity check(s)
+  ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
 %}
 
 <INITIAL>{
-{V09_START_CODE}|{V10_START_CODE} { message_p = &iparser_in->current ();
+{V09_START_CODE}|{V10_START_CODE} { message_p = &iparser_p->current ();
 
                                     BEGIN (length); }
 } // end <INITIAL>
@@ -78,40 +92,35 @@ V09_START_CODE         \x55
                                     message_p->len =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (sequence);
-                                  }
+                                    BEGIN (sequence); }
 } // end <length>
 <sequence>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->seq =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (system_id);
-                                  }
+                                    BEGIN (system_id); }
 } // end <sequence>
 <system_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->sysid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (component_id);
-                                  }
+                                    BEGIN (component_id); }
 } // end <system_id>
 <component_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->compid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (message_id);
-                                  }
+                                    BEGIN (message_id); }
 } // end <component_id>
 <message_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->msgid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (data);
-                                  }
+                                    BEGIN (data); }
 } // end <message_id>
 <data>{
 {OCTET}                           { ACE_ASSERT (message_p);
@@ -128,8 +137,7 @@ V09_START_CODE         \x55
                                       c = yyinput (yyscanner);
                                     ACE_UNUSED_ARG (c);
 
-                                    BEGIN (_checksum);
-                                  }
+                                    BEGIN (_checksum); }
 } // end <data>
 <_checksum>{
 {OCTET}{2}                        { ACE_ASSERT (message_p);
@@ -140,18 +148,18 @@ V09_START_CODE         \x55
                                       message_p->checksum =
                                           ACE_SWAP_WORD (message_p->checksum);
 
+                                    ACE_ASSERT (iparser_p);
                                     struct __mavlink_message* message_2 =
                                         message_p;
                                     try {
-                                      iparser_in->record (message_2);
+                                      iparser_p->record (message_2);
                                     } catch (...) {
                                       ACE_DEBUG ((LM_ERROR,
-                                                  ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+                                                  ACE_TEXT ("failed to Stream_IYaccStreamParser_T::record(), aborting\n")));
                                       yyterminate ();
                                     }
 
-                                    BEGIN (INITIAL);
-                                  }
+                                    BEGIN (INITIAL); }
 } // end <checksum>
 <<EOF>>                { return 0; }
 <*>{OCTET}             { /* *TODO*: use (?s:.) ? */
@@ -169,7 +177,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_MAVLink_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  ARDrone_MAVLink_IParser* iscanner_p =
+  ARDrone_MAVLink_IScanner_t* iscanner_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
 
   // sanity check(s)
@@ -202,7 +210,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   {
     // *NOTE*: most probable reason: received session end message
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to Common_IScanner::switchBuffer(), aborting\n")));
+                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
     return 1;
   } // end IF
 

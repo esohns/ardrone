@@ -825,8 +825,7 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
         break;
       }
       case NAVDATA_PWM_TAG: // 9
-      { unsigned int size_i = sizeof (struct _navdata_pwm_t);
-        ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
         struct _navdata_pwm_t* option_2 =
           reinterpret_cast<struct _navdata_pwm_t*> (option_p);
         ACE_UNUSED_ARG (option_2);

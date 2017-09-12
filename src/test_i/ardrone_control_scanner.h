@@ -484,7 +484,7 @@ void ARDrone_Control_Scanner_free (void * ,yyscan_t yyscanner );
 
 
 
-#define YY_EXTRA_TYPE ARDrone_Control_IParser*
+#define YY_EXTRA_TYPE ARDrone_Control_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
