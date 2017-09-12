@@ -38,8 +38,8 @@
 #include "common.h"
 
 #include "stream_data_base.h"
+#include "stream_iparser.h"
 
-#include "net_iparser.h"
 #include "net_iwlanmonitor.h"
 
 #include "ardrone_statemachine_navdata.h"
@@ -142,51 +142,20 @@ struct ARDrone_MessageData
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
-class ARDrone_Control_IParser
- : public Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              ARDrone_DeviceConfiguration_t>
- , public Net_IScanner_T<ARDrone_Control_IParser>
-{
- public:
-  // convenient types
-  typedef Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              ARDrone_DeviceConfiguration_t> IPARSER_T;
+typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+                                   ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 
-  using IPARSER_T::error;
-};
-class ARDrone_MAVLink_IParser
- : public Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              struct __mavlink_message>
- , public Net_IScanner_T<ARDrone_MAVLink_IParser>
-{
- public:
-  // convenient types
-  typedef Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              struct __mavlink_message> IPARSER_T;
-
-  using IPARSER_T::error;
-};
-class ARDrone_NavData_IParser
- : public Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              struct _navdata_t>
- , public Net_IScanner_T<ARDrone_NavData_IParser>
-{
- public:
-  // convenient types
-  typedef Net_IRecordParser_T<struct Common_ParserConfiguration,
-                              struct _navdata_t> IPARSER_T;
-
-  using IPARSER_T::error;
-
-  virtual void addOption (unsigned int) = 0; // offset
-};
-
+typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
 class ARDrone_IMAVLinkNotify
 {
  public:
   virtual void messageCB (const struct __mavlink_message&, // message record
                           void*) = 0;                      // payload handle
 };
+
+typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                   struct _navdata_t> ARDrone_NavData_IParser_t;
 class ARDrone_INavDataNotify
 {
  public:
@@ -194,7 +163,6 @@ class ARDrone_INavDataNotify
                           const ARDrone_NavDataOptionOffsets_t&, // option offsets
                           void*) = 0;                            // payload handle
 };
-
 class ARDrone_IController
  : virtual public ARDrone_IStateMachine_NavData_t
 {
