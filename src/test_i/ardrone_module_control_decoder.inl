@@ -415,7 +415,7 @@ continue_:
   // switch to the next fragment
 
   // clean state
-  scan_end ();
+  end ();
 
   // initialize next buffer
 
@@ -425,11 +425,11 @@ continue_:
   *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
-  if (!scan_begin (message_block_2->rd_ptr (),
-                   message_block_2->length ()))
+  if (!begin (message_block_2->rd_ptr (),
+              message_block_2->length ()))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to scan_begin(), aborting\n"),
+                ACE_TEXT ("%s: failed to begin(), aborting\n"),
                 inherited::mod_->name ()));
     return false;
   } // end IF
@@ -611,10 +611,10 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::scan_begin (const char* data_in,
-                                                                       unsigned int length_in)
+                                SessionDataContainerType>::begin (const char* data_in,
+                                                                  unsigned int length_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::scan_begin"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::begin"));
 
   // sanity check(s)
   ACE_ASSERT (!bufferState_);
@@ -638,14 +638,6 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                 length_in));
     return false;
   } // end IF
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("parsing fragment #%d --> %d byte(s)\n"),
-//              counter++,
-//              fragment_->length ()));
-
-//  // *WARNING*: contrary (!) to the documentation, still need to switch_buffers()
-//  HTTP_Scanner__switch_to_buffer (bufferState_,
-//                                  scannerState_);
 
   return true;
 }
@@ -664,9 +656,9 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-                                SessionDataContainerType>::scan_end ()
+                                SessionDataContainerType>::end ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::scan_end"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::end"));
 
   // sanity check(s)
   ACE_ASSERT (bufferState_);
@@ -715,7 +707,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
       error = ACE_OS::last_error ();
       if (error != EWOULDBLOCK) // Win32: 10035
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: worker thread (ID: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
+                    ACE_TEXT ("%s: worker thread (id: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
                     inherited::mod_->name ()));
       break;
     } // end IF
@@ -782,11 +774,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
         //buffer_->set_2 (inherited::stream_);
 
 continue_:
-        if (!scan_begin (buffer_->rd_ptr (),
-                         buffer_->length ()))
+        if (!begin (buffer_->rd_ptr (),
+                    buffer_->length ()))
         {
           ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),
+                      ACE_TEXT ("%s: failed to begin(), aborting\n"),
                       inherited::mod_->name ()));
           goto error;
         } // end IF
@@ -819,7 +811,7 @@ continue_:
             // *NOTE*: most probable reason: connection
             //         has been closed --> session end
             ACE_DEBUG ((LM_DEBUG,
-                        ACE_TEXT ("%s: failed to parse NavData message(s) (result was: %d), aborting\n"),
+                        ACE_TEXT ("%s: failed to parse control message(s) (result was: %d), aborting\n"),
                         inherited::mod_->name (),
                         result));
             goto error;
@@ -827,7 +819,7 @@ continue_:
           default:
           {
             // clean up
-            scan_end ();
+            end ();
             do_scan_end = false;
 
             // more data ?
@@ -848,7 +840,7 @@ error:
         if (message_block_p)
           message_block_p->release ();
         if (do_scan_end)
-          scan_end ();
+          end ();
 
         goto done;
       }

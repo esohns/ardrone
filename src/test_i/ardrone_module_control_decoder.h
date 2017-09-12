@@ -57,7 +57,10 @@ class ARDrone_Module_ControlDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData>
- , public ARDrone_Control_IParser
+ , public Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+                                     ARDrone_DeviceConfiguration_t>
+ , public Common_ILexScanner_T<Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+                                                          ARDrone_DeviceConfiguration_t> >
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -71,6 +74,10 @@ class ARDrone_Module_ControlDecoder_T
                                  struct ARDrone_UserData> inherited;
 
  public:
+  // convenient types
+  typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+                                     ARDrone_DeviceConfiguration_t> IPARSER_T;
+
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_ControlDecoder_T (ISTREAM_T*); // stream handle
@@ -79,10 +86,9 @@ class ARDrone_Module_ControlDecoder_T
 #endif
   virtual ~ARDrone_Module_ControlDecoder_T ();
 
-  //// override (part of) Stream_IModuleHandler_T
+  // override (part of) Stream_IModuleHandler_T
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
-  //virtual const ConfigurationType& get () const;
 
   // implement (part of) Stream_ITaskBase
   virtual void handleDataMessage (DataMessageType*&, // data message handle
@@ -90,48 +96,44 @@ class ARDrone_Module_ControlDecoder_T
   virtual void handleSessionMessage (SessionMessageType*&, // session message handle
                                      bool&);               // return value: pass message downstream ?
 
-  // implement ARDrone_Control_IParser
-  inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; };
-  inline virtual bool hasFinished () const { return true; };
-  virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
+  // implement (part of) Stream_IYaccRecordParser_T
   inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
   inline virtual void dump_state () const {};
-  inline virtual void error (const yy::location&,
-                             const std::string& string_in) { error (string_in); };
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
+  inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); };
+  inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; };
+  virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
+  inline virtual bool hasFinished () const { return true; };
 
-  // *NOTE*: this is the C interface (not needed by C++ scanners)
+  // implement (part of) Common_ILexScanner_T
+  inline virtual ACE_Message_Block* buffer () { return buffer_; };
+//  inline virtual bool debug () const { return ARDrone_Control_Scanner_get_debug (scannerState_); };
+  inline virtual bool isBlocking () const { return true; };
+  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, scannerState_); };
+  inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (scannerState_); };
+  virtual bool begin (const char*,   // buffer handle
+                      unsigned int); // buffer size
+  virtual void end ();
+  virtual bool switchBuffer (bool = false); // unlink current buffer ?
+  virtual void waitBuffer ();
+  virtual void error (const std::string&);
   inline virtual void debug (yyscan_t, bool) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual bool initialize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual void set (ARDrone_Control_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-
-  inline virtual ACE_Message_Block* buffer () { return buffer_; };
-  inline virtual bool debugScanner () const { return ARDrone_Control_Scanner_get_debug (scannerState_); };
-  inline virtual bool isBlocking () const { return true; };
-  virtual void error (const std::string&);
-  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, scannerState_); };
-  inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (scannerState_); };
-  // *IMPORTANT NOTE*: when the parser detects a frame end, it inserts a new
-  //                   buffer to the continuation and passes 'true'
-  //                   --> separate the current frame from the next
-  virtual bool switchBuffer (bool = false); // unlink current buffer ?
-  virtual void waitBuffer ();
+  inline virtual const IPARSER_T* const get () const { return this; };
+  inline virtual void set (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T (const ARDrone_Module_ControlDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T& operator= (const ARDrone_Module_ControlDecoder_T&))
 
+  using typename inherited::TASK_BASE_T::get;
+
   // override some ACE_Task_T methods
   int svc (void);
-
-  // helper methods
-  bool scan_begin (const char*,   // buffer handle
-                   unsigned int); // buffer size
-  void scan_end ();
 
   DataMessageType*              buffer_;
   struct yy_buffer_state*       bufferState_;

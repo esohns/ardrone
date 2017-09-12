@@ -57,10 +57,11 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IRecordParser_T<struct Common_ParserConfiguration,
-                                                        struct __mavlink_message>,
+                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                                            struct __mavlink_message>,
                                  struct Common_ParserConfiguration,
-                                 ARDrone_MAVLink_IParser,
+                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                                            struct __mavlink_message>,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData>
 {
@@ -70,10 +71,11 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IRecordParser_T<struct Common_ParserConfiguration,
-                                                        struct __mavlink_message>,
+                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                                            struct __mavlink_message>,
                                  struct Common_ParserConfiguration,
-                                 ARDrone_MAVLink_IParser,
+                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                                            struct __mavlink_message>,
                                  enum Stream_SessionMessageType,
                                  struct ARDrone_UserData> inherited;
 
@@ -86,29 +88,35 @@ class ARDrone_Module_MAVLinkDecoder_T
 #endif
   inline virtual ~ARDrone_Module_MAVLinkDecoder_T () {};
 
-  // implement (part of) ARDrone_MAVLink_IParser
-  virtual void record (struct __mavlink_message*&); // record handle
+  // implement/override (part of) Stream_IYaccStreamParser_T
   inline virtual void dump_state () const {};
-  inline virtual void error (const yy::location&,
-                             const std::string& string_in) { error (string_in); };
+  inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); };
+  virtual void record (struct __mavlink_message*&); // record handle
 
-  inline virtual void debug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_MAVLink_Scanner_set_debug ((debug_in ? 1 : 0), state_in); };
-  inline virtual bool initialize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, state_inout); return (result == 0); };
-  inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; };
-  inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__create_buffer (buffer_in, size_in, state_in); };
-  inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; };
-  inline virtual void set (ARDrone_MAVLink_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-
-  inline virtual bool debugScanner () const { return ARDrone_MAVLink_Scanner_get_debug (inherited::state_); };
-  virtual void error (const std::string&);
+  // implement/override (part of) Common_ILexScanner_T
+//  inline virtual bool debug () const { return ARDrone_MAVLink_Scanner_get_debug (inherited::state_); };
   inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, inherited::state_); };
   inline virtual unsigned int offset () const { return ARDrone_MAVLink_Scanner_get_column (inherited::state_); };
+  virtual bool begin (const char*,   // buffer handle
+                      unsigned int); // buffer size
+  virtual void end ();
   virtual void waitBuffer ();
+  virtual void error (const std::string&);
+  inline virtual void debug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_MAVLink_Scanner_set_debug ((debug_in ? 1 : 0), state_in); };
+  inline virtual bool initialize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, &state_inout); return (result == 0); };
+  inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; };
+  inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__scan_buffer (buffer_in, size_in, state_in); };
+  inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; };
+  inline virtual const ARDrone_MAVLink_IParser* const getP () const { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual void setP (ARDrone_MAVLink_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T (const ARDrone_Module_MAVLinkDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T& operator= (const ARDrone_Module_MAVLinkDecoder_T&))
+
+  // override some ACE_Task_T methods
+  virtual int svc (void);
 };
 
 // include template definition

@@ -12,7 +12,7 @@ class ARDrone_MAVLink_IParser;
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_MAVLink_IParser* iparser_in)
+                             ARDrone_MAVLink_IScanner_t* iscanner_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -478,7 +478,7 @@ void ARDrone_MAVLink_Scanner_free (void * ,yyscan_t yyscanner );
 
 
 
-#define YY_EXTRA_TYPE ARDrone_MAVLink_IParser*
+#define YY_EXTRA_TYPE ARDrone_MAVLink_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
