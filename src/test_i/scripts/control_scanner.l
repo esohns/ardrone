@@ -1,15 +1,20 @@
 %top{
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
+
+#include <map>
+#include <string>
+
+// forward declarations
 typedef void* yyscan_t;
 #endif
 
-class ARDrone_Control_IParser;
+class ARDrone_Control_IParser_t;
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_Control_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_Control_IParser* iparser_in)
+                             ARDrone_Control_IParser_t* iparser_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -47,7 +52,7 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="ARDrone_Control_IParser*"
+%option extra-type="ARDrone_Control_IParser_t*"
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
@@ -112,7 +117,7 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   ACE_ASSERT (yyscanner);
 //  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
 //  ACE_UNUSED_ARG (yyg);
-  ARDrone_Control_IParser* iscanner_p =
+  ARDrone_Control_IParser_t* iscanner_p =
     ARDrone_Control_Scanner_get_extra (yyscanner);
 
   // sanity check(s)
@@ -145,7 +150,7 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   {
     // *NOTE*: most probable reason: received session end message
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to Common_IScanner::switchBuffer(), aborting\n")));
+                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
     return 1;
   } // end IF
 

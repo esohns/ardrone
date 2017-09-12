@@ -28,6 +28,8 @@
 #include "common.h"
 #include "common_time_common.h"
 
+#include "stream_iparser.h"
+
 #include "stream_misc_parser.h"
 
 #include "ardrone_common.h"
@@ -55,9 +57,8 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Net_IScanner_T<ARDrone_MAVLink_IParser>,
-                                 Net_IRecordParser_T<struct Common_ParserConfiguration,
-                                                     struct __mavlink_message>,
+                                 Stream_IRecordParser_T<struct Common_ParserConfiguration,
+                                                        struct __mavlink_message>,
                                  struct Common_ParserConfiguration,
                                  ARDrone_MAVLink_IParser,
                                  enum Stream_SessionMessageType,
@@ -69,9 +70,8 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Net_IScanner_T<ARDrone_MAVLink_IParser>,
-                                 Net_IRecordParser_T<struct Common_ParserConfiguration,
-                                                     struct __mavlink_message>,
+                                 Stream_IRecordParser_T<struct Common_ParserConfiguration,
+                                                        struct __mavlink_message>,
                                  struct Common_ParserConfiguration,
                                  ARDrone_MAVLink_IParser,
                                  enum Stream_SessionMessageType,
@@ -84,66 +84,31 @@ class ARDrone_Module_MAVLinkDecoder_T
 #else
   ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T*); // stream handle
 #endif
-  virtual ~ARDrone_Module_MAVLinkDecoder_T ();
+  inline virtual ~ARDrone_Module_MAVLinkDecoder_T () {};
 
-  virtual bool initialize (const ConfigurationType&,
-                           Stream_IAllocator* = NULL);
-
-  // implement (part of) Stream_ITaskBase
-  virtual void handleDataMessage (DataMessageType*&, // data message handle
-                                  bool&);            // return value: pass message downstream ?
-  virtual void handleSessionMessage (SessionMessageType*&, // session message handle
-                                     bool&);               // return value: pass message downstream ?
-
-  // implement ARDrone_MAVLink_IParser
-  inline virtual struct __mavlink_message& current () { ACE_ASSERT (buffer_); return const_cast<struct __mavlink_message&> (buffer_->get ().get ().MAVLinkData); };
-  inline virtual bool hasFinished () const { return true; };
+  // implement (part of) ARDrone_MAVLink_IParser
   virtual void record (struct __mavlink_message*&); // record handle
-  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
   inline virtual void dump_state () const {};
   inline virtual void error (const yy::location&,
                              const std::string& string_in) { error (string_in); };
-  inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
 
-  // *NOTE*: this is the C interface (not needed by C++ scanners)
-  inline virtual void debug (yyscan_t, bool) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual bool initialize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
-  inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
-  inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual void debug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_MAVLink_Scanner_set_debug ((debug_in ? 1 : 0), state_in); };
+  inline virtual bool initialize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, state_inout); return (result == 0); };
+  inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; };
+  inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__create_buffer (buffer_in, size_in, state_in); };
+  inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; };
   inline virtual void set (ARDrone_MAVLink_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
-  inline virtual ACE_Message_Block* buffer () { return buffer_; };
-  inline virtual bool debugScanner () const { return ARDrone_MAVLink_Scanner_get_debug (scannerState_); };
-  inline virtual bool isBlocking () const { return true; };
+  inline virtual bool debugScanner () const { return ARDrone_MAVLink_Scanner_get_debug (inherited::state_); };
   virtual void error (const std::string&);
-  inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, scannerState_); };
-  inline virtual unsigned int offset () const { return ARDrone_MAVLink_Scanner_get_column (scannerState_); };
-  // *IMPORTANT NOTE*: when the parser detects a frame end, it inserts a new
-  //                   buffer to the continuation and passes 'true'
-  //                   --> separate the current frame from the next
-  virtual bool switchBuffer (bool = false); // unlink current buffer ?
+  inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, inherited::state_); };
+  inline virtual unsigned int offset () const { return ARDrone_MAVLink_Scanner_get_column (inherited::state_); };
   virtual void waitBuffer ();
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T (const ARDrone_Module_MAVLinkDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T& operator= (const ARDrone_Module_MAVLinkDecoder_T&))
-
-  // override some ACE_Task_T methods
-  int svc (void);
-
-  // helper methods
-  bool scan_begin (const char*,   // buffer handle
-                   unsigned int); // buffer size
-  void scan_end ();
-
-  DataMessageType*        buffer_;
-  struct yy_buffer_state* bufferState_;
-  bool                    isFirst_;
-  yyscan_t                scannerState_;
-  //std::string             scannerTables_;
-  bool                    useYYScanBuffer_;
 };
 
 // include template definition

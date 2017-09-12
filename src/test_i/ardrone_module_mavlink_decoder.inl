@@ -23,7 +23,7 @@
 
 //#include "checksum.h"
 
-#include "net_defines.h"
+#include "stream_misc_defines.h"
 
 #include "ardrone_macros.h"
 
@@ -45,245 +45,12 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 #else
                                 SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T* stream_in)
 #endif
- : inherited (stream_in)
- , buffer_ (NULL)
- , bufferState_ (NULL)
- , isFirst_ (true)
- , scannerState_ (NULL)
- , useYYScanBuffer_ (NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER)
+ : inherited (stream_in,
+              STREAM_MISC_PARSER_DEFAULT_LEX_TRACE,
+              STREAM_MISC_PARSER_DEFAULT_YACC_TRACE)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::ARDrone_Module_MAVLinkDecoder_T"));
 
-  // step1: initialize flex state
-  int result = ARDrone_MAVLink_Scanner_lex_init_extra (this,
-                                                       &scannerState_);
-  if (result)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to yylex_init_extra: \"%m\", returning\n"),
-                inherited::mod_->name ()));
-    return;
-  } // end IF
-  ACE_ASSERT (scannerState_);
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::~ARDrone_Module_MAVLinkDecoder_T ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::~ARDrone_Module_MAVLinkDecoder_T"));
-
-  // clean up any unprocessed (chained) buffer(s)
-  if (buffer_)
-    buffer_->release ();
-
-  if (ARDrone_MAVLink_Scanner_lex_destroy (scannerState_))
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to yylex_destroy(): \"%m\", continuing\n"),
-                inherited::mod_->name ()));
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-bool
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
-                                                                       Stream_IAllocator* allocator_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::initialize"));
-
-  int result = -1;
-
-  // sanity check(s)
-  // *TODO*: remove type inferences
-  ACE_ASSERT (configuration_in.parserConfiguration);
-  ACE_ASSERT (configuration_in.streamConfiguration);
-
-  if (inherited::isInitialized_)
-  {
-    if (buffer_)
-      buffer_->release ();
-    buffer_ = NULL;
-
-    if (bufferState_)
-    { ACE_ASSERT (scannerState_);
-      ARDrone_MAVLink_Scanner__delete_buffer (bufferState_,
-                                              scannerState_);
-      bufferState_ = NULL;
-    } // end IF
-
-    isFirst_ = true;
-
-    useYYScanBuffer_ = NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER;
-  } // end IF
-
-  ACE_ASSERT (inherited::msg_queue_);
-  result = inherited::msg_queue_->activate ();
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to ACE_Message_Queue::activate(): \"%m\", aborting\n"),
-                inherited::mod_->name ()));
-    return false;
-  } // end IF
-
-  // trace ?
-  ARDrone_MAVLink_Scanner_set_debug (configuration_in.debugScanner,
-                                     scannerState_);
-
-  return inherited::initialize (configuration_in,
-                                allocator_in);
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-void
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::handleDataMessage (DataMessageType*& message_inout,
-                                                                              bool& passMessageDownstream_out)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::handleDataMessage"));
-
-  int result = -1;
-
-  // initialize return value(s)
-  // *NOTE*: the default behavior is to pass all messages along
-  //         --> in this case, the individual frames are extracted and passed
-  //             as such
-  passMessageDownstream_out = false;
-
-  // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
-  *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-  *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
-  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
-
-  result = inherited::msg_queue_->enqueue_tail (message_inout,
-                                                NULL);
-  if (result == -1)
-  {
-    int error = ACE_OS::last_error ();
-    if (error != ESHUTDOWN)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
-                  inherited::mod_->name ()));
-
-    // clean up
-    message_inout->release ();
-    message_inout = NULL;
-
-    return;
-  } // end IF
-  message_inout = NULL;
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-void
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::handleSessionMessage (SessionMessageType*& message_inout,
-                                                                                 bool& passMessageDownstream_out)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::handleSessionMessage"));
-
-  int result = -1;
-
-  // don't care (implies yes per default, if part of a stream)
-  ACE_UNUSED_ARG (passMessageDownstream_out);
-
-  // sanity check(s)
-  ACE_ASSERT (inherited::isInitialized_);
-
-  switch (message_inout->type ())
-  {
-    case STREAM_SESSION_MESSAGE_BEGIN:
-    {
-      result = inherited::activate ();
-      if (result == -1)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ACE_Task_T::activate(): \"%m\", aborting\n"),
-                    inherited::mod_->name ()));
-        goto error;
-      } // end IF
-
-      goto continue_;
-
-error:
-      this->notify (STREAM_SESSION_MESSAGE_ABORT);
-
-      break;
-
-continue_:
-      break;
-    }
-    case STREAM_SESSION_MESSAGE_END:
-    {
-      if (inherited::thr_count_)
-        inherited::stop (false, // wait for completion ?
-                         true); // locked access ?
-      else
-      {
-        ACE_ASSERT (inherited::msg_queue_);
-        result = inherited::msg_queue_->deactivate ();
-        if (result == -1)
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: failed to ACE_Message_Queue::deactivate(): \"%m\", continuing\n"),
-                      inherited::mod_->name ()));
-      } // end ELSE
-
-      if (buffer_)
-      {
-        buffer_->release ();
-        buffer_ = NULL;
-      } // end IF
-
-      break;
-    }
-    default:
-      break;
-  } // end SWITCH
 }
 
 template <ACE_SYNCH_DECL,
@@ -502,85 +269,6 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType>
-bool
-ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::switchBuffer (bool unlink_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::switchBuffer"));
-
-  ACE_UNUSED_ARG (unlink_in);
-
-  // sanity check(s)
-  ACE_ASSERT (scannerState_);
-
-  ACE_Message_Block* message_block_p = buffer_;
-  ACE_Message_Block* message_block_2 = NULL;
-
-  // retrieve trailing chunk
-  if (!buffer_)
-    goto continue_;
-
-  do
-  {
-    message_block_2 = message_block_p->cont ();
-    if (message_block_2)
-      message_block_p = message_block_2;
-    else
-      break;
-  } while (true);
-  ACE_ASSERT (!message_block_p->cont ());
-
-continue_:
-  waitBuffer (); // <-- wait for data
-
-  message_block_2 = message_block_p ? message_block_p->cont ()
-                                    : buffer_;
-  if (!message_block_2)
-  {
-    // *NOTE*: most probable reason: received session end
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
-                inherited::mod_->name ()));
-    return false;
-  } // end IF
-
-  // switch to the next fragment
-
-  // clean state
-  scan_end ();
-
-  // initialize next buffer
-
-  // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
-  *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-  *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
-  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
-
-  if (!scan_begin (message_block_2->rd_ptr (),
-                   message_block_2->length ()))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to scan_begin(), aborting\n"),
-                inherited::mod_->name ()));
-    return false;
-  } // end IF
-
-  return true;
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
 void
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
@@ -605,6 +293,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
   // sanity check(s)
+  ACE_ASSERT (inherited::msg_queue_);
   ACE_ASSERT (inherited::sessionData_);
   //ACE_ASSERT (blockInParse_);
 

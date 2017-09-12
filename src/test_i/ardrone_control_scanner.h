@@ -4,15 +4,25 @@
 
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
+#include <map>
+#include <string>
+
+// forward declarations
 typedef void* yyscan_t;
 #endif
 
-class ARDrone_Control_IParser;
+template <typename ConfigurationType,
+          typename RecordType>
+class Stream_IYaccRecordParser_T;
+struct Common_ParserConfiguration;
+typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
+typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+                                   ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 
 #define YY_DECL                                                   \
 int                                                               \
 ARDrone_Control_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_Control_IParser* iparser_in)
+                             ARDrone_Control_IParser_t* iparser_in)
 // ... and declare it for the parser's sake
 YY_DECL;
 
