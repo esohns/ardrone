@@ -254,7 +254,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
                 ACE_TEXT (video_stream_name_string_)));
     goto error;
   } // end IF
-  sourceWriter_impl_p->set (&(inherited::state_));
+  sourceWriter_impl_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -346,7 +346,7 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
 
   int result = -1;
   struct ARDrone_SessionData& session_data_r =
-      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)

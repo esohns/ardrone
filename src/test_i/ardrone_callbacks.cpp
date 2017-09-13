@@ -744,10 +744,10 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = &data_p->GtkCBData->videoStream->get ();
+    session_data_container_p = &data_p->GtkCBData->videoStream->getR ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
-      &const_cast<struct ARDrone_SessionData&> (session_data_container_p->get ());
+      &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
     ACE_ASSERT (session_data_p);
     converter.clear ();
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));

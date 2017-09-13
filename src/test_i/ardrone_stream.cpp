@@ -131,7 +131,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - initialize modules
   // - push them onto the stream (tail-first)
   struct ARDrone_SessionData& session_data_r =
-    const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+    const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
 
   // ---------------------------------------------------------------------------
 
@@ -158,7 +158,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT ("dynamic_cast<ARDrone_Module_TCPSource> failed, aborting\n")));
       return false;
     } // end IF
-    sourceWriter_impl_p->set (&(inherited::state_));
+    sourceWriter_impl_p->setP (&(inherited::state_));
   } // end IF
   else
   {
@@ -170,7 +170,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchTCPSource> failed, aborting\n")));
       return false;
     } // end IF
-    asynchSourceWriter_impl_p->set (&(inherited::state_));
+    asynchSourceWriter_impl_p->setP (&(inherited::state_));
   } // end ELSE
 
   // enqueue the module
@@ -220,7 +220,7 @@ ARDrone_ControlStream::notify (Stream_SessionId_t sessionId_in,
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 
@@ -234,7 +234,7 @@ ARDrone_ControlStream::end (Stream_SessionId_t sessionId_in)
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 }
@@ -269,7 +269,7 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
 
   int result = -1;
   struct ARDrone_SessionData& session_data_r =
-      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)
@@ -479,7 +479,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - initialize modules
   // - push them onto the stream (tail-first)
   session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 
@@ -520,7 +520,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT (navdata_stream_name_string_)));
       goto error;
     } // end IF
-    sourceWriter_impl_p->set (&(inherited::state_));
+    sourceWriter_impl_p->setP (&(inherited::state_));
   } // end IF
   else
   {
@@ -533,7 +533,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT (navdata_stream_name_string_)));
       goto error;
     } // end IF
-    asynchSourceWriter_impl_p->set (&(inherited::state_));
+    asynchSourceWriter_impl_p->setP (&(inherited::state_));
   } // end ELSE
 
   // enqueue the module
@@ -630,7 +630,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 
@@ -644,7 +644,7 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 
@@ -668,7 +668,7 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
 
   int result = -1;
   struct ARDrone_SessionData& session_data_r =
-      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)
@@ -1255,7 +1255,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - initialize modules
   // - push them onto the stream (tail-first)
   session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 
@@ -1314,7 +1314,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT (mavlink_stream_name_string_)));
       goto error;
     } // end IF
-    sourceWriter_impl_p->set (&(inherited::state_));
+    sourceWriter_impl_p->setP (&(inherited::state_));
   } // end IF
   else
   {
@@ -1327,7 +1327,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
                   ACE_TEXT (mavlink_stream_name_string_)));
       goto error;
     } // end IF
-    asynchSourceWriter_impl_p->set (&(inherited::state_));
+    asynchSourceWriter_impl_p->setP (&(inherited::state_));
   } // end ELSE
 
   // enqueue the module
@@ -1404,7 +1404,7 @@ ARDrone_MAVLinkStream::notify (Stream_SessionId_t sessionId_in,
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 
@@ -1418,7 +1418,7 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
-      inherited::sessionData_->get ();
+      inherited::sessionData_->getR ();
   if (!session_data_r.sessionId != sessionId_in)
     return;
 
@@ -1466,7 +1466,7 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
 
   int result = -1;
   struct ARDrone_SessionData& session_data_r =
-      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
+      const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
     const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
   if (!module_p)

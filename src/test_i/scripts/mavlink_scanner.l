@@ -75,7 +75,7 @@ V09_START_CODE         \x55
   ACE_ASSERT (iscanner_in);
 
   ARDrone_MAVLink_IParser_t* iparser_p =
-    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_in->get ());
+    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_in->getP ());
   // sanity check(s)
   ACE_ASSERT (iparser_p);
 

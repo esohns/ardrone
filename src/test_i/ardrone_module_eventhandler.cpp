@@ -84,9 +84,9 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
   Stream_SessionId_t session_id = message_inout->sessionId ();
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
   const ARDrone_StreamSessionData_t& session_data_container_r =
-    message_inout->get ();
+    message_inout->getR ();
   struct ARDrone_SessionData& session_data_r =
-    const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
+    const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
   if (iterator == streams_.end ())
     streams_.insert (std::make_pair (session_id,
                                      session_data_r.state->type));
@@ -103,7 +103,7 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
         goto continue_;
       ACE_ASSERT ((*iterator_2).second);
       session_data_p =
-        &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->get ());
+        &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
       ACE_ASSERT (session_data_p->lock);
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_p->lock);
         // *NOTE*: this merges and combines the statistic data

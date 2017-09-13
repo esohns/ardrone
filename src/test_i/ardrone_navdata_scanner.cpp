@@ -2380,7 +2380,7 @@ YY_DECL
   ACE_ASSERT (iscanner_in);
 
   ARDrone_NavData_IParser* iparser_p =
-    const_cast<ARDrone_NavData_IParser*> (iscanner_in->get ());
+    const_cast<ARDrone_NavData_IParser*> (iscanner_in->getP ());
   // sanity check(s)
   ACE_ASSERT (iparser_p);
 

@@ -100,9 +100,9 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void dump_state () const {};
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); };
-  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->get ().get ().NavData.NavData); };
+  inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->getR ().getR ().NavData.NavData); };
   virtual void record (struct _navdata_t*&); // record handle
-  inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->get ().get ()).NavData.NavDataOptionOffsets.push_back (offset_in); };
+  inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->getR ().getR ()).NavData.NavDataOptionOffsets.push_back (offset_in); };
 
   // implement (part of) Common_ILexScanner_T
   inline virtual ACE_Message_Block* buffer () { return buffer_; };
@@ -121,8 +121,8 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual const IPARSER_T* const get () const { return this; };
-  inline virtual void set (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual const IPARSER_T* const getP () const { return this; };
+  inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T ())
