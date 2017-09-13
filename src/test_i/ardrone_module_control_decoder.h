@@ -122,15 +122,15 @@ class ARDrone_Module_ControlDecoder_T
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual const IPARSER_T* const get () const { return this; };
-  inline virtual void set (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual const IPARSER_T* const getP () const { return this; };
+  inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T (const ARDrone_Module_ControlDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T& operator= (const ARDrone_Module_ControlDecoder_T&))
 
-  using typename inherited::TASK_BASE_T::get;
+//  using typename inherited::TASK_BASE_T::get;
 
   // override some ACE_Task_T methods
   int svc (void);

@@ -80,6 +80,10 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  struct ARDrone_UserData> inherited;
 
  public:
+  // convenient types
+  typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+                                     struct __mavlink_message> IPARSER_T;
+
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T*); // stream handle
@@ -91,6 +95,7 @@ class ARDrone_Module_MAVLinkDecoder_T
   // implement/override (part of) Stream_IYaccStreamParser_T
   inline virtual void dump_state () const {};
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); };
+  inline virtual struct __mavlink_message& current () { ACE_ASSERT (inherited::fragment_); return const_cast<struct __mavlink_message&> (inherited::fragment_->getR ().getR ().MAVLinkData); };
   virtual void record (struct __mavlink_message*&); // record handle
 
   // implement/override (part of) Common_ILexScanner_T
@@ -107,8 +112,8 @@ class ARDrone_Module_MAVLinkDecoder_T
   inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; };
   inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__scan_buffer (buffer_in, size_in, state_in); };
   inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; };
-  inline virtual const ARDrone_MAVLink_IParser* const getP () const { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual void setP (ARDrone_MAVLink_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  inline virtual const IPARSER_T* const getP () const { return this; };
+  inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T ())

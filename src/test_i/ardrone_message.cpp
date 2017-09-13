@@ -343,7 +343,7 @@ ARDrone_Message::dump_state (void) const
         return;
       } // end IF
       const struct ARDrone_MessageData& message_data_r =
-          inherited::data_->get ();
+          inherited::data_->getR ();
 
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
@@ -365,7 +365,7 @@ ARDrone_Message::dump_state (void) const
         return;
       } // end IF
       const struct ARDrone_MessageData& message_data_r =
-          inherited::data_->get ();
+          inherited::data_->getR ();
 
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("[%u]: header: 0x%x, state: 0x%x, seq: %u, vision: %u, option(s) [%u]:\n"),

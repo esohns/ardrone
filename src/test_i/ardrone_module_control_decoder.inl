@@ -472,7 +472,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   //ACE_ASSERT (blockInParse_);
 
   session_data_p =
-    &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->get ());
+    &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
 
   // 1. wait for data
   do

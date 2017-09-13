@@ -316,9 +316,9 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     sizeof (struct _navdata_t) - sizeof (struct _navdata_option_t);
 
   const typename DataMessageType::DATA_T& message_data_container_r =
-    buffer_->get ();
+    buffer_->getR ();
   const typename DataMessageType::DATA_T::DATA_T& message_data_r =
-    message_data_container_r.get ();
+    message_data_container_r.getR ();
   ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
   struct _navdata_option_t* options_p =
     reinterpret_cast<struct _navdata_option_t*> (buffer_->rd_ptr () + missing_bytes);
@@ -336,7 +336,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   } // end FOR
   ACE_ASSERT (buffer_->total_length () >= missing_bytes);
   const typename SessionDataContainerType::DATA_T& session_data_r =
-    inherited::sessionData_->get ();
+    inherited::sessionData_->getR ();
 
   unsigned int trailing_bytes = 0;
   unsigned int length = 0;
@@ -850,9 +850,9 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
         {
           // sanity check(s)
           message_data_container_p =
-            &const_cast<typename DataMessageType::DATA_T&> (buffer_->get ());
+            &const_cast<typename DataMessageType::DATA_T&> (buffer_->getR ());
           message_data_p =
-            &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->get ());
+            &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->getR ());
           ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATA);
 
           goto continue_;

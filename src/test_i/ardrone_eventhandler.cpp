@@ -110,8 +110,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     case ARDRONE_MESSAGE_MAVLINK:
     { ACE_ASSERT (MAVLinkNotify_);
 
-      const ARDrone_MessageData_t& data_container_r = message_in.get ();
-      const struct ARDrone_MessageData& data_r = data_container_r.get ();
+      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
+      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 
       try {
         // *TODO*: remove type inference
@@ -129,8 +129,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     case ARDRONE_MESSAGE_NAVDATA:
     { ACE_ASSERT (NavDataNotify_);
 
-      const ARDrone_MessageData_t& data_container_r = message_in.get ();
-      const struct ARDrone_MessageData& data_r = data_container_r.get ();
+      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
+      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 
       try {
         // *TODO*: remove type inference
@@ -214,9 +214,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
       const ARDrone_StreamSessionData_t& session_data_container_r =
-        message_in.get ();
+        message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
-        const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
+        const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
       iterator =
         std::find_if (streams_.begin (), streams_.end (),
                       std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
@@ -269,9 +269,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
       const ARDrone_StreamSessionData_t& session_data_container_r =
-        message_in.get ();
+        message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
-        const_cast<struct ARDrone_SessionData&> (session_data_container_r.get ());
+        const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
 
       if (session_data_r.lock)
       {

@@ -166,9 +166,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     return;
 
   const typename DataMessageType::DATA_T& data_container_r =
-    message_inout->get ();
+    message_inout->getR ();
   const typename DataMessageType::DATA_T::DATA_T& data_r =
-    data_container_r.get ();
+    data_container_r.getR ();
   ACE_ASSERT (data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
   deviceState_ = data_r.NavData.NavData.ardrone_state;
 

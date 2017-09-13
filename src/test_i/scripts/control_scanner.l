@@ -78,7 +78,7 @@ VALUE                  [^\n]
   // sanity check(s)
   ACE_ASSERT (iscanner_in);
   ARDrone_Control_IParser_t* iparser_p =
-    const_cast<ARDrone_Control_IParser_t*> (iscanner_in->get ());
+    const_cast<ARDrone_Control_IParser_t*> (iscanner_in->getP ());
   ACE_ASSERT (iparser_p);
   ARDrone_DeviceConfiguration_t& configuration_r = iparser_p->current ();
 
