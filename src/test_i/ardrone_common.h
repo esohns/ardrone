@@ -144,11 +144,13 @@ typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
 typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-typedef Common_ILexScanner_T<ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
 
 typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
-typedef Common_ILexScanner_T<ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
 class ARDrone_IMAVLinkNotify
 {
  public:
@@ -163,7 +165,8 @@ class ARDrone_NavData_IParser
  public:
   virtual void addOption (unsigned int) = 0; // offset
 };
-typedef Common_ILexScanner_T<ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
 class ARDrone_INavDataNotify
 {
  public:

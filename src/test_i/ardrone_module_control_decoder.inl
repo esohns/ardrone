@@ -796,8 +796,7 @@ continue_:
 
         // parse data fragment
         try {
-          result = ARDrone_Control_Scanner_lex (scannerState_,
-                                                this);
+          result = ARDrone_Control_Scanner_lex (scannerState_);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),

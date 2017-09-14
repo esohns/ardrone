@@ -527,6 +527,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   bool do_scan_end = false;
   const typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
+  bool result_2 = false;
 
   do
   {
@@ -623,39 +624,30 @@ continue_:
 
         // parse data fragment
         try {
-          result = ARDrone_MAVLink_Scanner_lex (inherited::state_,
-                                                this);
+          result_2 = this->lex ();
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),
                       inherited::mod_->name ()));
-          result = 1;
+          result_2 = false;
         }
-        switch (result)
+        if (!result_2)
         {
-          case -1:
-          {
-            // *NOTE*: most probable reason: connection
-            //         has been closed --> session end
-            ACE_DEBUG ((LM_DEBUG,
-                        ACE_TEXT ("%s: failed to parse MAVLink message(s) (result was: %d), aborting\n"),
-                        inherited::mod_->name (),
-                        result));
-            goto error;
-          }
-          default:
-          {
-            // clean up
-            end ();
-            do_scan_end = false;
+          // *NOTE*: most probable reason: connection
+          //         has been closed --> session end
+          ACE_DEBUG ((LM_DEBUG,
+                      ACE_TEXT ("%s: failed to parse MAVLink message(s): \"%m\", aborting\n"),
+                      inherited::mod_->name ()));
+          goto error;
+        } // end IF
 
-            // more data ?
-            if (inherited::fragment_)
-              goto continue_;
+        // clean up
+        end ();
+        do_scan_end = false;
 
-            break;
-          }
-        } // end SWITCH
+        // more data ?
+        if (inherited::fragment_)
+          goto continue_;
 
         break;
 

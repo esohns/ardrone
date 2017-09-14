@@ -1,18 +1,18 @@
 %top{
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+// forward declarations
 typedef void* yyscan_t;
-
 class ARDrone_NavData_IParser;
-template <typename ParserInterfaceType>
+struct Common_ScannerState;
+template <typename ScannerStateType,
+          typename ParserInterfaceType>
 class Common_ILexScanner_T;
-typedef Common_ILexScanner_T<ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
 #endif
 
-#define YY_DECL                                                   \
-int                                                               \
-ARDrone_NavData_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_NavData_IScanner_t* iscanner_in)
+#define YY_DECL int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -66,11 +66,13 @@ HEADER                 \x88\x77\x66\x55
 
 %{
   // sanity check(s)
-  ACE_ASSERT (iscanner_in);
+  ACE_ASSERT (yyscanner);
 
+  ARDrone_NavData_IScanner_t* iscanner_p =
+    ARDrone_NavData_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iscanner_p);
   ARDrone_NavData_IParser* iparser_p =
-    const_cast<ARDrone_NavData_IParser*> (iscanner_in->getP ());
-  // sanity check(s)
+    const_cast<ARDrone_NavData_IParser*> (iscanner_p->getP_2 ());
   ACE_ASSERT (iparser_p);
 
   struct _navdata_t& message_r = iparser_p->current ();
@@ -178,7 +180,7 @@ HEADER                 \x88\x77\x66\x55
                ACE_ASSERT (iparser_p);
                struct _navdata_t* message_p = &message_r;
                try {
-                 iparser_in->record (message_p);
+                 iparser_p->record (message_p);
                } catch (...) {
                  ACE_DEBUG ((LM_ERROR,
                              ACE_TEXT ("failed to Stream_IYaccStreamParser_T::record(), aborting\n")));
