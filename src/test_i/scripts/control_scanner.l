@@ -14,15 +14,15 @@ struct Common_ParserConfiguration;
 typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
 typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-template <typename ParserInterfaceType>
+template <typename ScannerStateType,
+          typename ParserInterfaceType>
 class Common_ILexScanner_T;
-typedef Common_ILexScanner_T<ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+struct Common_ScannerState;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
 #endif
 
-#define YY_DECL                                                   \
-int                                                               \
-ARDrone_Control_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_Control_IScanner_t* iscanner_in)
+#define YY_DECL int ARDrone_Control_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -76,9 +76,13 @@ VALUE                  [^\n]
 
 %{
   // sanity check(s)
-  ACE_ASSERT (iscanner_in);
+  ACE_ASSERT (yyscanner);
+
+  ARDrone_Control_IScanner_t* iscanner_p =
+    ARDrone_Control_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iscanner_p);
   ARDrone_Control_IParser_t* iparser_p =
-    const_cast<ARDrone_Control_IParser_t*> (iscanner_in->getP ());
+    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
   ACE_ASSERT (iparser_p);
   ARDrone_DeviceConfiguration_t& configuration_r = iparser_p->current ();
 

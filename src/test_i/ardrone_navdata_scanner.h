@@ -4,21 +4,24 @@
 
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+// forward declarations
 typedef void* yyscan_t;
+class ARDrone_NavData_IParser;
+struct Common_ScannerState;
+template <typename ScannerStateType,
+          typename ParserInterfaceType>
+class Common_ILexScanner_T;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
 #endif
 
-class ARDrone_NavData_IParser;
-
-#define YY_DECL                                                   \
-int                                                               \
-ARDrone_NavData_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_NavData_IParser* iparser_in)
+#define YY_DECL int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
 YY_DECL;
 
 void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
-#define YY_NO_UNISTD_H
+//#define YY_NO_UNISTD_H
 
 //#define FLEXINT_H
 
@@ -41,7 +44,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 1
+#define YY_FLEX_SUBMINOR_VERSION 3
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -62,40 +65,72 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 /* %endif */
 
 /* %if-c-only */
+    #define yy_create_buffer ARDrone_NavData_Scanner__create_buffer
+
+    #define yy_delete_buffer ARDrone_NavData_Scanner__delete_buffer
+
+    #define yy_scan_buffer ARDrone_NavData_Scanner__scan_buffer
+
+    #define yy_scan_string ARDrone_NavData_Scanner__scan_string
+
+    #define yy_scan_bytes ARDrone_NavData_Scanner__scan_bytes
+
+    #define yy_init_buffer ARDrone_NavData_Scanner__init_buffer
+
+    #define yy_flush_buffer ARDrone_NavData_Scanner__flush_buffer
+
+    #define yy_load_buffer_state ARDrone_NavData_Scanner__load_buffer_state
+
+    #define yy_switch_to_buffer ARDrone_NavData_Scanner__switch_to_buffer
+
+    #define yypush_buffer_state ARDrone_NavData_Scanner_push_buffer_state
+
+    #define yypop_buffer_state ARDrone_NavData_Scanner_pop_buffer_state
+
+    #define yyensure_buffer_stack ARDrone_NavData_Scanner_ensure_buffer_stack
+
+    #define yylex ARDrone_NavData_Scanner_lex
+
+    #define yyrestart ARDrone_NavData_Scanner_restart
+
+    #define yylex_init ARDrone_NavData_Scanner_lex_init
+
+    #define yylex_init_extra ARDrone_NavData_Scanner_lex_init_extra
+
+    #define yylex_destroy ARDrone_NavData_Scanner_lex_destroy
+
+    #define yyget_debug ARDrone_NavData_Scanner_get_debug
+
+    #define yyset_debug ARDrone_NavData_Scanner_set_debug
+
+    #define yyget_extra ARDrone_NavData_Scanner_get_extra
+
+    #define yyset_extra ARDrone_NavData_Scanner_set_extra
+
+    #define yyget_in ARDrone_NavData_Scanner_get_in
+
+    #define yyset_in ARDrone_NavData_Scanner_set_in
+
+    #define yyget_out ARDrone_NavData_Scanner_get_out
+
+    #define yyset_out ARDrone_NavData_Scanner_set_out
+
+    #define yyget_leng ARDrone_NavData_Scanner_get_leng
+
+    #define yyget_text ARDrone_NavData_Scanner_get_text
+
+    #define yyget_lineno ARDrone_NavData_Scanner_get_lineno
+
+    #define yyset_lineno ARDrone_NavData_Scanner_set_lineno
+
     
+        #define yyget_column ARDrone_NavData_Scanner_get_column
+
+        #define yyset_column ARDrone_NavData_Scanner_set_column
+
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-        
-    
-    
+    #define yywrap ARDrone_NavData_Scanner_wrap
+
 /* %endif */
 
 
@@ -103,9 +138,12 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 
 
 
-    
-    
-    
+    #define yyalloc ARDrone_NavData_Scanner_alloc
+
+    #define yyrealloc ARDrone_NavData_Scanner_realloc
+
+    #define yyfree ARDrone_NavData_Scanner_free
+
 
 /* %if-c-only */
 
@@ -207,10 +245,6 @@ typedef unsigned int flex_uint32_t;
 #define yynoreturn
 #endif
 
-
-    
-
-
 /* %not-for-header */
 
 
@@ -235,8 +269,6 @@ typedef void* yyscan_t;
 
 
 
-    
-    
 
 
 
@@ -264,17 +296,6 @@ typedef void* yyscan_t;
 
 /* %if-not-reentrant */
 /* %endif */
-
-
-
-    
-    
-    
-    
-
-
-
-
 
 
 
@@ -316,12 +337,6 @@ typedef size_t yy_size_t;
 /* %if-not-reentrant */
 /* %endif */
 /* %endif */
-
-
-
-
-
-
 
 
 
@@ -390,8 +405,6 @@ struct yy_buffer_state
 
 
 
-
-
 /* %if-c-only Standard (non-C++) definition */
 
 /* %if-not-reentrant */
@@ -399,33 +412,25 @@ struct yy_buffer_state
 
 /* %endif */
 
-void ARDrone_NavData_Scanner_restart (FILE *input_file ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner__flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_push_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_pop_buffer_state (yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_restart ( FILE *input_file , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__create_buffer ( FILE *file, int size , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner__flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_push_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_pop_buffer_state ( yyscan_t yyscanner );
 
 
 
-
-
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_string ( const char *yy_str , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_NavData_Scanner__scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
 
 /* %endif */
 
-void *ARDrone_NavData_Scanner_alloc (yy_size_t ,yyscan_t yyscanner );
-void *ARDrone_NavData_Scanner_realloc (void *,yy_size_t ,yyscan_t yyscanner );
-void ARDrone_NavData_Scanner_free (void * ,yyscan_t yyscanner );
-
-
-
-
-
-
+void *ARDrone_NavData_Scanner_alloc ( yy_size_t , yyscan_t yyscanner );
+void *ARDrone_NavData_Scanner_realloc ( void *, yy_size_t , yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_free ( void * , yyscan_t yyscanner );
 
 
 
@@ -445,8 +450,6 @@ void ARDrone_NavData_Scanner_free (void * ,yyscan_t yyscanner );
 
 
 /* %endif */
-
-
 
 
 
@@ -477,7 +480,7 @@ void ARDrone_NavData_Scanner_free (void * ,yyscan_t yyscanner );
 
 
 
-#define YY_EXTRA_TYPE ARDrone_NavData_IParser*
+#define YY_EXTRA_TYPE ARDrone_NavData_IScanner_t*
 
 
 /* %if-c-only Reentrant structure and macros (non-C++). */
@@ -496,7 +499,7 @@ void ARDrone_NavData_Scanner_free (void * ,yyscan_t yyscanner );
 
 int ARDrone_NavData_Scanner_lex_init (yyscan_t* scanner);
 
-int ARDrone_NavData_Scanner_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+int ARDrone_NavData_Scanner_lex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
 
 /* %endif */
 
@@ -506,66 +509,66 @@ int ARDrone_NavData_Scanner_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t*
    These are made visible to non-reentrant scanners for convenience. */
 
 
-int ARDrone_NavData_Scanner_lex_destroy (yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_lex_destroy ( yyscan_t yyscanner );
 
 
 
-int ARDrone_NavData_Scanner_get_debug (yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_get_debug ( yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_debug (int debug_flag ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_debug ( int debug_flag , yyscan_t yyscanner );
 
 
 
-YY_EXTRA_TYPE ARDrone_NavData_Scanner_get_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE ARDrone_NavData_Scanner_get_extra ( yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_NavData_Scanner_get_in (yyscan_t yyscanner );
+FILE *ARDrone_NavData_Scanner_get_in ( yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_in  (FILE * _in_str ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_in  ( FILE * _in_str , yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_NavData_Scanner_get_out (yyscan_t yyscanner );
+FILE *ARDrone_NavData_Scanner_get_out ( yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_out  (FILE * _out_str ,yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_out  ( FILE * _out_str , yyscan_t yyscanner );
 
 
 
-			int ARDrone_NavData_Scanner_get_leng (yyscan_t yyscanner );
+			int ARDrone_NavData_Scanner_get_leng ( yyscan_t yyscanner );
 
 
 
-char *ARDrone_NavData_Scanner_get_text (yyscan_t yyscanner );
+char *ARDrone_NavData_Scanner_get_text ( yyscan_t yyscanner );
 
 
 
-int ARDrone_NavData_Scanner_get_lineno (yyscan_t yyscanner );
+int ARDrone_NavData_Scanner_get_lineno ( yyscan_t yyscanner );
 
 
 
-void ARDrone_NavData_Scanner_set_lineno (int _line_number ,yyscan_t yyscanner );
-
-
-
-
-int ARDrone_NavData_Scanner_get_column  (yyscan_t yyscanner );
+void ARDrone_NavData_Scanner_set_lineno ( int _line_number , yyscan_t yyscanner );
 
 
 
 
+int ARDrone_NavData_Scanner_get_column  ( yyscan_t yyscanner );
 
-void ARDrone_NavData_Scanner_set_column (int _column_no ,yyscan_t yyscanner );
+
+
+
+
+void ARDrone_NavData_Scanner_set_column ( int _column_no , yyscan_t yyscanner );
 
 
 
@@ -578,9 +581,9 @@ void ARDrone_NavData_Scanner_set_column (int _column_no ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner );
+extern "C" int ARDrone_NavData_Scanner_wrap ( yyscan_t yyscanner );
 #else
-extern int ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner );
+extern int ARDrone_NavData_Scanner_wrap ( yyscan_t yyscanner );
 #endif
 #endif
 
@@ -589,11 +592,11 @@ extern int ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner );
 /* %endif */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
+static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
+static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
@@ -697,8 +700,6 @@ extern int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner);
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
-
-
 
 #undef ARDrone_NavData_Scanner_IN_HEADER
 #endif /* ARDrone_NavData_Scanner_HEADER_H */

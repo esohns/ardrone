@@ -1,5 +1,6 @@
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
+// forward declarations
 typedef void* yyscan_t;
 
 template <typename ConfigurationType,
@@ -9,15 +10,15 @@ struct Common_ParserConfiguration;
 struct __mavlink_message;
 typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
-template <typename ParserInterfaceType>
+struct Common_ScannerState;
+template <typename ScannerStateType,
+          typename ParserInterfaceType>
 class Common_ILexScanner_T;
-typedef Common_ILexScanner_T<ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_ScannerState,
+                             ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
 #endif
 
-#define YY_DECL                                                   \
-int                                                               \
-ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner,                  \
-                             ARDrone_MAVLink_IScanner_t* iscanner_in)
+#define YY_DECL int ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
 YY_DECL;
 
@@ -41,7 +42,6 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 
 
 /* %not-for-header */
-
 /* %if-c-only */
 /* %if-not-reentrant */
 /* %endif */
@@ -52,7 +52,7 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 1
+#define YY_FLEX_SUBMINOR_VERSION 3
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -73,40 +73,72 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 /* %endif */
 
 /* %if-c-only */
+    #define yy_create_buffer ARDrone_MAVLink_Scanner__create_buffer
+
+    #define yy_delete_buffer ARDrone_MAVLink_Scanner__delete_buffer
+
+    #define yy_scan_buffer ARDrone_MAVLink_Scanner__scan_buffer
+
+    #define yy_scan_string ARDrone_MAVLink_Scanner__scan_string
+
+    #define yy_scan_bytes ARDrone_MAVLink_Scanner__scan_bytes
+
+    #define yy_init_buffer ARDrone_MAVLink_Scanner__init_buffer
+
+    #define yy_flush_buffer ARDrone_MAVLink_Scanner__flush_buffer
+
+    #define yy_load_buffer_state ARDrone_MAVLink_Scanner__load_buffer_state
+
+    #define yy_switch_to_buffer ARDrone_MAVLink_Scanner__switch_to_buffer
+
+    #define yypush_buffer_state ARDrone_MAVLink_Scanner_push_buffer_state
+
+    #define yypop_buffer_state ARDrone_MAVLink_Scanner_pop_buffer_state
+
+    #define yyensure_buffer_stack ARDrone_MAVLink_Scanner_ensure_buffer_stack
+
+    #define yylex ARDrone_MAVLink_Scanner_lex
+
+    #define yyrestart ARDrone_MAVLink_Scanner_restart
+
+    #define yylex_init ARDrone_MAVLink_Scanner_lex_init
+
+    #define yylex_init_extra ARDrone_MAVLink_Scanner_lex_init_extra
+
+    #define yylex_destroy ARDrone_MAVLink_Scanner_lex_destroy
+
+    #define yyget_debug ARDrone_MAVLink_Scanner_get_debug
+
+    #define yyset_debug ARDrone_MAVLink_Scanner_set_debug
+
+    #define yyget_extra ARDrone_MAVLink_Scanner_get_extra
+
+    #define yyset_extra ARDrone_MAVLink_Scanner_set_extra
+
+    #define yyget_in ARDrone_MAVLink_Scanner_get_in
+
+    #define yyset_in ARDrone_MAVLink_Scanner_set_in
+
+    #define yyget_out ARDrone_MAVLink_Scanner_get_out
+
+    #define yyset_out ARDrone_MAVLink_Scanner_set_out
+
+    #define yyget_leng ARDrone_MAVLink_Scanner_get_leng
+
+    #define yyget_text ARDrone_MAVLink_Scanner_get_text
+
+    #define yyget_lineno ARDrone_MAVLink_Scanner_get_lineno
+
+    #define yyset_lineno ARDrone_MAVLink_Scanner_set_lineno
+
     
+        #define yyget_column ARDrone_MAVLink_Scanner_get_column
+
+        #define yyset_column ARDrone_MAVLink_Scanner_set_column
+
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-        
-    
-    
+    #define yywrap ARDrone_MAVLink_Scanner_wrap
+
 /* %endif */
 
 
@@ -114,9 +146,12 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 
 
 
-    
-    
-    
+    #define yyalloc ARDrone_MAVLink_Scanner_alloc
+
+    #define yyrealloc ARDrone_MAVLink_Scanner_realloc
+
+    #define yyfree ARDrone_MAVLink_Scanner_free
+
 
 /* %if-c-only */
 
@@ -218,25 +253,17 @@ typedef unsigned int flex_uint32_t;
 #define yynoreturn
 #endif
 
-
-    
-
-
 /* %not-for-header */
-
 /* Returned upon end-of-file. */
 #define YY_NULL 0
 /* %ok-for-header */
 
 
 /* %not-for-header */
-
-/* Promotes a possibly negative, possibly signed char to an unsigned
- * integer for use as an array index.  If the signed char is negative,
- * we want to instead treat it as an 8-bit unsigned char, hence the
- * double cast.
+/* Promotes a possibly negative, possibly signed char to an
+ *   integer in range [0..255] for use as an array index.
  */
-#define YY_SC_TO_UI(c) ((unsigned int) (unsigned char) c)
+#define YY_SC_TO_UI(c) ((YY_CHAR) (c))
 /* %ok-for-header */
 
 
@@ -258,8 +285,6 @@ typedef void* yyscan_t;
 
 
 
-    
-    
 
 
 
@@ -290,10 +315,7 @@ typedef void* yyscan_t;
 
 
 
-    
-    
-    
-    
+
 
 
 
@@ -302,28 +324,16 @@ typedef void* yyscan_t;
  * definition of BEGIN.
  */
 #define BEGIN yyg->yy_start = 1 + 2 *
-
-
-
 /* Translate the current start state into a value that can be later handed
  * to BEGIN to return to the state.  The YYSTATE alias is for lex
  * compatibility.
  */
 #define YY_START ((yyg->yy_start - 1) / 2)
 #define YYSTATE YY_START
-
-
-
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
-
-
-
 /* Special action meaning "start processing a new file". */
 #define YY_NEW_FILE ARDrone_MAVLink_Scanner_restart(yyin ,yyscanner )
-
-
-
 #define YY_END_OF_BUFFER_CHAR 0
 
 
@@ -369,9 +379,6 @@ typedef size_t yy_size_t;
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
-
-
-
     
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
@@ -395,9 +402,6 @@ typedef size_t yy_size_t;
                         --yylineno;\
             }while(0)
     
-
-
-
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
@@ -411,9 +415,6 @@ typedef size_t yy_size_t;
 		YY_DO_BEFORE_ACTION; /* set up yytext again */ \
 		} \
 	while ( 0 )
-
-
-
 #define unput(c) yyunput( c, yyg->yytext_ptr , yyscanner )
 
 
@@ -491,7 +492,6 @@ struct yy_buffer_state
 
 /* %if-c-only Standard (non-C++) definition */
 /* %not-for-header */
-
 /* %if-not-reentrant */
 /* %endif */
 /* %ok-for-header */
@@ -508,9 +508,6 @@ struct yy_buffer_state
 #define YY_CURRENT_BUFFER ( yyg->yy_buffer_stack \
                           ? yyg->yy_buffer_stack[yyg->yy_buffer_stack_top] \
                           : NULL)
-
-
-
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
  */
@@ -521,44 +518,37 @@ struct yy_buffer_state
 
 /* %if-not-reentrant */
 /* %not-for-header */
-
 /* %ok-for-header */
 
 /* %endif */
 
-void ARDrone_MAVLink_Scanner_restart (FILE *input_file ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner__switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner__delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner__flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner_push_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner_pop_buffer_state (yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_restart ( FILE *input_file , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner__switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__create_buffer ( FILE *file, int size , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner__delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner__flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_push_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_pop_buffer_state ( yyscan_t yyscanner );
 
 
-static void ARDrone_MAVLink_Scanner_ensure_buffer_stack (yyscan_t yyscanner );
-static void ARDrone_MAVLink_Scanner__load_buffer_state (yyscan_t yyscanner );
-static void ARDrone_MAVLink_Scanner__init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
-
-
-
+static void ARDrone_MAVLink_Scanner_ensure_buffer_stack ( yyscan_t yyscanner );
+static void ARDrone_MAVLink_Scanner__load_buffer_state ( yyscan_t yyscanner );
+static void ARDrone_MAVLink_Scanner__init_buffer ( YY_BUFFER_STATE b, FILE *file , yyscan_t yyscanner );
 #define YY_FLUSH_BUFFER ARDrone_MAVLink_Scanner__flush_buffer(YY_CURRENT_BUFFER ,yyscanner)
 
 
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_string ( const char *yy_str , yyscan_t yyscanner );
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
 
 /* %endif */
 
-void *ARDrone_MAVLink_Scanner_alloc (yy_size_t ,yyscan_t yyscanner );
-void *ARDrone_MAVLink_Scanner_realloc (void *,yy_size_t ,yyscan_t yyscanner );
-void ARDrone_MAVLink_Scanner_free (void * ,yyscan_t yyscanner );
+void *ARDrone_MAVLink_Scanner_alloc ( yy_size_t , yyscan_t yyscanner );
+void *ARDrone_MAVLink_Scanner_realloc ( void *, yy_size_t , yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_free ( void * , yyscan_t yyscanner );
 
 
 #define yy_new_buffer ARDrone_MAVLink_Scanner__create_buffer
-
-
-
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
@@ -568,9 +558,6 @@ void ARDrone_MAVLink_Scanner_free (void * ,yyscan_t yyscanner );
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
-
-
-
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
@@ -580,9 +567,6 @@ void ARDrone_MAVLink_Scanner_free (void * ,yyscan_t yyscanner );
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
-
-
-
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 
@@ -590,10 +574,7 @@ void ARDrone_MAVLink_Scanner_free (void * ,yyscan_t yyscanner );
 /* Begin user sect3 */
 
 #define FLEX_DEBUG
-
-typedef unsigned char YY_CHAR;
-
-
+typedef flex_uint8_t YY_CHAR;
 
 
 typedef int yy_state_type;
@@ -602,7 +583,7 @@ typedef int yy_state_type;
 
 
 /* %% [1.5] DFA */
-static yyconst flex_int32_t yy_nxt[][256] =
+static const flex_int32_t yy_nxt[][256] =
     {
     {
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
@@ -1559,10 +1540,10 @@ static yyconst flex_int32_t yy_nxt[][256] =
 /* %if-c-only Standard (non-C++) definition */
 
 
-static yy_state_type yy_get_previous_state (yyscan_t yyscanner );
-static yy_state_type yy_try_NUL_trans (yy_state_type current_state  ,yyscan_t yyscanner);
-static int yy_get_next_buffer (yyscan_t yyscanner );
-static void yynoreturn yy_fatal_error (yyconst char* msg ,yyscan_t yyscanner );
+static yy_state_type yy_get_previous_state ( yyscan_t yyscanner );
+static yy_state_type yy_try_NUL_trans ( yy_state_type current_state  , yyscan_t yyscanner);
+static int yy_get_next_buffer ( yyscan_t yyscanner );
+static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 
 
 /* %endif */
@@ -1579,9 +1560,6 @@ static void yynoreturn yy_fatal_error (yyconst char* msg ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
 	yyg->yy_c_buf_p = yy_cp;
-
-
-
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
 #define YY_NUM_RULES 10
 #define YY_END_OF_BUFFER 11
@@ -1592,7 +1570,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int32_t yy_accept[30] =
+static const flex_int32_t yy_accept[30] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,   11,    9,
@@ -1601,20 +1579,20 @@ static yyconst flex_int32_t yy_accept[30] =
 
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[11] =
+static const flex_int32_t yy_rule_can_match_eol[11] =
     {   0,
 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,     };
 
-static yyconst yy_state_type yy_NUL_trans[30] =
+static const yy_state_type yy_NUL_trans[30] =
     {   0,
        20,   20,   22,   22,   23,   23,   24,   24,   25,   25,
        26,   26,   27,   27,   28,   28,   20,   20,    0,    0,
         0,    0,    0,    0,    0,    0,    0,   29,    0
     } ;
 
-static yyconst flex_int32_t yy_rule_linenum[10] =
+static const flex_int32_t yy_rule_linenum[10] =
     {   0,
-       72,   77,   85,   93,  101,  109,  117,  135,  157
+       90,   95,  102,  109,  116,  123,  130,  147,  169
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1732,7 +1710,7 @@ struct yyguts_t
 
 /* %if-c-only */
 
-static int yy_init_globals (yyscan_t yyscanner );
+static int yy_init_globals ( yyscan_t yyscanner );
 
 /* %endif */
 
@@ -1746,7 +1724,7 @@ static int yy_init_globals (yyscan_t yyscanner );
 
 int ARDrone_MAVLink_Scanner_lex_init (yyscan_t* scanner);
 
-int ARDrone_MAVLink_Scanner_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+int ARDrone_MAVLink_Scanner_lex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
 
 /* %endif */
 
@@ -1756,66 +1734,66 @@ int ARDrone_MAVLink_Scanner_lex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t*
    These are made visible to non-reentrant scanners for convenience. */
 
 
-int ARDrone_MAVLink_Scanner_lex_destroy (yyscan_t yyscanner );
+int ARDrone_MAVLink_Scanner_lex_destroy ( yyscan_t yyscanner );
 
 
 
-int ARDrone_MAVLink_Scanner_get_debug (yyscan_t yyscanner );
+int ARDrone_MAVLink_Scanner_get_debug ( yyscan_t yyscanner );
 
 
 
-void ARDrone_MAVLink_Scanner_set_debug (int debug_flag ,yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_set_debug ( int debug_flag , yyscan_t yyscanner );
 
 
 
-YY_EXTRA_TYPE ARDrone_MAVLink_Scanner_get_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE ARDrone_MAVLink_Scanner_get_extra ( yyscan_t yyscanner );
 
 
 
-void ARDrone_MAVLink_Scanner_set_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_set_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_MAVLink_Scanner_get_in (yyscan_t yyscanner );
+FILE *ARDrone_MAVLink_Scanner_get_in ( yyscan_t yyscanner );
 
 
 
-void ARDrone_MAVLink_Scanner_set_in  (FILE * _in_str ,yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_set_in  ( FILE * _in_str , yyscan_t yyscanner );
 
 
 
-FILE *ARDrone_MAVLink_Scanner_get_out (yyscan_t yyscanner );
+FILE *ARDrone_MAVLink_Scanner_get_out ( yyscan_t yyscanner );
 
 
 
-void ARDrone_MAVLink_Scanner_set_out  (FILE * _out_str ,yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_set_out  ( FILE * _out_str , yyscan_t yyscanner );
 
 
 
-			int ARDrone_MAVLink_Scanner_get_leng (yyscan_t yyscanner );
+			int ARDrone_MAVLink_Scanner_get_leng ( yyscan_t yyscanner );
 
 
 
-char *ARDrone_MAVLink_Scanner_get_text (yyscan_t yyscanner );
+char *ARDrone_MAVLink_Scanner_get_text ( yyscan_t yyscanner );
 
 
 
-int ARDrone_MAVLink_Scanner_get_lineno (yyscan_t yyscanner );
+int ARDrone_MAVLink_Scanner_get_lineno ( yyscan_t yyscanner );
 
 
 
-void ARDrone_MAVLink_Scanner_set_lineno (int _line_number ,yyscan_t yyscanner );
-
-
-
-
-int ARDrone_MAVLink_Scanner_get_column  (yyscan_t yyscanner );
+void ARDrone_MAVLink_Scanner_set_lineno ( int _line_number , yyscan_t yyscanner );
 
 
 
 
+int ARDrone_MAVLink_Scanner_get_column  ( yyscan_t yyscanner );
 
-void ARDrone_MAVLink_Scanner_set_column (int _column_no ,yyscan_t yyscanner );
+
+
+
+
+void ARDrone_MAVLink_Scanner_set_column ( int _column_no , yyscan_t yyscanner );
 
 
 
@@ -1828,14 +1806,13 @@ void ARDrone_MAVLink_Scanner_set_column (int _column_no ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner );
+extern "C" int ARDrone_MAVLink_Scanner_wrap ( yyscan_t yyscanner );
 #else
-extern int ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner );
+extern int ARDrone_MAVLink_Scanner_wrap ( yyscan_t yyscanner );
 #endif
 #endif
 
 /* %not-for-header */
-
 #ifndef YY_NO_UNPUT
     
 #endif
@@ -1844,21 +1821,20 @@ extern int ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner );
 /* %endif */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
+static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
+static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
 /* %if-c-only Standard (non-C++) definition */
 /* %not-for-header */
-
 #ifdef __cplusplus
-static int yyinput (yyscan_t yyscanner );
+static int yyinput ( yyscan_t yyscanner );
 #else
-static int input (yyscan_t yyscanner );
+static int input ( yyscan_t yyscanner );
 #endif
 /* %ok-for-header */
 
@@ -1906,7 +1882,7 @@ static int input (yyscan_t yyscanner );
 #define YY_INPUT(buf,result,max_size) \
 /* %% [5.0] fread()/read() definition of YY_INPUT goes here unless we're doing C++ \ */\
 	errno=0; \
-	while ( (result = (int) read( fileno(yyin), buf, max_size )) < 0 ) \
+	while ( (result = (int) read( fileno(yyin), buf, (yy_size_t) max_size )) < 0 ) \
 	{ \
 		if( errno != EINTR) \
 		{ \
@@ -1951,11 +1927,9 @@ static int input (yyscan_t yyscanner );
 
 /* %if-tables-serialization structures and prototypes */
 /* %not-for-header */
-
 /* %ok-for-header */
 
 /* %not-for-header */
-
 /* %tables-yydmap generated elements */
 /* %endif */
 /* end tables serialization structures and prototypes */
@@ -2009,7 +1983,6 @@ extern int ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner);
 
 
 /* %not-for-header */
-
 /** The main scanner function which does all the work.
  */
 YY_DECL
@@ -2064,15 +2037,21 @@ YY_DECL
 	{
 /* %% [7.0] user's declarations go here */
 
-  // sanity check(s)
-  ACE_ASSERT (iscanner_in);
 
-  ARDrone_MAVLink_IParser_t* iparser_p =
-    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_in->getP ());
+
   // sanity check(s)
+  ACE_ASSERT (yyscanner);
+
+  ARDrone_MAVLink_IScanner_t* iscanner_p =
+    ARDrone_MAVLink_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iscanner_p);
+  ARDrone_MAVLink_IParser_t* iparser_p =
+    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_p->getP_2 ());
   ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
+
+
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2105,7 +2084,7 @@ yy_find_action:
 
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
-			yy_size_t yyl;
+			int yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
 					   
@@ -2154,8 +2133,7 @@ YY_RULE_SETUP
                                     message_p->len =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (sequence);
-                                  }
+                                    BEGIN (sequence); }
 	YY_BREAK
 // end <length>
 
@@ -2166,8 +2144,7 @@ YY_RULE_SETUP
                                     message_p->seq =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (system_id);
-                                  }
+                                    BEGIN (system_id); }
 	YY_BREAK
 // end <sequence>
 
@@ -2178,8 +2155,7 @@ YY_RULE_SETUP
                                     message_p->sysid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (component_id);
-                                  }
+                                    BEGIN (component_id); }
 	YY_BREAK
 // end <system_id>
 
@@ -2190,8 +2166,7 @@ YY_RULE_SETUP
                                     message_p->compid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (message_id);
-                                  }
+                                    BEGIN (message_id); }
 	YY_BREAK
 // end <component_id>
 
@@ -2202,8 +2177,7 @@ YY_RULE_SETUP
                                     message_p->msgid =
                                       *reinterpret_cast<uint8_t*> (yytext);
 
-                                    BEGIN (data);
-                                  }
+                                    BEGIN (data); }
 	YY_BREAK
 // end <message_id>
 
@@ -2224,8 +2198,7 @@ YY_RULE_SETUP
                                       c = yyinput (yyscanner);
                                     ACE_UNUSED_ARG (c);
 
-                                    BEGIN (_checksum);
-                                  }
+                                    BEGIN (_checksum); }
 	YY_BREAK
 // end <data>
 
@@ -2247,12 +2220,11 @@ YY_RULE_SETUP
                                       iparser_p->record (message_2);
                                     } catch (...) {
                                       ACE_DEBUG ((LM_ERROR,
-                                                  ACE_TEXT ("failed to Net_IRecordParser_T::record(), aborting\n")));
+                                                  ACE_TEXT ("failed to Stream_IYaccStreamParser_T::record(), aborting\n")));
                                       yyterminate ();
                                     }
 
-                                    BEGIN (INITIAL);
-                                  }
+                                    BEGIN (INITIAL); }
 	YY_BREAK
 // end <checksum>
 case YY_STATE_EOF(INITIAL):
@@ -2416,7 +2388,6 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 
 /* %if-c++-only */
 /* %not-for-header */
-
 /* %ok-for-header */
 
 /* %endif */
@@ -2438,7 +2409,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
 	char *source = yyg->yytext_ptr;
-	yy_size_t number_to_move, i;
+	int number_to_move, i;
 	int ret_val;
 
 	if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
@@ -2467,7 +2438,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (yy_size_t) (yyg->yy_c_buf_p - yyg->yytext_ptr) - 1;
+	number_to_move = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -2503,7 +2474,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					ARDrone_MAVLink_Scanner_realloc((void *) b->yy_ch_buf,b->yy_buf_size + 2 ,yyscanner );
+					ARDrone_MAVLink_Scanner_realloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2) ,yyscanner );
 				}
 			else
 				/* Can't grow it, we don't own it. */
@@ -2549,10 +2520,10 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((int) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if ((yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) ARDrone_MAVLink_Scanner_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) ARDrone_MAVLink_Scanner_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size ,yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
 	}
@@ -2571,7 +2542,6 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 /* %if-c-only */
 /* %not-for-header */
-
     static yy_state_type yy_get_previous_state (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
@@ -2657,7 +2627,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			int offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			int offset = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr);
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -2819,12 +2789,12 @@ static void ARDrone_MAVLink_Scanner__load_buffer_state  (yyscan_t yyscanner)
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_MAVLink_Scanner__create_buffer()" );
 
-	b->yy_buf_size = (yy_size_t)size;
+	b->yy_buf_size = size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) ARDrone_MAVLink_Scanner_alloc(b->yy_buf_size + 2 ,yyscanner );
+	b->yy_ch_buf = (char *) ARDrone_MAVLink_Scanner_alloc((yy_size_t) (b->yy_buf_size + 2) ,yyscanner );
 	if ( ! b->yy_ch_buf )
 		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_MAVLink_Scanner__create_buffer()" );
 
@@ -3017,7 +2987,7 @@ static void ARDrone_MAVLink_Scanner_ensure_buffer_stack (yyscan_t yyscanner)
 /* %if-c++-only */
 /* %endif */
 {
-	int num_to_alloc;
+	yy_size_t num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	if (!yyg->yy_buffer_stack) {
@@ -3086,7 +3056,7 @@ YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_buffer  (char * base, yy_size_t  s
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_MAVLink_Scanner__scan_buffer()" );
 
-	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
 	b->yy_input_file = NULL;
@@ -3114,7 +3084,7 @@ YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_buffer  (char * base, yy_size_t  s
  * @note If you want to scan bytes that may contain NUL values, then use
  *       ARDrone_MAVLink_Scanner__scan_bytes() instead.
  */
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_string (yyconst char * yystr , yyscan_t yyscanner)
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_string (const char * yystr , yyscan_t yyscanner)
 {
     
 	return ARDrone_MAVLink_Scanner__scan_bytes(yystr,(int) strlen(yystr) ,yyscanner);
@@ -3132,15 +3102,15 @@ YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_string (yyconst char * yystr , yys
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	yy_size_t i;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = (yy_size_t) _yybytes_len + 2;
+	n = (yy_size_t) (_yybytes_len + 2);
 	buf = (char *) ARDrone_MAVLink_Scanner_alloc(n ,yyscanner );
 	if ( ! buf )
 		YY_FATAL_ERROR( "out of dynamic memory in ARDrone_MAVLink_Scanner__scan_bytes()" );
@@ -3178,7 +3148,7 @@ YY_BUFFER_STATE ARDrone_MAVLink_Scanner__scan_bytes  (yyconst char * yybytes, in
 #endif
 
 /* %if-c-only */
-static void yynoreturn yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
+static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 {
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	(void)yyg;
@@ -3408,9 +3378,7 @@ void ARDrone_MAVLink_Scanner_set_debug (int  _bdebug , yyscan_t yyscanner)
  * the ONLY reentrant function that doesn't take the scanner as the last argument.
  * That's why we explicitly handle the declaration, instead of using our macros.
  */
-
 int ARDrone_MAVLink_Scanner_lex_init(yyscan_t* ptr_yy_globals)
-
 {
     if (ptr_yy_globals == NULL){
         errno = EINVAL;
@@ -3438,9 +3406,7 @@ int ARDrone_MAVLink_Scanner_lex_init(yyscan_t* ptr_yy_globals)
  * The user defined value in the first argument will be available to ARDrone_MAVLink_Scanner_alloc in
  * the yyextra field.
  */
-
 int ARDrone_MAVLink_Scanner_lex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
-
 {
     struct yyguts_t dummy_yyguts;
 
@@ -3561,7 +3527,7 @@ int ARDrone_MAVLink_Scanner_lex_destroy  (yyscan_t yyscanner)
 
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
+static void yy_flex_strncpy (char* s1, const char * s2, int n , yyscan_t yyscanner)
 {
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	(void)yyg;
@@ -3575,7 +3541,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yysca
 
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
+static int yy_flex_strlen (const char * s , yyscan_t yyscanner)
 {
 	int n;
 	for ( n = 0; s[n]; ++n )
@@ -3634,7 +3600,6 @@ void ARDrone_MAVLink_Scanner_free (void * ptr , yyscan_t yyscanner)
 
 
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -3678,7 +3643,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   {
     // *NOTE*: most probable reason: received session end message
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to Common_IScanner::switchBuffer(), aborting\n")));
+                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
     return 1;
   } // end IF
 
