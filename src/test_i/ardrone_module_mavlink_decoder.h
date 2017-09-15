@@ -110,7 +110,7 @@ class ARDrone_Module_MAVLinkDecoder_T
   virtual void waitBuffer ();
   virtual void error (const std::string&);
   inline virtual void debug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_MAVLink_Scanner_set_debug ((debug_in ? 1 : 0), state_in); };
-  inline virtual bool initialize (yyscan_t& state_inout, struct Common_ScannerState* state2_in) { ACE_ASSERT (state_inout); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, &state_inout); return (result == 0); };
+  inline virtual bool initialize (yyscan_t& state_inout, struct Common_ScannerState* state2_in) { ACE_ASSERT (!state_inout); ACE_UNUSED_ARG (state2_in); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, &state_inout); return (result == 0); };
   inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; };
   inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__scan_buffer (buffer_in, size_in, state_in); };
   inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; };
