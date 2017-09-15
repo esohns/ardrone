@@ -2801,7 +2801,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5;
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
   std::string address_string =
     ACE_TEXT_ALWAYS_CHAR (gtk_entry_get_text (entry_p));
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
@@ -2825,6 +2825,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (iterator_4 != cb_data_p->configuration->streamConfigurations.end ());
   iterator_5 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_5 != (*iterator_4).second.end ());
+  iterator_6 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+  ACE_ASSERT (iterator_6 != (*iterator_4).second.end ());
   // retrieve buffer
   spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -3103,10 +3105,10 @@ continue_:
       video_info_header_p->bmiHeader.biSizeImage =
         DIBSIZE (video_info_header_p->bmiHeader);
 #else
-      (*iterator_5).second.sourceFormat.height =
-        ARDRONE_H264_360P_VIDEO_HEIGHT;
-      (*iterator_5).second.sourceFormat.width =
-        ARDRONE_H264_360P_VIDEO_WIDTH;
+      (*iterator_5).second.sourceFormat.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
+      (*iterator_5).second.sourceFormat.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+      (*iterator_6).second.sourceFormat.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
+      (*iterator_6).second.sourceFormat.width = ARDRONE_H264_360P_VIDEO_WIDTH;
 #endif
       break;
     }
@@ -3120,6 +3122,8 @@ continue_:
 #else
       (*iterator_5).second.sourceFormat.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
       (*iterator_5).second.sourceFormat.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+      (*iterator_6).second.sourceFormat.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
+      (*iterator_6).second.sourceFormat.width = ARDRONE_H264_720P_VIDEO_WIDTH;
 #endif
       break;
     }
@@ -3654,6 +3658,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
     if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier),
 #else
     if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier,
+                                                 const_cast<struct DBusConnection*> (WLAN_monitor_p->getP ()),
 #endif
                                                  interface_address,
                                                  gateway_address))

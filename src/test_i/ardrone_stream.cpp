@@ -1030,13 +1030,14 @@ ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
 
   // debug info
   ACE_INET_Addr local_SAP, peer_SAP;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_WLANMonitor_t* wlan_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (wlan_monitor_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (deviceIdentifier_in),
 #else
   if (!Net_Common_Tools::interfaceToIPAddress (deviceIdentifier_in,
+                                               const_cast<struct DBusConnection*> (wlan_monitor_p->getP ()),
 #endif
                                                local_SAP,
                                                peer_SAP))
