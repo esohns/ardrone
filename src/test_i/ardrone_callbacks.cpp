@@ -2127,7 +2127,7 @@ idle_update_info_display_cb (gpointer userData_in)
   for (ARDrone_EventsIterator_t iterator_2 = data_p->eventStack.begin ();
        iterator_2 != data_p->eventStack.end ();
        ++iterator_2)
-  {
+  { // step1: process event
     switch ((*iterator_2).second)
     {
       case ARDRONE_EVENT_CONNECT:
@@ -2180,14 +2180,16 @@ idle_update_info_display_cb (gpointer userData_in)
             GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
         ACE_ASSERT (drawing_area_p);
+
         unsigned int height, width;
         ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
             data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
         ACE_ASSERT (video_streamconfiguration_iterator != data_p->configuration->streamConfigurations.end ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
         ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
           (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
         ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
+
         // sanity check(s)
         ACE_ASSERT ((*iterator_3).second.filterConfiguration);
         ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration);
@@ -2200,8 +2202,12 @@ idle_update_info_display_cb (gpointer userData_in)
         height = video_info_header_p->bmiHeader.biHeight;
         width = video_info_header_p->bmiHeader.biWidth;
 #else
-        height = (*iterator_3).second.sourceFormat.height;
-        width = (*iterator_3).second.sourceFormat.width;
+        ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
+          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+        ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
+
+        height = (*iterator_4).second.sourceFormat.height;
+        width = (*iterator_4).second.sourceFormat.width;
 #endif
         gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
                                      width, height);
@@ -2214,11 +2220,12 @@ idle_update_info_display_cb (gpointer userData_in)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("invalid/unknown event type (was: %d), continuing\n"),
-                    *iterator_2));
+                    (*iterator_2).second));
         break;
       }
     } // end SWITCH
 
+    // step2: update message counter
     switch ((*iterator_2).first)
     {
       case ARDRONE_STREAM_CONTROL:

@@ -30,15 +30,15 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType>
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                             TimePolicyType,
-                             ConfigurationType,
-                             ControlMessageType,
-                             DataMessageType,
-                             SessionMessageType,
+                              TimePolicyType,
+                              ConfigurationType,
+                              ControlMessageType,
+                              DataMessageType,
+                              SessionMessageType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+                              SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
 #else
-                             SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
+                              SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
 #endif
  : inherited (stream_in)
  , buffer_ (NULL)
@@ -65,12 +65,12 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType>
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType>::~ARDrone_Module_PaVEDecoder_T ()
+                             TimePolicyType,
+                             ConfigurationType,
+                             ControlMessageType,
+                             DataMessageType,
+                             SessionMessageType,
+                             SessionDataContainerType>::~ARDrone_Module_PaVEDecoder_T ()
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::~ARDrone_Module_PaVEDecoder_T"));
 
@@ -88,13 +88,13 @@ template <ACE_SYNCH_DECL,
           typename SessionDataContainerType>
 bool
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
-                                                                   Stream_IAllocator* allocator_in)
+                             TimePolicyType,
+                             ConfigurationType,
+                             ControlMessageType,
+                             DataMessageType,
+                             SessionMessageType,
+                             SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
+                                                                    Stream_IAllocator* allocator_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::initialize"));
 
@@ -119,13 +119,13 @@ template <ACE_SYNCH_DECL,
           typename SessionDataContainerType>
 void
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType>::handleDataMessage (DataMessageType*& message_inout,
-                                                                          bool& passMessageDownstream_out)
+                             TimePolicyType,
+                             ConfigurationType,
+                             ControlMessageType,
+                             DataMessageType,
+                             SessionMessageType,
+                             SessionDataContainerType>::handleDataMessage (DataMessageType*& message_inout,
+                                                                           bool& passMessageDownstream_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::handleDataMessage"));
 
@@ -223,7 +223,7 @@ next:
                   videoMode_, video_mode_e));
       videoMode_ = video_mode_e;
 
-      // notify downstream
+      // update session data (see below) and notify downstream
       SessionDataContainerType* session_data_container_p =
         inherited::sessionData_;
       if (session_data_container_p)
@@ -341,13 +341,13 @@ template <ACE_SYNCH_DECL,
           typename SessionDataContainerType>
 void
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType>::handleSessionMessage (SessionMessageType*& message_inout,
-                                                                             bool& passMessageDownstream_out)
+                             TimePolicyType,
+                             ConfigurationType,
+                             ControlMessageType,
+                             DataMessageType,
+                             SessionMessageType,
+                             SessionDataContainerType>::handleSessionMessage (SessionMessageType*& message_inout,
+                                                                              bool& passMessageDownstream_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::handleSessionMessage"));
 
@@ -359,8 +359,34 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
   switch (message_inout->type ())
   {
-    case STREAM_SESSION_MESSAGE_BEGIN:
+    case STREAM_SESSION_MESSAGE_RESIZE:
     {
+      // update session data
+      ACE_ASSERT (inherited::sessionData_);
+
+      typename SessionDataContainerType::DATA_T& session_data_r =
+          const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
+      // *TODO*: remove type inferences
+      switch (videoMode_)
+      {
+        case ARDRONE_VIDEOMODE_360P:
+          session_data_r.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
+          session_data_r.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+          break;
+        case ARDRONE_VIDEOMODE_720P:
+          session_data_r.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
+          session_data_r.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+          break;
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: invalid/unknown video mode (was: %d), continuing\n"),
+                      inherited::mod_->name (),
+                      videoMode_));
+          break;
+        }
+      } // end SWITCH
+
       break;
     }
     default:

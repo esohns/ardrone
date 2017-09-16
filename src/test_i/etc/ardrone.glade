@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
 <interface>
-  <!-- interface-requires gtk+ 3.0 -->
+  <requires lib="gtk+" version="3.0"/>
   <object class="GtkActionGroup" id="actiongroup">
     <property name="name">actions</property>
     <child>
@@ -122,10 +123,25 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
-  <object class="GtkAdjustment" id="adjustment_data_messages">
+  <object class="GtkAdjustment" id="adjustment_data_messages_control">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_data_messages_mavlink">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_data_messages_navdata">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_data_messages_video">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment_port">
     <property name="lower">1</property>
@@ -134,10 +150,25 @@
     <property name="step_increment">1</property>
     <property name="page_increment">100</property>
   </object>
-  <object class="GtkAdjustment" id="adjustment_session_messages">
+  <object class="GtkAdjustment" id="adjustment_session_messages_control">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_session_messages_mavlink">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_session_messages_navdata">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment_session_messages_video">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
   </object>
   <object class="GtkAboutDialog" id="dialog_about">
     <property name="can_focus">False</property>
@@ -180,6 +211,89 @@
       </object>
     </child>
   </object>
+  <object class="GtkEntryCompletion" id="entrycompletion_SSID">
+    <property name="inline_completion">True</property>
+  </object>
+  <object class="GtkEntryCompletion" id="entrycompletion_address">
+    <property name="inline_completion">True</property>
+  </object>
+  <object class="GtkFileChooserDialog" id="filechooserdialog_save">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">choose a directory...</property>
+    <property name="role">GtkFileChooserDialog</property>
+    <property name="modal">True</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon">ardrone_small.png</property>
+    <property name="type_hint">dialog</property>
+    <property name="action">select-folder</property>
+    <property name="local_only">False</property>
+    <property name="preview_widget_active">False</property>
+    <property name="show_hidden">True</property>
+    <property name="use_preview_label">False</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="filechooserdialog-vbox2">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="filechooserdialog-action_area2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkListStore" id="liststore_display_device">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name device -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_display_format">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gint"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_save_format">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name GUID -->
+      <column type="gchararray"/>
+      <!-- column-name enum -->
+      <column type="gint"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_wlan_interface">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name GUID -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="dialog_main">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -192,6 +306,58 @@
       <object class="GtkBox" id="vbox_main">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="hbuttonbox_main">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="homogeneous">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_about">
+                <property name="label">gtk-about</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">show information</property>
+                <property name="relief">half</property>
+                <property name="use_stock">True</property>
+                <property name="focus_on_click">False</property>
+                <signal name="clicked" handler="button_about_clicked_cb" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_quit">
+                <property name="label">gtk-quit</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">quit</property>
+                <property name="relief">half</property>
+                <property name="use_stock">True</property>
+                <property name="focus_on_click">False</property>
+                <signal name="clicked" handler="button_quit_clicked_cb" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkHBox" id="hbox_main">
             <property name="visible">True</property>
@@ -418,8 +584,8 @@
                                                 <property name="primary_icon_activatable">False</property>
                                                 <property name="primary_icon_sensitive">False</property>
                                                 <property name="primary_icon_tooltip_text" translatable="yes">address</property>
-                                                <signal name="insert-text" handler="entry_address_insert_text_cb" swapped="no"/>
                                                 <signal name="delete-text" handler="entry_address_delete_text_cb" swapped="no"/>
+                                                <signal name="insert-text" handler="entry_address_insert_text_cb" swapped="no"/>
                                               </object>
                                               <packing>
                                                 <property name="expand">False</property>
@@ -465,7 +631,6 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
                                                 <property name="n_columns">2</property>
-                                                <property name="homogeneous">True</property>
                                                 <child>
                                                   <object class="GtkLabel" id="label_buffersize">
                                                     <property name="visible">True</property>
@@ -474,6 +639,10 @@
                                                     <property name="label" translatable="yes">buffer</property>
                                                     <property name="track_visited_links">False</property>
                                                   </object>
+                                                  <packing>
+                                                    <property name="x_options"/>
+                                                    <property name="x_padding">2</property>
+                                                  </packing>
                                                 </child>
                                                 <child>
                                                   <object class="GtkSpinButton" id="spinbutton_buffersize">
@@ -483,6 +652,7 @@
                                                     <property name="receives_default">True</property>
                                                     <property name="has_tooltip">True</property>
                                                     <property name="tooltip_text" translatable="yes">bytes</property>
+                                                    <property name="has_frame">False</property>
                                                     <property name="invisible_char">●</property>
                                                     <property name="xalign">1</property>
                                                     <property name="caps_lock_warning">False</property>
@@ -937,6 +1107,7 @@
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
                                     <property name="can_focus">False</property>
+                                    <property name="xpad">2</property>
                                     <property name="label" translatable="yes">mavlink</property>
                                     <property name="track_visited_links">False</property>
                                   </object>
@@ -953,16 +1124,17 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">session messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
                                     <property name="primary_icon_activatable">False</property>
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="adjustment">adjustment_session_messages</property>
+                                    <property name="adjustment">adjustment_session_messages_mavlink</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -992,12 +1164,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">session messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_session_messages</property>
+                                    <property name="adjustment">adjustment_session_messages_navdata</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1028,12 +1201,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">session messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_session_messages</property>
+                                    <property name="adjustment">adjustment_session_messages_control</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1048,12 +1222,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">data messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_data_messages</property>
+                                    <property name="adjustment">adjustment_data_messages_control</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>
@@ -1081,12 +1256,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">data messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_data_messages</property>
+                                    <property name="adjustment">adjustment_data_messages_navdata</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>
@@ -1118,12 +1294,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">data messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_data_messages</property>
+                                    <property name="adjustment">adjustment_data_messages_mavlink</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>
@@ -1155,16 +1332,17 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">session messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
                                     <property name="primary_icon_activatable">False</property>
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="adjustment">adjustment_session_messages</property>
+                                    <property name="adjustment">adjustment_session_messages_video</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1181,12 +1359,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">data messages</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="adjustment">adjustment_data_messages</property>
+                                    <property name="adjustment">adjustment_data_messages_video</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>
@@ -1231,6 +1410,10 @@
                                     <property name="label" translatable="yes">connections</property>
                                     <property name="track_visited_links">False</property>
                                   </object>
+                                  <packing>
+                                    <property name="x_options"/>
+                                    <property name="x_padding">2</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkSpinButton" id="spinbutton_connections">
@@ -1240,9 +1423,9 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">connections</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
                                     <property name="primary_icon_activatable">False</property>
                                     <property name="secondary_icon_activatable">False</property>
@@ -1250,6 +1433,7 @@
                                     <property name="secondary_icon_sensitive">False</property>
                                     <property name="adjustment">adjustment_connections</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1267,6 +1451,7 @@
                                   <packing>
                                     <property name="top_attach">1</property>
                                     <property name="bottom_attach">2</property>
+                                    <property name="x_options"/>
                                   </packing>
                                 </child>
                                 <child>
@@ -1277,12 +1462,13 @@
                                     <property name="has_tooltip">True</property>
                                     <property name="tooltip_text" translatable="yes">bytes</property>
                                     <property name="editable">False</property>
+                                    <property name="has_frame">False</property>
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
-                                    <property name="invisible_char_set">True</property>
                                     <property name="caps_lock_warning">False</property>
                                     <property name="adjustment">adjustment_data</property>
                                     <property name="numeric">True</property>
+                                    <property name="wrap">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1303,6 +1489,7 @@
                                   <packing>
                                     <property name="top_attach">2</property>
                                     <property name="bottom_attach">3</property>
+                                    <property name="x_options"/>
                                   </packing>
                                 </child>
                                 <child>
@@ -1376,8 +1563,8 @@
                         <property name="double_buffered">False</property>
                         <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
-                        <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
                         <signal name="configure-event" handler="drawingarea_video_configure_cb" swapped="no"/>
+                        <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
                         <signal name="key-press-event" handler="drawingarea_video_key_press_event_cb" swapped="no"/>
                         <signal name="realize" handler="drawingarea_video_realize_cb" swapped="no"/>
                         <signal name="size-allocate" handler="drawingarea_video_size_allocate_cb" swapped="no"/>
@@ -1451,58 +1638,6 @@
             <property name="position">2</property>
           </packing>
         </child>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="hbuttonbox_main">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="homogeneous">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button_about">
-                <property name="label">gtk-about</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">show information</property>
-                <property name="relief">half</property>
-                <property name="use_stock">True</property>
-                <property name="focus_on_click">False</property>
-                <signal name="clicked" handler="button_about_clicked_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button_quit">
-                <property name="label">gtk-quit</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">quit</property>
-                <property name="relief">half</property>
-                <property name="use_stock">True</property>
-                <property name="focus_on_click">False</property>
-                <signal name="clicked" handler="button_quit_clicked_cb" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">3</property>
-          </packing>
-        </child>
       </object>
     </child>
     <action-widgets>
@@ -1510,100 +1645,6 @@
       <action-widget response="0">button_quit</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkEntryCompletion" id="entrycompletion_SSID">
-    <property name="inline_completion">True</property>
-  </object>
-  <object class="GtkEntryCompletion" id="entrycompletion_address">
-    <property name="inline_completion">True</property>
-  </object>
-  <object class="GtkFileChooserDialog" id="filechooserdialog_save">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">choose a directory...</property>
-    <property name="role">GtkFileChooserDialog</property>
-    <property name="modal">True</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="icon">ardrone_small.png</property>
-    <property name="type_hint">dialog</property>
-    <property name="action">select-folder</property>
-    <property name="local_only">False</property>
-    <property name="preview_widget_active">False</property>
-    <property name="show_hidden">True</property>
-    <property name="use_preview_label">False</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="filechooserdialog-vbox2">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="filechooserdialog-action_area2">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkListStore" id="liststore_display_device">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name device -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_display_format">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name value -->
-      <column type="gint"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_save_format">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name GUID -->
-      <column type="gchararray"/>
-      <!-- column-name enum -->
-      <column type="gint"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_wlan_interface">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name GUID -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkAdjustment" id="scrolledwindow_hadjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="scrolledwindow_vadjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkTextBuffer" id="textbuffer_log"/>
   <object class="GtkWindow" id="window_fullscreen">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">ARDrone</property>
@@ -1624,11 +1665,22 @@
         <property name="can_focus">False</property>
         <property name="events">GDK_EXPOSURE_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
         <property name="double_buffered">False</property>
-        <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
         <signal name="configure-event" handler="drawingarea_video_configure_cb" swapped="no"/>
+        <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
         <signal name="realize" handler="drawingarea_video_realize_cb" swapped="no"/>
         <signal name="size-allocate" handler="drawingarea_video_size_allocate_cb" swapped="no"/>
       </object>
     </child>
   </object>
+  <object class="GtkAdjustment" id="scrolledwindow_hadjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="scrolledwindow_vadjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer_log"/>
 </interface>

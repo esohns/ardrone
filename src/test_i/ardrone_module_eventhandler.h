@@ -78,6 +78,14 @@ class ARDrone_Module_EventHandler
 
   typedef std::map<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_MAP_T;
   typedef SESSIONID_TO_STREAM_MAP_T::iterator SESSIONID_TO_STREAM_MAP_ITERATOR_T;
+  typedef std::pair<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_PAIR_T;
+  struct SESSIONID_TO_STREAM_MAP_FIND_S
+   : public std::binary_function<SESSIONID_TO_STREAM_PAIR_T,
+                                 enum ARDrone_StreamType,
+                                 bool>
+  {
+    inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; };
+  };
 
   SESSIONID_TO_STREAM_MAP_T streams_;
 };

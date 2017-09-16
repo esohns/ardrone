@@ -168,11 +168,12 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 
   if (message_event)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    iterator =
-      GtkCBData_->progressData->statistic.streamStatistic.find (stream_type_e);
-    ACE_ASSERT (iterator != GtkCBData_->progressData->statistic.streamStatistic.end ());
-    (*iterator).second.bytes += message_in.total_length ();
-    GtkCBData_->progressData->statistic.bytes += message_in.total_length ();
+//    iterator =
+//      GtkCBData_->progressData->statistic.streamStatistic.find (stream_type_e);
+//    ACE_ASSERT (iterator != GtkCBData_->progressData->statistic.streamStatistic.end ());
+//    (*iterator).second.bytes += message_in.total_length ();
+//    ++(*iterator).second.dataMessages;
+//    +GtkCBData_->progressData->statistic;
 
     GtkCBData_->eventStack.push_back (std::make_pair (stream_type_e,
                                                       ARDRONE_EVENT_MESSAGE_DATA));
@@ -209,7 +210,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
 
-  // update mapping ?
+  // update session id <-> stream mapping ?
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
@@ -247,9 +248,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     stream_type_e = (*iterator).second;
   } // end lock scope
 
-  // sanity check(s)
-  ACE_ASSERT (GtkCBData_->progressData);
-
   switch (message_in.type ())
   {
     case STREAM_SESSION_MESSAGE_CONNECT:
@@ -262,12 +260,60 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
     case STREAM_SESSION_MESSAGE_LINK:
       break;
     case STREAM_SESSION_MESSAGE_RESIZE:
+    {
+      // sanity check(s)
+      ACE_ASSERT (GtkCBData_->configuration);
+
       event_e = ARDRONE_EVENT_RESIZE;
+
+      // update configuration (reused by gtk callback(s))
+      const ARDrone_StreamSessionData_t& session_data_container_r =
+        message_in.getR ();
+      struct ARDrone_SessionData& session_data_r =
+        const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+
+      ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
+          GtkCBData_->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+      ACE_ASSERT (video_streamconfiguration_iterator != GtkCBData_->configuration->streamConfigurations.end ());
+      ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
+      ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
+        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+      ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
+
+      if (session_data_r.lock)
+      {
+        result = session_data_r.lock->acquire ();
+        if (result == -1)
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
+      } // end IF
+
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+        (*iterator_3).second.sourceFormat.height = session_data_r.height;
+        (*iterator_3).second.sourceFormat.width = session_data_r.width;
+        (*iterator_4).second.sourceFormat.height = session_data_r.height;
+        (*iterator_4).second.sourceFormat.width = session_data_r.width;
+      } // end lock scope
+
+      if (session_data_r.lock)
+      {
+        result = session_data_r.lock->release ();
+        if (result == -1)
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n")));
+      } // end IF
+
       break;
+    }
     case STREAM_SESSION_MESSAGE_UNLINK:
       break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
+      // sanity check(s)
+      ACE_ASSERT (GtkCBData_->progressData);
+
       const ARDrone_StreamSessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
@@ -282,8 +328,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       } // end IF
 
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-        // *NOTE*: this merges and combines the statistic data
-        GtkCBData_->progressData->statistic += session_data_r.statistic;
+        GtkCBData_->progressData->statistic = session_data_r.statistic;
       } // end lock scope
 
       if (session_data_r.lock)
