@@ -81,43 +81,93 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleSessionMessage"));
 
-  Stream_SessionId_t session_id = message_inout->sessionId ();
-  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
   const ARDrone_StreamSessionData_t& session_data_container_r =
     message_inout->getR ();
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+
+  Stream_SessionId_t session_id = message_inout->sessionId ();
+  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
   if (iterator == streams_.end ())
+  {
+    // remove prior entries of the same stream type
+    iterator =
+      std::find_if (streams_.begin (), streams_.end (),
+                    std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
+                                  session_data_r.state->type));
+    if (iterator != streams_.end ())
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
+                  inherited::mod_->name (),
+                  session_data_r.state->type,
+                  (*iterator).first));
+
+      SESSION_DATA_ITERATOR_T iterator_2;
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
+        iterator_2 =
+            inherited::sessionData_.find ((*iterator).first);
+        ACE_ASSERT (iterator_2 != inherited::sessionData_.end ());
+        (*iterator_2).second->decrease ();
+        inherited::sessionData_.erase (iterator_2);
+      } // end lock scope
+
+      streams_.erase (iterator);
+    } // end IF
+
     streams_.insert (std::make_pair (session_id,
                                      session_data_r.state->type));
+  } // end IF
 
   if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
   {
     // retain statistic data for each stream separately
     // *TODO*: consider moving this into a base-class
+
     SESSION_DATA_ITERATOR_T iterator_2;
     struct ARDrone_SessionData* session_data_p = NULL;
+    ARDroneStreamStatisticIterator_t iterator_3, iterator_4;
+    struct ARDrone_Statistic statistic_s;
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
+      // step1: 'sink' this streams' data
       iterator_2 = inherited::sessionData_.find (session_id);
-      if (iterator_2 == inherited::sessionData_.end ())
-        goto continue_;
+      ACE_ASSERT (iterator_2 != inherited::sessionData_.end ());
       ACE_ASSERT ((*iterator_2).second);
       session_data_p =
         &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
       ACE_ASSERT (session_data_p->lock);
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_p->lock);
-        // *NOTE*: this merges and combines the statistic data
-        session_data_p->statistic += session_data_r.statistic;
+      ACE_ASSERT (session_data_p->state);
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard_2, *session_data_p->lock);
+        iterator_3 =
+            session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
+        ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
+        (*iterator_3).second = session_data_r.statistic;
       } // end lock scope
+
+      // step2: merge everything
+      for (iterator_2 = inherited::sessionData_.begin ();
+           iterator_2 != inherited::sessionData_.end ();
+           ++iterator_2)
+      {
+        session_data_p =
+          &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
+        ACE_ASSERT (session_data_p->state);
+        iterator_3 =
+            session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
+        ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
+        iterator_4 =
+            statistic_s.streamStatistic.find (session_data_p->state->type);
+        ACE_ASSERT (iterator_4 != statistic_s.streamStatistic.end ());
+        (*iterator_4).second = (*iterator_3).second;
+      } // end FOR
     } // end lock scope
+    // step3: combine everything
+    +statistic_s;
 
     // update message session data
-    ACE_ASSERT (iterator != streams_.end ());
-    ARDroneStreamStatisticIterator_t iterator_3;
     ACE_ASSERT (session_data_r.lock);
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *session_data_r.lock);
-      // *TODO*: consider locking session_data_p here
-      session_data_r.statistic = session_data_p->statistic;
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard_3, *session_data_r.lock);
+      session_data_r.statistic = statistic_s;
     } // end lock scope
   } // end IF
 

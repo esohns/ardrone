@@ -136,7 +136,7 @@ struct ARDrone_ConnectionConfiguration;
 struct ARDrone_UserData
  : Net_UserData
 {
-  inline ARDrone_UserData ()
+  ARDrone_UserData ()
    : Net_UserData ()
    , connectionConfiguration (NULL)
   {};
@@ -173,31 +173,23 @@ struct ARDrone_Statistic
                                             Stream_Statistic ()));
   };
 
-  struct ARDrone_Statistic operator+= (const struct ARDrone_Statistic& rhs_in)
+  struct ARDrone_Statistic operator+ ()
   {
-    // *NOTE*: the idea is to merge and combine the data
+    // *NOTE*: the idea is to merge the data
 
-    // step1: merge the session data
-    ARDroneStreamStatisticIterator_t iterator;
-    for (ARDroneStreamStatisticConstIterator_t iterator_2 = rhs_in.streamStatistic.begin ();
-         iterator_2 != rhs_in.streamStatistic.end ();
-         ++iterator_2)
+    Stream_Statistic::operator~ ();
+    for (ARDroneStreamStatisticConstIterator_t iterator = streamStatistic.begin ();
+         iterator != streamStatistic.end ();
+         ++iterator)
     {
-      iterator = streamStatistic.find ((*iterator_2).first);
-      ACE_ASSERT (iterator != streamStatistic.end ());
-      (*iterator).second += (*iterator_2).second;
-      (*iterator).second.bytesPerSecond = (*iterator_2).second.bytesPerSecond;
-      (*iterator).second.messagesPerSecond =
-        (*iterator_2).second.messagesPerSecond;
-      (*iterator).second.timeStamp = (*iterator_2).second.timeStamp;
-    } // end FOR
+      *static_cast<struct Stream_Statistic*> (this) += (*iterator).second;
+      bytesPerSecond += (*iterator).second.bytesPerSecond;
+      messagesPerSecond += (*iterator).second.messagesPerSecond;
 
-    // step2: combine the session data
-    Stream_Statistic ();
-    for (ARDroneStreamStatisticConstIterator_t iterator_2 = streamStatistic.begin ();
-         iterator_2 != streamStatistic.end ();
-         ++iterator_2)
-      *static_cast<struct Stream_Statistic*> (this) += (*iterator_2).second;
+      timeStamp =
+          ((timeStamp > (*iterator).second.timeStamp) ? timeStamp
+                                                      : (*iterator).second.timeStamp);
+    } // end FOR
 
     return *this;
   };
