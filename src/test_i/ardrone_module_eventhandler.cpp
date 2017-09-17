@@ -45,35 +45,12 @@ ARDrone_Module_EventHandler::handleDataMessage (ARDrone_Message*& message_inout,
   if (!passMessageDownstream_out)
     return;
 
-  //enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
-  //switch (message_inout->type ())
-  //{
-  //  case ARDRONE_MESSAGE_ATCOMMAND:
-  //    stream_type_e = ARDRONE_STREAM_NAVDATA; break;
-  //  case ARDRONE_MESSAGE_CONTROL:
-  //    stream_type_e = ARDRONE_STREAM_CONTROL; break;
-  //  case ARDRONE_MESSAGE_MAVLINK:
-  //    stream_type_e = ARDRONE_STREAM_MAVLINK; break;
-  //  case ARDRONE_MESSAGE_NAVDATA:
-  //    stream_type_e = ARDRONE_STREAM_NAVDATA; break;
-  //  case ARDRONE_MESSAGE_VIDEO:
-  //    stream_type_e = ARDRONE_STREAM_VIDEO; break;
-  //  default:
-  //  {
-  //    ACE_DEBUG ((LM_ERROR,
-  //                ACE_TEXT ("%s: invalid/unknown message type (was: %d), returning\n"),
-  //                inherited::mod_->name (),
-  //                message_inout->type ()));
-  //    return;
-  //  }
-  //} // end SWITCH
-
-  if (message_inout->type () != ARDRONE_MESSAGE_ATCOMMAND)
-  {
-    message_inout->release ();
-    message_inout = NULL;
-    passMessageDownstream_out = false;
-  } // end IF
+//  if (message_inout->type () != ARDRONE_MESSAGE_ATCOMMAND)
+//  {
+//    message_inout->release ();
+//    message_inout = NULL;
+//    passMessageDownstream_out = false;
+//  } // end IF
 }
 void
 ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& message_inout,
@@ -90,26 +67,28 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
   if (iterator == streams_.end ())
   {
-    // remove prior entries of the same stream type
+    // remove any prior entry of the same stream type
     iterator =
       std::find_if (streams_.begin (), streams_.end (),
                     std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
                                   session_data_r.state->type));
     if (iterator != streams_.end ())
     {
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
-                  inherited::mod_->name (),
-                  session_data_r.state->type,
-                  (*iterator).first));
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
+//                  inherited::mod_->name (),
+//                  session_data_r.state->type,
+//                  (*iterator).first));
 
       SESSION_DATA_ITERATOR_T iterator_2;
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
         iterator_2 =
             inherited::sessionData_.find ((*iterator).first);
-        ACE_ASSERT (iterator_2 != inherited::sessionData_.end ());
-        (*iterator_2).second->decrease ();
-        inherited::sessionData_.erase (iterator_2);
+        if (iterator_2 != inherited::sessionData_.end ())
+        {
+          (*iterator_2).second->decrease ();
+          inherited::sessionData_.erase (iterator_2);
+        } // end IF
       } // end lock scope
 
       streams_.erase (iterator);
@@ -131,7 +110,8 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
       // step1: 'sink' this streams' data
       iterator_2 = inherited::sessionData_.find (session_id);
-      ACE_ASSERT (iterator_2 != inherited::sessionData_.end ());
+      if (iterator_2 == inherited::sessionData_.end ())
+        goto continue_;
       ACE_ASSERT ((*iterator_2).second);
       session_data_p =
         &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());

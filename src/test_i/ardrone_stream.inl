@@ -121,16 +121,10 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_StatisticReport_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchStatisticReport_Module (this,
-                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                  false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,

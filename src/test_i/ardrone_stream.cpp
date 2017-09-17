@@ -66,28 +66,16 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_StatisticReport_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchStatisticReport_Module (this,
-                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                  false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_TCPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchTCPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_TCPSource_Module (this,
+                                                   ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
+                  false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -148,30 +136,15 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
     return false;
   } // end IF
 
-  if (configuration_in.configuration_.useReactor)
+  ARDrone_Module_TCPSource* sourceWriter_impl_p =
+      dynamic_cast<ARDrone_Module_TCPSource*> (module_p->writer ());
+  if (!sourceWriter_impl_p)
   {
-    ARDrone_Module_TCPSource* sourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_TCPSource*> (module_p->writer ());
-    if (!sourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("dynamic_cast<ARDrone_Module_TCPSource> failed, aborting\n")));
-      return false;
-    } // end IF
-    sourceWriter_impl_p->setP (&(inherited::state_));
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("dynamic_cast<ARDrone_Module_TCPSource> failed, aborting\n")));
+    return false;
   } // end IF
-  else
-  {
-    ARDrone_Module_AsynchTCPSource* asynchSourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_AsynchTCPSource*> (module_p->writer ());
-    if (!asynchSourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("dynamic_cast<ARDrone_Module_AsynchTCPSource> failed, aborting\n")));
-      return false;
-    } // end IF
-    asynchSourceWriter_impl_p->setP (&(inherited::state_));
-  } // end ELSE
+  sourceWriter_impl_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -403,16 +376,10 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_StatisticReport_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchStatisticReport_Module (this,
-                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                  false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
@@ -421,16 +388,10 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_UDPSource_Module (this,
+                                                   ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
+                  false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -455,6 +416,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
+  ARDrone_Module_UDPSource* source_impl_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -509,32 +471,9 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     goto error;
   } // end IF
 
-  if (configuration_in.configuration_.useReactor)
-  {
-    ARDrone_Module_UDPSource* sourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
-    if (!sourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_UDPSource> failed, aborting\n"),
-                  ACE_TEXT (navdata_stream_name_string_)));
-      goto error;
-    } // end IF
-    sourceWriter_impl_p->setP (&(inherited::state_));
-  } // end IF
-  else
-  {
-    ARDrone_Module_AsynchUDPSource* asynchSourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_AsynchUDPSource*> (module_p->writer ());
-    if (!asynchSourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n"),
-                  ACE_TEXT (navdata_stream_name_string_)));
-      goto error;
-    } // end IF
-    asynchSourceWriter_impl_p->setP (&(inherited::state_));
-  } // end ELSE
+  source_impl_p = dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
+  ACE_ASSERT (source_impl_p);
+  source_impl_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -1181,16 +1120,10 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_StatisticReport_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchStatisticReport_Module (this,
-                                                                 ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_StatisticReport_Module (this,
+                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                  false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
@@ -1199,16 +1132,10 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_UDPSource_Module (this,
+                                                   ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
+                  false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -1232,6 +1159,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
+  ARDrone_Module_UDPSource* source_impl_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -1304,32 +1232,9 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
     goto error;
   } // end IF
 
-  if (configuration_in.configuration_.useReactor)
-  {
-    ARDrone_Module_UDPSource* sourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
-    if (!sourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_UDPSource> failed, aborting\n"),
-                  ACE_TEXT (mavlink_stream_name_string_)));
-      goto error;
-    } // end IF
-    sourceWriter_impl_p->setP (&(inherited::state_));
-  } // end IF
-  else
-  {
-    ARDrone_Module_AsynchUDPSource* asynchSourceWriter_impl_p =
-        dynamic_cast<ARDrone_Module_AsynchUDPSource*> (module_p->writer ());
-    if (!asynchSourceWriter_impl_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_AsynchUDPSource> failed, aborting\n"),
-                  ACE_TEXT (mavlink_stream_name_string_)));
-      goto error;
-    } // end IF
-    asynchSourceWriter_impl_p->setP (&(inherited::state_));
-  } // end ELSE
+  source_impl_p = dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
+  ACE_ASSERT (source_impl_p);
+  source_impl_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it

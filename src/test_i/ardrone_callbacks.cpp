@@ -2115,6 +2115,7 @@ idle_update_info_display_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+  GtkProgressBar* progress_bar_p = NULL;
   GtkSpinButton* spin_button_p = NULL;
   bool is_session_message = false;
 
@@ -2230,6 +2231,9 @@ idle_update_info_display_cb (gpointer userData_in)
     {
       case ARDRONE_STREAM_CONTROL:
       {
+        progress_bar_p =
+          GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_CONTROL)));
         spin_button_p =
           GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                    (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_CONTROL)
@@ -2238,6 +2242,9 @@ idle_update_info_display_cb (gpointer userData_in)
       }
       case ARDRONE_STREAM_NAVDATA:
       {
+        progress_bar_p =
+          GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
         spin_button_p =
           GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                    (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_NAVDATA)
@@ -2246,6 +2253,9 @@ idle_update_info_display_cb (gpointer userData_in)
       }
       case ARDRONE_STREAM_MAVLINK:
       {
+        progress_bar_p =
+          GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
         spin_button_p =
           GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                    (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_MAVLINK)
@@ -2254,6 +2264,9 @@ idle_update_info_display_cb (gpointer userData_in)
       }
       case ARDRONE_STREAM_VIDEO:
       {
+        progress_bar_p =
+          GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
         spin_button_p =
           GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                    (is_session_message ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_VIDEO)
@@ -2272,6 +2285,8 @@ idle_update_info_display_cb (gpointer userData_in)
     gtk_spin_button_spin (spin_button_p,
                           GTK_SPIN_STEP_FORWARD,
                           1.0);
+    ACE_ASSERT (progress_bar_p);
+    gtk_progress_bar_pulse (progress_bar_p);
   } // end FOR
   data_p->eventStack.clear ();
 
@@ -2565,7 +2580,6 @@ idle_update_progress_cb (gpointer userData_in)
   } // end IF
   gtk_progress_bar_set_text (progress_bar_p,
                              ACE_TEXT_ALWAYS_CHAR (buffer));
-  gtk_progress_bar_pulse (progress_bar_p);
 
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
@@ -2602,7 +2616,6 @@ idle_update_progress_cb (gpointer userData_in)
   } // end IF
   gtk_progress_bar_set_text (progress_bar_p,
                               ACE_TEXT_ALWAYS_CHAR (buffer));
-  gtk_progress_bar_pulse (progress_bar_p);
 
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
@@ -2638,7 +2651,6 @@ idle_update_progress_cb (gpointer userData_in)
   } // end IF
   gtk_progress_bar_set_text (progress_bar_p,
                              ACE_TEXT_ALWAYS_CHAR (buffer));
-  gtk_progress_bar_pulse (progress_bar_p);
 
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
@@ -2674,7 +2686,6 @@ idle_update_progress_cb (gpointer userData_in)
   } // end IF
   gtk_progress_bar_set_text (progress_bar_p,
                              ACE_TEXT_ALWAYS_CHAR (buffer));
-  gtk_progress_bar_pulse (progress_bar_p);
 
   return G_SOURCE_CONTINUE; // --> reschedule
 }
