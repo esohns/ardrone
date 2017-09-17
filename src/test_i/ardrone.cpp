@@ -948,7 +948,6 @@ do_work (int argc_in,
   //         developer guide (this is a total mess, apparently)
   ARDrone_NavDataStream navdata_stream;
   ARDrone_VideoStream_t video_stream;
-  ARDrone_AsynchVideoStream_t asynch_video_stream;
   ARDrone_ConnectionConfigurationIterator_t iterator_2;
   Common_Timer_Manager_t* timer_manager_p = NULL;
   struct Common_TimerConfiguration timer_configuration;
@@ -1324,10 +1323,7 @@ do_work (int argc_in,
   CBData_in.controlStream = &control_stream;
   CBData_in.MAVLinkStream = &mavlink_stream;
   CBData_in.NavDataStream = &navdata_stream;
-  if (useReactor_in)
-    CBData_in.videoStream = &video_stream;
-  else
-    CBData_in.videoStream = &asynch_video_stream;
+  CBData_in.videoStream = &video_stream;
 
   if (!heap_allocator.initialize ((*video_streamconfiguration_iterator).second.allocatorConfiguration_))
   {
@@ -1497,24 +1493,12 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to initialize MAVLink stream, returning\n")));
       goto clean;
     } // end IF
-    if (useReactor_in)
+    if (!video_stream.initialize ((*video_streamconfiguration_iterator).second))
     {
-      if (!video_stream.initialize ((*video_streamconfiguration_iterator).second))
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to initialize video stream, returning\n")));
-        goto clean;
-      } // end IF
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize video stream, returning\n")));
+      goto clean;
     } // end IF
-    else
-    {
-      if (!asynch_video_stream.initialize ((*video_streamconfiguration_iterator).second))
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to initialize video stream, returning\n")));
-        goto clean;
-      } // end IF
-    } // end ELSE
 
     istream_control_p->start ();
     if (!istream_control_p->isRunning ())
@@ -1539,10 +1523,7 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to start NavData stream, returning\n")));
       goto clean;
     } // end IF
-    if (useReactor_in)
-      istream_control_p = &video_stream;
-    else
-      istream_control_p = &asynch_video_stream;
+    istream_control_p = &video_stream;
     istream_control_p->start ();
     if (!istream_control_p->isRunning ())
     {
@@ -1563,10 +1544,7 @@ do_work (int argc_in,
     istream_control_p->wait (true,
                              false,
                              false);
-    if (useReactor_in)
-      istream_control_p = &video_stream;
-    else
-      istream_control_p = &asynch_video_stream;
+    istream_control_p = &video_stream;
     istream_control_p->wait (true,
                              false,
                              false);

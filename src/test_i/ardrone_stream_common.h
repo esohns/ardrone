@@ -75,7 +75,7 @@ struct ARDrone_SessionData;
 struct ARDrone_StreamState
  : Stream_State
 {
-  inline ARDrone_StreamState ()
+  ARDrone_StreamState ()
    : sessionData (NULL)
    , type (ARDRONE_STREAM_INVALID)
    , userData (NULL)
@@ -265,7 +265,7 @@ struct ARDrone_GtkCBData;
 struct ARDrone_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {
-  inline ARDrone_ModuleHandlerConfiguration ()
+  ARDrone_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
    , block (false)
    , codecFormat (AV_PIX_FMT_YUV420P) // codec output-
@@ -375,7 +375,7 @@ typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize
 struct ARDrone_StreamConfiguration
  : Stream_Configuration
 {
-  inline ARDrone_StreamConfiguration ()
+  ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
    , GtkCBData (NULL)
    , initializeMAVLink (NULL)
@@ -395,7 +395,6 @@ typedef std::map<std::string,
                  ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
 
-typedef Stream_StatisticHandler_Reactor_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_Reactor_t;
-typedef Stream_StatisticHandler_Proactor_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_Proactor_t;
+typedef Stream_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H

@@ -112,7 +112,6 @@ class ARDrone_VideoStream_T
 };
 
 typedef ARDrone_VideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
-typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
 
 //////////////////////////////////////////
 
