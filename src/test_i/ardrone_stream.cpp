@@ -351,16 +351,10 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::load"));
 
   Stream_Module_t* module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_Controller_Module (this,
-                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchController_Module (this,
-                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
-                    false);
+  ACE_NEW_RETURN (module_p,
+                  ARDrone_Module_Controller_Module (this,
+                                                    ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
+                  false);
   modules_out.push_back (module_p);
   module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
@@ -412,7 +406,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-  struct ARDrone_SessionData* session_data_p = NULL;
+//  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -440,8 +434,8 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
   // - push them onto the stream (tail-first)
-  session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+//  session_data_p =
+//    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 
