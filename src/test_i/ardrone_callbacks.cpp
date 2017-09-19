@@ -301,7 +301,7 @@ error:
   {
     if (!ifaddrs_2->ifa_addr                                        ||
         !(ifaddrs_2->ifa_addr->sa_family == AF_INET)                ||
-        !Net_Common_Tools::interfaceIsWireless (ifaddrs_2->ifa_name))
+        !Net_Common_Tools::interfaceIsWLAN (ifaddrs_2->ifa_name))
       continue;
 
     gtk_list_store_append (listStore_in, &iterator);

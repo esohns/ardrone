@@ -89,12 +89,15 @@ class ARDrone_Module_EventHandler
 
   SESSIONID_TO_STREAM_MAP_T streams_;
 };
+typedef ARDrone_Module_EventHandler::READER_TASK_T ARDrone_EventHandler_ReaderTask_t;
 
 // declare module
-DATASTREAM_MODULE_INPUT_ONLY_A (struct ARDrone_SessionData,                // session data type
-                                enum Stream_SessionMessageType,            // session event type
-                                struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-                                Stream_INotify_t,                          // stream notification interface type
-                                ARDrone_Module_EventHandler);              // writer type
+DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                // session data type
+                            enum Stream_SessionMessageType,            // session event type
+                            struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                            Stream_INotify_t,                          // stream notification interface type
+                            ARDrone_EventHandler_ReaderTask_t,         // reader type
+                            ARDrone_Module_EventHandler,               // writer type
+                            ARDrone_Module_EventHandler);              // name
 
 #endif
