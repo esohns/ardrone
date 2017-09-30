@@ -32,7 +32,7 @@
 #include <minwindef.h>
 //#include <mfidl.h>
 #else
-#include <linux/videodev2.h>
+#include "linux/videodev2.h"
 #endif
 
 #ifdef __cplusplus

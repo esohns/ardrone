@@ -101,7 +101,7 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->getR ().getR ()).NavData.NavDataOptionOffsets.push_back (offset_in); };
 
   // implement (part of) Common_ILexScanner_T
-  inline virtual const Common_ScannerState& getR_2 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) };
+  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) };
   inline virtual const ARDrone_NavData_IParser* const getP_2 () const { return this; };
   inline virtual void setP (ARDrone_NavData_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual ACE_Message_Block* buffer () { return buffer_; };

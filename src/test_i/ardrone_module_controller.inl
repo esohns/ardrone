@@ -303,8 +303,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       socket_configuration_p =
         dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
       ACE_ASSERT (socket_configuration_p);
-      socket_configuration_p->address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                       1);
+      socket_configuration_p->peerAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                           1);
       socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_NAVDATA;
 
       if (!inherited::connection_)
@@ -322,7 +322,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: reset target address to %s\n"),
                   inherited::mod_->name (),
-                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->address).c_str ())));
+                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
 
 continue_:
       change (NAVDATA_STATE_INVALID);
@@ -426,8 +426,8 @@ error:
       struct Net_UDPSocketConfiguration* socket_configuration_p =
         dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
       ACE_ASSERT (socket_configuration_p);
-      socket_configuration_p->address.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
-                                                       1);
+      socket_configuration_p->peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
+                                                           1);
       socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_CONTROL_CONFIGURATION;
       Common_IReset* ireset_p =
         dynamic_cast<Common_IReset*> (inherited::connection_);
@@ -442,7 +442,7 @@ error:
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: reset target address to %s\n"),
                   inherited::mod_->name (),
-                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->address).c_str ())));
+                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
 
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: requesting device configuration data\n"),

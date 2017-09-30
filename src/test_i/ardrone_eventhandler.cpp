@@ -47,7 +47,7 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
 }
 
 void
-ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
+ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
                              const struct ARDrone_SessionData& sessionData_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
@@ -57,7 +57,7 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
   ACE_ASSERT (sessionData_in.state);
 
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    streams_.insert (std::make_pair (sessionID_in, sessionData_in.state->type));
+    streams_.insert (std::make_pair (sessionId_in, sessionData_in.state->type));
   } // end lock scope
 
   if (sessionData_in.state->type == ARDRONE_STREAM_NAVDATA)
@@ -77,12 +77,12 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionID_in,
 }
 
 void
-ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
+ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                               const ARDrone_Message& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
-  ACE_UNUSED_ARG (sessionID_in);
+  ACE_UNUSED_ARG (sessionId_in);
 
   // sanity check(s)
   ACE_ASSERT (GtkCBData_);
@@ -196,7 +196,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 }
 
 void
-ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
+ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                               const ARDrone_SessionMessage& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
@@ -223,26 +223,26 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
                       std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
                                     session_data_r.state->type));
       ACE_ASSERT (iterator != streams_.end ());
-      if ((*iterator).first != sessionID_in)
+      if ((*iterator).first != sessionId_in)
       {
         //ACE_DEBUG ((LM_DEBUG,
         //            ACE_TEXT ("updating session id (was: %u) --> %u\n"),
         //            (*iterator).first,
-        //            sessionID_in));
+        //            sessionId_in));
         streams_.erase (iterator);
-        streams_.insert (std::make_pair (sessionID_in,
+        streams_.insert (std::make_pair (sessionId_in,
                                          session_data_r.state->type));
-        //(*iterator).first = sessionID_in;
+        //(*iterator).first = sessionId_in;
       } // end IF
     } // end IF
-    iterator = streams_.find (sessionID_in);
+    iterator = streams_.find (sessionId_in);
     // sanity check(s)
     if (iterator == streams_.end ())
     { // most probable reason: statistic messages arriving out-of-session
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("session message (type: %d): invalid session id (was: %u), returning\n"),
       //            message_in.type (),
-      //            sessionID_in));
+      //            sessionId_in));
       return;
     } // end IF
     stream_type_e = (*iterator).second;
@@ -291,10 +291,64 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
       } // end IF
 
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        // sanity check(s)
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_p =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.filterConfiguration->pinConfiguration->format->pbFormat);
+
+        ACE_ASSERT ((*iterator_3).second.format);
+        ACE_ASSERT ((*iterator_3).second.format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_2 =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.format->pbFormat);
+
+        ACE_ASSERT ((*iterator_4).second.filterConfiguration);
+        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format);
+        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_3 =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.filterConfiguration->pinConfiguration->format->pbFormat);
+
+        ACE_ASSERT ((*iterator_4).second.format);
+        ACE_ASSERT ((*iterator_4).second.format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_4).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_4 =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.format->pbFormat);
+
+        ACE_ASSERT (session_data_r.format);
+        ACE_ASSERT (session_data_r.format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT (session_data_r.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        struct tagVIDEOINFOHEADER* video_info_header_5 =
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.format->pbFormat);
+
+        video_info_header_p->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+        video_info_header_p->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+        video_info_header_p->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_p->bmiHeader);
+        video_info_header_2->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+        video_info_header_2->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+        video_info_header_2->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_2->bmiHeader);
+        video_info_header_3->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+        video_info_header_3->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+        video_info_header_3->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_3->bmiHeader);
+        video_info_header_4->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+        video_info_header_4->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+        video_info_header_4->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_4->bmiHeader);
+#else
         (*iterator_3).second.sourceFormat.height = session_data_r.height;
         (*iterator_3).second.sourceFormat.width = session_data_r.width;
         (*iterator_4).second.sourceFormat.height = session_data_r.height;
         (*iterator_4).second.sourceFormat.width = session_data_r.width;
+#endif
       } // end lock scope
 
       if (session_data_r.lock)
@@ -357,7 +411,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionID_in,
 }
 
 void
-ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
+ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
@@ -368,10 +422,16 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionID_in)
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    iterator = streams_.find (sessionID_in);
-    ACE_ASSERT (iterator != streams_.end ());
-    stream_type_e = (*iterator).second;
-    streams_.erase (iterator);
+    iterator = streams_.find (sessionId_in);
+    if (iterator != streams_.end ())
+    {
+      stream_type_e = (*iterator).second;
+      streams_.erase (iterator);
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%d: session id %d has ended\n"),
+                  stream_type_e,
+                  sessionId_in));
+    } // end IF
   } // end lock scope
 
   if (stream_type_e == ARDRONE_STREAM_NAVDATA)

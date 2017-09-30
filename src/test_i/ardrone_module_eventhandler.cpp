@@ -28,30 +28,12 @@
 
 ARDrone_Module_EventHandler::ARDrone_Module_EventHandler (ISTREAM_T* stream_in)
  : inherited (stream_in)
- , streams_ ()
+ //, streams_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::ARDrone_Module_EventHandler"));
 
 }
 
-void
-ARDrone_Module_EventHandler::handleDataMessage (ARDrone_Message*& message_inout,
-                                                bool& passMessageDownstream_out)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleDataMessage"));
-
-  inherited::handleDataMessage (message_inout,
-                                passMessageDownstream_out);
-  if (!passMessageDownstream_out)
-    return;
-
-//  if (message_inout->type () != ARDRONE_MESSAGE_ATCOMMAND)
-//  {
-//    message_inout->release ();
-//    message_inout = NULL;
-//    passMessageDownstream_out = false;
-//  } // end IF
-}
 void
 ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& message_inout,
                                                    bool& passMessageDownstream_out)
@@ -64,39 +46,39 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
     const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
 
   Stream_SessionId_t session_id = message_inout->sessionId ();
-  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
-  if (iterator == streams_.end ())
-  {
-    // remove any prior entry of the same stream type
-    iterator =
-      std::find_if (streams_.begin (), streams_.end (),
-                    std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
-                                  session_data_r.state->type));
-    if (iterator != streams_.end ())
-    {
-//      ACE_DEBUG ((LM_DEBUG,
-//                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
-//                  inherited::mod_->name (),
-//                  session_data_r.state->type,
-//                  (*iterator).first));
-
-      SESSION_DATA_ITERATOR_T iterator_2;
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
-        iterator_2 =
-            inherited::sessionData_.find ((*iterator).first);
-        if (iterator_2 != inherited::sessionData_.end ())
-        {
-          (*iterator_2).second->decrease ();
-          inherited::sessionData_.erase (iterator_2);
-        } // end IF
-      } // end lock scope
-
-      streams_.erase (iterator);
-    } // end IF
-
-    streams_.insert (std::make_pair (session_id,
-                                     session_data_r.state->type));
-  } // end IF
+//  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
+//  if (iterator == streams_.end ())
+//  {
+//    // remove any prior entry of the same stream type
+//    iterator =
+//      std::find_if (streams_.begin (), streams_.end (),
+//                    std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
+//                                  session_data_r.state->type));
+//    if (iterator != streams_.end ())
+//    {
+////      ACE_DEBUG ((LM_DEBUG,
+////                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
+////                  inherited::mod_->name (),
+////                  session_data_r.state->type,
+////                  (*iterator).first));
+//
+//      SESSION_DATA_ITERATOR_T iterator_2;
+//      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
+//        iterator_2 =
+//            inherited::sessionData_.find ((*iterator).first);
+//        if (iterator_2 != inherited::sessionData_.end ())
+//        {
+//          (*iterator_2).second->decrease ();
+//          inherited::sessionData_.erase (iterator_2);
+//        } // end IF
+//      } // end lock scope
+//
+//      streams_.erase (iterator);
+//    } // end IF
+//
+//    streams_.insert (std::make_pair (session_id,
+//                                     session_data_r.state->type));
+//  } // end IF
 
   if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
   {
