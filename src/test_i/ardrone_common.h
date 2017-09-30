@@ -31,6 +31,8 @@
 #include <strmif.h>
 #endif
 
+#include "ace/OS.h"
+
 #include "mavlink.h"
 
 #include "navdata_common.h"

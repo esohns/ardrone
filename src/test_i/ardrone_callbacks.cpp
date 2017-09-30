@@ -2961,12 +2961,12 @@ continue_:
   ACE_ASSERT ((*iterator_5).second.filterConfiguration);
   ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration);
   ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format);
-  ACE_ASSERT ((*iterator_5).second.format);
-
   ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
   ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_p =
     reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.filterConfiguration->pinConfiguration->format->pbFormat);
+
+  ACE_ASSERT ((*iterator_5).second.format);
   ACE_ASSERT ((*iterator_5).second.format->formattype == FORMAT_VideoInfo);
   ACE_ASSERT ((*iterator_5).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_2 =
@@ -3622,10 +3622,10 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier =
+  cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier =
     Common_Tools::StringToGUID (ACE_TEXT_ALWAYS_CHAR (g_value_get_string (&value)));
 #else
-  cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier =
+  cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier =
     ACE_TEXT_ALWAYS_CHAR (g_value_get_string (&value));
 #endif
 
@@ -3633,10 +3633,10 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (WLAN_monitor_p->get_2 (),
-                                                                                                    cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier)) &&
+  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (WLAN_monitor_p->get (),
+                                                                                                    cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
 #else
-  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier)) &&
+  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
 #endif
       cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
   {
@@ -3648,18 +3648,18 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
                               TRUE);
     gtk_spinner_start (spinner_p);
 
-    if (!WLAN_monitor_p->associate (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier,
+    if (!WLAN_monitor_p->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
                                     cb_data_p->configuration->WLANMonitorConfiguration.SSID))
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ()),
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #else
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ()),
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #endif
       return;
@@ -3672,32 +3672,35 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
     ACE_ASSERT (entry_p);
     ACE_INET_Addr interface_address, gateway_address;
+    if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier),
 #else
-    if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier,
                                                  const_cast<struct DBusConnection*> (WLAN_monitor_p->getP ()),
 #endif
                                                  interface_address,
                                                  gateway_address))
     {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ())));
 #else
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ())));
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ())));
 #endif
       return;
     } // end IF
     if (gateway_address.is_any ())
     {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("\"%s\" does not currently have any gateway address, returning\n"),
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ())));
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ())));
 #else
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ())));
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("\"%s\" does not currently have any gateway address, returning\n"),
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ())));
 #endif
       return;
     } // end IF
@@ -4120,18 +4123,18 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
   if ((WLAN_monitor_p->SSID () != cb_data_p->configuration->WLANMonitorConfiguration.SSID) &&
       cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
   {
-    if (!ARDRONE_WLANMONITOR_SINGLETON::instance ()->associate (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier,
+    if (!ARDRONE_WLANMONITOR_SINGLETON::instance ()->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
                                                                 cb_data_p->configuration->WLANMonitorConfiguration.SSID))
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (Net_Common_Tools::interfaceToString (WLAN_monitor_p->get_2 (), cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier).c_str ()),
+                  ACE_TEXT (Net_Common_Tools::interfaceToString (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #else
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.deviceIdentifier.c_str ()),
+                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #endif
       return;

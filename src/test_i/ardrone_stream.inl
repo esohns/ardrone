@@ -169,7 +169,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-//  struct ARDrone_SessionData* session_data_p = NULL;
+  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
@@ -190,15 +190,10 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
     setup_pipeline;
   reset_setup_pipeline = false;
 
-  // sanity check(s)
-//  ACE_ASSERT (inherited::sessionData_);
-
   // things to be done here:
   // - create modules (done for the ones "owned" by the stream itself)
   // - initialize modules
   // - push them onto the stream (tail-first)
-//  session_data_p =
-//    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->get ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
@@ -211,6 +206,12 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   ACE_ASSERT (configuration_p->filterConfiguration);
   ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration);
   ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
+
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
+
+  session_data_p =
+    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
 
   if (session_data_p->format)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->format);

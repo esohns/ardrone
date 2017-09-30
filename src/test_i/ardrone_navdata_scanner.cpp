@@ -1917,6 +1917,7 @@ static const flex_int32_t yy_rule_linenum[9] =
 #include <sstream>
 
 #include "ace/Log_Msg.h"
+#include "ace/OS.h"
 
 #include "ace/Synch.h"
 #include "ardrone_common.h"

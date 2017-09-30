@@ -100,7 +100,14 @@ extern "C"
 #include "ardrone_stream.h"
 #include "ardrone_types.h"
 
-const char net_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("NetStream");
+const char net_video_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("NetVideoStream");
+const char net_control_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("NetControlStream");
+const char net_navdata_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("NetNavDataStream");
+const char net_mavlink_stream_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkStream");
 const char video_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("VideoStream");
 const char control_stream_name_string_[] =
   ACE_TEXT_ALWAYS_CHAR ("ControlStream");
@@ -947,6 +954,7 @@ do_work (int argc_in,
   //         communications instead of the 'NavData' stream documented in the
   //         developer guide (this is a total mess, apparently)
   ARDrone_NavDataStream navdata_stream;
+  ARDrone_AsynchVideoStream_t asynch_video_stream;
   ARDrone_VideoStream_t video_stream;
   ARDrone_ConnectionConfigurationIterator_t iterator_2;
   Common_Timer_Manager_t* timer_manager_p = NULL;
@@ -1083,8 +1091,7 @@ do_work (int argc_in,
                                                                                                  1,
                                                                                                  0);
   ACE_ASSERT (result == 0);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
-      connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.reset ();
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
     false;
   connection_configuration.streamConfiguration =
@@ -1099,10 +1106,10 @@ do_work (int argc_in,
   (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
 
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress =
     address_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                                                                     1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                                                                         1);
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     !useReactor_in;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
@@ -1127,8 +1134,7 @@ do_work (int argc_in,
                                                                                                  1,
                                                                                                  0);
   ACE_ASSERT (result == 0);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.address =
-      connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress;
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.reset ();
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     false;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
@@ -1323,7 +1329,10 @@ do_work (int argc_in,
   CBData_in.controlStream = &control_stream;
   CBData_in.MAVLinkStream = &mavlink_stream;
   CBData_in.NavDataStream = &navdata_stream;
-  CBData_in.videoStream = &video_stream;
+  if (useReactor_in)
+    CBData_in.videoStream = &video_stream;
+  else
+    CBData_in.videoStream = &asynch_video_stream;
 
   if (!heap_allocator.initialize ((*video_streamconfiguration_iterator).second.allocatorConfiguration_))
   {

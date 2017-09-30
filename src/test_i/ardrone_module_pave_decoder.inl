@@ -366,17 +366,49 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
       typename SessionDataContainerType::DATA_T& session_data_r =
           const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      // sanity check(s)
+      ACE_ASSERT (session_data_r.format);
+      ACE_ASSERT (session_data_r.format->formattype == FORMAT_VideoInfo);
+      ACE_ASSERT (session_data_r.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      struct tagVIDEOINFOHEADER* video_info_header_p =
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.format->pbFormat);
+#endif
       // *TODO*: remove type inferences
       switch (videoMode_)
       {
         case ARDRONE_VIDEOMODE_360P:
+        {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          // sanity check(s)
+          ACE_ASSERT (video_info_header_p);
+
+          video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
+          video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
+          video_info_header_p->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_p->bmiHeader);
+#else
           session_data_r.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
           session_data_r.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+#endif
           break;
+        }
         case ARDRONE_VIDEOMODE_720P:
+        {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          // sanity check(s)
+          ACE_ASSERT (video_info_header_p);
+
+          video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
+          video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
+          video_info_header_p->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_p->bmiHeader);
+#else
           session_data_r.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
           session_data_r.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+#endif
           break;
+        }
         default:
         {
           ACE_DEBUG ((LM_ERROR,

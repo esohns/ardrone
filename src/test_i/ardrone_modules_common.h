@@ -103,27 +103,27 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_TCPSource);                 // writer type
-//typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-//                                    ARDrone_ControlMessage_t,
-//                                    ARDrone_Message,
-//                                    ARDrone_SessionMessage,
-//                                    struct ARDrone_ModuleHandlerConfiguration,
-//                                    enum Stream_ControlType,
-//                                    enum Stream_SessionMessageType,
-//                                    struct ARDrone_StreamState,
-//                                    struct ARDrone_SessionData,
-//                                    ARDrone_StreamSessionData_t,
-//                                    struct ARDrone_Statistic,
-//                                    Common_Timer_Manager_t,
-//                                    ARDrone_ConnectionConfigurationIterator_t,
-//                                    ARDrone_ConnectionManager_t,
-//                                    ARDrone_AsynchTCPConnector_t,
-//                                    struct ARDrone_UserData> ARDrone_Module_AsynchTCPSource;
-//DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
-//                              enum Stream_SessionMessageType,            // session event type
-//                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-//                              Stream_INotify_t,                          // stream notification interface type
-//                              ARDrone_Module_AsynchTCPSource);           // writer type
+typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
+                                    ARDrone_ControlMessage_t,
+                                    ARDrone_Message,
+                                    ARDrone_SessionMessage,
+                                    struct ARDrone_ModuleHandlerConfiguration,
+                                    enum Stream_ControlType,
+                                    enum Stream_SessionMessageType,
+                                    struct ARDrone_StreamState,
+                                    struct ARDrone_SessionData,
+                                    ARDrone_StreamSessionData_t,
+                                    struct ARDrone_Statistic,
+                                    Common_Timer_Manager_t,
+                                    ARDrone_ConnectionConfigurationIterator_t,
+                                    ARDrone_ConnectionManager_t,
+                                    ARDrone_AsynchTCPConnector_t,
+                                    struct ARDrone_UserData> ARDrone_Module_AsynchTCPSource;
+DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
+                              enum Stream_SessionMessageType,            // session event type
+                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                              Stream_INotify_t,                          // stream notification interface type
+                              ARDrone_Module_AsynchTCPSource);           // writer type
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     ARDrone_ControlMessage_t,
                                     ARDrone_Message,
@@ -145,27 +145,27 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_UDPSource);                 // writer type
-//typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-//                                    ARDrone_ControlMessage_t,
-//                                    ARDrone_Message,
-//                                    ARDrone_SessionMessage,
-//                                    struct ARDrone_ModuleHandlerConfiguration,
-//                                    enum Stream_ControlType,
-//                                    enum Stream_SessionMessageType,
-//                                    struct ARDrone_StreamState,
-//                                    struct ARDrone_SessionData,
-//                                    ARDrone_StreamSessionData_t,
-//                                    struct ARDrone_Statistic,
-//                                    Common_Timer_Manager_t,
-//                                    ARDrone_ConnectionConfigurationIterator_t,
-//                                    ARDrone_ConnectionManager_t,
-//                                    ARDrone_AsynchUDPConnector_t,
-//                                    struct ARDrone_UserData> ARDrone_Module_AsynchUDPSource;
-//DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
-//                              enum Stream_SessionMessageType,            // session event type
-//                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-//                              Stream_INotify_t,                          // stream notification interface type
-//                              ARDrone_Module_AsynchUDPSource);           // writer type
+typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
+                                    ARDrone_ControlMessage_t,
+                                    ARDrone_Message,
+                                    ARDrone_SessionMessage,
+                                    struct ARDrone_ModuleHandlerConfiguration,
+                                    enum Stream_ControlType,
+                                    enum Stream_SessionMessageType,
+                                    struct ARDrone_StreamState,
+                                    struct ARDrone_SessionData,
+                                    ARDrone_StreamSessionData_t,
+                                    struct ARDrone_Statistic,
+                                    Common_Timer_Manager_t,
+                                    ARDrone_ConnectionConfigurationIterator_t,
+                                    ARDrone_ConnectionManager_t,
+                                    ARDrone_AsynchUDPConnector_t,
+                                    struct ARDrone_UserData> ARDrone_Module_AsynchUDPSource;
+DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
+                              enum Stream_SessionMessageType,            // session event type
+                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                              Stream_INotify_t,                          // stream notification interface type
+                              ARDrone_Module_AsynchUDPSource);           // writer type
 
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,
@@ -196,35 +196,6 @@ DATASTREAM_MODULE_DUPLEX (struct ARDrone_SessionData,                // session 
                           ARDrone_Module_Statistic_ReaderTask_t,     // reader type
                           ARDrone_Module_Statistic_WriterTask_t,     // writer type
                           ARDrone_Module_StatisticReport);           // name
-//typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
-//                                                      Common_TimePolicy_t,
-//                                                      struct ARDrone_ModuleHandlerConfiguration,
-//                                                      ARDrone_ControlMessage_t,
-//                                                      ARDrone_Message,
-//                                                      ARDrone_SessionMessage,
-//                                                      int,
-//                                                      struct ARDrone_Statistic,
-//                                                      Common_Timer_Manager_t,
-//                                                      struct ARDrone_SessionData,
-//                                                      ARDrone_StreamSessionData_t> ARDrone_Module_Statistic_AsynchReaderTask_t;
-//typedef Stream_Statistic_StatisticReport_WriterTask_T<ACE_MT_SYNCH,
-//                                                      Common_TimePolicy_t,
-//                                                      struct ARDrone_ModuleHandlerConfiguration,
-//                                                      ARDrone_ControlMessage_t,
-//                                                      ARDrone_Message,
-//                                                      ARDrone_SessionMessage,
-//                                                      int,
-//                                                      struct ARDrone_Statistic,
-//                                                      Common_Timer_Manager_t,
-//                                                      struct ARDrone_SessionData,
-//                                                      ARDrone_StreamSessionData_t> ARDrone_Module_Statistic_AsynchWriterTask_t;
-//DATASTREAM_MODULE_DUPLEX (struct ARDrone_SessionData,                  // session data type
-//                          enum Stream_SessionMessageType,              // session event type
-//                          struct ARDrone_ModuleHandlerConfiguration,   // module handler configuration type
-//                          Stream_INotify_t,                            // stream notification interface type
-//                          ARDrone_Module_Statistic_AsynchReaderTask_t, // reader type
-//                          ARDrone_Module_Statistic_AsynchWriterTask_t, // writer type
-//                          ARDrone_Module_AsynchStatisticReport);       // name
 
 typedef ARDrone_Module_ControlDecoder_T<ACE_MT_SYNCH,
                                         Common_TimePolicy_t,
@@ -288,22 +259,6 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_H264Decoder);               // writer type
 
-//typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
-//                                    Common_TimePolicy_t,
-//                                    struct ARDrone_ModuleHandlerConfiguration,
-//                                    ARDrone_ControlMessage_t,
-//                                    ARDrone_Message,
-//                                    ARDrone_SessionMessage,
-//                                    ARDrone_StreamSessionData_t,
-//                                    ARDrone_WLANMonitor_t,
-//                                    ARDrone_ConnectionConfigurationIterator_t,
-//                                    ARDrone_ConnectionManager_t,
-//                                    ARDrone_AsynchUDPConnector_t> ARDrone_Module_AsynchController;
-//DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
-//                              enum Stream_SessionMessageType,            // session event type
-//                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-//                              Stream_INotify_t,                          // stream notification interface type
-//                              ARDrone_Module_AsynchController);          // writer type
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_ModuleHandlerConfiguration,
@@ -320,6 +275,22 @@ DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // sess
                               struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_Controller);                // writer type
+typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
+                                    Common_TimePolicy_t,
+                                    struct ARDrone_ModuleHandlerConfiguration,
+                                    ARDrone_ControlMessage_t,
+                                    ARDrone_Message,
+                                    ARDrone_SessionMessage,
+                                    ARDrone_StreamSessionData_t,
+                                    ARDrone_WLANMonitor_t,
+                                    ARDrone_ConnectionConfigurationIterator_t,
+                                    ARDrone_ConnectionManager_t,
+                                    ARDrone_AsynchUDPConnector_t> ARDrone_Module_AsynchController;
+DATASTREAM_MODULE_INPUT_ONLY (struct ARDrone_SessionData,                // session data type
+                              enum Stream_SessionMessageType,            // session event type
+                              struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
+                              Stream_INotify_t,                          // stream notification interface type
+                              ARDrone_Module_AsynchController);          // writer type
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_MediaFramework_DirectShow_Source_Filter_T<Common_TimePolicy_t,

@@ -45,6 +45,9 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::load"));
 
+  // sanity check(s)
+  ACE_ASSERT (inherited::configuration_);
+
   Stream_Module_t* module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
 //                  ARDrone_Module_FileWriter_Module (this,
@@ -72,10 +75,16 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_TCPSource_Module (this,
-                                                   ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_TCPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchTCPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
+                    false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -124,6 +133,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   // ---------------------------------------------------------------------------
 
   Stream_Module_t* module_p = NULL;
+  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // ******************************** Source ***********************************
   module_p =
@@ -136,15 +146,10 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
     return false;
   } // end IF
 
-  ARDrone_Module_TCPSource* sourceWriter_impl_p =
-      dynamic_cast<ARDrone_Module_TCPSource*> (module_p->writer ());
-  if (!sourceWriter_impl_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_TCPSource> failed, aborting\n")));
-    return false;
-  } // end IF
-  sourceWriter_impl_p->setP (&(inherited::state_));
+  iset_p =
+    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  ACE_ASSERT (iset_p);
+  iset_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -351,10 +356,16 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::load"));
 
   Stream_Module_t* module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Controller_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_Controller_Module (this,
+                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchController_Module (this,
+                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
+                    false);
   modules_out.push_back (module_p);
   module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
@@ -382,10 +393,16 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_UDPSource_Module (this,
-                                                   ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_UDPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchUDPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
+                    false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -410,7 +427,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
-  ARDrone_Module_UDPSource* source_impl_p = NULL;
+  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -465,9 +482,10 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     goto error;
   } // end IF
 
-  source_impl_p = dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
-  ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  iset_p =
+    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  ACE_ASSERT (iset_p);
+  iset_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it
@@ -906,16 +924,16 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
 
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_NavDataStream::onAssociate (REFGUID deviceIdentifier_in,
+ARDrone_NavDataStream::onAssociate (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream::onAssociate (const std::string& deviceIdentifier_in,
+ARDrone_NavDataStream::onAssociate (const std::string& interfaceIdentifier_in,
 #endif
                                     const std::string& SSID_in,
                                     bool success_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onAssociate"));
 
-  ACE_UNUSED_ARG (deviceIdentifier_in);
+  ACE_UNUSED_ARG (interfaceIdentifier_in);
   ACE_UNUSED_ARG (SSID_in);
 
   // sanity check(s)
@@ -943,16 +961,16 @@ ARDrone_NavDataStream::onAssociate (const std::string& deviceIdentifier_in,
 }
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_NavDataStream::onConnect (REFGUID deviceIdentifier_in,
+ARDrone_NavDataStream::onConnect (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
+ARDrone_NavDataStream::onConnect (const std::string& interfaceIdentifier_in,
 #endif
                                   const std::string& SSID_in,
                                   bool success_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onConnect"));
 
-  ACE_UNUSED_ARG (deviceIdentifier_in);
+  ACE_UNUSED_ARG (interfaceIdentifier_in);
   ACE_UNUSED_ARG (SSID_in);
 
   // sanity check(s)
@@ -966,10 +984,9 @@ ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
   ARDrone_WLANMonitor_t* wlan_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (wlan_monitor_p);
+  if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (!Net_Common_Tools::interfaceToIPAddress (Common_Tools::GUIDToString (deviceIdentifier_in),
 #else
-  if (!Net_Common_Tools::interfaceToIPAddress (deviceIdentifier_in,
                                                const_cast<struct DBusConnection*> (wlan_monitor_p->getP ()),
 #endif
                                                local_SAP,
@@ -978,27 +995,25 @@ ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-                ACE_TEXT (Net_Common_Tools::interfaceToString (wlan_monitor_p->get_2 (),
-                                                               deviceIdentifier_in).c_str ())));
+                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ())));
 #else
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-                ACE_TEXT (deviceIdentifier_in.c_str ())));
+                ACE_TEXT (interfaceIdentifier_in.c_str ())));
 #endif
     return;
   } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-              ACE_TEXT (Net_Common_Tools::interfaceToString (wlan_monitor_p->get_2 (),
-                                                             deviceIdentifier_in).c_str ()),
+              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
               ACE_TEXT (SSID_in.c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
 #else
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-              ACE_TEXT (deviceIdentifier_in.c_str ()),
+              ACE_TEXT (interfaceIdentifier_in.c_str ()),
               ACE_TEXT (SSID_in.c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
@@ -1024,9 +1039,9 @@ ARDrone_NavDataStream::onConnect (const std::string& deviceIdentifier_in,
 }
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_NavDataStream::onHotPlug (REFGUID deviceIdentifier_in,
+ARDrone_NavDataStream::onHotPlug (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream::onHotPlug (const std::string& deviceIdentifier_in,
+ARDrone_NavDataStream::onHotPlug (const std::string& interfaceIdentifier_in,
 #endif
                                   bool enabled_in)
 {
@@ -1035,20 +1050,20 @@ ARDrone_NavDataStream::onHotPlug (const std::string& deviceIdentifier_in,
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("\"%s\": interface %s\n"),
-//              ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
+//              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
 //              (enabled_in ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled/removed"))));
 //#else
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("\"%s\": interface %s\n"),
-//              ACE_TEXT (deviceIdentifier_in.c_str ()),
+//              ACE_TEXT (interfaceIdentifier_in.c_str ()),
 //              (enabled_in ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled/removed"))));
 //#endif
 }
 void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_NavDataStream::onScanComplete (REFGUID deviceIdentifier_in)
+ARDrone_NavDataStream::onScanComplete (REFGUID interfaceIdentifier_in)
 #else
-ARDrone_NavDataStream::onScanComplete (const std::string& deviceIdentifier_in)
+ARDrone_NavDataStream::onScanComplete (const std::string& interfaceIdentifier_in)
 #endif
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::onScanComplete"));
@@ -1060,17 +1075,17 @@ ARDrone_NavDataStream::onScanComplete (const std::string& deviceIdentifier_in)
 //  if (!configuration_->autoAssociate)
 //    return;
 //
-//  if (!associate (deviceIdentifier_in,
+//  if (!associate (interfaceIdentifier_in,
 //                  configuration_->SSID))
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-//                ACE_TEXT (Net_Common_Tools::interfaceToString (deviceIdentifier_in).c_str ()),
+//                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
 //                ACE_TEXT (configuration_->SSID.c_str ())));
 //#else
 //    ACE_DEBUG ((LM_ERROR,
 //                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-//                ACE_TEXT (deviceIdentifier_in.c_str ()),
+//                ACE_TEXT (interfaceIdentifier_in.c_str ()),
 //                ACE_TEXT (configuration_->SSID.c_str ())));
 //#endif
 }
@@ -1126,10 +1141,16 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_UDPSource_Module (this,
-                                                   ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
-                  false);
+  if (inherited::configuration_->configuration_.useReactor)
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_UDPSource_Module (this,
+                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
+                    false);
+  else
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AsynchUDPSource_Module (this,
+                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
+                    false);
   modules_out.push_back (module_p);
 
   delete_out = true;
@@ -1153,7 +1174,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
-  ARDrone_Module_UDPSource* source_impl_p = NULL;
+  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -1226,9 +1247,10 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
     goto error;
   } // end IF
 
-  source_impl_p = dynamic_cast<ARDrone_Module_UDPSource*> (module_p->writer ());
-  ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  iset_p =
+    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  ACE_ASSERT (iset_p);
+  iset_p->setP (&(inherited::state_));
 
   // enqueue the module
   // *NOTE*: push()ing the module will open() it

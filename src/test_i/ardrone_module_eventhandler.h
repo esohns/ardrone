@@ -62,8 +62,6 @@ class ARDrone_Module_EventHandler
   inline virtual ~ARDrone_Module_EventHandler () {};
 
   // override (part of) Stream_ITaskBase_T
-  virtual void handleDataMessage (ARDrone_Message*&, // data message handle
-                                  bool&);            // return value: pass message downstream ?
   virtual void handleSessionMessage (ARDrone_SessionMessage*&, // session message handle
                                      bool&);                   // return value: pass message downstream ?
 
@@ -76,18 +74,18 @@ class ARDrone_Module_EventHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler (const ARDrone_Module_EventHandler&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_EventHandler& operator= (const ARDrone_Module_EventHandler&))
 
-  typedef std::map<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_MAP_T;
-  typedef SESSIONID_TO_STREAM_MAP_T::iterator SESSIONID_TO_STREAM_MAP_ITERATOR_T;
-  typedef std::pair<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_PAIR_T;
-  struct SESSIONID_TO_STREAM_MAP_FIND_S
-   : public std::binary_function<SESSIONID_TO_STREAM_PAIR_T,
-                                 enum ARDrone_StreamType,
-                                 bool>
-  {
-    inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; };
-  };
+  //typedef std::map<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_MAP_T;
+  //typedef SESSIONID_TO_STREAM_MAP_T::iterator SESSIONID_TO_STREAM_MAP_ITERATOR_T;
+  //typedef std::pair<Stream_SessionId_t, enum ARDrone_StreamType> SESSIONID_TO_STREAM_PAIR_T;
+  //struct SESSIONID_TO_STREAM_MAP_FIND_S
+  // : public std::binary_function<SESSIONID_TO_STREAM_PAIR_T,
+  //                               enum ARDrone_StreamType,
+  //                               bool>
+  //{
+  //  inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; };
+  //};
 
-  SESSIONID_TO_STREAM_MAP_T streams_;
+  //SESSIONID_TO_STREAM_MAP_T streams_;
 };
 typedef ARDrone_Module_EventHandler::READER_TASK_T ARDrone_EventHandler_ReaderTask_t;
 

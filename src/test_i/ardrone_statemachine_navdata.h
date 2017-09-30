@@ -62,6 +62,8 @@ class ARDrone_StateMachine_NavData
   virtual std::string stateToString (enum ARDRone_NavDataState) const;
 
  protected:
+   ACE_SYNCH_NULL_MUTEX lock_;
+
   // implement (part of) Common_IStateMachine_T
   // *NOTE*: only derived classes can change state
   virtual bool change (enum ARDRone_NavDataState); // new state
@@ -72,8 +74,6 @@ class ARDrone_StateMachine_NavData
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_StateMachine_NavData (const ARDrone_StateMachine_NavData&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_StateMachine_NavData& operator= (const ARDrone_StateMachine_NavData&))
-
-  ACE_SYNCH_NULL_MUTEX lock_;
 };
 
 // convenient types

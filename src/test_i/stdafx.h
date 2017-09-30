@@ -14,7 +14,7 @@
 //#define max
 
 // C RunTime Header Files
-//#include <string>
+#include <string>
 //#include <map>
 //#include <vector>
 //#include <set>
@@ -24,19 +24,31 @@
 //#include <functional>
 
 // System Library Header Files
-#include <ace/OS.h>
-//#include <ace/ACE.h>
-#include <ace/Log_Msg.h>
-#include <ace/Assert.h>
-//#include <ace/Synch.h>
-//#include <ace/Task.h>
-//#include <ace/Reactor.h>
-//#include <ace/Malloc_Allocator.h>
-//#include <ace/Lock_Adapter_T.h>
-//#include <ace/Stream.h>
+#include "ace/config-lite.h"
+#include "ace/Assert.h"
+#include "ace/Global_Macros.h"
+#include "ace/Log_Msg.h"
+//#include "ace/Synch_Traits.h"
+
+//#include "gtk/gtk.h"
+
+#include "common.h"
+#include "common_macros.h"
+
+#include "stream_common.h"
+#include "stream_macros.h"
+
+#include "net_common.h"
+#include "net_macros.h"
+
+//#include "test_i_common.h"
+
+//#include "ardrone_common.h"
+//#include "ardrone_types.h"
+#include "ardrone_macros.h"
 
 #if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
-#include <valgrind/memcheck.h>
+#include "valgrind/memcheck.h"
 #endif
 
 #define LIGBGLADE_SUPPORT

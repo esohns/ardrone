@@ -107,7 +107,7 @@ class ARDrone_Module_ControlDecoder_T
   inline virtual bool hasFinished () const { return true; };
 
   // implement (part of) Common_ILexScanner_T
-  inline virtual const Common_ScannerState& getR_2 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) };
+  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) };
   inline virtual const IPARSER_T* const getP_2 () const { return this; };
   inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual ACE_Message_Block* buffer () { return buffer_; };
