@@ -24,15 +24,15 @@
 #include "ace/Global_Macros.h"
 
 #include "common_signalhandler.h"
-#include "common_isignal.h"
 
 #include "ardrone_network.h"
 #include "ardrone_types.h"
 
 class ARDrone_SignalHandler
  : public Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration>
- , public Common_ISignal
 {
+  typedef Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration> inherited;
+
  public:
   ARDrone_SignalHandler ();
   inline virtual ~ARDrone_SignalHandler () {};
@@ -44,8 +44,6 @@ class ARDrone_SignalHandler
   virtual void handle (int); // signal
 
  private:
-  typedef Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler (const ARDrone_SignalHandler&));
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
 

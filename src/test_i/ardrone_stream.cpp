@@ -24,6 +24,35 @@
 
 #include "ardrone_modules_common.h"
 
+std::string 
+ARDroneStreamTypeToString (const enum ARDrone_StreamType type_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::ARDroneStreamTypeToString"));
+  
+  switch (type_in)
+  {
+    case ARDRONE_STREAM_CONTROL:
+      return ACE_TEXT_ALWAYS_CHAR ("ControlStream");
+    case ARDRONE_STREAM_MAVLINK:
+      return ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream");
+    case ARDRONE_STREAM_NAVDATA:
+      return ACE_TEXT_ALWAYS_CHAR ("NavDataStream");
+    case ARDRONE_STREAM_VIDEO:
+      return ACE_TEXT_ALWAYS_CHAR ("VideoStream");
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unkown stream type (was: %d), aborting\n"),
+                  type_in));
+      break;
+    }
+  } // end SWITCH
+
+  return ACE_TEXT_ALWAYS_CHAR ("");
+}
+
+//////////////////////////////////////////
+
 ARDrone_ControlStream::ARDrone_ControlStream ()
  : inherited ()
 {

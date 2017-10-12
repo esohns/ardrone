@@ -1356,7 +1356,7 @@ do_work (int argc_in,
   bool serialize_output;
   if (!Common_Tools::initializeEventDispatch (useReactor_in,
                                               false,
-                                              1,
+                                              1, // #threads
                                               proactor_type,
                                               reactor_type,
                                               serialize_output))
@@ -1618,7 +1618,7 @@ ACE_TMAIN (int argc_in,
   bool log_to_file;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  std::string device_identifier_string;
+  std::string interface_identifier_string;
 #endif
   unsigned short port_number;
   bool use_reactor;
@@ -1707,7 +1707,7 @@ ACE_TMAIN (int argc_in,
   log_to_file            = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  device_identifier_string =
+  interface_identifier_string =
     ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN);
 #endif
   port_number = ARDRONE_PORT_TCP_VIDEO;
@@ -1766,7 +1766,7 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             use_mediafoundation,
 #else
-                            device_identifier_string,
+                            interface_identifier_string,
 #endif
                             port_number,
                             use_reactor,
@@ -1873,8 +1873,8 @@ ACE_TMAIN (int argc_in,
   ACE_ASSERT (video_modulehandlerconfiguration_iterator != (*video_streamconfiguration_iterator).second.end ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  configuration.WLANMonitorConfiguration.deviceIdentifier =
-      device_identifier_string;
+  configuration.WLANMonitorConfiguration.interfaceIdentifier =
+      interface_identifier_string;
 #endif
 
   // step7: initialize user interface, if any

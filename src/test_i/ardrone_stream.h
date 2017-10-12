@@ -44,6 +44,8 @@
 
 extern const char video_stream_name_string_[];
 
+std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
+
 template <typename SourceModuleType>
 class ARDrone_VideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,

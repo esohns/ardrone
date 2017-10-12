@@ -245,7 +245,8 @@ typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionState,
                           struct ARDrone_Statistic> ARDrone_IConnection_t;
 struct ARDrone_UserData;
-typedef Net_IConnectionManager_T<ACE_INET_Addr,
+typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+                                 ACE_INET_Addr,
                                  struct ARDrone_ConnectionConfiguration,
                                  struct ARDrone_ConnectionState,
                                  struct ARDrone_Statistic,

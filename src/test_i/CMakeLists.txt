@@ -49,7 +49,7 @@ if (WIN32)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   add_definitions (-DDEBUG) # activate DirectShow debug logging
  endif ()
- set (DIRECTSHOW_BASECLASSES_DIRECTORY "$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
+ set (DIRECTSHOW_BASECLASSES_DIRECTORY "$ENV{PROGRAMFILES(X86)}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
 endif ()
 
 include (FindOpenGL)
@@ -198,7 +198,7 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
- include_directories ("$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
+ include_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY})
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
  # *TODO*: repair pkgconfig support
 # gtk
@@ -391,7 +391,7 @@ if (WIN32)
 endif ()
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Device)
-#target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
+target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACENetwork)
 
 # add PCH
@@ -468,6 +468,7 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
                                                ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})
