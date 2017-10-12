@@ -31,6 +31,7 @@
 #include "ardrone_callbacks.h"
 #include "ardrone_configuration.h"
 #include "ardrone_macros.h"
+#include "ardrone_stream.h"
 
 ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_in,
                                             bool consoleMode_in)
@@ -428,8 +429,8 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       stream_type_e = (*iterator).second;
       streams_.erase (iterator);
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%d: session id %d has ended\n"),
-                  stream_type_e,
+                  ACE_TEXT ("%s: session id %d has ended\n"),
+                  ACE_TEXT (ARDroneStreamTypeToString (stream_type_e).c_str ()),
                   sessionId_in));
     } // end IF
   } // end lock scope

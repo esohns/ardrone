@@ -4,34 +4,26 @@
 //
 #if defined _MSC_VER
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+
 #define _USE_MATH_DEFINES
 
 // Windows Header Files
 #include <windows.h>
 #endif
 
-//#define min
-//#define max
-
 // C RunTime Header Files
 #include <string>
-//#include <map>
-//#include <vector>
-//#include <set>
-//#include <bitset>
-//#include <iostream>
 //#include <sstream>
-//#include <functional>
 
+#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
+#include "valgrind/memcheck.h"
+#endif
 // System Library Header Files
 #include "ace/config-lite.h"
-#include "ace/Assert.h"
 #include "ace/Global_Macros.h"
 #include "ace/Log_Msg.h"
-//#include "ace/Synch_Traits.h"
 
-//#include "gtk/gtk.h"
-
+// Library Header Files
 #include "common.h"
 #include "common_macros.h"
 
@@ -41,14 +33,7 @@
 #include "net_common.h"
 #include "net_macros.h"
 
-//#include "test_i_common.h"
-
-//#include "ardrone_common.h"
-//#include "ardrone_types.h"
+// Local Header Files
 #include "ardrone_macros.h"
-
-#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
-#include "valgrind/memcheck.h"
-#endif
 
 #define LIGBGLADE_SUPPORT

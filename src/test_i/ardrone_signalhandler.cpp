@@ -32,7 +32,7 @@
 #include "ardrone_macros.h"
 
 ARDrone_SignalHandler::ARDrone_SignalHandler ()
- : inherited (this) // event handler handle
+ : inherited (NULL)
  , connector_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::ARDrone_SignalHandler"));
@@ -42,6 +42,8 @@ ARDrone_SignalHandler::ARDrone_SignalHandler ()
 bool
 ARDrone_SignalHandler::initialize (const struct ARDrone_SignalHandlerConfiguration& configuration_in)
 {
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::initialize"));
+
   // *TODO*: remove type inference
   connector_ = configuration_in.connector;
 
