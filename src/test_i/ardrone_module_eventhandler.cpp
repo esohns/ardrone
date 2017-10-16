@@ -83,7 +83,7 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
   if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
   {
     // retain statistic data for each stream separately
-    // *TODO*: consider moving this into a base-class
+    // *TODO*: move this into the base-class
 
     SESSION_DATA_ITERATOR_T iterator_2;
     struct ARDrone_SessionData* session_data_p = NULL;

@@ -273,12 +273,6 @@ continue_:
                       inherited::mod_->name ()));
       } // end ELSE
 
-      if (buffer_)
-      {
-        buffer_->release ();
-        buffer_ = NULL;
-      } // end IF
-
       break;
     }
     default:
@@ -304,27 +298,34 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::record"));
 
+  int result = -1;
+
   // sanity check(s)
   ACE_ASSERT (buffer_);
+  ACE_ASSERT (buffer_->isInitialized ());
   ACE_ASSERT (record_inout);
 
-  buffer_->release ();
-  buffer_ = NULL;
+  const typename DataMessageType::DATA_T& message_data_container_r =
+    buffer_->getR ();
+  typename DataMessageType::DATA_T::DATA_T& message_data_r =
+    const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_r.getR ());
 
-#if defined (_DEBUG)
-  // debug info
-  ACE_DEBUG ((LM_INFO,
-              ACE_TEXT ("received device configuration (%d setting(s)):\n"),
-              record_inout->size ()));
-  for (ARDrone_DeviceConfigurationIterator_t iterator = record_inout->begin ();
-       iterator != record_inout->end ();
-       ++iterator)
-    ACE_DEBUG ((LM_INFO,
-                ACE_TEXT ("\t%s:\t%s\n"),
-                ACE_TEXT ((*iterator).first.c_str ()),
-                ACE_TEXT ((*iterator).second.c_str ())));
-#endif
-  record_inout = NULL;
+  // sanity check(s)
+  ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
+
+  message_data_r.controlData = configuration_;
+
+  result = inherited::put_next (buffer_, NULL);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ACE_Task_T::put_next(): \"%m\", returning\n"),
+                inherited::mod_->name ()));
+
+    // clean up
+    buffer_->release ();
+  } // end IF
+  buffer_ = NULL;
 }
 
 template <ACE_SYNCH_DECL,
@@ -406,9 +407,9 @@ continue_:
   if (!message_block_2)
   {
     // *NOTE*: most probable reason: received session end
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
-                inherited::mod_->name ()));
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
+    //            inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -497,8 +498,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
         is_data = true;
         break;
       case ACE_Message_Block::MB_STOP:
-        done = true; // session has finished --> abort
+      {
+        if (!inherited::msg_queue_->message_count ())
+          done = true; // session has finished --> abort
         break;
+      }
       case ACE_Message_Block::MB_USER:
       {
         session_message_p = dynamic_cast<SessionMessageType*> (message_block_p);
@@ -571,9 +575,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
       return;
     } // end IF
     message_data_p->messageType = ARDRONE_MESSAGE_CONTROL;
-    ACE_OS::memset (&message_data_p->NavData,
-                    0,
-                    sizeof (struct _navdata_t));
+    message_data_p->controlData.clear ();
     ACE_NEW_NORETURN (message_data_container_p,
                       typename DataMessageType::DATA_T (message_data_p));
     if (!message_data_container_p)
@@ -692,10 +694,10 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
 
   ACE_Message_Block* message_block_p = NULL;
   int result = -1;
-  int error = 0;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   bool do_scan_end = false;
+  bool done = false;
 
   do
   {
@@ -704,7 +706,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                               NULL);
     if (result == -1)
     {
-      error = ACE_OS::last_error ();
+      int error = ACE_OS::last_error ();
       if (error != EWOULDBLOCK) // Win32: 10035
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: worker thread (id: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
@@ -724,12 +726,15 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
 
         result = 0;
 
-        goto done;
+        done = true;
+
+        break;
       }
       default:
       { ACE_ASSERT (!buffer_);
         buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
         ACE_ASSERT (buffer_);
+        message_block_p = NULL;
 
         if (buffer_->isInitialized ())
         {
@@ -753,9 +758,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
           goto error;
         } // end IF
         message_data_p->messageType = ARDRONE_MESSAGE_CONTROL;
-        ACE_OS::memset (&message_data_p->NavData,
-                        0,
-                        sizeof (struct _navdata_t));
+        message_data_p->controlData.clear ();
         ACE_NEW_NORETURN (message_data_container_p,
                           typename DataMessageType::DATA_T (message_data_p));
         if (!message_data_container_p)
@@ -801,7 +804,7 @@ continue_:
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),
                       inherited::mod_->name ()));
-          result = 1;
+          result = -1;
         }
         switch (result)
         {
@@ -809,11 +812,17 @@ continue_:
           {
             // *NOTE*: most probable reason: connection
             //         has been closed --> session end
-            ACE_DEBUG ((LM_DEBUG,
-                        ACE_TEXT ("%s: failed to parse control message(s) (result was: %d), aborting\n"),
-                        inherited::mod_->name (),
-                        result));
-            goto error;
+            //ACE_DEBUG ((LM_DEBUG,
+            //            ACE_TEXT ("%s: failed to parse control message(s) (result was: %d), aborting\n"),
+            //            inherited::mod_->name (),
+            //            result));
+
+            // clean up
+            end ();
+
+            done = true;
+
+            break;
           }
           default:
           {
@@ -841,12 +850,10 @@ error:
         if (do_scan_end)
           end ();
 
-        goto done;
+        done = true;
       }
     } // end SWITCH
-  } while (true);
-  result = -1;
+  } while (!done);
 
-done:
   return result;
 }

@@ -272,12 +272,6 @@ continue_:
                       inherited::mod_->name ()));
       } // end ELSE
 
-      if (buffer_)
-      {
-        buffer_->release ();
-        buffer_ = NULL;
-      } // end IF
-
       break;
     }
     default:
@@ -518,9 +512,9 @@ continue_:
   if (!message_block_2)
   {
     // *NOTE*: most probable reason: received session end
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
-                inherited::mod_->name ()));
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
+    //            inherited::mod_->name ()));
     return false;
   } // end IF
 
@@ -848,12 +842,12 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
         if (buffer_->isInitialized ())
         {
-          // sanity check(s)
-          message_data_container_p =
-            &const_cast<typename DataMessageType::DATA_T&> (buffer_->getR ());
-          message_data_p =
-            &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->getR ());
-          ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATA);
+          //// sanity check(s)
+          //message_data_container_p =
+          //  &const_cast<typename DataMessageType::DATA_T&> (buffer_->getR ());
+          //message_data_p =
+          //  &const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_p->getR ());
+          //ACE_ASSERT (message_data_p->messageType == ARDRONE_MESSAGE_NAVDATA);
 
           goto continue_;
         } // end IF

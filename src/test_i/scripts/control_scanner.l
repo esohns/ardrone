@@ -2,8 +2,7 @@
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 
-#include <map>
-#include <string>
+#include "ardrone_types.h"
 
 // forward declarations
 typedef void* yyscan_t;
@@ -11,7 +10,6 @@ template <typename ConfigurationType,
           typename RecordType>
 class Stream_IYaccRecordParser_T;
 struct Common_ParserConfiguration;
-typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
 typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 template <typename ScannerStateType,
@@ -62,58 +60,114 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 %option extra-type="ARDrone_Control_IScanner_t*"
 %option nounistd nounput noyymore
 
-OCTET                  [\x00-\xFF]
+CATEGORY               [^:]
+COLON                  :
 EQUALS                 =
 KEY                    [^=]
 VALUE                  [^\n]
+OCTET                  [\x00-\xFF]
 
+%s                     category
+%s                     delimiter_1
 %s                     key
-%s                     delimiter
+%s                     delimiter_2
 %s                     value
 %s                     newline
 
 %% /* end of definitions */
 
 %{
-  // sanity check(s)
-  ACE_ASSERT (yyscanner);
-
-  ARDrone_Control_IScanner_t* iscanner_p =
-    ARDrone_Control_Scanner_get_extra (yyscanner);
-  ACE_ASSERT (iscanner_p);
-  ARDrone_Control_IParser_t* iparser_p =
-    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
-  ACE_ASSERT (iparser_p);
-  ARDrone_DeviceConfiguration_t& configuration_r = iparser_p->current ();
-
-  static std::string current_key_string;
+  static std::string current_string;
+	static ARDrone_DeviceConfigurationKeyValue_t current_key_value;
 %}
 
 <INITIAL>{
 [[:blank:]\r\n] {}
-[^=]            { yyless (0);
-                  BEGIN (key); }
+[^:]            { yyless (0);
+                  BEGIN (category); }
 } // end <INITIAL>
+<category>{
+{CATEGORY}*     { current_string = yytext;
+                  BEGIN (delimiter_1); }
+} // end <category>
+<delimiter_1>{
+:               { BEGIN (key); }
+} // end <delimiter_1>
 <key>{
-{KEY}*          { current_key_string = Common_Tools::strip (yytext);
-                  BEGIN (delimiter); }
+{KEY}*          { current_key_value.first = yytext;
+                  current_key_value.first =
+                    Common_Tools::strip (current_key_value.first);
+                  BEGIN (delimiter_2); }
 } // end <key>
-<delimiter>{
+<delimiter_2>{
 =               { BEGIN (value); }
-} // end <delimiter>
+} // end <delimiter_2>
 <value>{
-{VALUE}*        { ACE_ASSERT (!current_key_string.empty ());
-                  configuration_r.insert (std::make_pair (current_key_string,
-                                                          Common_Tools::strip (yytext)));
+{VALUE}*        { current_key_value.second = yytext;
+                  current_key_value.second =
+                    Common_Tools::strip (current_key_value.second);
+
+                  // sanity check(s)
+                  ACE_ASSERT (yyscanner);
+
+                  ARDrone_Control_IScanner_t* iscanner_p =
+                    ARDrone_Control_Scanner_get_extra (yyscanner);
+                  ACE_ASSERT (iscanner_p);
+                  ARDrone_Control_IParser_t* iparser_p =
+                    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ACE_ASSERT (iparser_p);
+                  ARDrone_DeviceConfiguration_t& configuration_r =
+                    iparser_p->current ();
+
+                  // sanity check(s)
+                  ACE_ASSERT (!current_string.empty ());
+
+                  ARDrone_DeviceConfigurationIterator_t iterator =
+                    configuration_r.find (current_string);
+                  if (iterator == configuration_r.end ())
+                  {
+                    ARDrone_DeviceConfigurationCategory_t category_s;
+                    configuration_r.insert (std::make_pair (current_string,
+                                                            category_s));
+                    iterator =
+                      configuration_r.find (current_string);
+                    ACE_ASSERT (iterator != configuration_r.end ());
+                  } // end IF
+                  (*iterator).second.push_back (current_key_value);
                   BEGIN (newline); }
 } // end <value>
 <newline>{
-\n              { current_key_string.clear ();
-                  BEGIN (key); }
+\n              { current_string.clear ();
+                  current_key_value.first.clear ();
+                  current_key_value.second.clear ();
+                  BEGIN (category); }
 } // end <newline>
-<<EOF>>                { return -1; }
-<*>{OCTET}             { /* *TODO*: use (?s:.) ? */
-                         yyterminate (); }
+<<EOF>>         { /* *NOTE*: failed to switch buffers (received MB_STOP); the
+                             peer closes the connection after all data has been
+                             sent, ending the session
+                             --> present the data that has been decoded */
+
+                  // sanity check(s)
+                  ACE_ASSERT (yyscanner);
+
+                  ARDrone_Control_IScanner_t* iscanner_p =
+                    ARDrone_Control_Scanner_get_extra (yyscanner);
+                  ACE_ASSERT (iscanner_p);
+                  ARDrone_Control_IParser_t* iparser_p =
+                    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ACE_ASSERT (iparser_p);
+                  ARDrone_DeviceConfiguration_t* configuration_p =
+                    &iparser_p->current ();
+
+                  try {
+                    iparser_p->record (configuration_p);
+                  } catch (...) {
+                    ACE_DEBUG ((LM_ERROR,
+                                ACE_TEXT ("caught exception in Net_IYaccStreamParser_T::record(), continuing\n")));
+                  }
+                  yyterminate (); }
+<*>{OCTET}      { /* *TODO*: use (?s:.) ? */
+                  yyterminate (); }
 
 %% /* end of rules */
 

@@ -1001,6 +1001,8 @@ do_work (int argc_in,
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
   ACE_ASSERT (video_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
 
+  (*control_streamconfiguration_iterator).second.configuration_.initializeControl =
+    &event_handler;
   (*control_streamconfiguration_iterator).second.moduleConfiguration_.notify =
     &control_stream;
 
@@ -1067,8 +1069,6 @@ do_work (int argc_in,
     std::max (bufferSize_in,
               static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
   connection_configuration.userData = CBData_in.configuration->userData;
-//  CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-//                                                                            connection_configuration));
   connection_configuration.streamConfiguration =
     &((*control_streamconfiguration_iterator).second);
   CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("ControlSource"),
@@ -1083,8 +1083,6 @@ do_work (int argc_in,
 
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
-    false;
   result =
     connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
                                                                                                  static_cast<ACE_UINT32> (INADDR_ANY),
@@ -1106,14 +1104,14 @@ do_work (int argc_in,
   (*iterator_2).second.socketHandlerConfiguration.socketConfiguration =
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
 
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.reset ();
+  // *TODO*: bind to a specific interface
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress =
     address_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
                                                                                                          1);
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     !useReactor_in;
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
-    ARDRONE_PORT_UDP_NAVDATA;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
     true;
   connection_configuration.streamConfiguration =
@@ -1129,7 +1127,7 @@ do_work (int argc_in,
       &(*iterator_2).second.socketHandlerConfiguration.socketConfiguration_3;
 
   result =
-    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION),
                                                                                                  static_cast<ACE_UINT32> (INADDR_ANY),
                                                                                                  1,
                                                                                                  0);
@@ -1175,10 +1173,6 @@ do_work (int argc_in,
 //              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
                                                                                                      1);
-//  connection_configuration.socketHandlerConfiguration.socketConfiguration.connect =
-//    !useReactor_in;
-//  connection_configuration.socketHandlerConfiguration.socketConfiguration.writeOnly =
-//    true;
   connection_configuration.streamConfiguration =
     &((*video_streamconfiguration_iterator).second);
   CBData_in.configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("VideoSource"),
@@ -1354,9 +1348,10 @@ do_work (int argc_in,
   enum Common_ProactorType proactor_type;
   enum Common_ReactorType reactor_type;
   bool serialize_output;
-  if (!Common_Tools::initializeEventDispatch (useReactor_in,
-                                              false,
-                                              1, // #threads
+  if (!Common_Tools::initializeEventDispatch (useReactor_in,                                      // use reactor ? : proactor
+                                              (useReactor_in &&
+                                               (ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS > 1)), // use thread pool reactor ?
+                                              ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS,         // # dispatching threads
                                               proactor_type,
                                               reactor_type,
                                               serialize_output))

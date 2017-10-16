@@ -21,10 +21,6 @@
 #ifndef ARDRONE_COMMON_H
 #define ARDRONE_COMMON_H
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <mfobjects.h>
@@ -47,11 +43,6 @@
 #include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
 
-typedef std::map<std::string, std::string> ARDrone_DeviceConfiguration_t;
-typedef ARDrone_DeviceConfiguration_t::const_iterator ARDrone_DeviceConfigurationIterator_t;
-
-typedef std::vector<unsigned int> ARDrone_NavDataOptionOffsets_t;
-typedef ARDrone_NavDataOptionOffsets_t::const_iterator ARDrone_NavDataOptionOffsetsIterator_t;
 struct ARDrone_NavData
 {
   ARDrone_NavData ()
@@ -94,6 +85,9 @@ struct ARDrone_MessageData
     messageType = data_in.messageType;
     switch (messageType)
     {
+      case ARDRONE_MESSAGE_CONTROL:
+        controlData = data_in.controlData;
+        break;
       case ARDRONE_MESSAGE_NAVDATA:
         NavData = data_in.NavData;
         break;
@@ -112,10 +106,13 @@ struct ARDrone_MessageData
       }
     } // end SWITCH
   };
-  ~ARDrone_MessageData ()
+  virtual ~ARDrone_MessageData ()
   {
     switch (messageType)
     {
+      case ARDRONE_MESSAGE_CONTROL:
+        controlData.clear ();
+        break;
       case ARDRONE_MESSAGE_NAVDATA:
         break;
       case ARDRONE_MESSAGE_MAVLINK:
@@ -136,11 +133,12 @@ struct ARDrone_MessageData
   inline void operator+= (struct ARDrone_MessageData rhs_in)
   { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
 
-  enum ARDrone_MessageType  messageType;
+  enum ARDrone_MessageType      messageType;
 
-  struct __mavlink_message  MAVLinkData;
-  struct ARDrone_NavData    NavData;
-  struct ARDrone_VideoFrame videoFrame;
+  ARDrone_DeviceConfiguration_t controlData;
+  struct __mavlink_message      MAVLinkData;
+  struct ARDrone_NavData        NavData;
+  struct ARDrone_VideoFrame     videoFrame;
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
@@ -148,6 +146,11 @@ typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+class ARDrone_IControlNotify
+{
+ public:
+  virtual void messageCB (const ARDrone_DeviceConfiguration_t&) = 0; // device configuration
+};
 
 typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
@@ -176,13 +179,14 @@ class ARDrone_INavDataNotify
                           const ARDrone_NavDataOptionOffsets_t&, // option offsets
                           void*) = 0;                            // payload handle
 };
+
 class ARDrone_IController
  : virtual public ARDrone_IStateMachine_NavData_t
 {
  public:
-  virtual void ids (uint8_t,      // session id
-                    uint8_t,      // user id
-                    uint8_t) = 0; // application id
+  virtual void ids (unsigned char,      // session id
+                    unsigned char,      // user id
+                    unsigned char) = 0; // application id
 
   virtual void init () = 0; // send initial packet
   virtual void start () = 0; // switch from 'bootstrap' to 'demo' mode

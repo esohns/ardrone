@@ -37,6 +37,7 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
  , GtkCBData_ (GtkCBData_in)
+ , ControlNotify_ (NULL)
  , MAVLinkNotify_ (NULL)
  , NavDataNotify_ (NULL)
  , streams_ ()
@@ -104,16 +105,25 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       break;
     }
     case ARDRONE_MESSAGE_CONTROL:
-    {
+    { ACE_ASSERT (ControlNotify_);
+      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
+      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
+      try {
+        // *TODO*: remove type inference
+        ControlNotify_->messageCB (data_r.controlData);
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in ARDrone_IControlNotify::messageCB(), returning\n")));
+      }
+    
       stream_type_e = ARDRONE_STREAM_CONTROL;
+
       break;
     }
     case ARDRONE_MESSAGE_MAVLINK:
     { ACE_ASSERT (MAVLinkNotify_);
-
       const ARDrone_MessageData_t& data_container_r = message_in.getR ();
       const struct ARDrone_MessageData& data_r = data_container_r.getR ();
-
       try {
         // *TODO*: remove type inference
         MAVLinkNotify_->messageCB (data_r.MAVLinkData,
@@ -129,7 +139,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
     case ARDRONE_MESSAGE_NAVDATA:
     { ACE_ASSERT (NavDataNotify_);
-
       const ARDrone_MessageData_t& data_container_r = message_in.getR ();
       const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 

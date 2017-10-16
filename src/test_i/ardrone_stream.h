@@ -138,6 +138,12 @@ class ARDrone_ControlStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
+ , public Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage>
+ , public ARDrone_IControlNotify
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -156,6 +162,11 @@ class ARDrone_ControlStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+  typedef Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage> inherited2;
 
  public:
   ARDrone_ControlStream ();
@@ -169,13 +180,21 @@ class ARDrone_ControlStream
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
 
   // implement Common_IStatistic_T
-  // *NOTE*: these delegate to runtimeStatistic_
   virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
   virtual void report () const;
+
+  // implement ARDrone_IControlNotify
+  virtual void messageCB (const ARDrone_DeviceConfiguration_t&); // device configuration
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream (const ARDrone_ControlStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream& operator= (const ARDrone_ControlStream&))
+
+  // convenient types
+  struct SUBSCRIBERS_IS_EQUAL_P
+  {
+    inline bool operator() (typename inherited2::INOTIFY_T* first, typename inherited2::INOTIFY_T* second) { return (first == second); }
+  };
 
   // override (part of) Stream_ISessionNotify_T
   virtual void start (Stream_SessionId_t,
@@ -235,6 +254,11 @@ class ARDrone_NavDataStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+  typedef Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage> inherited2;
 
  public:
   ARDrone_NavDataStream ();
@@ -258,14 +282,14 @@ class ARDrone_NavDataStream
                           void*);                                // payload handle
 
  private:
-  typedef Stream_SessionBase_T<Stream_SessionId_t,
-                               struct ARDrone_SessionData,
-                               enum Stream_SessionMessageType,
-                               ARDrone_Message,
-                               ARDrone_SessionMessage> inherited2;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream& operator= (const ARDrone_NavDataStream&))
+
+  // convenient types
+  struct SUBSCRIBERS_IS_EQUAL_P
+  {
+    inline bool operator() (typename inherited2::INOTIFY_T* first, typename inherited2::INOTIFY_T* second) { return (first == second); }
+  };
 
   // override (part of) Stream_ISessionNotify_T
   virtual void start (Stream_SessionId_t,
@@ -358,6 +382,11 @@ class ARDrone_MAVLinkStream
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
+  typedef Stream_SessionBase_T<Stream_SessionId_t,
+                               struct ARDrone_SessionData,
+                               enum Stream_SessionMessageType,
+                               ARDrone_Message,
+                               ARDrone_SessionMessage> inherited2;
 
  public:
   ARDrone_MAVLinkStream ();
@@ -380,14 +409,14 @@ class ARDrone_MAVLinkStream
                           void*);                          // payload handle
 
  private:
-  typedef Stream_SessionBase_T<Stream_SessionId_t,
-                               struct ARDrone_SessionData,
-                               enum Stream_SessionMessageType,
-                               ARDrone_Message,
-                               ARDrone_SessionMessage> inherited2;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream (const ARDrone_MAVLinkStream&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream& operator= (const ARDrone_MAVLinkStream&))
+
+  // convenient types
+  struct SUBSCRIBERS_IS_EQUAL_P
+  {
+    inline bool operator() (typename inherited2::INOTIFY_T* first, typename inherited2::INOTIFY_T* second) { return (first == second); }
+  };
 
   // override (part of) Stream_ISessionNotify_T
   virtual void start (Stream_SessionId_t,
@@ -396,8 +425,8 @@ class ARDrone_MAVLinkStream
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 
-  // *TODO*: re-consider this API
-  void ping ();
+  //// *TODO*: re-consider this API
+  //void ping ();
 };
 
 // include template definition

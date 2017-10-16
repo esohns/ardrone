@@ -40,6 +40,7 @@ struct ARDrone_SessionData;
 
 class ARDrone_EventHandler
  : public ARDrone_Notification_t
+ , public Common_IInitializeP_T<ARDrone_IControlNotify>
  , public Common_IInitializeP_T<ARDrone_IMAVLinkNotify>
  , public Common_IInitializeP_T<ARDrone_INavDataNotify>
 {
@@ -60,6 +61,7 @@ class ARDrone_EventHandler
   virtual void end (Stream_SessionId_t); // session id
 
   // implement Common_IInitializeP_T
+  inline bool initialize (const ARDrone_IControlNotify* notify_in) { ControlNotify_ = const_cast<ARDrone_IControlNotify*> (notify_in); return true; };
   inline bool initialize (const ARDrone_IMAVLinkNotify* notify_in) { MAVLinkNotify_ = const_cast<ARDrone_IMAVLinkNotify*> (notify_in); return true; };
   inline bool initialize (const ARDrone_INavDataNotify* notify_in) { NavDataNotify_ = const_cast<ARDrone_INavDataNotify*> (notify_in); return true; };
 
@@ -81,6 +83,7 @@ class ARDrone_EventHandler
 
   bool                      consoleMode_;
   struct ARDrone_GtkCBData* GtkCBData_;
+  ARDrone_IControlNotify*   ControlNotify_;
   ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
   ARDrone_INavDataNotify*   NavDataNotify_;
   SESSIONID_TO_STREAM_MAP_T streams_;
