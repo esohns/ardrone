@@ -132,7 +132,13 @@
 #define ARDRONE_PORT_TCP_VIDEO                             5555
 #define ARDRONE_PORT_UDP_CONTROL_CONFIGURATION             5556  // UDP (drone <-- client)
 #define ARDRONE_PORT_UDP_MAVLINK                           14550 // UDP (drone --> client)
-#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone (<)--> client)
+// *NOTE*: this isn't really documented anywhere, but the procedure resembles a
+//         subscriber pattern: the client sends 4 bytes '0x0001' to this port;
+//         the drone will then send NavData to the clients' 'source' port, i.e.
+//         the port the subscription originated from
+//         --> setting the source port to 5556 (see above) will give the nice
+//             impression of a 'bidirectional' NavData communication 'channel'
+#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone <-- client)
 
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 
@@ -159,9 +165,9 @@
 
 // navdata
 #if defined (_DEBUG)
-#define ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS               true
+#define ARDRONE_PROTOCOL_FULL_NAVDATA_OPTIONS               true
 #else
-#define ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS               false
+#define ARDRONE_PROTOCOL_FULL_NAVDATA_OPTIONS               false
 #endif
 
 // *** stream-related ***

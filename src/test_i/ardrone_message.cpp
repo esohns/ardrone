@@ -333,6 +333,29 @@ ARDrone_Message::dump_state (void) const
                   inherited::length ()));
       break;
     }
+    case ARDRONE_MESSAGE_CONTROL:
+    {
+      if (!inherited::data_)
+      {
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("[%u]: not initialized\n"),
+                    inherited::id_));
+        return;
+      } // end IF
+      const struct ARDrone_MessageData& message_data_r =
+        inherited::data_->getR ();
+      ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
+
+      //unsigned int number_of_settings = 0;
+      //for (ARDrone_DeviceConfigurationConstIterator_t iterator = message_data_r.controlData.begin ();
+      //     iterator != message_data_r.controlData.end ();
+      //     ++iterator)
+      //  number_of_settings += (*iterator).second.size ();
+      //ACE_DEBUG ((LM_DEBUG,
+      //            ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+      //            number_of_settings, message_data_r.controlData.size ()));
+      break;
+    }
     case ARDRONE_MESSAGE_MAVLINK:
     {
       if (!inherited::data_)
@@ -344,6 +367,7 @@ ARDrone_Message::dump_state (void) const
       } // end IF
       const struct ARDrone_MessageData& message_data_r =
           inherited::data_->getR ();
+      ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_MAVLINK);
 
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
@@ -366,6 +390,7 @@ ARDrone_Message::dump_state (void) const
       } // end IF
       const struct ARDrone_MessageData& message_data_r =
           inherited::data_->getR ();
+      ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
 
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("[%u]: header: 0x%x, state: 0x%x, seq: %u, vision: %u, option(s) [%u]:\n"),

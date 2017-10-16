@@ -169,7 +169,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-  struct ARDrone_SessionData* session_data_p = NULL;
+//  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;

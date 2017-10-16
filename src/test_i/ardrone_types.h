@@ -22,8 +22,11 @@
 #define ARDRONE_TYPES_H
 
 #include <deque>
+#include <list>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -98,6 +101,16 @@ typedef ARDrone_Events_t::const_iterator ARDrone_EventsIterator_t;
 //  glm::vec3 translation;
 //  int last[2];
 //};
+
+typedef std::pair<std::string, std::string> ARDrone_DeviceConfigurationKeyValue_t;
+typedef std::list<ARDrone_DeviceConfigurationKeyValue_t> ARDrone_DeviceConfigurationCategory_t;
+typedef ARDrone_DeviceConfigurationCategory_t::const_iterator ARDrone_DeviceConfigurationCategoryIterator_t;
+typedef std::map<std::string, ARDrone_DeviceConfigurationCategory_t> ARDrone_DeviceConfiguration_t;
+typedef ARDrone_DeviceConfiguration_t::iterator ARDrone_DeviceConfigurationIterator_t;
+typedef ARDrone_DeviceConfiguration_t::const_iterator ARDrone_DeviceConfigurationConstIterator_t;
+
+typedef std::vector<unsigned int> ARDrone_NavDataOptionOffsets_t;
+typedef ARDrone_NavDataOptionOffsets_t::const_iterator ARDrone_NavDataOptionOffsetsIterator_t;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 __pragma (pack (push, 1))

@@ -107,7 +107,6 @@ struct ARDrone_SessionData
 {
   ARDrone_SessionData ()
    : Stream_SessionData ()
-   , connectionState (NULL)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , direct3DDevice (NULL)
    , direct3DManagerResetToken (0)
@@ -195,7 +194,6 @@ struct ARDrone_SessionData
     return *this;
   };
 
-  struct ARDrone_ConnectionState* connectionState;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: mediafoundation only, remove ASAP
   IDirect3DDevice9Ex*             direct3DDevice;
@@ -371,6 +369,7 @@ struct ARDrone_ModuleHandlerConfiguration
   bool                                           useYYScanBuffer; // H264 decoder module
 };
 
+typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;
 typedef Common_IInitializeP_T<ARDrone_IMAVLinkNotify> ARDrone_IMAVLinkInitialize_t;
 typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize_t;
 struct ARDrone_StreamConfiguration
@@ -379,6 +378,7 @@ struct ARDrone_StreamConfiguration
   ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
    , GtkCBData (NULL)
+   , initializeControl (NULL)
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
    , useReactor (NET_EVENT_USE_REACTOR)
@@ -386,6 +386,7 @@ struct ARDrone_StreamConfiguration
   {};
 
   struct ARDrone_GtkCBData*     GtkCBData;
+  ARDrone_IControlInitialize_t* initializeControl;
   ARDrone_IMAVLinkInitialize_t* initializeMAVLink;
   ARDrone_INavDataInitialize_t* initializeNavData;
   bool                          useReactor;

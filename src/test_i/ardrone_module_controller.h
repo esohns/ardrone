@@ -84,6 +84,7 @@ class ARDrone_Module_Controller_T
                                      ConnectionConfigurationIteratorType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;
+  typedef ARDrone_StateMachine_NavData inherited2;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -120,7 +121,6 @@ class ARDrone_Module_Controller_T
 
  private:
   // convenient types
-  typedef ARDrone_StateMachine_NavData inherited2;
   typedef ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                                       TimePolicyType,
                                       ConfigurationType,

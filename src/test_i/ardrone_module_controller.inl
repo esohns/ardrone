@@ -159,9 +159,10 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   ACE_UNUSED_ARG (passMessageDownstream_out);
 
   // sanity check(s)
-  // *NOTE*: (depending on previous sessions) navdata may start arriving as soon
-  //         as the stream connects to the navdata port. Discard all 'early'
-  //         data until the module reaches a defined state (see below)
+  // *NOTE*: (depending on previous 'sessions') navdata may start arriving as
+  //         soon as upstream connects to the (previously subscribed) port
+  //         --> discard all 'early' data until the module reaches a defined
+  //             state (see below)
   if (inherited2::state_ < NAVDATA_STATE_INITIAL)
     return;
 
@@ -179,7 +180,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     if (deviceState_ & ARDRONE_COMMAND_MASK)
     {
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: resetting control command ACK flag...\n"),
+                  ACE_TEXT ("%s: resetting control command ACK flag\n"),
                   inherited::mod_->name ()));
       resetACKFlag ();
     } // end IF
@@ -201,6 +202,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   { // *NOTE*: the command ACK flag needs to be reset manually
     if (inherited2::state_ != NAVDATA_STATE_COMMAND_ACK)
       change (NAVDATA_STATE_COMMAND_ACK);
+
+    // confirm command ACK receipt
+    resetACKFlag ();
   } // end IF
   else if (inherited2::state_ == NAVDATA_STATE_COMMAND_ACK)
   {
@@ -212,7 +216,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   } // end ELSE IF
 
   // reset watchdog ?
-  if (state_ & ARDRONE_COM_WATCHDOG_MASK)
+  if (deviceState_ & ARDRONE_COM_WATCHDOG_MASK)
   {
     try {
       resetWatchdog ();
@@ -258,15 +262,14 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   // sanity check(s)
   ACE_ASSERT (inherited::isInitialized_);
 
+  enum Stream_SessionMessageType message_type_e =
+    message_inout->type ();
+
   // set up connection
   inherited::handleSessionMessage (message_inout,
                                    passMessageDownstream_out);
 
-  // sanity check(s)
-  if (!message_inout || !passMessageDownstream_out)
-    return;
-
-  switch (message_inout->type ())
+  switch (message_type_e)
   {
     case STREAM_SESSION_MESSAGE_BEGIN:
     {
@@ -285,46 +288,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     }
     case STREAM_SESSION_MESSAGE_END:
     {
-      ConnectionConfigurationIteratorType iterator;
-      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
-      Common_IReset* ireset_p = NULL;
-
-       if (!inherited::configuration_)
-          goto continue_;
-
-      // reset the connection configuration
-      iterator =
-        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
-      if (iterator == inherited::configuration_->connectionConfigurations->end ())
-        iterator =
-          inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (""));
-      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
-      ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
-      socket_configuration_p =
-        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
-      ACE_ASSERT (socket_configuration_p);
-      socket_configuration_p->peerAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                           1);
-      socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_NAVDATA;
-
-      if (!inherited::connection_)
-        goto continue_;
-
-      ireset_p = dynamic_cast<Common_IReset*> (inherited::connection_);
-      ACE_ASSERT (ireset_p);
-      try {
-        ireset_p->reset ();
-      } catch (...) {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: caught exception in Common_IReset::reset(), continuing\n"),
-                    inherited::mod_->name ()));
-      }
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: reset target address to %s\n"),
-                  inherited::mod_->name (),
-                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
-
-continue_:
       change (NAVDATA_STATE_INVALID);
 
       break;
@@ -368,84 +331,124 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   {
     case NAVDATA_STATE_INITIAL:
     {
-      DataMessageType* message_p =
-        inherited::allocateMessage (ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH);
-      if (!message_p)
+      //// sanity check(s)
+      //ACE_ASSERT (inherited::sessionData_);
+
+      //const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
+      //  inherited::sessionData_->getR ();
+      ConnectionConfigurationIteratorType iterator, iterator_2;
+      struct Net_UDPSocketConfiguration* socket_configuration_p, *socket_configuration_2 = NULL;
+      ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      struct _GUID interface_identifier;
+#else
+      std::string interface_identifier;
+#endif
+      ACE_Message_Block* message_block_p = NULL;
+      unsigned char buffer_a[] = {0x01, 0x00, 0x00, 0x00};
+
+      // retrieve listen address (connection has been set up upstream) and peer
+      // address to set up the local SAP 
+      // sanity check(s)
+      ACE_ASSERT (inherited::configuration_);
+      ACE_ASSERT (inherited::configuration_->connectionConfigurations);
+      iterator =
+        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+      // sanity check(s)
+      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
+      ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
+      socket_configuration_p =
+        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
+      ACE_ASSERT (socket_configuration_p);
+      iterator_2 =
+        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
+      // sanity check(s)
+      ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
+      ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
+      socket_configuration_2 =
+        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
+      ACE_ASSERT (socket_configuration_2);
+      if (unlikely (!Net_Common_Tools::IPAddressToInterface (socket_configuration_2->peerAddress,
+                                                             interface_identifier)))
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), aborting\n"),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_2->peerAddress).c_str ())));
+        goto error;
+      } // end IF
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
+                                                             local_SAP,
+                                                             gateway_address)))
+#else
+      if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
+                                                             NULL,
+                                                             local_SAP,
+                                                             gateway_address)))
+#endif
+      {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s): \"%m\", aborting\n"),
+                    ACE_TEXT (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())));
+#else
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s): \"%m\", aborting\n"),
+                    ACE_TEXT (interface_identifier.c_str ())));
+#endif
+        goto error;
+      } // end IF
+      local_SAP.set_port_number (socket_configuration_p->listenAddress.get_port_number (),
+                                 1);
+      remote_SAP = socket_configuration_2->peerAddress;
+      remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
+
+      // 'subscribe' to the NavData stream
+      message_block_p = inherited::allocateMessage (4);
+      if (unlikely (!message_block_p))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_TaskBase_T::allocateMessage(%u): \"%m\", returning\n"),
                     inherited::mod_->name (),
-                    ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
-        return;
+                    4));
+        goto error;
       } // end IF
-      message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
+      //message_p->initialize (session_data_r.sessionId,
+      //                       NULL);
+      //message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
       //message_p->set_2 (inherited::stream_);
-      unsigned char buffer_a[] = { 0x01, 0x00, 0x00, 0x00 };
-      result = message_p->copy (reinterpret_cast<char*> (buffer_a),
-                                sizeof (buffer_a));
-      if (result == -1)
+      result = message_block_p->copy (reinterpret_cast<char*> (buffer_a),
+                                      4);
+      if (unlikely (result == -1))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to ACE_Message_Block::copy(): \"%m\", aborting\n"),
                     inherited::mod_->name ()));
         goto error;
       } // end IF
-
-      result = inherited::put_next (message_p, NULL);
-      if (result == -1)
+      if (unlikely (!Net_Common_Tools::sendDatagram (local_SAP,
+                                                     remote_SAP,
+                                                     message_block_p)))
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ACE_Task::put_next(): \"%m\", aborting\n"),
-                    inherited::mod_->name ()));
+                    ACE_TEXT ("%s: failed to Net_Common_Tools::sendDatagram(%s,%s,%u), aborting\n"),
+                    inherited::mod_->name (),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ()),
+                    4));
         goto error;
       } // end IF
 
-      return;
-
 error:
-      if (message_p)
-        message_p->release ();
+      if (message_block_p)
+        message_block_p->release ();
 
       break;
     }
     case NAVDATA_STATE_CONFIG:
     {
-      // sanity check(s)
-      ACE_ASSERT (inherited::configuration_);
-      ACE_ASSERT (inherited::connection_);
-
-      // step1: the UDP control port is 5556 (not 5554)
-      //        --> update the connection configuration
-      ConnectionConfigurationIteratorType iterator =
-        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
-      if (iterator == inherited::configuration_->connectionConfigurations->end ())
-        iterator =
-          inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (""));
-      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
-      ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
-      struct Net_UDPSocketConfiguration* socket_configuration_p =
-        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
-      ACE_ASSERT (socket_configuration_p);
-      socket_configuration_p->peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
-                                                           1);
-      socket_configuration_p->sourcePort = ARDRONE_PORT_UDP_CONTROL_CONFIGURATION;
-      Common_IReset* ireset_p =
-        dynamic_cast<Common_IReset*> (inherited::connection_);
-      ACE_ASSERT (ireset_p);
-      try {
-        ireset_p->reset ();
-      } catch (...) {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: caught exception in Common_IReset::reset(), continuing\n"),
-                    inherited::mod_->name ()));
-      }
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: reset target address to %s\n"),
-                  inherited::mod_->name (),
-                  ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
-
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("%s: requesting device configuration data\n"),
+                  ACE_TEXT ("%s: requesting device configuration data...\n"),
                   inherited::mod_->name ()));
 
       command_string =
@@ -481,8 +484,8 @@ error:
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: switching navdata mode: %s\n"),
                   inherited::mod_->name (),
-                  (ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("full")
-                                                          : ACE_TEXT_ALWAYS_CHAR ("demo"))));
+                  (ARDRONE_PROTOCOL_FULL_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("full")
+                                                         : ACE_TEXT_ALWAYS_CHAR ("reduced"))));
 
       command_string =
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
@@ -500,8 +503,8 @@ error:
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_SETTING_MODE_STRING);
       command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
       command_string +=
-        (ARDRONE_PROTOCOL_DEBUG_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("FALSE")
-                                                : ACE_TEXT_ALWAYS_CHAR ("TRUE"));
+        (ARDRONE_PROTOCOL_FULL_NAVDATA_OPTIONS ? ACE_TEXT_ALWAYS_CHAR ("FALSE")
+                                               : ACE_TEXT_ALWAYS_CHAR ("TRUE"));
       command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
 
       if (!sendATCommand (command_string))
@@ -603,9 +606,6 @@ error:
     {
       // step0: remember previous state
       previousState_ = inherited2::state_;
-
-      // step1: confirm command ACK receipt
-      resetACKFlag ();
 
       break;
     }
@@ -802,6 +802,12 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::sendATCommand"));
 
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
+
+  const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
+    inherited::sessionData_->getR ();
+
   DataMessageType* message_p =
     inherited::allocateMessage (ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH);
   if (!message_p)
@@ -812,8 +818,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
+  message_p->initialize (session_data_r.sessionId,
+                         NULL);
   message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
-  //message_p->set_2 (inherited::stream_);
   int result = message_p->copy (commandString_in.c_str (),
                                 commandString_in.size ());
   if (result == -1)
@@ -871,9 +878,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::ids (uint8_t sessionID_in,
-                                                 uint8_t userID_in,
-                                                 uint8_t applicationID_in)
+                            ConnectorType>::ids (uint8_t sessionId_in,
+                                                 uint8_t userId_in,
+                                                 uint8_t applicationId_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ids"));
 
@@ -893,21 +900,21 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << static_cast<int> (sessionID_in);
+  converter << static_cast<int> (sessionId_in);
   command_string += converter.str ();
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (",");
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << static_cast<int> (userID_in);
+  converter << static_cast<int> (userId_in);
   command_string += converter.str ();
   command_string +=
     ACE_TEXT_ALWAYS_CHAR (",");
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << static_cast<int> (applicationID_in);
+  converter << static_cast<int> (applicationId_in);
   command_string += converter.str ();
 
   command_string += '\r';

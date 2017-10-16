@@ -55,6 +55,7 @@ ARDroneStreamTypeToString (const enum ARDrone_StreamType type_in)
 
 ARDrone_ControlStream::ARDrone_ControlStream ()
  : inherited ()
+ , inherited2 (&(inherited::sessionDataLock_))
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::ARDrone_ControlStream"));
 
@@ -133,6 +134,11 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
+  //  struct ARDrone_SessionData* session_data_p = NULL;
+  typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
+  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
+  Stream_Module_t* module_p = NULL;
+  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -143,7 +149,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
                 ACE_TEXT (control_stream_name_string_)));
-    return false;
+    goto error;
   } // end IF
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
     setup_pipeline;
@@ -152,17 +158,27 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
-  // things to be done here:
-  // - create modules (done for the ones "owned" by the stream itself)
-  // - initialize modules
-  // - push them onto the stream (tail-first)
-  struct ARDrone_SessionData& session_data_r =
-    const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+  //struct ARDrone_SessionData& session_data_r =
+  //  const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+
+  iterator =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+
+  // sanity check(s)
+  ACE_ASSERT (iterator != configuration_in.end ());
+
+  configuration_p =
+    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+
+  // sanity check(s)
+  ACE_ASSERT (configuration_p);
+  ACE_ASSERT (configuration_p->subscribers);
+
+  configuration_p->subscribers->push_back (this);
+  configuration_p->subscribers->sort ();
+  configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
 
   // ---------------------------------------------------------------------------
-
-  Stream_Module_t* module_p = NULL;
-  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // ******************************** Source ***********************************
   module_p =
@@ -172,7 +188,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT ("ControlSource")));
-    return false;
+    goto error;
   } // end IF
 
   iset_p =
@@ -184,6 +200,17 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   // *NOTE*: push()ing the module will open() it
   // --> set the argument that is passed along
   module_p->arg (inherited::sessionData_);
+
+  // ---------------------------------------------------------------------------
+
+  ACE_ASSERT (configuration_in.configuration_.initializeControl);
+  if (!configuration_in.configuration_.initializeControl->initialize (this))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
+                ACE_TEXT (control_stream_name_string_)));
+    goto error;
+  } // end IF
 
   // ---------------------------------------------------------------------------
 
@@ -348,6 +375,39 @@ ARDrone_ControlStream::report () const
               inherited::state_.sessionData->statistic.bytes));
 }
 
+void
+ARDrone_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceConfiguration_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::messageCB"));
+
+#if defined (_DEBUG)
+  // debug info
+  unsigned int number_of_settings = 0;
+  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+       iterator != deviceConfiguration_in.end ();
+       ++iterator)
+    number_of_settings += (*iterator).second.size ();
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+              number_of_settings, deviceConfiguration_in.size ()));
+  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+       iterator != deviceConfiguration_in.end ();
+       ++iterator)
+  {
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
+                ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
+    for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
+         iterator_2 != (*iterator).second.end ();
+         ++iterator_2)
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("\t%s:\t%s\n"),
+                  ACE_TEXT ((*iterator_2).first.c_str ()),
+                  ACE_TEXT ((*iterator_2).second.c_str ())));
+  } // end FOR
+#endif
+}
+
 //////////////////////////////////////////
 
 ARDrone_NavDataStream::ARDrone_NavDataStream ()
@@ -476,10 +536,6 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
-  // things to be done here:
-  // - create modules (done for the ones "owned" by the stream itself)
-  // - initialize modules
-  // - push them onto the stream (tail-first)
 //  session_data_p =
 //    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
@@ -496,6 +552,8 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   ACE_ASSERT (configuration_p->subscribers);
 
   configuration_p->subscribers->push_back (this);
+  configuration_p->subscribers->sort ();
+  configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
 
   // ---------------------------------------------------------------------------
 
@@ -542,6 +600,8 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
                 ACE_TEXT (navdata_stream_name_string_)));
     goto error;
   } // end IF
+
+  // ---------------------------------------------------------------------------
 
   ACE_ASSERT (configuration_in.configuration_.initializeNavData);
   if (!configuration_in.configuration_.initializeNavData->initialize (this))
@@ -591,7 +651,7 @@ ARDrone_NavDataStream::start (Stream_SessionId_t sessionId_in,
 
   ACE_ASSERT (inherited2::lock_);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
-    inSession_ = true;
+    inherited2::inSession_ = true;
   } // end lock scope
 
   try {
@@ -637,7 +697,7 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
 
   ACE_ASSERT (inherited2::lock_);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
-    inSession_ = false;
+    inherited2::inSession_ = false;
   } // end lock scope
 }
 
@@ -1223,12 +1283,8 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
 
-  // things to be done here:
-  // - create modules (done for the ones "owned" by the stream itself)
-  // - initialize modules
-  // - push them onto the stream (tail-first)
-  session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+  //session_data_p =
+  //  &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 
@@ -1243,6 +1299,8 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   ACE_ASSERT (configuration_p->subscribers);
 
   configuration_p->subscribers->push_back (this);
+  configuration_p->subscribers->sort ();
+  configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
 
   // ---------------------------------------------------------------------------
 
@@ -1286,7 +1344,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   // --> set the argument that is passed along
   module_p->arg (inherited::sessionData_);
 
-  // -------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   ACE_ASSERT (configuration_in.configuration_.initializeMAVLink);
   if (!configuration_in.configuration_.initializeMAVLink->initialize (this))
@@ -1336,7 +1394,7 @@ ARDrone_MAVLinkStream::start (Stream_SessionId_t sessionId_in,
 
   ACE_ASSERT (inherited2::lock_);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
-    inSession_ = true;
+    inherited2::inSession_ = true;
   } // end lock scope
 
   try {
@@ -1382,33 +1440,32 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
 
   ACE_ASSERT (inherited2::lock_);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, *inherited2::lock_);
-
-    inSession_ = false;
+    inherited2::inSession_ = false;
   } // end lock scope
 }
 
-void
-ARDrone_MAVLinkStream::ping ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ping"));
-
-//  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
-//  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
-//  if (!protocolHandler_impl)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
-
-//    return;
-//  } // end IF
-
-//  // delegate to this module
-//  protocolHandler_impl->handleTimeout (NULL);
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
-}
+//void
+//ARDrone_MAVLinkStream::ping ()
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ping"));
+//
+////  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
+////  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
+////  if (!protocolHandler_impl)
+////  {
+////    ACE_DEBUG ((LM_ERROR,
+////                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
+//
+////    return;
+////  } // end IF
+//
+////  // delegate to this module
+////  protocolHandler_impl->handleTimeout (NULL);
+//
+//  ACE_ASSERT (false);
+//  ACE_NOTSUP;
+//  ACE_NOTREACHED (return;)
+//}
 
 bool
 ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)

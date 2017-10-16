@@ -690,7 +690,7 @@ stream_processing_function (void* arg_in)
     } // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->MAVLinkStream);
 //    ACE_ASSERT (session_p);
-    data_p->GtkCBData->MAVLinkStream->start ();
+    //data_p->GtkCBData->MAVLinkStream->start ();
 //    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
@@ -766,7 +766,7 @@ stream_processing_function (void* arg_in)
                                       converter.str ().c_str ());
     gdk_threads_leave ();
 //  } // end lock scope
-    data_p->GtkCBData->videoStream->start ();
+    //data_p->GtkCBData->videoStream->start ();
 
   //    if (!stream_p->isRunning ())
   //    {
@@ -2430,17 +2430,16 @@ idle_update_progress_cb (gpointer userData_in)
   // done ?
   Common_UI_GTK_PendingActionsIterator_t iterator_2;
   int result = -1;
-  ACE_Thread_Manager* thread_manager_p =
-    (data_p->completedActions.empty () ? NULL
-                                       : ACE_Thread_Manager::instance ());
   ACE_THR_FUNC_RETURN exit_status;
   for (Common_UI_GTK_CompletedActionsIterator_t iterator_3 = data_p->completedActions.begin ();
         iterator_3 != data_p->completedActions.end ();
         ++iterator_3)
-  { ACE_ASSERT (thread_manager_p);
+  {
     iterator_2 = data_p->pendingActions.find (*iterator_3);
     ACE_ASSERT (iterator_2 != data_p->pendingActions.end ());
-    result = thread_manager_p->join ((*iterator_2).second.id (), &exit_status);
+    result =
+      ACE_Thread_Manager::instance ()->join ((*iterator_2).second.id (),
+                                             &exit_status);
     if (result == -1)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_Thread_Manager::join(%u): \"%m\", continuing\n"),
@@ -2513,6 +2512,7 @@ idle_update_progress_cb (gpointer userData_in)
     return G_SOURCE_REMOVE; // done
   } // end IF
 
+  // update progress bars
   ACE_TCHAR buffer[BUFSIZ];
   ACE_OS::memset (buffer, 0, sizeof (buffer));
   float fps, speed = 0.0F;
@@ -2556,136 +2556,129 @@ idle_update_progress_cb (gpointer userData_in)
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
     iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_CONTROL);
     ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps   = (*iterator_4).second.messagesPerSecond;
+    fps = (*iterator_4).second.messagesPerSecond;
     speed = (*iterator_4).second.bytesPerSecond;
-  } // end lock scope
-  if (speed)
-  {
-    if (speed >= 1024.0F)
+    if (speed)
     {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      } // end IF
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+      } // end IF
+      //ACE_OS::memset (buffer, 0, sizeof (buffer));
+      result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                                fps, speed, magnitude_string.c_str ());
+      if (result < 0)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
     } // end IF
-    if (speed >= 1024.0F)
-    {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
-    } // end IF
-    //ACE_OS::memset (buffer, 0, sizeof (buffer));
-    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
-                              fps, speed, magnitude_string.c_str ());
-    if (result < 0)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
-  } // end IF
-  gtk_progress_bar_set_text (progress_bar_p,
-                             ACE_TEXT_ALWAYS_CHAR (buffer));
+    gtk_progress_bar_set_text (progress_bar_p,
+                               ACE_TEXT_ALWAYS_CHAR (buffer));
 
-  ACE_OS::memset (buffer, 0, sizeof (buffer));
-  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+    ACE_OS::memset (buffer, 0, sizeof (buffer));
+    magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
 
-  progress_bar_p =
-    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
-  ACE_ASSERT (progress_bar_p);
-
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    progress_bar_p =
+      GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
+    ACE_ASSERT (progress_bar_p);
     iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_NAVDATA);
     ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps   = (*iterator_4).second.messagesPerSecond;
+    fps = (*iterator_4).second.messagesPerSecond;
     speed = (*iterator_4).second.bytesPerSecond;
-  } // end lock scope
-  if (speed)
-  {
-    if (speed >= 1024.0F)
+    if (speed)
     {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      } // end IF
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+      } // end IF
+      //ACE_OS::memset (buffer, 0, sizeof (buffer));
+      result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                                fps, speed, magnitude_string.c_str ());
+      if (result < 0)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
     } // end IF
-    if (speed >= 1024.0F)
-    {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
-    } // end IF
-    //ACE_OS::memset (buffer, 0, sizeof (buffer));
-    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
-                              fps, speed, magnitude_string.c_str ());
-    if (result < 0)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
-  } // end IF
-  gtk_progress_bar_set_text (progress_bar_p,
-                              ACE_TEXT_ALWAYS_CHAR (buffer));
+    gtk_progress_bar_set_text (progress_bar_p,
+                               ACE_TEXT_ALWAYS_CHAR (buffer));
 
-  ACE_OS::memset (buffer, 0, sizeof (buffer));
-  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+    ACE_OS::memset (buffer, 0, sizeof (buffer));
+    magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
 
-  progress_bar_p =
-    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
-  ACE_ASSERT (progress_bar_p);
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    progress_bar_p =
+      GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
+    ACE_ASSERT (progress_bar_p);
     iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_MAVLINK);
     ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps   = (*iterator_4).second.messagesPerSecond;
+    fps = (*iterator_4).second.messagesPerSecond;
     speed = (*iterator_4).second.bytesPerSecond;
-  } // end lock scope
-  if (speed)
-  {
-    if (speed >= 1024.0F)
+    if (speed)
     {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      } // end IF
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+      } // end IF
+      //ACE_OS::memset (buffer, 0, sizeof (buffer));
+      result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                                fps, speed, magnitude_string.c_str ());
+      if (result < 0)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
     } // end IF
-    if (speed >= 1024.0F)
-    {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
-    } // end IF
-    //ACE_OS::memset (buffer, 0, sizeof (buffer));
-    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
-                              fps, speed, magnitude_string.c_str ());
-    if (result < 0)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
-  } // end IF
-  gtk_progress_bar_set_text (progress_bar_p,
-                             ACE_TEXT_ALWAYS_CHAR (buffer));
+    gtk_progress_bar_set_text (progress_bar_p,
+                               ACE_TEXT_ALWAYS_CHAR (buffer));
 
-  ACE_OS::memset (buffer, 0, sizeof (buffer));
-  magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
+    ACE_OS::memset (buffer, 0, sizeof (buffer));
+    magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
 
-  progress_bar_p =
-    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
-  ACE_ASSERT (progress_bar_p);
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+    progress_bar_p =
+      GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
+    ACE_ASSERT (progress_bar_p);
     iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_VIDEO);
     ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps   = (*iterator_4).second.messagesPerSecond;
+    fps = (*iterator_4).second.messagesPerSecond;
     speed = (*iterator_4).second.bytesPerSecond;
+    if (speed)
+    {
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
+      } // end IF
+      if (speed >= 1024.0F)
+      {
+        speed /= 1024.0F;
+        magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
+      } // end IF
+      //ACE_OS::memset (buffer, 0, sizeof (buffer));
+      result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
+                                fps, speed, magnitude_string.c_str ());
+      if (result < 0)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
+    } // end IF
+    gtk_progress_bar_set_text (progress_bar_p,
+                               ACE_TEXT_ALWAYS_CHAR (buffer));
   } // end lock scope
-  if (speed)
-  {
-    if (speed >= 1024.0F)
-    {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("kbyte(s)/s");
-    } // end IF
-    if (speed >= 1024.0F)
-    {
-      speed /= 1024.0F;
-      magnitude_string = ACE_TEXT_ALWAYS_CHAR ("mbyte(s)/s");
-    } // end IF
-    //ACE_OS::memset (buffer, 0, sizeof (buffer));
-    result = ACE_OS::sprintf (buffer, ACE_TEXT ("%.0f 1/s | %.2f %s"),
-                              fps, speed, magnitude_string.c_str ());
-    if (result < 0)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_OS::sprintf(): \"%m\", continuing\n")));
-  } // end IF
-  gtk_progress_bar_set_text (progress_bar_p,
-                             ACE_TEXT_ALWAYS_CHAR (buffer));
 
   return G_SOURCE_CONTINUE; // --> reschedule
 }
