@@ -2341,7 +2341,7 @@ case YY_STATE_EOF(newline):
                     ACE_DEBUG ((LM_ERROR,
                                 ACE_TEXT ("caught exception in Net_IYaccStreamParser_T::record(), continuing\n")));
                   }
-                  return -1; }
+                  yyterminate (); }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
