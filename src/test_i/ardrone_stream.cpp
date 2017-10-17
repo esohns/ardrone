@@ -1259,7 +1259,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-  struct ARDrone_SessionData* session_data_p = NULL;
+//  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;

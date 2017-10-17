@@ -808,7 +808,7 @@ continue_:
         }
         switch (result)
         {
-          case -1:
+          case 0:
           {
             // *NOTE*: most probable reason: connection
             //         has been closed --> session end
