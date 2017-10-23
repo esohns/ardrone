@@ -145,7 +145,7 @@ class ARDrone_Module_Controller_T
   void resetACKFlag ();
   bool sendATCommand (const std::string&); // AT command string
 
-  // atomic ID generator
+  // atomic id generator
   typedef ACE_Atomic_Op<ACE_SYNCH_MUTEX,
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;

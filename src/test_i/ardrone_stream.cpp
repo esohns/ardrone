@@ -255,7 +255,7 @@ ARDrone_ControlStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 
   ACE_UNUSED_ARG (event_in);
@@ -269,7 +269,7 @@ ARDrone_ControlStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 }
 
@@ -671,10 +671,83 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 
-  ACE_UNUSED_ARG (event_in);
+  switch (event_in)
+  {
+    case STREAM_SESSION_MESSAGE_LINK:
+    {
+      // *NOTE*: there will be two 'link' messages; wait for the second one
+      if (isFirst_)
+      {
+        isFirst_ = false;
+        break;
+      }
+
+      // reset event dispatch notification for outbound data
+      typename ARDrone_StreamConfiguration_t::ITERATOR_T iterator;
+      ARDrone_ConnectionConfigurationIterator_t iterator_2;
+      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
+      ARDrone_IConnectionManager_t* iconnection_manager_p =
+          ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
+      ACE_ASSERT (iconnection_manager_p);
+      typename ARDrone_IConnectionManager_t::CONNECTION_T* connection_p = NULL;
+      ARDrone_IStreamConnection_t* istream_connection_p = NULL;
+      Stream_IOutboundDataNotify* ioutbound_data_notify = NULL;
+      std::string module_name_string;
+
+      // sanity check(s)
+      ACE_ASSERT (inherited::configuration_);
+
+      iterator =
+          inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator != inherited::configuration_->end ());
+      iterator_2 =
+          (*iterator).second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"));
+      ACE_ASSERT (iterator_2 != (*iterator).second.connectionConfigurations->end ());
+      ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
+      socket_configuration_p =
+          dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
+      ACE_ASSERT (socket_configuration_p);
+      connection_p =
+          iconnection_manager_p->get (socket_configuration_p->peerAddress,
+                                      true); // is peer address ?
+      if (!connection_p)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to Net_IConnectionManager::get(0x%@), returning"),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
+        return;
+      } // end IF
+      istream_connection_p =
+          dynamic_cast<ARDrone_IStreamConnection_t*> (connection_p);
+      ACE_ASSERT (istream_connection_p);
+      ioutbound_data_notify =
+          &const_cast<typename ARDrone_IStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
+      try {
+        if (!ioutbound_data_notify->initialize (connection_p->notification (),
+                                                module_name_string))
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                      ACE_TEXT (navdata_stream_name_string_),
+                      connection_p->notification (),
+                      ACE_TEXT (module_name_string.c_str ())));
+        return;
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                    ACE_TEXT (navdata_stream_name_string_),
+                    connection_p->notification (),
+                    ACE_TEXT (module_name_string.c_str ())));
+        return;
+      }
+
+      break;
+    }
+    default:
+      break;
+  } // end SWITCH
 }
 void
 ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
@@ -685,7 +758,7 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 
   try {
@@ -787,11 +860,6 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::messageCB"));
 
-  if (isFirst_)
-  {
-    isFirst_ = false;
-  } // end IF
-
   struct _navdata_option_t* option_p = NULL;
   for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
        iterator != offsets_in.end ();
@@ -802,191 +870,198 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
     switch (option_p->tag)
     {
       case NAVDATA_DEMO_TAG: // 0
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_demo_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_demo_t));
         struct _navdata_demo_t* option_2 =
           reinterpret_cast<struct _navdata_demo_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_TIME_TAG: // 1
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_time_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_time_t));
         struct _navdata_time_t* option_2 =
           reinterpret_cast<struct _navdata_time_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_RAW_MEASURES_TAG: // 2
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_raw_measures_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_raw_measures_t));
         struct _navdata_raw_measures_t* option_2 =
           reinterpret_cast<struct _navdata_raw_measures_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_PHYS_MEASURES_TAG: // 3
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_phys_measures_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_phys_measures_t));
         struct _navdata_phys_measures_t* option_2 =
           reinterpret_cast<struct _navdata_phys_measures_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_GYROS_OFFSETS_TAG: // 4
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_gyros_offsets_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_gyros_offsets_t));
         struct _navdata_gyros_offsets_t* option_2 =
           reinterpret_cast<struct _navdata_gyros_offsets_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_EULER_ANGLES_TAG: // 5
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_euler_angles_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_euler_angles_t));
         struct _navdata_euler_angles_t* option_2 =
           reinterpret_cast<struct _navdata_euler_angles_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_REFERENCES_TAG: // 6
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_references_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_references_t));
         struct _navdata_references_t* option_2 =
           reinterpret_cast<struct _navdata_references_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_TRIMS_TAG: // 7
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_trims_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_trims_t));
         struct _navdata_trims_t* option_2 =
           reinterpret_cast<struct _navdata_trims_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_RC_REFERENCES_TAG: // 8
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_rc_references_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_rc_references_t));
         struct _navdata_rc_references_t* option_2 =
           reinterpret_cast<struct _navdata_rc_references_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_PWM_TAG: // 9
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
         struct _navdata_pwm_t* option_2 =
           reinterpret_cast<struct _navdata_pwm_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_ALTITUDE_TAG: // 10
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_altitude_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_altitude_t));
         struct _navdata_altitude_t* option_2 =
           reinterpret_cast<struct _navdata_altitude_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VISION_RAW_TAG: // 11
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_raw_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_raw_t));
         struct _navdata_vision_raw_t* option_2 =
           reinterpret_cast<struct _navdata_vision_raw_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VISION_OF_TAG: // 12
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_of_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_of_t));
         struct _navdata_vision_of_t* option_2 =
           reinterpret_cast<struct _navdata_vision_of_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VISION_TAG: // 13
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_t));
         struct _navdata_vision_t* option_2 =
           reinterpret_cast<struct _navdata_vision_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VISION_PERF_TAG: // 14
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_perf_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_perf_t));
         struct _navdata_vision_perf_t* option_2 =
           reinterpret_cast<struct _navdata_vision_perf_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_TRACKERS_SEND_TAG: // 15
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_trackers_send_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_trackers_send_t));
         struct _navdata_trackers_send_t* option_2 =
           reinterpret_cast<struct _navdata_trackers_send_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VISION_DETECT_TAG: // 16
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_detect_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_detect_t));
         struct _navdata_vision_detect_t* option_2 =
           reinterpret_cast<struct _navdata_vision_detect_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_WATCHDOG_TAG: // 17
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_watchdog_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_watchdog_t));
         struct _navdata_watchdog_t* option_2 =
           reinterpret_cast<struct _navdata_watchdog_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_ADC_DATA_FRAME_TAG: // 18
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_adc_data_frame_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_adc_data_frame_t));
         struct _navdata_adc_data_frame_t* option_2 =
           reinterpret_cast<struct _navdata_adc_data_frame_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_VIDEO_STREAM_TAG: // 19
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_video_stream_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_video_stream_t));
         struct _navdata_video_stream_t* option_2 =
           reinterpret_cast<struct _navdata_video_stream_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_GAMES_TAG: // 20
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_games_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_games_t));
         struct _navdata_games_t* option_2 =
           reinterpret_cast<struct _navdata_games_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_PRESSURE_RAW_TAG: // 21
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_pressure_raw_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_pressure_raw_t));
         struct _navdata_pressure_raw_t* option_2 =
           reinterpret_cast<struct _navdata_pressure_raw_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_MAGNETO_TAG: // 22
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_magneto_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_magneto_t));
         struct _navdata_magneto_t* option_2 =
           reinterpret_cast<struct _navdata_magneto_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_WIND_TAG: // 23
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_wind_speed_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_wind_speed_t));
         struct _navdata_wind_speed_t* option_2 =
           reinterpret_cast<struct _navdata_wind_speed_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_KALMAN_PRESSURE_TAG: // 24
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_kalman_pressure_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_kalman_pressure_t));
         struct _navdata_kalman_pressure_t* option_2 =
           reinterpret_cast<struct _navdata_kalman_pressure_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_HDVIDEO_STREAM_TAG: // 25
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_hdvideo_stream_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_hdvideo_stream_t));
         struct _navdata_hdvideo_stream_t* option_2 =
           reinterpret_cast<struct _navdata_hdvideo_stream_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
       case NAVDATA_WIFI_TAG: // 26
-      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_wifi_t));
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_wifi_t));
         struct _navdata_wifi_t* option_2 =
           reinterpret_cast<struct _navdata_wifi_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ZIMMU_3000_TAG: // 27
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_zimmu_3000_t));
+        struct _navdata_zimmu_3000_t* option_2 =
+          reinterpret_cast<struct _navdata_zimmu_3000_t*> (option_p);
         ACE_UNUSED_ARG (option_2);
         break;
       }
@@ -1414,7 +1489,7 @@ ARDrone_MAVLinkStream::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 
   ACE_UNUSED_ARG (event_in);
@@ -1428,7 +1503,7 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (inherited::sessionData_);
   const struct ARDrone_SessionData& session_data_r =
       inherited::sessionData_->getR ();
-  if (!session_data_r.sessionId != sessionId_in)
+  if (session_data_r.sessionId != sessionId_in)
     return;
 
   try {

@@ -60,7 +60,7 @@ class ARDrone_Message
 
  public:
   ARDrone_Message (enum ARDrone_MessageType); // message type
-  ARDrone_Message (unsigned int); // requested size
+  explicit ARDrone_Message (unsigned int); // requested size
   virtual ~ARDrone_Message ();
 
   inline virtual int command () const { return 0; }; // return value: message type

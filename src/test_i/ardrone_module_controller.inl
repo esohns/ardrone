@@ -197,7 +197,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     }
   } // end IF
 
-  // received acknowledgement ?
+  // received acknowlegement ?
   if (deviceState_ & ARDRONE_COMMAND_MASK)
   { // *NOTE*: the command ACK flag needs to be reset manually
     if (inherited2::state_ != NAVDATA_STATE_COMMAND_ACK)
@@ -337,7 +337,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       //const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
       //  inherited::sessionData_->getR ();
       ConnectionConfigurationIteratorType iterator, iterator_2;
-      struct Net_UDPSocketConfiguration* socket_configuration_p, *socket_configuration_2 = NULL;
+      struct Net_UDPSocketConfiguration* socket_configuration_p, *socket_configuration_2 =
+          NULL;
       ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       struct _GUID interface_identifier;
@@ -348,7 +349,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       unsigned char buffer_a[] = {0x01, 0x00, 0x00, 0x00};
 
       // retrieve listen address (connection has been set up upstream) and peer
-      // address to set up the local SAP 
+      // address to set up the local SAP
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
       ACE_ASSERT (inherited::configuration_->connectionConfigurations);
@@ -404,13 +405,13 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
 
       // 'subscribe' to the NavData stream
-      message_block_p = inherited::allocateMessage (4);
+      message_block_p = inherited::allocateMessage (sizeof (buffer_a));
       if (unlikely (!message_block_p))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_TaskBase_T::allocateMessage(%u): \"%m\", returning\n"),
                     inherited::mod_->name (),
-                    4));
+                    sizeof (buffer_a)));
         goto error;
       } // end IF
       //message_p->initialize (session_data_r.sessionId,
@@ -418,7 +419,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       //message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
       //message_p->set_2 (inherited::stream_);
       result = message_block_p->copy (reinterpret_cast<char*> (buffer_a),
-                                      4);
+                                      sizeof (buffer_a));
       if (unlikely (result == -1))
       {
         ACE_DEBUG ((LM_ERROR,
@@ -435,7 +436,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     inherited::mod_->name (),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ()),
-                    4));
+                    sizeof (buffer_a)));
         goto error;
       } // end IF
 
@@ -544,7 +545,8 @@ error:
          NAVDATA_OPTION_MASK (NAVDATA_WIND_TAG)            |
          NAVDATA_OPTION_MASK (NAVDATA_KALMAN_PRESSURE_TAG) |
          NAVDATA_OPTION_MASK (NAVDATA_HDVIDEO_STREAM_TAG)  |
-         NAVDATA_OPTION_MASK (NAVDATA_WIFI_TAG));
+         NAVDATA_OPTION_MASK (NAVDATA_WIFI_TAG)            |
+         NAVDATA_OPTION_MASK (NAVDATA_ZIMMU_3000_TAG));
 
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: requesting navdata options: 0x%x\n"),
@@ -698,25 +700,25 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   int result = -1;
   int error = 0;
 
-  ACE_GUARD_RETURN (ACE_SYNCH_NULL_MUTEX, aGuard, *inherited2::stateLock_, false);
-
-  result = inherited2::condition_->wait (timeout_in);
-  if (result == -1)
-  {
-    error = ACE_OS::last_error ();
-    if (error != ETIME)
+  { ACE_GUARD_RETURN (ACE_SYNCH_NULL_MUTEX, aGuard, *inherited2::stateLock_, false);
+    result = inherited2::condition_->wait (timeout_in);
+    if (result == -1)
+    {
+      error = ACE_OS::last_error ();
+      if (error != ETIME)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to ACE_SYNCH_CONDITION_T::wait(): \"%m\", continuing\n"),
+                    inherited::mod_->name ()));
+    } // end IF
+    if ((error == ETIME) ||
+        (inherited2::state_ != NAVDATA_STATE_READY))
+    {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to ACE_SYNCH_CONDITION_T::wait(): \"%m\", continuing\n"),
+                  ACE_TEXT ("%s: failed to initialize NavData, aborting\n"),
                   inherited::mod_->name ()));
-  } // end IF
-  if ((error == ETIME) ||
-      (inherited2::state_ != NAVDATA_STATE_READY))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to initialize NavData, aborting\n"),
-                inherited::mod_->name ()));
-    return false;
-  } // end IF
+      return false;
+    } // end IF
+  } // end lock scope
 
   return true;
 }
