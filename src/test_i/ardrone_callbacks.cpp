@@ -2286,7 +2286,8 @@ idle_update_info_display_cb (gpointer userData_in)
                           GTK_SPIN_STEP_FORWARD,
                           1.0);
     ACE_ASSERT (progress_bar_p);
-    gtk_progress_bar_pulse (progress_bar_p);
+    if (!is_session_message)
+      gtk_progress_bar_pulse (progress_bar_p);
   } // end FOR
   data_p->eventStack.clear ();
 

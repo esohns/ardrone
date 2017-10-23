@@ -60,14 +60,24 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 %option extra-type="ARDrone_Control_IScanner_t*"
 %option nounistd nounput noyymore
 
-CATEGORY               [^:]
+/* *IMPORTANT NOTE*: "...A negated character class such as the example "[^A-Z]"
+                     above will match a newline unless "\n" (or an equivalent
+                     escape sequence) is one of the characters explicitly
+                     present in the negated character class (e.g., "[^A-Z\n]").
+                     This is unlike how many other regular expression tools
+                     treat negated character classes, but unfortunately the
+                     inconsistency is historically entrenched. Matching newlines
+                     means that a pattern like [^"]* can match the entire input
+                     unless there's another quote in the input. ..." */
+CATEGORY               [^:\n]
 COLON                  :
+DOT                    [\x00]
 EQUALS                 =
-KEY                    [^=]
+KEY                    [^=\n]
 VALUE                  [^\n]
 OCTET                  [\x00-\xFF]
 
-%s                     category
+%s                     dot_or_category
 %s                     delimiter_1
 %s                     key
 %s                     delimiter_2
@@ -78,18 +88,36 @@ OCTET                  [\x00-\xFF]
 
 %{
   static std::string current_string;
-	static ARDrone_DeviceConfigurationKeyValue_t current_key_value;
+  static ARDrone_DeviceConfigurationKeyValue_t current_key_value;
 %}
 
 <INITIAL>{
-[[:blank:]\r\n] {}
-[^:]            { yyless (0);
-                  BEGIN (category); }
+{OCTET}{1}      { yyless (0);
+                  BEGIN (dot_or_category); }
 } // end <INITIAL>
-<category>{
+<dot_or_category>{
+{DOT}           { // sanity check(s)
+                  ACE_ASSERT (yyscanner);
+
+                  ARDrone_Control_IScanner_t* iscanner_p =
+                      ARDrone_Control_Scanner_get_extra (yyscanner);
+                  ACE_ASSERT (iscanner_p);
+                  ARDrone_Control_IParser_t* iparser_p =
+                      const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ACE_ASSERT (iparser_p);
+                  ARDrone_DeviceConfiguration_t* configuration_p =
+                      &iparser_p->current ();
+
+                  try {
+                    iparser_p->record (configuration_p);
+                  } catch (...) {
+                    ACE_DEBUG ((LM_ERROR,
+                                ACE_TEXT ("caught exception in Net_IYaccStreamParser_T::record(), continuing\n")));
+                  }
+                  BEGIN (INITIAL); }
 {CATEGORY}*     { current_string = yytext;
                   BEGIN (delimiter_1); }
-} // end <category>
+} // end <dot_or_category>
 <delimiter_1>{
 :               { BEGIN (key); }
 } // end <delimiter_1>
@@ -103,7 +131,7 @@ OCTET                  [\x00-\xFF]
 =               { BEGIN (value); }
 } // end <delimiter_2>
 <value>{
-{VALUE}*        { current_key_value.second = yytext;
+{VALUE}*/\n     { current_key_value.second = yytext;
                   current_key_value.second =
                     Common_Tools::strip (current_key_value.second);
 
@@ -137,37 +165,12 @@ OCTET                  [\x00-\xFF]
                   BEGIN (newline); }
 } // end <value>
 <newline>{
-\n              { current_string.clear ();
-                  current_key_value.first.clear ();
-                  current_key_value.second.clear ();
-                  BEGIN (category); }
+\n               { current_string.clear ();
+                   current_key_value.first.clear ();
+                   current_key_value.second.clear ();
+                   BEGIN (dot_or_category); }
 } // end <newline>
-<<EOF>>         { /* *NOTE*: failed to switch buffers (received MB_STOP); the
-                             peer closes the connection after all data has been
-                             sent, ending the session
-                             --> present the data that has been decoded */
-
-                  // sanity check(s)
-                  ACE_ASSERT (yyscanner);
-
-                  ARDrone_Control_IScanner_t* iscanner_p =
-                    ARDrone_Control_Scanner_get_extra (yyscanner);
-                  ACE_ASSERT (iscanner_p);
-                  ARDrone_Control_IParser_t* iparser_p =
-                    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
-                  ACE_ASSERT (iparser_p);
-                  ARDrone_DeviceConfiguration_t* configuration_p =
-                    &iparser_p->current ();
-
-                  try {
-                    iparser_p->record (configuration_p);
-                  } catch (...) {
-                    ACE_DEBUG ((LM_ERROR,
-                                ACE_TEXT ("caught exception in Net_IYaccStreamParser_T::record(), continuing\n")));
-                  }
-                  yyterminate (); }
-<*>{OCTET}      { /* *TODO*: use (?s:.) ? */
-                  yyterminate (); }
+<*><<EOF>>       { return -1; }
 
 %% /* end of rules */
 

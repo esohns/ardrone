@@ -47,13 +47,13 @@ class ARDrone_EventHandler
  public:
   ARDrone_EventHandler (struct ARDrone_GtkCBData*, // Gtk state
                         bool = false);             // console mode ?
-  inline virtual ~ARDrone_EventHandler () {};
+  inline virtual ~ARDrone_EventHandler () {}
 
   // implement Stream_ISessionDataNotify_T
   virtual void start (Stream_SessionId_t,          // session id
                       const ARDrone_SessionData&); // session data
-  inline virtual void notify (Stream_SessionId_t,                        // session id
-                              const enum Stream_SessionMessageType&) {}; // event (state/status change, ...)
+  inline virtual void notify (Stream_SessionId_t,                       // session id
+                              const enum Stream_SessionMessageType&) {} // event (state/status change, ...)
   virtual void notify (Stream_SessionId_t,      // session id
                        const ARDrone_Message&); // data
   virtual void notify (Stream_SessionId_t,             // session id
@@ -61,9 +61,9 @@ class ARDrone_EventHandler
   virtual void end (Stream_SessionId_t); // session id
 
   // implement Common_IInitializeP_T
-  inline bool initialize (const ARDrone_IControlNotify* notify_in) { ControlNotify_ = const_cast<ARDrone_IControlNotify*> (notify_in); return true; };
-  inline bool initialize (const ARDrone_IMAVLinkNotify* notify_in) { MAVLinkNotify_ = const_cast<ARDrone_IMAVLinkNotify*> (notify_in); return true; };
-  inline bool initialize (const ARDrone_INavDataNotify* notify_in) { NavDataNotify_ = const_cast<ARDrone_INavDataNotify*> (notify_in); return true; };
+  inline bool initialize (const ARDrone_IControlNotify* notify_in) { ControlNotify_ = const_cast<ARDrone_IControlNotify*> (notify_in); return true; }
+  inline bool initialize (const ARDrone_IMAVLinkNotify* notify_in) { MAVLinkNotify_ = const_cast<ARDrone_IMAVLinkNotify*> (notify_in); return true; }
+  inline bool initialize (const ARDrone_INavDataNotify* notify_in) { NavDataNotify_ = const_cast<ARDrone_INavDataNotify*> (notify_in); return true; }
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_EventHandler ())
@@ -78,7 +78,7 @@ class ARDrone_EventHandler
                                  enum ARDrone_StreamType,
                                  bool>
   {
-    inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; };
+    inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; }
   };
 
   bool                      consoleMode_;

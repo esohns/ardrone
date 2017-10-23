@@ -972,6 +972,8 @@ do_work (int argc_in,
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration);
 
+  CBData_in.configuration->parserConfiguration.debugScanner = debugScanner_in;
+
   ARDrone_StreamConfiguration_t stream_configuration;
   stream_configuration.configuration_.messageAllocator = &message_allocator;
   stream_configuration.configuration_.module = &event_handler_module;
@@ -1132,7 +1134,8 @@ do_work (int argc_in,
                                                                                                  1,
                                                                                                  0);
   ACE_ASSERT (result == 0);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.reset ();
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.base_set (AF_ANY,
+                                                                                                  -1);
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
     false;
   connection_configuration.socketHandlerConfiguration.socketConfiguration_3.sourcePort =
@@ -1156,21 +1159,21 @@ do_work (int argc_in,
 //                                              interface_identifier_string))
 //  {
 //    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_Common_Tools::IPAddress2Interface(%s), returning\n"),
-//                ACE_TEXT (Net_Common_Tools::IPAddress2String (address_in).c_str ())));
+//                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
+//                ACE_TEXT (Net_Common_Tools::IPAddressToString (address_in).c_str ())));
 //    goto error;
 //  } // end IF
 //  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
 //                                              CBData_in.localSAP))
 //  {
 //    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_Common_Tools::interface2IPAddress(%s), returning\n"),
+//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
 //                ACE_TEXT (interface_identifier_string.c_str ())));
 //    goto error;
 //  } // end IF
 //  ACE_DEBUG ((LM_ERROR,
 //              ACE_TEXT ("set local SAP: %s...\n"),
-//              ACE_TEXT (Net_Common_Tools::IPAddress2String (CBData_in.localSAP).c_str ())));
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (CBData_in.localSAP).c_str ())));
   connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
                                                                                                      1);
   connection_configuration.streamConfiguration =
@@ -1194,7 +1197,6 @@ do_work (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   modulehandler_configuration.consoleMode = UIInterfaceDefinitionFile_in.empty ();
 #endif
-  modulehandler_configuration.debugScanner = debugScanner_in;
   modulehandler_configuration.demultiplex = true;
   modulehandler_configuration.fullScreen = fullScreen_in;
   modulehandler_configuration.parserConfiguration =
@@ -1265,8 +1267,6 @@ do_work (int argc_in,
   (*video_modulehandlerconfiguration_iterator).second.consoleMode =
     UIInterfaceDefinitionFile_in.empty ();
 #endif
-  (*video_modulehandlerconfiguration_iterator).second.debugScanner =
-    debugScanner_in;
   (*video_modulehandlerconfiguration_iterator).second.demultiplex = true;
   (*video_modulehandlerconfiguration_iterator).second.fullScreen =
     fullScreen_in;

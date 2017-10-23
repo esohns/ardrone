@@ -148,8 +148,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   } // end IF
 
   // trace ?
-  ARDrone_NavData_Scanner_set_debug (configuration_in.debugScanner,
-                                     scannerState_);
+//  ARDrone_NavData_Scanner_set_debug (configuration_in.debugScanner,
+//                                     scannerState_);
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
@@ -525,11 +525,11 @@ continue_:
 
   // initialize next buffer
 
-  // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
-  *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-  *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
-  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
+//  // append the "\0\0"-sequence, as required by flex
+//  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
+//  *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
+//  *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
+//  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
   if (!begin (message_block_2->rd_ptr (),
               message_block_2->length ()))
