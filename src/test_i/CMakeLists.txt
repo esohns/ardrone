@@ -1,7 +1,7 @@
 option (GTK3_SUPPORT "enable Gtk3 support"
         ON)
 option (GTKGL_SUPPORT "enable Gtk OpenGL support"
-        OFF)
+        ON)
 if (WIN32)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap"
          ON)
@@ -122,22 +122,24 @@ if (NOT EXISTS ${Common_DIR})
 endif ()
 add_definitions (-DCOMMON_HAS_DLL)
 
-find_package (ACEStream 0.0.1 EXACT
+#find_package (ACEStream 0.0.1 EXACT
+find_package (ACEStream
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-              PATH_SUFFIXES libACEStream/cmake
+              PATH_SUFFIXES libACEStream/build libACEStream/cmake
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACEStream_DIR})
  message (FATAL_ERROR "could not find package \"ACEStream\", aborting")
 endif ()
 add_definitions (-DSTREAM_HAS_DLL)
 
-find_package (ACENetwork 0.0.1 EXACT
+#find_package (ACENetwork 0.0.1 EXACT
+find_package (ACENetwork
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-              PATH_SUFFIXES libACENetwork/cmake
+              PATH_SUFFIXES libACENetwork/build libACENetwork/cmake
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
@@ -469,6 +471,9 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net
                                                ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})
@@ -494,6 +499,7 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
                                                ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})

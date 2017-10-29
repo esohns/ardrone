@@ -36,12 +36,6 @@ ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData ()
 
 }
 
-ARDrone_StateMachine_NavData::~ARDrone_StateMachine_NavData ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::~ARDrone_StateMachine_NavData"));
-
-}
-
 void
 ARDrone_StateMachine_NavData::initialize ()
 {
@@ -87,7 +81,7 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
       {
         case NAVDATA_STATE_INVALID:
         // good case
-        case NAVDATA_STATE_CONFIG:
+        case NAVDATA_STATE_GET_CONFIGURATION:
         {
           inherited::change (newState_in);
           return true;
@@ -98,16 +92,33 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
-    case NAVDATA_STATE_CONFIG:
-    case NAVDATA_STATE_MODE:
-    case NAVDATA_STATE_OPTIONS:
-    case NAVDATA_STATE_READY:
+    case NAVDATA_STATE_COMMAND_ACK: // *TODO*: this is wrong; remove ASAP
+    {
+      switch (newState_in)
+      {
+        case NAVDATA_STATE_INVALID:
+        // good case
+        case NAVDATA_STATE_COMMAND_ACK: // *TODO*: this is wrong; remove ASAP
+        case NAVDATA_STATE_READY: // *TODO*: this is wrong; remove ASAP
+        {
+          inherited::change (newState_in);
+          return true;
+        }
+        default:
+          break;
+      } // end SWITCH
+
+      break;
+    }
+    case NAVDATA_STATE_GET_CONFIGURATION:
     {
       switch (newState_in)
       {
         case NAVDATA_STATE_INVALID:
         // good case
         case NAVDATA_STATE_COMMAND_ACK:
+        case NAVDATA_STATE_SWITCH_MODE:
+        case NAVDATA_STATE_NAVDATA_OPTIONS:
         {
           inherited::change (newState_in);
           return true;
@@ -118,30 +129,14 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
-    //case NAVDATA_STATE_SET_PARAMETER:
-    //{
-    //  switch (newState_in)
-    //  {
-    //    case NAVDATA_STATE_INVALID:
-    //    // good case
-    //    case NAVDATA_STATE_COMMAND_ACK:
-    //    {
-    //      inherited::change (newState_in);
-    //      return true;
-    //    }
-    //    default:
-    //      break;
-    //  } // end SWITCH
-
-    //  break;
-    //}
-    case NAVDATA_STATE_COMMAND_ACK:
+    case NAVDATA_STATE_SWITCH_MODE:
     {
       switch (newState_in)
       {
         case NAVDATA_STATE_INVALID:
         // good case
-        case NAVDATA_STATE_COMMAND_NACK:
+        case NAVDATA_STATE_COMMAND_ACK:
+        case NAVDATA_STATE_NAVDATA_OPTIONS:
         {
           inherited::change (newState_in);
           return true;
@@ -152,14 +147,70 @@ ARDrone_StateMachine_NavData::change (enum ARDRone_NavDataState newState_in)
 
       break;
     }
-    case NAVDATA_STATE_COMMAND_NACK:
+    case NAVDATA_STATE_NAVDATA_OPTIONS:
     {
       switch (newState_in)
       {
         case NAVDATA_STATE_INVALID:
         // good case
-        case NAVDATA_STATE_MODE:
-        case NAVDATA_STATE_OPTIONS:
+        case NAVDATA_STATE_COMMAND_ACK:
+        case NAVDATA_STATE_SET_VIDEO:
+        {
+          inherited::change (newState_in);
+          return true;
+        }
+        default:
+          break;
+      } // end SWITCH
+
+      break;
+    }
+    case NAVDATA_STATE_SET_VIDEO:
+    {
+      switch (newState_in)
+      {
+        case NAVDATA_STATE_INVALID:
+        // good case
+        case NAVDATA_STATE_COMMAND_ACK:
+        case NAVDATA_STATE_CALIBRATE_SENSOR:
+        {
+          inherited::change (newState_in);
+          return true;
+        }
+        default:
+          break;
+      } // end SWITCH
+
+      break;
+    }
+    case NAVDATA_STATE_READY:
+    {
+      switch (newState_in)
+      {
+        case NAVDATA_STATE_INVALID:
+        // good case
+        case NAVDATA_STATE_COMMAND_ACK: // *TODO*: this is wrong; remove ASAP
+        case NAVDATA_STATE_READY:       // *TODO*: this is wrong; remove ASAP
+        case NAVDATA_STATE_CALIBRATE_SENSOR:
+        case NAVDATA_STATE_SET_PARAMETER:
+        {
+          inherited::change (newState_in);
+          return true;
+        }
+        default:
+          break;
+      } // end SWITCH
+
+      break;
+    }
+    case NAVDATA_STATE_CALIBRATE_SENSOR:
+    case NAVDATA_STATE_SET_PARAMETER:
+    {
+      switch (newState_in)
+      {
+        case NAVDATA_STATE_INVALID:
+        // good case
+        case NAVDATA_STATE_COMMAND_ACK:
         case NAVDATA_STATE_READY:
         {
           inherited::change (newState_in);
@@ -196,20 +247,18 @@ ARDrone_StateMachine_NavData::stateToString (enum ARDRone_NavDataState state_in)
       break;
     case NAVDATA_STATE_INITIAL:
       result = ACE_TEXT_ALWAYS_CHAR ("INITIAL"); break;
-    case NAVDATA_STATE_CONFIG:
+    case NAVDATA_STATE_COMMAND_ACK:
+      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_ACK"); break;
+    case NAVDATA_STATE_GET_CONFIGURATION:
       result = ACE_TEXT_ALWAYS_CHAR ("CONFIG"); break;
-    case NAVDATA_STATE_MODE:
+    case NAVDATA_STATE_SWITCH_MODE:
       result = ACE_TEXT_ALWAYS_CHAR ("MODE"); break;
-    case NAVDATA_STATE_OPTIONS:
+    case NAVDATA_STATE_NAVDATA_OPTIONS:
       result = ACE_TEXT_ALWAYS_CHAR ("OPTIONS"); break;
     case NAVDATA_STATE_READY:
       result = ACE_TEXT_ALWAYS_CHAR ("READY"); break;
-    //case NAVDATA_STATE_SET_PARAMETER:
-    //  result = ACE_TEXT_ALWAYS_CHAR ("SET_PARAMETER"); break;
-    case NAVDATA_STATE_COMMAND_ACK:
-      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_ACK"); break;
-    case NAVDATA_STATE_COMMAND_NACK:
-      result = ACE_TEXT_ALWAYS_CHAR ("COMMAND_NACK"); break;
+    case NAVDATA_STATE_SET_PARAMETER:
+      result = ACE_TEXT_ALWAYS_CHAR ("SET_PARAMETER"); break;
     default:
     {
       ACE_DEBUG ((LM_ERROR,

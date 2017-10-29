@@ -327,10 +327,12 @@ ARDrone_Message::dump_state (void) const
   {
     case ARDRONE_MESSAGE_ATCOMMAND:
     {
+#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),
                   inherited::id_,
                   inherited::length ()));
+#endif
       break;
     }
     case ARDRONE_MESSAGE_CONTROL:
@@ -346,14 +348,17 @@ ARDrone_Message::dump_state (void) const
         inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
 
-      //unsigned int number_of_settings = 0;
-      //for (ARDrone_DeviceConfigurationConstIterator_t iterator = message_data_r.controlData.begin ();
-      //     iterator != message_data_r.controlData.end ();
-      //     ++iterator)
-      //  number_of_settings += (*iterator).second.size ();
-      //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
-      //            number_of_settings, message_data_r.controlData.size ()));
+#if defined (_DEBUG)
+      unsigned int number_of_settings = 0;
+      for (ARDrone_DeviceConfigurationConstIterator_t iterator = message_data_r.controlData.begin ();
+           iterator != message_data_r.controlData.end ();
+           ++iterator)
+        number_of_settings += (*iterator).second.size ();
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+                  number_of_settings, message_data_r.controlData.size ()));
+#endif
+
       break;
     }
     case ARDRONE_MESSAGE_MAVLINK:
@@ -369,14 +374,16 @@ ARDrone_Message::dump_state (void) const
           inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_MAVLINK);
 
-      //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
-      //            inherited::id_,
-      //            message_data_r.MAVLinkData.len,
-      //            message_data_r.MAVLinkData.seq,
-      //            message_data_r.MAVLinkData.msgid,
-      //            message_data_r.MAVLinkData.compid,
-      //            message_data_r.MAVLinkData.sysid));
+#if defined (_DEBUG)
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
+                  inherited::id_,
+                  message_data_r.MAVLinkData.len,
+                  message_data_r.MAVLinkData.seq,
+                  message_data_r.MAVLinkData.msgid,
+                  message_data_r.MAVLinkData.compid,
+                  message_data_r.MAVLinkData.sysid));
+#endif
       break;
     }
     case ARDRONE_MESSAGE_NAVDATA:
@@ -392,69 +399,73 @@ ARDrone_Message::dump_state (void) const
           inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
 
-      //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("[%u]: header: 0x%x, state: 0x%x, seq: %u, vision: %u, option(s) [%u]:\n"),
-      //            inherited::id_,
-      //            message_data_r.NavData.NavData.header,
-      //            message_data_r.NavData.NavData.ardrone_state,
-      //            message_data_r.NavData.NavData.sequence,
-      //            message_data_r.NavData.NavData.vision_defined,
-      //            message_data_r.NavData.NavDataOptionOffsets.size ()));
-      //struct _navdata_option_t* option_p = NULL;
-      //for (ARDrone_NavDataOptionOffsetsIterator_t iterator = message_data_r.NavData.NavDataOptionOffsets.begin ();
-      //     iterator != message_data_r.NavData.NavDataOptionOffsets.end ();
-      //     ++iterator)
-      //{
-      //  option_p =
-      //    reinterpret_cast<struct _navdata_option_t*> (inherited::rd_ptr () + (*iterator));
-      //  ACE_DEBUG ((LM_DEBUG,
-      //              ACE_TEXT ("\tid: %u, size: %u\n"),
-      //              option_p->tag,
-      //              option_p->size));
-      //} // end FOR
-      //ACE_DEBUG ((LM_DEBUG,
-      //            ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling mask: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-      //            ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
+#if defined (_DEBUG)
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling mask: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+                  ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("[%u]: header: 0x%x, state: 0x%x, seq: %u, vision: %u, option(s) [%u]:\n"),
+                  inherited::id_,
+                  message_data_r.NavData.NavData.header,
+                  message_data_r.NavData.NavData.ardrone_state,
+                  message_data_r.NavData.NavData.sequence,
+                  message_data_r.NavData.NavData.vision_defined,
+                  message_data_r.NavData.NavDataOptionOffsets.size ()));
+      struct _navdata_option_t* option_p = NULL;
+      for (ARDrone_NavDataOptionOffsetsIterator_t iterator = message_data_r.NavData.NavDataOptionOffsets.begin ();
+           iterator != message_data_r.NavData.NavDataOptionOffsets.end ();
+           ++iterator)
+      {
+        option_p =
+          reinterpret_cast<struct _navdata_option_t*> (inherited::rd_ptr () + (*iterator));
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("\tid: %u, size: %u\n"),
+                    option_p->tag,
+                    option_p->size));
+      } // end FOR
+#endif
 
       break;
     }
     case ARDRONE_MESSAGE_VIDEO:
     {
+#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),
                   inherited::id_,
                   inherited::length ()));
+#endif
       break;
     }
     default:

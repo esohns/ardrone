@@ -45,6 +45,11 @@
 extern const char video_stream_name_string_[];
 
 std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
+std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
+// *TODO*: use libav here
+void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
+                                   unsigned int&,  // return value: width
+                                   unsigned int&); // return value: height
 
 template <typename SourceModuleType>
 class ARDrone_VideoStream_T
@@ -103,9 +108,6 @@ class ARDrone_VideoStream_T
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T (const ARDrone_VideoStream_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T& operator= (const ARDrone_VideoStream_T&))
-
-  // *TODO*: re-consider this API
-  void ping ();
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IGraphBuilder*   graphBuilder_;
@@ -170,7 +172,7 @@ class ARDrone_ControlStream
 
  public:
   ARDrone_ControlStream ();
-  virtual ~ARDrone_ControlStream ();
+  inline virtual ~ARDrone_ControlStream () { inherited::shutdown (); }
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -203,8 +205,7 @@ class ARDrone_ControlStream
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 
-  // *TODO*: re-consider this API
-  void ping ();
+  ARDrone_IDeviceConfiguration* configuration_;
 };
 
 //////////////////////////////////////////
@@ -236,6 +237,7 @@ class ARDrone_NavDataStream
                                ARDrone_SessionMessage>
  , public ARDrone_INavDataNotify
  , public Net_IWLANCB
+ , public Common_IGetP_T<ARDrone_IController>
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -280,6 +282,9 @@ class ARDrone_NavDataStream
   virtual void messageCB (const struct _navdata_t&,              // message record
                           const ARDrone_NavDataOptionOffsets_t&, // option offsets
                           void*);                                // payload handle
+
+  // implement Common_IGetP_T
+  virtual const ARDrone_IController* const getP () const;
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
@@ -329,11 +334,7 @@ class ARDrone_NavDataStream
   virtual void onScanComplete (const std::string&); // device identifier
 #endif
 
-  // *TODO*: re-consider this API
-  inline void ping () { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-
-  ARDrone_IController* controller_;
-  bool                 isFirst_;
+  bool isFirst_;
 };
 
 //////////////////////////////////////////
@@ -390,7 +391,7 @@ class ARDrone_MAVLinkStream
 
  public:
   ARDrone_MAVLinkStream ();
-  virtual ~ARDrone_MAVLinkStream ();
+  inline virtual ~ARDrone_MAVLinkStream () { inherited::shutdown (); }
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
@@ -424,9 +425,6 @@ class ARDrone_MAVLinkStream
   virtual void notify (Stream_SessionId_t,
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
-
-  //// *TODO*: re-consider this API
-  //void ping ();
 };
 
 // include template definition

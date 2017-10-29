@@ -93,6 +93,7 @@ extern "C"
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
 #include "ardrone_message.h"
+#include "ardrone_stream.h"
 #include "ardrone_opengl.h"
 
 // global variables
@@ -526,22 +527,19 @@ load_display_formats (GtkListStore* listStore_in)
   // initialize result
   gtk_list_store_clear (listStore_in);
 
-  std::string format_string;
   GtkTreeIter iterator;
   do
   { // *TODO*: this needs more work; support the device capabilities exposed
     //         through the API, instead of static values
-    format_string = ACE_TEXT_ALWAYS_CHAR ("H264 360p");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT (format_string.c_str ()),
+                        0, ACE_TEXT (ARDroneVideoModeToString (ARDRONE_VIDEOMODE_360P).c_str ()),
                         1, ARDRONE_VIDEOMODE_360P,
                         -1);
 
-    format_string = ACE_TEXT_ALWAYS_CHAR ("H264 720p");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT (format_string.c_str ()),
+                        0, ACE_TEXT (ARDroneVideoModeToString (ARDRONE_VIDEOMODE_720P).c_str ()),
                         1, ARDRONE_VIDEOMODE_720P,
                         -1);
 
@@ -559,20 +557,20 @@ load_save_formats (GtkListStore* listStore_in)
   // initialize result
   gtk_list_store_clear (listStore_in);
 
-  std::string format_string;
   GtkTreeIter iterator;
   do
   { // *TODO*: this needs more work; support the device capabilities exposed
     //         through the API, instead of static values
     // *TODO*: define/activate a 'save-to-file' subpipeline (use a multiplexer)
     //         and forward(/encapsulate) the byte-stream as default format
-    format_string = ACE_TEXT_ALWAYS_CHAR ("RGB AVI");
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT (format_string.c_str ()),
+                        0, ACE_TEXT ("RGB AVI"),
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                         1, ACE_TEXT (Common_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
+                        2, 0,
 #else
+                        1, ACE_TEXT (""),
                         2, AV_PIX_FMT_RGBA,
 #endif
                         -1);
@@ -636,6 +634,39 @@ stream_processing_function (void* arg_in)
 //    Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
+    Common_IGetP_T<ARDrone_IController>* iget_p = NULL;
+
+    // navdata
+    iterator_3 =
+      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+    iterator_4 =
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
+    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
+    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
+    configuration_p =
+      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
+    ACE_ASSERT (configuration_p);
+    configuration_p->targetFileName =
+      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
+    configuration_p->stream = data_p->GtkCBData->NavDataStream;
+    result_2 =
+      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+    iget_p =
+      dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->GtkCBData->NavDataStream);
+    ACE_ASSERT (iget_p);
+    data_p->GtkCBData->controller =
+      const_cast<ARDrone_IController*> (iget_p->getP ());
+    ACE_ASSERT (data_p->GtkCBData->controller);
 
     // control
     iterator_3 =
@@ -690,34 +721,10 @@ stream_processing_function (void* arg_in)
     } // end IF
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->MAVLinkStream);
 //    ACE_ASSERT (session_p);
-    //data_p->GtkCBData->MAVLinkStream->start ();
+    data_p->GtkCBData->MAVLinkStream->start ();
 //    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
-    iterator_3 =
-      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
-    iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
-    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
-    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-    configuration_p =
-          const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
-    ACE_ASSERT (configuration_p);
-    configuration_p->targetFileName =
-        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
-                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-    configuration_p->stream = data_p->GtkCBData->NavDataStream;
-    result_2 =
-      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
     data_p->GtkCBData->NavDataStream->start ();
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->NavDataStream);
 //    ACE_ASSERT (session_p);
@@ -766,7 +773,7 @@ stream_processing_function (void* arg_in)
                                       converter.str ().c_str ());
     gdk_threads_leave ();
 //  } // end lock scope
-    //data_p->GtkCBData->videoStream->start ();
+    data_p->GtkCBData->videoStream->start ();
 
   //    if (!stream_p->isRunning ())
   //    {
@@ -795,7 +802,7 @@ done:
 #else
     ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GtkCBData->lock, std::numeric_limits<void*>::max ());
 #endif
-    data_p->GtkCBData->progressData->completedActions.insert (data_p->eventSourceID);
+    data_p->GtkCBData->progressData->completedActions.insert (data_p->eventSourceId);
   } // end lock scope
 
   // clean up
@@ -1189,38 +1196,6 @@ idle_initialize_ui_cb (gpointer userData_in)
     return G_SOURCE_REMOVE;
   } // end IF
 
-  GtkCheckButton* check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_VIDEO)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                cb_data_p->enableVideo);
-  check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                (*iterator_4).second.fullScreen);
-  check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                !(*iterator_4).second.targetFileName.empty ());
-  check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate);
-  check_button_p =
-    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
-  ACE_ASSERT (check_button_p);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
-
-
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_CONTROL)));
@@ -1295,7 +1270,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 
   GtkWidget* drawing_area_p =
       GTK_WIDGET (gtk_builder_get_object ((*iterator).second.second,
-                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
+                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL)));
   ACE_ASSERT (drawing_area_p);
 
   GtkProgressBar* progress_bar_p =
@@ -1382,25 +1357,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     return G_SOURCE_REMOVE;
   } // end ELSE
 #endif
-
-  //gtk_builder_expose_object ((*iterator).second.second,
-  //                           ACE_TEXT_ALWAYS_CHAR (TEST_U_STREAM_UI_GTK_GLAREA_3D_NAME),
-  //                           G_OBJECT (gl_area_p));
-//  gtk_widget_set_size_request (GTK_WIDGET (gl_area_p),
-//                               320, 240);
-  //GtkBox* box_p =
-  //  GTK_BOX (gtk_builder_get_object ((*iterator).second.second,
-  //                                   ACE_TEXT_ALWAYS_CHAR (TEST_U_STREAM_UI_GTK_BOX_DISPLAY_NAME)));
-  //ACE_ASSERT (box_p);
-  //gtk_container_remove (GTK_CONTAINER (box_p),
-  //                      GTK_WIDGET (drawing_area_2));
-  //drawing_area_2 = NULL;
-  //gtk_box_pack_start (box_p,
-  //                    GTK_WIDGET (gl_area_p),
-  //                    TRUE,
-  //                    TRUE,
-  //                    0);
-#else
+#elif GTK_CHECK_VERSION (2,0,0)
 #if defined (GTKGLAREA_SUPPORT)
   /* Attribute list for gtkglarea widget. Specifies a
      list of Boolean attributes and enum/integer
@@ -1445,9 +1402,9 @@ idle_initialize_ui_cb (gpointer userData_in)
                       TRUE,
                       0);
 #else
-  GdkGLConfigMode features = static_cast<GdkGLConfigMode> (GDK_GL_MODE_DOUBLE  |
-                                                           GDK_GL_MODE_ALPHA   |
+  GdkGLConfigMode features = static_cast<GdkGLConfigMode> (GDK_GL_MODE_ALPHA   |
                                                            GDK_GL_MODE_DEPTH   |
+                                                           GDK_GL_MODE_DOUBLE  |
                                                            GDK_GL_MODE_STENCIL |
                                                            GDK_GL_MODE_ACCUM);
   GdkGLConfigMode configuration_mode =
@@ -1470,9 +1427,9 @@ idle_initialize_ui_cb (gpointer userData_in)
                 ACE_TEXT ("failed to gtk_widget_set_gl_capability(): \"%m\", aborting\n")));
     return G_SOURCE_REMOVE;
   } // end IF
-#endif
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION
+#endif // GTKGL_SUPPORT
 
   // step3b: initialize GLUT
   //glutInit (&cb_data_p->argc, cb_data_p->argv);
@@ -1513,12 +1470,12 @@ idle_initialize_ui_cb (gpointer userData_in)
   //                    G_CALLBACK (glarea_resize_cb),
   //                    userData_in);
 #else
-  result =
-      g_signal_connect (G_OBJECT (gl_area_p),
-                        ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
-                        G_CALLBACK (glarea_size_allocate_event_cb),
-                        userData_in);
-  ACE_ASSERT (result);
+  //result =
+  //    g_signal_connect (G_OBJECT (gl_area_p),
+  //                      ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
+  //                      G_CALLBACK (glarea_size_allocate_event_cb),
+  //                      userData_in);
+  //ACE_ASSERT (result);
   result =
       g_signal_connect (G_OBJECT (gl_area_p),
                         ACE_TEXT_ALWAYS_CHAR ("draw"),
@@ -1530,14 +1487,14 @@ idle_initialize_ui_cb (gpointer userData_in)
                       ACE_TEXT_ALWAYS_CHAR ("realize"),
                       G_CALLBACK (glarea_realize_cb),
                       userData_in);
-#endif
-#else
-  result =
-      g_signal_connect (G_OBJECT (drawing_area_p),
-                        ACE_TEXT_ALWAYS_CHAR ("configure-event"),
-                        G_CALLBACK (drawingarea_video_configure_event_cb),
-                        userData_in);
-  ACE_ASSERT (result);
+#endif // GTK_CHECK_VERSION (3,16,0)
+#elif GTK_CHECK_VERSION (2,0,0)
+  //result =
+  //    g_signal_connect (G_OBJECT (drawing_area_p),
+  //                      ACE_TEXT_ALWAYS_CHAR ("configure-event"),
+  //                      G_CALLBACK (drawingarea_video_configure_event_cb),
+  //                      userData_in);
+  //ACE_ASSERT (result);
   result =
       g_signal_connect (G_OBJECT (drawing_area_p),
                         ACE_TEXT_ALWAYS_CHAR ("expose-event"),
@@ -1545,12 +1502,12 @@ idle_initialize_ui_cb (gpointer userData_in)
                         userData_in);
   ACE_ASSERT (result);
 #if defined (GTKGLAREA_SUPPORT)
-  result =
-      g_signal_connect (G_OBJECT (gl_area_p),
-                        ACE_TEXT_ALWAYS_CHAR ("configure-event"),
-                        G_CALLBACK (glarea_configure_event_cb),
-                        userData_in);
-  ACE_ASSERT (result);
+  //result =
+  //    g_signal_connect (G_OBJECT (gl_area_p),
+  //                      ACE_TEXT_ALWAYS_CHAR ("configure-event"),
+  //                      G_CALLBACK (glarea_configure_event_cb),
+  //                      userData_in);
+  //ACE_ASSERT (result);
   result =
       g_signal_connect (G_OBJECT (gl_area_p),
                         ACE_TEXT_ALWAYS_CHAR ("expose-event"),
@@ -1574,9 +1531,9 @@ idle_initialize_ui_cb (gpointer userData_in)
                         ACE_TEXT_ALWAYS_CHAR ("expose-event"),
                         G_CALLBACK (drawingarea_video_expose_event_cb),
                         userData_in);
-#endif
-#endif
-#endif
+#endif // GTK_CHECK_VERSION (2,0,0)
+#endif // GTK_CHECK_VERSION
+#endif // GTKGL_SUPPORT
   ACE_ASSERT (result);
 
 //  // step5: use correct screen
@@ -1732,6 +1689,20 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end FOR
 #endif
 
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE)));
+  ACE_ASSERT (combo_box_p);
+  if (activate_combobox_network_interface)
+    gtk_combo_box_set_active (combo_box_p, 0);
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
+  ACE_ASSERT (combo_box_p);
+  if (activate_combobox_display_interface)
+    gtk_combo_box_set_active (combo_box_p,
+                              primary_display_monitor_index);
+
   //list_store_p =
   //  GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
   //                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
@@ -1751,12 +1722,6 @@ idle_initialize_ui_cb (gpointer userData_in)
   //else
   //  gtk_action_set_sensitive (GTK_ACTION (toggle_action_p), false);
 
-  GtkAction* action_p =
-      GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
-                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CUT)));
-  ACE_ASSERT (action_p);
-  gtk_action_set_sensitive (action_p, false);
-
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT)));
@@ -1773,10 +1738,25 @@ idle_initialize_ui_cb (gpointer userData_in)
     gtk_combo_box_set_active (combo_box_p, 0);
   } // end IF
 
+  GtkCheckButton* check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_VIDEO)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                cb_data_p->enableVideo);
+  GtkToggleButton* toggle_button_p =
+    GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
+  ACE_ASSERT (toggle_button_p);
+  gtk_toggle_button_set_active (toggle_button_p,
+                                (*iterator_4).second.fullScreen);
+  gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
+                            cb_data_p->enableVideo);
+
   bool is_active = !(*iterator_4).second.targetFileName.empty ();
   if (is_active)
   {
-    GtkToggleButton* toggle_button_p =
+    toggle_button_p =
           GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
     ACE_ASSERT (toggle_button_p);
@@ -1790,18 +1770,18 @@ idle_initialize_ui_cb (gpointer userData_in)
                               true);
   } // end IF
 
-  combo_box_p =
-    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_WLAN_INTERFACE)));
-  ACE_ASSERT (combo_box_p);
-  if (activate_combobox_network_interface)
-    gtk_combo_box_set_active (combo_box_p, 0);
-  combo_box_p =
-    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
-                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
-  ACE_ASSERT (combo_box_p);
-  if (activate_combobox_display_interface)
-    gtk_combo_box_set_active (combo_box_p, primary_display_monitor_index);
+  check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
+  check_button_p =
+    GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
+  ACE_ASSERT (check_button_p);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+                                cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate);
 
   ///* Get Icons shown on buttons */
   //GtkSettings* settings_p = gtk_settings_get_default ();
@@ -1862,7 +1842,7 @@ idle_finalize_ui_cb (gpointer userData_in)
 gboolean
 idle_session_end_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_session_end_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_session_end_cb"));
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -1950,12 +1930,21 @@ idle_session_end_cb (gpointer userData_in)
   } // end IF
 #endif
 
+  if (data_p->stateEventId)
+  {
+    if (!g_source_remove (data_p->stateEventId))
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_source_remove(%u): \"%m\", continuing\n"),
+                  data_p->stateEventId));
+    data_p->stateEventId = 0;
+  } // end IF
+
   return G_SOURCE_REMOVE;
 }
 gboolean
 idle_session_start_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_session_start_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_session_start_cb"));
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -1999,13 +1988,30 @@ idle_session_start_cb (gpointer userData_in)
   ACE_ASSERT (action_p);
   gtk_action_set_sensitive (action_p, true);
 
+  ACE_ASSERT (!data_p->stateEventId);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
+    // schedule asynchronous updates of the state
+    data_p->stateEventId =
+      g_timeout_add (COMMON_UI_GTK_WIDGET_UPDATE_INTERVAL,
+                     idle_update_state_cb,
+                     userData_in);
+    if (data_p->stateEventId > 0)
+      data_p->eventSourceIds.insert (data_p->stateEventId);
+    else
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to g_timeout_add(): \"%m\", aborting\n")));
+      return G_SOURCE_REMOVE;
+    } // end ELSE
+  } // end lock scope
+
   return G_SOURCE_REMOVE;
 }
 
 gboolean
 idle_reset_ui_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_reset_ui_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_reset_ui_cb"));
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -2102,7 +2108,7 @@ idle_reset_ui_cb (gpointer userData_in)
 gboolean
 idle_update_info_display_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_update_info_display_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_update_info_display_cb"));
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -2129,6 +2135,7 @@ idle_update_info_display_cb (gpointer userData_in)
        iterator_2 != data_p->eventStack.end ();
        ++iterator_2)
   { // step1: process event
+    is_session_message = false;
     switch ((*iterator_2).second)
     {
       case ARDRONE_EVENT_CONNECT:
@@ -2297,7 +2304,7 @@ idle_update_info_display_cb (gpointer userData_in)
 //gboolean
 //idle_update_log_display_cb (gpointer userData_in)
 //{
-//  STREAM_TRACE (ACE_TEXT ("::idle_update_log_display_cb"));
+//  ARDRONE_TRACE (ACE_TEXT ("::idle_update_log_display_cb"));
 //
 //  struct ARDrone_GtkCBData* data_p =
 //    static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -2382,9 +2389,58 @@ idle_update_info_display_cb (gpointer userData_in)
 //}
 
 gboolean
+idle_update_state_cb (gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::idle_update_state_cb"));
+
+  struct ARDrone_GtkCBData* data_p =
+    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (data_p);
+  ACE_ASSERT (data_p->controller);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  ACE_ASSERT (iterator != data_p->builders.end ());
+
+  uint32_t device_state = data_p->controller->get ();
+  struct _navdata_demo_t device_state_2 = data_p->controller->get_2 ();
+  std::ostringstream converter;
+
+  GtkLabel* label_p =
+    GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LABEL_ROLL)));
+  ACE_ASSERT (label_p);
+  converter << device_state_2.phi;
+  gtk_label_set_text (label_p,
+                      converter.str ().c_str ());
+  label_p =
+    GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LABEL_PITCH)));
+  ACE_ASSERT (label_p);
+  converter.clear ();
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter << device_state_2.theta;
+  gtk_label_set_text (label_p,
+                      converter.str ().c_str ());
+  label_p =
+    GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LABEL_YAW)));
+  ACE_ASSERT (label_p);
+  converter.clear ();
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter << device_state_2.psi;
+  gtk_label_set_text (label_p,
+                      converter.str ().c_str ());
+
+  return G_SOURCE_REMOVE;
+}
+
+gboolean
 idle_update_video_display_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_update_video_display_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_update_video_display_cb"));
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
@@ -2419,7 +2475,7 @@ idle_update_video_display_cb (gpointer userData_in)
 gboolean
 idle_update_progress_cb (gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::idle_update_progress_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::idle_update_progress_cb"));
 
   struct ARDrone_GtkProgressData* data_p =
     static_cast<struct ARDrone_GtkProgressData*> (userData_in);
@@ -2508,7 +2564,7 @@ idle_update_progress_cb (gpointer userData_in)
     //gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
     gtk_widget_set_sensitive (GTK_WIDGET (progress_bar_p), false);
 
-    data_p->eventSourceID = 0;
+    data_p->eventSourceId = 0;
 
     return G_SOURCE_REMOVE; // done
   } // end IF
@@ -2690,11 +2746,11 @@ idle_update_progress_cb (gpointer userData_in)
 extern "C"
 {
 #endif /* __cplusplus */
-G_MODULE_EXPORT void
+void
 toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                                  gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::toggleaction_connect_toggled_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::toggleaction_connect_toggled_cb"));
 
   // --> user pressed connect/disconnect
 
@@ -2790,6 +2846,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GtkListStore* list_store_p = NULL;
   GtkDrawingArea* drawing_area_p = NULL;
   GtkCheckButton* check_button_p = NULL;
+  GtkToggleButton* toggle_button_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if GTK_CHECK_VERSION (3,0,0)
@@ -2848,12 +2905,12 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
 
   // set fullscreen ?
-  check_button_p =
-      GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
-  ACE_ASSERT (check_button_p);
+  toggle_button_p =
+      GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
+  ACE_ASSERT (toggle_button_p);
   (*iterator_5).second.fullScreen =
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
+    gtk_toggle_button_get_active (toggle_button_p);
 
   // retrieve filename ?
   check_button_p =
@@ -3470,9 +3527,9 @@ continue_:
   // start progress reporting
   // *TODO*: there is a race condition here if the processing thread returns
   //         early
-  ACE_ASSERT (!cb_data_p->progressData->eventSourceID);
+  ACE_ASSERT (!cb_data_p->progressData->eventSourceId);
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
-    cb_data_p->progressData->eventSourceID =
+    cb_data_p->progressData->eventSourceId =
         //g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, // _LOW doesn't work (on Win32)
         //                 idle_update_progress_cb,
         //                 &data_p->progressData,
@@ -3482,12 +3539,12 @@ continue_:
                             idle_update_progress_cb,
                             cb_data_p->progressData,
                             NULL);
-    if (cb_data_p->progressData->eventSourceID > 0)
+    if (cb_data_p->progressData->eventSourceId > 0)
     {
-      thread_data_p->eventSourceID = cb_data_p->progressData->eventSourceID;
-      cb_data_p->progressData->pendingActions[cb_data_p->progressData->eventSourceID] =
+      thread_data_p->eventSourceId = cb_data_p->progressData->eventSourceId;
+      cb_data_p->progressData->pendingActions[cb_data_p->progressData->eventSourceId] =
           ACE_Thread_ID (thread_id, thread_handle);
-      cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceID);
+      cb_data_p->eventSourceIds.insert (cb_data_p->progressData->eventSourceId);
     } // end IF
     else
       ACE_DEBUG ((LM_ERROR,
@@ -3523,7 +3580,7 @@ error:
 
   if (stop_progress_reporting)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
-    cb_data_p->progressData->completedActions.insert (cb_data_p->progressData->eventSourceID);
+    cb_data_p->progressData->completedActions.insert (cb_data_p->progressData->eventSourceId);
   } // end IF
 
   if (thread_data_p)
@@ -3533,20 +3590,7 @@ error:
   gtk_action_activate (GTK_ACTION (toggleAction_in));
 }
 
-G_MODULE_EXPORT void
-action_trim_activate_cb (GtkAction* action_in,
-                         gpointer userData_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("::action_trim_activate_cb"));
-
-  struct ARDrone_GtkCBData* cb_data_p =
-      static_cast<struct ARDrone_GtkCBData*> (userData_in);
-
-  // sanity check(s)
-  ACE_ASSERT (cb_data_p);
-}
-
-G_MODULE_EXPORT void
+void
 action_calibrate_activate_cb (GtkAction* action_in,
                               gpointer userData_in)
 {
@@ -3557,22 +3601,38 @@ action_calibrate_activate_cb (GtkAction* action_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->controller);
+
+  try {
+    cb_data_p->controller->calibrate ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::calibrate(), continuing\n")));
+  }
 }
 
-G_MODULE_EXPORT void
-action_cut_activate_cb (GtkAction* action_in,
-                        gpointer userData_in)
+void
+action_dump_activate_cb (GtkAction* action_in,
+                         gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::action_cut_activate_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::action_dump_activate_cb"));
 
   struct ARDrone_GtkCBData* cb_data_p =
       static_cast<struct ARDrone_GtkCBData*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->controller);
+
+  try {
+    cb_data_p->controller->dump ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::dump(), continuing\n")));
+  }
 }
 
-G_MODULE_EXPORT void
+void
 combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
                                     gpointer userData_in)
 {
@@ -3711,7 +3771,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   } // end ELSE
 }
 
-G_MODULE_EXPORT void
+void
 combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
                                     gpointer userData_in)
 {
@@ -3730,20 +3790,80 @@ combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
 
   GtkComboBox* combo_box_p =
     GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE)));
+  ACE_ASSERT (combo_box_p);
+  GtkListStore* list_store_p =
+    GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
+                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
+  ACE_ASSERT (list_store_p);
+  gint n_rows =
+    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
+  combo_box_p =
+    GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
   ACE_ASSERT (combo_box_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
+  //if (n_rows > 0)
+  //  gtk_combo_box_set_active (combo_box_p, 0);
+}
+
+void
+combobox_display_format_changed_cb (GtkComboBox* comboBox_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::combobox_display_format_changed_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+      static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+  //ACE_ASSERT (cb_data_p->controller);
+
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  GtkTreeIter iterator_2;
+  if (!gtk_combo_box_get_active_iter (comboBox_in,
+                                      &iterator_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_combo_box_get_active_iter(), returning\n")));
+    return;
+  } // end IF
   GtkListStore* list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
   ACE_ASSERT (list_store_p);
-  gint n_rows =
-    gtk_tree_model_iter_n_children (GTK_TREE_MODEL (list_store_p), NULL);
-  gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
-  if (n_rows > 0)
-    gtk_combo_box_set_active (combo_box_p, 0);
+  GValue value;
+#if GTK_CHECK_VERSION (3,0,0)
+  value = G_VALUE_INIT;
+#else
+  g_value_init (&value, G_TYPE_INT);
+#endif
+  gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
+                            &iterator_2,
+                            1, &value);
+  ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
+  cb_data_p->videoMode =
+    static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value));
+
+  if (cb_data_p->controller)
+  {
+    try {
+      cb_data_p->controller->set (cb_data_p->videoMode);
+    } catch (...) {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in ARDrone_IController::set(%d), returning\n"),
+                  cb_data_p->videoMode));
+      return;
+    }
+  } // end IF
 }
 
-G_MODULE_EXPORT void
+void
 entry_address_delete_text_cb (GtkEditable* editable_in,
                               gint startPosition_in,
                               gint endPosition_in,
@@ -3798,7 +3918,7 @@ refuse:
   g_signal_stop_emission_by_name (editable_in,
                                   ACE_TEXT_ALWAYS_CHAR ("delete-text"));
 }
-G_MODULE_EXPORT void
+void
 entry_address_insert_text_cb (GtkEditable* editable_in,
                               gchar* newText_in,
                               gint newTextLength_in,
@@ -3957,7 +4077,7 @@ refuse:
 }
 
 #if defined (GTK3_SUPPORT)
-G_MODULE_EXPORT void
+void
 places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
                       GMountOperation* mountOperation_in,
                       gpointer userData_in)
@@ -3970,7 +4090,7 @@ places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
 }
 #endif
 
-G_MODULE_EXPORT void
+void
 toggleaction_video_toggled_cb (GtkToggleAction* toggleAction_in,
                                gpointer userData_in)
 {
@@ -3999,19 +4119,19 @@ toggleaction_video_toggled_cb (GtkToggleAction* toggleAction_in,
 
   GtkToggleButton* toggle_button_p =
     GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
+                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
   ACE_ASSERT (toggle_button_p);
   gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
                             cb_data_p->enableVideo);
-  toggle_button_p =
-    GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
-  ACE_ASSERT (toggle_button_p);
-  gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
+  GtkWidget* widget_p =
+    GTK_WIDGET (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
+  ACE_ASSERT (widget_p);
+  gtk_widget_set_sensitive (widget_p,
                             cb_data_p->enableVideo);
 }
 
-G_MODULE_EXPORT void
+void
 toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
                                     gpointer userData_in)
 {
@@ -4062,7 +4182,7 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
   }
 }
 
-G_MODULE_EXPORT void
+void
 toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
                               gpointer userData_in)
 {
@@ -4090,7 +4210,20 @@ toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
                             gtk_toggle_action_get_active (toggleAction_in));
 }
 
-G_MODULE_EXPORT void
+void
+action_cut_activate_cb (GtkAction* action_in,
+                        gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::action_cut_activate_cb"));
+
+  struct ARDrone_GtkCBData* cb_data_p =
+    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+}
+
+void
 toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
                                    gpointer userData_in)
 {
@@ -4139,7 +4272,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
 //------------------------------------------------------------------------------
 
 #if GTK_CHECK_VERSION (3,0,0)
-G_MODULE_EXPORT void
+void
 drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
                                     GdkRectangle* allocation_in,
                                     gpointer userData_in)
@@ -4284,7 +4417,7 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
 #endif
 }
 #else
-G_MODULE_EXPORT gboolean
+gboolean
 drawingarea_video_configure_cb (GtkWidget* widget_in,
                                 GdkEvent* event_in,
                                 gpointer userData_in)
@@ -4425,7 +4558,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   return TRUE;
 }
 #endif
-G_MODULE_EXPORT gboolean
+gboolean
 drawingarea_video_draw_cb (GtkWidget* widget_in,
                            cairo_t* context_in,
                            gpointer userData_in)
@@ -4477,7 +4610,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
 
   return TRUE;
 }
-G_MODULE_EXPORT void
+void
 drawingarea_video_realize_cb (GtkWidget* widget_in,
                               gpointer userData_in)
 {
@@ -4503,7 +4636,7 @@ drawingarea_video_realize_cb (GtkWidget* widget_in,
   } // end IF
 }
 
-G_MODULE_EXPORT gboolean
+gboolean
 key_cb (GtkWidget* widget_in,
         GdkEventKey* event_in,
         gpointer userData_in)
@@ -4530,10 +4663,10 @@ key_cb (GtkWidget* widget_in,
     case GDK_KEY_f:
     case GDK_KEY_F:
     {
-      GtkCheckButton* check_button_p =
-        GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN)));
-      ACE_ASSERT (check_button_p);
+      GtkToggleButton* toggle_button_p =
+        GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
+      ACE_ASSERT (toggle_button_p);
 
       ARDrone_StreamConfigurationsIterator_t iterator =
         cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
@@ -4542,14 +4675,14 @@ key_cb (GtkWidget* widget_in,
         (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_2 != (*iterator).second.end ());
       (*iterator_2).second.fullScreen =
-        gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p));
+        gtk_toggle_button_get_active (toggle_button_p);
 
       // sanity check(s)
       if ((event_in->keyval == GDK_KEY_Escape) &&
           !(*iterator_2).second.fullScreen)
         break; // <-- not in fullscreen mode, nothing to do
 
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
+      gtk_toggle_button_set_active (toggle_button_p,
                                     !(*iterator_2).second.fullScreen);
 
       break;
@@ -4560,6 +4693,7 @@ key_cb (GtkWidget* widget_in,
 
   return TRUE; // done (do not propagate further)
 }
+
 gboolean
 drawingarea_video_key_press_event_cb (GtkWidget* widget_in,
                                       GdkEventKey* event_in,
@@ -4569,6 +4703,7 @@ drawingarea_video_key_press_event_cb (GtkWidget* widget_in,
 
   return key_cb (widget_in, event_in, userData_in);
 };
+
 gboolean
 dialog_main_key_press_event_cb (GtkWidget* widget_in,
                                 GdkEventKey* event_in,
@@ -4579,7 +4714,7 @@ dialog_main_key_press_event_cb (GtkWidget* widget_in,
   return key_cb (widget_in, event_in, userData_in);
 };
 
-//G_MODULE_EXPORT gboolean
+//gboolean
 //motion_cb (GtkWidget* widget_in,
 //           GdkEventMotion* event_in,
 //           gpointer userData_in)
@@ -4636,39 +4771,39 @@ dialog_main_key_press_event_cb (GtkWidget* widget_in,
 
 //------------------------------------------------------------------------------
 
-G_MODULE_EXPORT gint
-button_clear_clicked_cb (GtkWidget* widget_in,
-                         gpointer userData_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("::button_clear_clicked_cb"));
+//gint
+//button_clear_clicked_cb (GtkWidget* widget_in,
+//                         gpointer userData_in)
+//{
+//  ARDRONE_TRACE (ACE_TEXT ("::button_clear_clicked_cb"));
+//
+//  ACE_UNUSED_ARG (widget_in);
+//  struct ARDrone_GtkCBData* cb_data_p =
+//    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+//
+//  // sanity check(s)
+//  ACE_ASSERT (cb_data_p);
+//
+//  Common_UI_GTKBuildersIterator_t iterator =
+//    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+//  // sanity check(s)
+//  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+//
+////  GtkTextView* view_p =
+////    GTK_TEXT_VIEW (gtk_builder_get_object ((*iterator).second.second,
+////                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG)));
+////  ACE_ASSERT (view_p);
+////  GtkTextBuffer* buffer_p =
+//////    gtk_text_buffer_new (NULL); // text tag table --> create new
+////    gtk_text_view_get_buffer (view_p);
+////  ACE_ASSERT (buffer_p);
+////  gtk_text_buffer_set_text (buffer_p,
+////                            ACE_TEXT_ALWAYS_CHAR (""), 0);
+//
+//  return TRUE; // done (do not propagate further)
+//}
 
-  ACE_UNUSED_ARG (widget_in);
-  struct ARDrone_GtkCBData* cb_data_p =
-    static_cast<struct ARDrone_GtkCBData*> (userData_in);
-
-  // sanity check(s)
-  ACE_ASSERT (cb_data_p);
-
-  Common_UI_GTKBuildersIterator_t iterator =
-    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
-  // sanity check(s)
-  ACE_ASSERT (iterator != cb_data_p->builders.end ());
-
-//  GtkTextView* view_p =
-//    GTK_TEXT_VIEW (gtk_builder_get_object ((*iterator).second.second,
-//                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG)));
-//  ACE_ASSERT (view_p);
-//  GtkTextBuffer* buffer_p =
-////    gtk_text_buffer_new (NULL); // text tag table --> create new
-//    gtk_text_view_get_buffer (view_p);
-//  ACE_ASSERT (buffer_p);
-//  gtk_text_buffer_set_text (buffer_p,
-//                            ACE_TEXT_ALWAYS_CHAR (""), 0);
-
-  return TRUE; // done (do not propagate further)
-}
-
-G_MODULE_EXPORT gint
+gint
 button_about_clicked_cb (GtkWidget* widget_in,
                          gpointer userData_in)
 {
@@ -4710,7 +4845,7 @@ button_about_clicked_cb (GtkWidget* widget_in,
   return TRUE; // done (do not propagate further)
 }
 
-G_MODULE_EXPORT gint
+gint
 button_quit_clicked_cb (GtkWidget* widget_in,
                         gpointer userData_in)
 {

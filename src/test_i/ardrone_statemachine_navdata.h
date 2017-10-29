@@ -33,17 +33,19 @@ enum ARDRone_NavDataState
 {
   NAVDATA_STATE_INVALID = -1,
   // *NOTE*: --> port 5554
-  NAVDATA_STATE_INITIAL = 0,   // send initialization packet
+  NAVDATA_STATE_INITIAL = 0,       // request navdata
   // -------------------------------------
   // *NOTE*: --> port 5556
-  NAVDATA_STATE_CONFIG,        // first packet arrives --> request configuration
-  NAVDATA_STATE_MODE,          // [switch to demo/full mode iff in bootstrap]
-  NAVDATA_STATE_OPTIONS,       // modeswitch complete --> select navdata options
-  NAVDATA_STATE_READY,         // initialization complete
-  //NAVDATA_STATE_SET_PARAMETER, // setting parameter (e.g. video birate/codec/...)
+  NAVDATA_STATE_GET_CONFIGURATION, // first packet arrives --> request configuration
+  NAVDATA_STATE_SWITCH_MODE,       // [switch to demo/full mode iff in bootstrap]
+  NAVDATA_STATE_NAVDATA_OPTIONS,   // select navdata options
+  NAVDATA_STATE_SET_VIDEO,         // set up video
+  NAVDATA_STATE_READY,             // initialization complete
   ////////////////////////////////////////
-  NAVDATA_STATE_COMMAND_ACK,   // command ACK arrives --> send ACK_CONTROL_MODE
-  NAVDATA_STATE_COMMAND_NACK,  // command ACK cleared --> proceed
+  NAVDATA_STATE_CALIBRATE_SENSOR,  // trimming accelerometer/calibrating gyroscope/...
+  NAVDATA_STATE_SET_PARAMETER,     // setting parameter (e.g. video birate/codec/...)
+  ////////////////////////////////////////
+  NAVDATA_STATE_COMMAND_ACK,       // command ACK arrived --> reset ACK_CONTROL_MODE and switch states
   ////////////////////////////////////////
   NAVDATA_STATE_MAX
 };
@@ -54,7 +56,7 @@ class ARDrone_StateMachine_NavData
 {
  public:
   ARDrone_StateMachine_NavData ();
-  virtual ~ARDrone_StateMachine_NavData ();
+  inline virtual ~ARDrone_StateMachine_NavData () {}
 
   // implement (part of) Common_IStateMachine_T
   virtual void initialize ();

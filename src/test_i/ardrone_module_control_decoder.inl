@@ -415,7 +415,6 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
         // clean up
         message_block_p->release ();
 
-        result = 0;
         done = true;
 
         break;
@@ -511,7 +510,6 @@ continue_:
             // clean up
             end ();
 
-            done = true;
             result = 0;
 
             break;

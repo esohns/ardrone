@@ -33,6 +33,7 @@
 #else
 #include "video_encapsulation.h"
 #endif
+#include "VLIB/video_codec.h"
 
 #include "ace/Message_Block.h"
 
@@ -145,23 +146,19 @@ struct ARDrone_ParrotVideoEncapsulation_Header
 __pragma (pack (pop))
 #endif
 
-struct ARDrone_ConnectionConfiguration;
 struct ARDrone_UserData
  : Net_UserData
 {
   ARDrone_UserData ()
    : Net_UserData ()
-   , connectionConfiguration (NULL)
   {};
-
-  struct ARDrone_ConnectionConfiguration* connectionConfiguration;
 };
 
 enum ARDrone_VideoMode : int
 {
   ARDRONE_VIDEOMODE_INVALID = -1,
-  ARDRONE_VIDEOMODE_360P,
-  ARDRONE_VIDEOMODE_720P,
+  ARDRONE_VIDEOMODE_360P = H264_360P_CODEC,
+  ARDRONE_VIDEOMODE_720P = H264_720P_CODEC,
   ///////////////////////////////////////
   ARDRONE_VIDEOMODE_MAX
 };

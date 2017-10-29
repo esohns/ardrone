@@ -35,50 +35,49 @@ ARDrone_Module_EventHandler::ARDrone_Module_EventHandler (ISTREAM_T* stream_in)
 }
 
 void
+ARDrone_Module_EventHandler::handleDataMessage (ARDrone_Message*& message_inout,
+                                                bool& passMessageDownstream_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleDataMessage"));
+
+  // *NOTE*: messages traversing this module will be sent to the device
+  //         --> filter inbound NavData here
+
+  enum ARDrone_MessageType message_type_e = message_inout->type ();
+  ARDrone_Message* message_p = message_inout;
+
+  // the base class release()s all messages --> create duplicates
+  if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
+  {
+    message_p =
+      dynamic_cast<ARDrone_Message*> (message_inout->duplicate ());
+    ACE_ASSERT (message_p);
+  } // end IF
+  inherited::handleDataMessage (message_p,
+                                passMessageDownstream_out);
+  ACE_ASSERT (!message_p);
+  ACE_ASSERT (!passMessageDownstream_out);
+
+  if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
+  {
+    // sanity check(s)
+    ACE_ASSERT (message_inout);
+
+    passMessageDownstream_out = true;
+  } // end IF
+}
+
+void
 ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& message_inout,
                                                    bool& passMessageDownstream_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleSessionMessage"));
 
+  Stream_SessionId_t session_id = message_inout->sessionId ();
   const ARDrone_StreamSessionData_t& session_data_container_r =
     message_inout->getR ();
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
-
-  Stream_SessionId_t session_id = message_inout->sessionId ();
-//  SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator = streams_.find (session_id);
-//  if (iterator == streams_.end ())
-//  {
-//    // remove any prior entry of the same stream type
-//    iterator =
-//      std::find_if (streams_.begin (), streams_.end (),
-//                    std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
-//                                  session_data_r.state->type));
-//    if (iterator != streams_.end ())
-//    {
-////      ACE_DEBUG ((LM_DEBUG,
-////                  ACE_TEXT ("%s: removing duplicate entry for stream type %d (session id was: %d)\n"),
-////                  inherited::mod_->name (),
-////                  session_data_r.state->type,
-////                  (*iterator).first));
-//
-//      SESSION_DATA_ITERATOR_T iterator_2;
-//      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
-//        iterator_2 =
-//            inherited::sessionData_.find ((*iterator).first);
-//        if (iterator_2 != inherited::sessionData_.end ())
-//        {
-//          (*iterator_2).second->decrease ();
-//          inherited::sessionData_.erase (iterator_2);
-//        } // end IF
-//      } // end lock scope
-//
-//      streams_.erase (iterator);
-//    } // end IF
-//
-//    streams_.insert (std::make_pair (session_id,
-//                                     session_data_r.state->type));
-//  } // end IF
 
   if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
   {
@@ -136,8 +135,8 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
 continue_:
   inherited::handleSessionMessage (message_inout,
                                    passMessageDownstream_out);
-  if (!passMessageDownstream_out)
-    return;
+  ACE_ASSERT (!message_inout);
+  ACE_ASSERT (!passMessageDownstream_out);
 }
 
 ACE_Task<ACE_MT_SYNCH,

@@ -444,18 +444,45 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
     } // end IF
   } // end lock scope
 
-  if (stream_type_e == ARDRONE_STREAM_NAVDATA)
+  switch (stream_type_e)
   {
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-      guint event_source_id = g_idle_add (idle_session_end_cb,
-                                          GtkCBData_);
-      if (event_source_id == 0)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
-        return;
-      } // end IF
-      GtkCBData_->eventSourceIds.insert (event_source_id);
-    } // end lock scope
-  } // end IF
+    case ARDRONE_STREAM_CONTROL:
+    {
+      // *NOTE*: the device closes the control connection after transmitting
+      //         configuration data
+      //         --> reconnect automatically
+      ACE_ASSERT (GtkCBData_->controlStream);
+
+      GtkCBData_->controlStream->start ();
+  
+      break;
+    }
+    case ARDRONE_STREAM_MAVLINK:
+      break;
+    case ARDRONE_STREAM_NAVDATA:
+    {
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+        guint event_source_id = g_idle_add (idle_session_end_cb,
+                                            GtkCBData_);
+        if (event_source_id == 0)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
+          return;
+        } // end IF
+        GtkCBData_->eventSourceIds.insert (event_source_id);
+      } // end lock scope
+
+      break;
+    }
+    case ARDRONE_STREAM_VIDEO:
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown stream type (was: %d), returning\n"),
+                  stream_type_e));
+      return;
+    }
+  } // end SWITCH
 }

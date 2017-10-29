@@ -35,6 +35,7 @@ gboolean idle_session_end_cb (gpointer);
 gboolean idle_session_start_cb (gpointer);
 gboolean idle_update_info_display_cb (gpointer);
 //gboolean idle_update_log_display_cb (gpointer);
+gboolean idle_update_state_cb (gpointer);
 gboolean idle_update_progress_cb (gpointer);
 gboolean idle_update_video_display_cb (gpointer);
 
@@ -46,7 +47,7 @@ extern "C"
 G_MODULE_EXPORT void toggleaction_connect_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void action_trim_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void action_calibrate_activate_cb (GtkAction*, gpointer);
-G_MODULE_EXPORT void action_cut_activate_cb (GtkAction*, gpointer);
+G_MODULE_EXPORT void action_dump_activate_cb (GtkAction*, gpointer);
 // -----------------------------------------------------------------------------
 G_MODULE_EXPORT void combobox_wlan_interface_changed_cb (GtkComboBox*, gpointer);
 G_MODULE_EXPORT void entry_address_delete_text_cb (GtkEditable*,
@@ -59,15 +60,21 @@ G_MODULE_EXPORT void entry_address_insert_text_cb (GtkEditable*,
                                                    gpointer,
                                                    gpointer);
 G_MODULE_EXPORT void combobox_display_device_changed_cb (GtkComboBox*, gpointer);
+G_MODULE_EXPORT void combobox_display_format_changed_cb (GtkComboBox*, gpointer);
 //G_MODULE_EXPORT void combobox_save_format_changed_cb (GtkComboBox*, gpointer);
 #if defined (GTK3_SUPPORT)
 G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            GMountOperation*,
                                            gpointer);
 #endif
+//------------------------------------------------------------------------------
+G_MODULE_EXPORT gboolean drawingarea_opengl_draw_cb (GtkWidget*, cairo_t*, gpointer);
+G_MODULE_EXPORT void drawingarea_opengl_realize_cb (GtkWidget*, gpointer);
+//------------------------------------------------------------------------------
 G_MODULE_EXPORT void toggleaction_video_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void toggleaction_fullscreen_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void toggleaction_save_toggled_cb (GtkToggleAction*, gpointer);
+G_MODULE_EXPORT void action_cut_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void toggleaction_associate_toggled_cb (GtkToggleAction*, gpointer);
 //------------------------------------------------------------------------------
 #if GTK_CHECK_VERSION (3,0,0)
@@ -81,7 +88,7 @@ G_MODULE_EXPORT gboolean drawingarea_video_key_press_event_cb (GtkWidget*, GdkEv
 G_MODULE_EXPORT gboolean key_cb (GtkWidget*, GdkEventKey*, gpointer);
 //------------------------------------------------------------------------------
 G_MODULE_EXPORT gboolean dialog_main_key_press_event_cb (GtkWidget*, GdkEventKey*, gpointer);
-G_MODULE_EXPORT gint button_clear_clicked_cb (GtkWidget*, gpointer);
+//G_MODULE_EXPORT gint button_clear_clicked_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gint button_about_clicked_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gint button_quit_clicked_cb (GtkWidget*, gpointer);
 #ifdef __cplusplus

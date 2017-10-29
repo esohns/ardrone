@@ -267,6 +267,7 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
    , block (false)
+   , CBData (NULL)
    , codecFormat (AV_PIX_FMT_YUV420P) // codec output-
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
@@ -323,14 +324,14 @@ struct ARDrone_ModuleHandlerConfiguration
     passive = false;
   };
 
-  bool                                block;               // H264 decoder module
-  enum AVPixelFormat                  codecFormat;         // H264 decoder module
-  enum AVCodecID                      codecId;             // H264 decoder module
-  ARDrone_IConnection_t*              connection;          // net source/IO module
+  bool                                block;                    // H264 decoder module
+  struct ARDrone_GtkCBData*           CBData;                   // controller module
+  enum AVPixelFormat                  codecFormat;              // H264 decoder module
+  enum AVCodecID                      codecId;                  // H264 decoder module
+  ARDrone_IConnection_t*              connection;               // net source/IO module
   ARDrone_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*       connectionManager;   // IO module
+  ARDrone_IConnectionManager_t*       connectionManager;        // IO module
   std::string                         device;
-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagRECT                                 area;                // display module
   bool                                           consoleMode;
