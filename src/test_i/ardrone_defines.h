@@ -62,7 +62,6 @@
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_QUIT                        "button_quit"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE              "checkbutton_associate"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH                 "checkbutton_asynch"
-#define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_FULLSCREEN             "checkbutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE                   "checkbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_VIDEO                  "checkbutton_video"
 #define ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_DEVICE            "combobox_display_device"
@@ -72,6 +71,7 @@
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_ABOUT                       "dialog_about"
 #define ARDRONE_UI_WIDGET_NAME_DIALOG_MAIN                        "dialog_main"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN             "drawingarea_fullscreen"
+#define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL                 "drawingarea_opengl"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO                  "drawingarea_video"
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS                      "entry_address"
 #define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                         "entry_SSID"
@@ -80,6 +80,9 @@
 #define ARDRONE_UI_WIDGET_NAME_FRAME_DISPLAY                      "frame_display"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS                      "frame_options"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE                 "frame_save_options"
+#define ARDRONE_UI_WIDGET_NAME_LABEL_ROLL                         "label_roll_value"
+#define ARDRONE_UI_WIDGET_NAME_LABEL_PITCH                        "label_roll_pitch"
+#define ARDRONE_UI_WIDGET_NAME_LABEL_YAW                          "label_roll_yaw"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE           "liststore_display_device"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT           "liststore_display_format"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT              "liststore_save_format"
@@ -106,6 +109,7 @@
 #define ARDRONE_UI_WIDGET_NAME_STATUSBAR                          "statusbar"
 //#define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT               "toggleaction_connect"
+#define ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN            "togglebutton_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN                  "window_fullscreen"
 
 //#define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
@@ -189,11 +193,10 @@
 // *IMPORTANT NOTE*: currently (!) this value must correspond to the actual
 //                   device driver setting i.e. TIMER_DELAY_MS (for noint=1)
 //#define ARDRONE_DATA_RATE                                 100 // messages/s
-// *TODO*: apparently, the Microsoft H264 decoder cannot handle the 720P
-//         resolution
 // *TODO*: do not use static values; compute these with ffmpeg
 #define ARDRONE_H264_360P_VIDEO_WIDTH                      640
-// *TODO*: for some reason, ffmpeg codec returns 368, not 360; find out why
+// *TODO*: for some reason, the drone MPEG codec returns 368 lines, not 360;
+//         --> find out why
 #define ARDRONE_H264_360P_VIDEO_HEIGHT                     368
 #define ARDRONE_H264_720P_VIDEO_WIDTH                      1280
 #define ARDRONE_H264_720P_VIDEO_HEIGHT                     720
@@ -209,7 +212,6 @@
 #define ARDRONE_DEFAULT_SSID_AUTOASSOCIATE                 true
 #define ARDRONE_DEFAULT_VIDEO_DISPLAY                      true
 #define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
-#define ARDRONE_DEFAULT_VIDEO_WIDTH                        ARDRONE_H264_360P_VIDEO_WIDTH
-#define ARDRONE_DEFAULT_VIDEO_HEIGHT                       ARDRONE_H264_360P_VIDEO_HEIGHT
+#define ARDRONE_DEFAULT_VIDEO_MODE                         ARDRONE_VIDEOMODE_360P
 
 #endif // #ifndef ARDRONE_DEFINES_H

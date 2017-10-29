@@ -21,7 +21,7 @@
 #ifndef ARDRONE_OPENGL_H
 #define ARDRONE_OPENGL_H
 
-#if defined (GTKOPENGL_SUPPORT)
+#if defined (GTKGL_SUPPORT)
 #include <GL/gl.h>
 
 //void arrow (GLfloat,  // x1
@@ -34,7 +34,7 @@
 //void axes (GLfloat); // length
 
 GLuint axes ();
-void draw_teapot (bool,    // solid ?
+void draw_teapot (bool,   // solid ?
                   float); // scale
 void frames_per_second (float); // fps
 #endif

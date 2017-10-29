@@ -51,6 +51,59 @@ ARDroneStreamTypeToString (const enum ARDrone_StreamType type_in)
   return ACE_TEXT_ALWAYS_CHAR ("");
 }
 
+std::string 
+ARDroneVideoModeToString (const enum ARDrone_VideoMode mode_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::ARDroneVideoModeToString"));
+  
+  switch (mode_in)
+  {
+    case ARDRONE_VIDEOMODE_360P:
+      return ACE_TEXT_ALWAYS_CHAR ("H264 360p");
+    case ARDRONE_VIDEOMODE_720P:
+      return ACE_TEXT_ALWAYS_CHAR ("H264 720p");
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unkown video mode (was: %d), aborting\n"),
+                  mode_in));
+      break;
+    }
+  } // end SWITCH
+
+  return ACE_TEXT_ALWAYS_CHAR ("");
+}
+void
+ARDroneVideoModeToResolution (const enum ARDrone_VideoMode mode_in,
+                              unsigned int& width_out,
+                              unsigned int& height_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::ARDroneVideoModeToResolution"));
+
+  // initialize return value(s)
+  width_out = 0;
+  height_out = 0;
+
+  switch (mode_in)
+  {
+    case ARDRONE_VIDEOMODE_360P:
+      width_out = ARDRONE_H264_360P_VIDEO_WIDTH;
+      height_out = ARDRONE_H264_360P_VIDEO_HEIGHT;
+      break;
+    case ARDRONE_VIDEOMODE_720P:
+      width_out = ARDRONE_H264_720P_VIDEO_WIDTH;
+      height_out = ARDRONE_H264_720P_VIDEO_HEIGHT;
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unkown video mode (was: %d), aborting\n"),
+                  mode_in));
+      break;
+    }
+  } // end SWITCH
+}
+
 //////////////////////////////////////////
 
 ARDrone_ControlStream::ARDrone_ControlStream ()
@@ -60,13 +113,6 @@ ARDrone_ControlStream::ARDrone_ControlStream ()
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::ARDrone_ControlStream"));
 
   inherited::state_.type = ARDRONE_STREAM_CONTROL;
-}
-
-ARDrone_ControlStream::~ARDrone_ControlStream ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::~ARDrone_ControlStream"));
-
-  inherited::shutdown ();
 }
 
 bool
@@ -129,6 +175,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   if (inherited::isInitialized_)
   {
+    configuration_ = NULL;
   } // end IF
 
 //  bool result = false;
@@ -156,10 +203,12 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
+  ACE_ASSERT ((configuration_in).configuration_.GtkCBData);
 
-  //struct ARDrone_SessionData& session_data_r =
-  //  const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+  configuration_ = (configuration_in).configuration_.GtkCBData->controller;
+
+  // sanity check(s)
+  ACE_ASSERT (configuration_);
 
   iterator =
     const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -273,29 +322,6 @@ ARDrone_ControlStream::end (Stream_SessionId_t sessionId_in)
     return;
 }
 
-void
-ARDrone_ControlStream::ping ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::ping"));
-
-//  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
-//  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
-//  if (!protocolHandler_impl)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
-
-//    return;
-//  } // end IF
-
-//  // delegate to this module
-//  protocolHandler_impl->handleTimeout (NULL);
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
-}
-
 bool
 ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
 {
@@ -380,32 +406,42 @@ ARDrone_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceCon
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream::messageCB"));
 
-#if defined (_DEBUG)
-  // debug info
-  unsigned int number_of_settings = 0;
-  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
-       iterator != deviceConfiguration_in.end ();
-       ++iterator)
-    number_of_settings += (*iterator).second.size ();
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
-              number_of_settings, deviceConfiguration_in.size ()));
-  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
-       iterator != deviceConfiguration_in.end ();
-       ++iterator)
-  {
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
-                ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
-    for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
-         iterator_2 != (*iterator).second.end ();
-         ++iterator_2)
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("\t%s:\t%s\n"),
-                  ACE_TEXT ((*iterator_2).first.c_str ()),
-                  ACE_TEXT ((*iterator_2).second.c_str ())));
-  } // end FOR
-#endif
+  // sanity check(s)
+  ACE_ASSERT (configuration_);
+
+  try {
+    configuration_->setP (&const_cast<ARDrone_DeviceConfiguration_t&> (deviceConfiguration_in));
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IDeviceConfiguration::setP(), continuing\n")));
+  }
+
+//#if defined (_DEBUG)
+//  // debug info
+//  unsigned int number_of_settings = 0;
+//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+//       iterator != deviceConfiguration_in.end ();
+//       ++iterator)
+//    number_of_settings += (*iterator).second.size ();
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+//              number_of_settings, deviceConfiguration_in.size ()));
+//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+//       iterator != deviceConfiguration_in.end ();
+//       ++iterator)
+//  {
+//    ACE_DEBUG ((LM_DEBUG,
+//                ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
+//                ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
+//    for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
+//         iterator_2 != (*iterator).second.end ();
+//         ++iterator_2)
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("\t%s:\t%s\n"),
+//                  ACE_TEXT ((*iterator_2).first.c_str ()),
+//                  ACE_TEXT ((*iterator_2).second.c_str ())));
+//  } // end FOR
+//#endif
 }
 
 //////////////////////////////////////////
@@ -413,7 +449,6 @@ ARDrone_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceCon
 ARDrone_NavDataStream::ARDrone_NavDataStream ()
  : inherited ()
  , inherited2 (&(inherited::sessionDataLock_))
- , controller_ (NULL)
  , isFirst_ (true)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::ARDrone_NavDataStream"));
@@ -506,7 +541,6 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   if (inherited::isInitialized_)
   {
-    controller_ = NULL;
     isFirst_ = true;
   } // end IF
 
@@ -533,8 +567,8 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
     setup_pipeline;
   reset_setup_pipeline = false;
 
-  // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
+  //// sanity check(s)
+  //ACE_ASSERT (inherited::sessionData_);
 
 //  session_data_p =
 //    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
@@ -578,28 +612,6 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   // *NOTE*: push()ing the module will open() it
   // --> set the argument that is passed along
   module_p->arg (inherited::sessionData_);
-
-  // **************************** Controller ***********************************
-  module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")));
-  if (!module_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT ("NavDataTarget")));
-    goto error;
-  } // end IF
-
-  controller_ =
-    dynamic_cast<ARDrone_IController*> (module_p->writer ());
-  if (!controller_)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: dynamic_cast<ARDrone_IController> failed, aborting\n"),
-                ACE_TEXT (navdata_stream_name_string_)));
-    goto error;
-  } // end IF
 
   // ---------------------------------------------------------------------------
 
@@ -683,7 +695,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
       {
         isFirst_ = false;
         break;
-      }
+      } // end IF
 
       // reset event dispatch notification for outbound data
       typename ARDrone_StreamConfiguration_t::ITERATOR_T iterator;
@@ -859,6 +871,46 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
                                   void* payload_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::messageCB"));
+
+#if defined (_DEBUG)
+  // dump state
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling mask: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
+              ((record_in.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
+              ((record_in.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
+              ((record_in.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
+              ((record_in.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
+              ((record_in.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
+              ((record_in.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
+              ((record_in.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
+              ((record_in.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+              ((record_in.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+              ((record_in.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
+
+  // *TODO*: dump options
+#endif
 
   struct _navdata_option_t* option_p = NULL;
   for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
@@ -1084,6 +1136,34 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
   } // end FOR
 }
 
+const ARDrone_IController* const
+ARDrone_NavDataStream::getP () const
+{
+  Stream_Module_t* module_p =
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")));
+  if (!module_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (navdata_stream_name_string_),
+                ACE_TEXT ("NavDataTarget")));
+    return NULL;
+  } // end IF
+
+  ARDrone_IController* controller_p =
+    dynamic_cast<ARDrone_IController*> (module_p->writer ());
+  if (!controller_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s/%s: dynamic_cast<ARDrone_IController> failed, aborting\n"),
+                ACE_TEXT (navdata_stream_name_string_),
+                module_p->name ()));
+    return NULL;
+  } // end IF
+
+  return controller_p;
+}
+
 //////////////////////////////////////////
 
 void
@@ -1263,13 +1343,6 @@ ARDrone_MAVLinkStream::ARDrone_MAVLinkStream ()
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ARDrone_MAVLinkStream"));
 
   inherited::state_.type = ARDRONE_STREAM_MAVLINK;
-}
-
-ARDrone_MAVLinkStream::~ARDrone_MAVLinkStream ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::~ARDrone_MAVLinkStream"));
-
-  inherited::shutdown ();
 }
 
 bool

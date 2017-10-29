@@ -60,7 +60,7 @@ class ARDrone_NavDataMessage;
 struct ARDrone_AllocatorConfiguration
  : Stream_AllocatorConfiguration
 {
-  inline ARDrone_AllocatorConfiguration ()
+  ARDrone_AllocatorConfiguration ()
    : Stream_AllocatorConfiguration ()
   {
     defaultBufferSize = ARDRONE_MESSAGE_BUFFER_SIZE;
@@ -83,7 +83,7 @@ struct ARDrone_AllocatorConfiguration
 struct ARDrone_DirectShow_FilterConfiguration
  : Stream_MediaFramework_DirectShow_FilterConfiguration
 {
-  inline ARDrone_DirectShow_FilterConfiguration ()
+  ARDrone_DirectShow_FilterConfiguration ()
    : Stream_MediaFramework_DirectShow_FilterConfiguration ()
    , module (NULL)
    , pinConfiguration (NULL)
@@ -101,11 +101,11 @@ struct ARDrone_SocketHandlerConfiguration;
 struct ARDrone_SignalHandlerConfiguration
  : Common_SignalHandlerConfiguration
 {
- inline ARDrone_SignalHandlerConfiguration ()
-  : Common_SignalHandlerConfiguration ()
-  , actionTimerID (-1)
-  , connector (NULL)
-  , peerAddress ()
+  ARDrone_SignalHandlerConfiguration ()
+   : Common_SignalHandlerConfiguration ()
+   , actionTimerID (-1)
+   , connector (NULL)
+   , peerAddress ()
   {};
 
   long                  actionTimerID;
@@ -118,7 +118,7 @@ typedef std::map<std::string,
                  struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
 struct ARDrone_Configuration
 {
-  inline ARDrone_Configuration ()
+  ARDrone_Configuration ()
    : signalHandlerConfiguration ()
    , WLANMonitorConfiguration ()
    , connectionConfigurations ()
@@ -162,7 +162,7 @@ typedef ARDrone_Messages_t::const_iterator ARDrone_MessagesIterator_t;
 struct ARDrone_GtkProgressData
  : Common_UI_GTK_ProgressData
 {
-  inline ARDrone_GtkProgressData ()
+  ARDrone_GtkProgressData ()
    : Common_UI_GTK_ProgressData ()
    , statistic ()
   {};
@@ -245,91 +245,97 @@ typedef Stream_Base_T<ACE_MT_SYNCH,
 struct ARDrone_GtkCBData
  : Common_UI_GTKState
 {
- inline ARDrone_GtkCBData ()
-  : Common_UI_GTKState ()
-  , configuration (NULL)
-  , controlStream (NULL)
-  , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
-  , eventStack ()
-  , frameCounter (0)
-  , localSAP ()
-  , MAVLinkStream (NULL)
-  , messages ()
-  , messageAllocator (NULL)
-  , NavDataStream (NULL)
+  ARDrone_GtkCBData ()
+   : Common_UI_GTKState ()
+   , configuration (NULL)
+   , controller (NULL)
+   , controlStream (NULL)
+   , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
+   , eventStack ()
+   , frameCounter (0)
+   , localSAP ()
+   , MAVLinkStream (NULL)
+   , messages ()
+   , messageAllocator (NULL)
+   , NavDataStream (NULL)
 #if defined (GTKGL_SUPPORT)
-  , openGLAxesListId (0)
-  , openGLCamera ()
-  , openGLRefreshId (0)
-  , openGLDoubleBuffered (ARDRONE_OPENGL_DOUBLE_BUFFERED)
+   , openGLAxesListId (0)
+   , openGLCamera ()
+   , openGLRefreshId (0)
+   , openGLDoubleBuffered (ARDRONE_OPENGL_DOUBLE_BUFFERED)
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  , pixelBuffer (NULL)
+   , pixelBuffer (NULL)
 #endif
-  , progressData (NULL)
-  , timeStamp (ACE_Time_Value::zero)
+   , progressData (NULL)
+   , stateEventId (0)
+   , timeStamp (ACE_Time_Value::zero)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
+   , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
 #endif
-  , videoStream (NULL)
- {
+   , videoMode (ARDRONE_DEFAULT_VIDEO_MODE)
+   , videoStream (NULL)
+  {
 #if defined (GTKGL_SUPPORT)
-   resetCamera ();
+    resetCamera ();
 #endif
- };
+  };
 
 #if defined (GTKGL_SUPPORT)
- inline void resetCamera ()
- {
-   ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
-   openGLCamera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
- };
+  void resetCamera ()
+  {
+    ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
+    openGLCamera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
+  };
 #endif
 
- struct ARDrone_Configuration*   configuration;
- // *NOTE*: on the host ("server"), use the device bias registers instead !
- // *TODO*: implement a client->server protocol to do this
- //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
- ARDrone_ControlStreamBase_t*    controlStream;
- bool                            enableVideo;
- ARDrone_Events_t                eventStack;
- unsigned int                    frameCounter;
- ACE_INET_Addr                   localSAP;
- ARDrone_MAVLinkStreamBase_t*    MAVLinkStream;
- ARDrone_Messages_t              messages;
- ARDrone_MessageAllocator_t*     messageAllocator;
- ARDrone_NavDataStreamBase_t*    NavDataStream;
+  struct ARDrone_Configuration*   configuration;
+  ARDrone_IController*            controller;
+  // *NOTE*: on the host ("server"), use the device bias registers instead !
+  // *TODO*: implement a client->server protocol to do this
+  //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
+  ARDrone_ControlStreamBase_t*    controlStream;
+  bool                            enableVideo;
+  ARDrone_Events_t                eventStack;
+  unsigned int                    frameCounter;
+  ACE_INET_Addr                   localSAP;
+  ARDrone_MAVLinkStreamBase_t*    MAVLinkStream;
+  ARDrone_Messages_t              messages;
+  ARDrone_MessageAllocator_t*     messageAllocator;
+  ARDrone_NavDataStreamBase_t*    NavDataStream;
 #if defined (GTKGL_SUPPORT)
- GLuint                          openGLAxesListId;
- struct ARDrone_Camera           openGLCamera;
- guint                           openGLRefreshId;
- bool                            openGLDoubleBuffered;
+  GLuint                          openGLAxesListId;
+  struct ARDrone_Camera           openGLCamera;
+  guint                           openGLRefreshId;
+  bool                            openGLDoubleBuffered;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
- GdkPixbuf*                      pixelBuffer;
+  GdkPixbuf*                      pixelBuffer;
 #endif
- struct ARDrone_GtkProgressData* progressData;
- ACE_Time_Value                  timeStamp;
+  struct ARDrone_GtkProgressData* progressData;
+  guint                           stateEventId;
+  ACE_Time_Value                  timeStamp;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
- bool                            useMediaFoundation;
+  bool                            useMediaFoundation;
 #endif
- ARDrone_VideoStreamBase_t*      videoStream;
+  enum ARDrone_VideoMode          videoMode;
+  ARDrone_VideoStreamBase_t*      videoStream;
 };
 
 struct ARDrone_ThreadData
 {
-  inline ARDrone_ThreadData ()
+  ARDrone_ThreadData ()
    : GtkCBData (NULL)
-   , eventSourceID (0)
+   , eventSourceId (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
 #endif
   {};
 
   struct ARDrone_GtkCBData* GtkCBData;
-  guint                     eventSourceID;
+  guint                     eventSourceId;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool                      useMediaFoundation;
 #endif

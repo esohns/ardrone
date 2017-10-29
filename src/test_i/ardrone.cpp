@@ -731,8 +731,11 @@ continue_:
   //video_info_header_p->rcTarget.bottom = ARDRONE_DEFAULT_VIDEO_HEIGHT;
 
   // *NOTE*: width * height * bytes/pixel * frames/s * 8
+  ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
+                                *reinterpret_cast<unsigned int*> (&video_info_header_p->bmiHeader.biWidth),
+                                *reinterpret_cast<unsigned int*> (&video_info_header_p->bmiHeader.biHeight));
   video_info_header_p->dwBitRate =
-    (ARDRONE_DEFAULT_VIDEO_WIDTH * ARDRONE_DEFAULT_VIDEO_HEIGHT) * 4 * 30 * 8;
+    (video_info_header_p->bmiHeader.biWidth * video_info_header_p->bmiHeader.biHeight) * 4 * 30 * 8;
   //video_info_header_p->dwBitErrorRate = 0;
   video_info_header_p->AvgTimePerFrame =
     MILLISECONDS_TO_100NS_UNITS (1000 / 30); // --> 30 fps
@@ -748,8 +751,8 @@ continue_:
 
   // *TODO*: make this configurable (and part of a protocol)
   video_info_header_p->bmiHeader.biSize = sizeof (struct tagBITMAPINFOHEADER);
-  video_info_header_p->bmiHeader.biWidth = ARDRONE_DEFAULT_VIDEO_WIDTH;
-  video_info_header_p->bmiHeader.biHeight = -ARDRONE_DEFAULT_VIDEO_HEIGHT;
+  video_info_header_p->bmiHeader.biHeight =
+    -video_info_header_p->bmiHeader.biHeight;
   video_info_header_p->bmiHeader.biPlanes = 1;
   //video_info_header_p->bmiHeader.biBitCount = 12;
   video_info_header_p->bmiHeader.biBitCount = 24;
@@ -972,6 +975,8 @@ do_work (int argc_in,
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration);
 
+  //CBData_in.controller =
+  //    const_cast<ARDrone_IController*> (navdata_stream.getP ());
   CBData_in.configuration->parserConfiguration.debugScanner = debugScanner_in;
 
   ARDrone_StreamConfiguration_t stream_configuration;
@@ -1193,6 +1198,7 @@ do_work (int argc_in,
 //  ACE_ASSERT (iterator_2 != CBData_in.configuration->connectionConfigurations.end ());
 
   // ******************** stream configuration data ***************************
+  modulehandler_configuration.CBData = &CBData_in;
   modulehandler_configuration.connectionManager = connection_manager_p;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   modulehandler_configuration.consoleMode = UIInterfaceDefinitionFile_in.empty ();

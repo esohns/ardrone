@@ -169,7 +169,9 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
-//  struct ARDrone_SessionData* session_data_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_SessionData* session_data_p = NULL;
+#endif
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
@@ -216,7 +218,7 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   if (session_data_p->format)
     Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->format);
   ACE_ASSERT (!session_data_p->format);
-  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*configuration_p->filterConfiguration->pinConfiguration->format,
+  if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
                                                              session_data_p->format))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -304,30 +306,6 @@ error:
   //  CoUninitialize ();
 #endif
   return false;
-}
-
-template <typename SourceModuleType>
-void
-ARDrone_VideoStream_T<SourceModuleType>::ping ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ping"));
-
-//  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
-//  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
-//  if (!protocolHandler_impl)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
-
-//    return;
-//  } // end IF
-
-//  // delegate to this module
-//  protocolHandler_impl->handleTimeout (NULL);
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
 }
 
 template <typename SourceModuleType>

@@ -46,7 +46,8 @@ class ARDrone_Module_EventHandler
                                           ARDrone_Message,
                                           ARDrone_SessionMessage,
                                           Stream_SessionId_t,
-                                          struct ARDrone_SessionData>
+                                          struct ARDrone_SessionData,
+                                          struct ARDrone_UserData>
 {
   typedef Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
                                           Common_TimePolicy_t,
@@ -55,13 +56,16 @@ class ARDrone_Module_EventHandler
                                           ARDrone_Message,
                                           ARDrone_SessionMessage,
                                           Stream_SessionId_t,
-                                          struct ARDrone_SessionData> inherited;
+                                          struct ARDrone_SessionData,
+                                          struct ARDrone_UserData> inherited;
 
  public:
   ARDrone_Module_EventHandler (typename inherited::ISTREAM_T*); // stream handle
   inline virtual ~ARDrone_Module_EventHandler () {};
 
   // override (part of) Stream_ITaskBase_T
+  virtual void handleDataMessage (ARDrone_Message*&, // message handle
+                                  bool&);            // return value: pass message downstream ?
   virtual void handleSessionMessage (ARDrone_SessionMessage*&, // session message handle
                                      bool&);                   // return value: pass message downstream ?
 

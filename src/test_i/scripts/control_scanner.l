@@ -220,8 +220,8 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   if (!iscanner_p->switchBuffer ())
   {
     // *NOTE*: most probable reason: received session end message
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
+//    ACE_DEBUG ((LM_DEBUG,
+//                ACE_TEXT ("failed to Common_IScannerBase::switchBuffer(), aborting\n")));
     return 1;
   } // end IF
 

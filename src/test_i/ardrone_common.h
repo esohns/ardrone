@@ -21,6 +21,8 @@
 #ifndef ARDRONE_COMMON_H
 #define ARDRONE_COMMON_H
 
+#include <string>
+
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <mfobjects.h>
@@ -180,24 +182,38 @@ class ARDrone_INavDataNotify
                           void*) = 0;                            // payload handle
 };
 
+class ARDrone_IDeviceConfiguration
+ : public Common_IGetR_3_T<ARDrone_DeviceConfiguration_t>
+ , public Common_ISetP_T<ARDrone_DeviceConfiguration_t>
+{};
+
 class ARDrone_IController
  : virtual public ARDrone_IStateMachine_NavData_t
+ , public ARDrone_IDeviceConfiguration
+ , public Common_IGet_T<uint32_t>
+ , public Common_IGet_2_T<struct _navdata_demo_t>
 {
  public:
-  virtual void ids (unsigned char,      // session id
-                    unsigned char,      // user id
-                    unsigned char) = 0; // application id
-
-  virtual void init () = 0; // send initial packet
-  virtual void start () = 0; // switch from 'bootstrap' to 'demo' mode
-  virtual void resetWatchdog () = 0; // reset com watchdog (every 50ms)
-
-  virtual void trim () = 0;
+  // *NOTE*: calibrate gyroscope (only when airborne)
+  virtual void calibrate () = 0;
+  // *NOTE*: dump device configuration
+  virtual void dump () = 0;
 
   virtual void takeoff () = 0;
   virtual void land () = 0;
 
   virtual void set (enum ARDrone_VideoMode) = 0;
+
+ protected:
+  virtual void ids (const std::string&,      // session id
+                    const std::string&,      // user id
+                    const std::string&) = 0; // application id
+  virtual void init () = 0; // send initial packet
+  virtual void start () = 0; // switch from 'bootstrap' to 'demo' mode
+  virtual void resetWatchdog () = 0; // reset com watchdog (every 50ms)
+
+  // *NOTE*: calibrate accelerometer (only when not (!) airborne)
+  virtual void trim () = 0;
 };
 
 //////////////////////////////////////////
