@@ -42,6 +42,8 @@ extern "C"
 }
 #endif /* __cplusplus */
 
+#include "gtk/gtk.h"
+
 #include "ace/OS.h"
 
 #include "common_ui_defines.h"
@@ -58,16 +60,23 @@ extern "C"
 #include "stream_dev_directshow_tools.h"
 #endif
 
+#include "net_defines.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
-#include "ardrone_modules_common.h"
+#include "ardrone_common.h"
 #include "ardrone_types.h"
 
+// *IMPORTANT NOTE*: these are defined in ardrone_stream.cpp
+std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
+std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
+// *TODO*: use libav here
+void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
+                                   unsigned int&,  // return value: width
+                                   unsigned int&); // return value: height
+
 // forward declarations
-class ARDrone_MAVLinkMessage;
-class ARDrone_NavDataMessage;
-class ARDrone_VideoMessage;
+class ARDrone_Message;
 class ARDrone_SessionMessage;
 
 struct ARDrone_UserData;
@@ -116,8 +125,8 @@ struct ARDrone_SessionData
    , windowController (NULL)
 #else
    , format (AV_PIX_FMT_RGBA)
-   , height (ARDRONE_DEFAULT_VIDEO_HEIGHT)
-   , width (ARDRONE_DEFAULT_VIDEO_WIDTH)
+   , height (0)
+   , width (0)
 #endif
    , state (NULL)
    , statistic ()
@@ -132,6 +141,10 @@ struct ARDrone_SessionData
                   ACE_TEXT ("failed to allocate memory, continuing\n")));
     else
       ACE_OS::memset (format, 0, sizeof (struct _AMMediaType));
+#else
+    ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
+                                  width,
+                                  height);
 #endif
   };
 
@@ -237,11 +250,14 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
+struct ARDrone_ConnectionConfiguration;
 struct ARDrone_ConnectionState;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
                           struct ARDrone_ConnectionState,
                           struct ARDrone_Statistic> ARDrone_IConnection_t;
+typedef std::map<std::string,
+                 struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
 struct ARDrone_UserData;
 typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
@@ -374,7 +390,7 @@ struct ARDrone_StreamConfiguration
 {
   ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
-   , GtkCBData (NULL)
+   , CBData (NULL)
    , initializeControl (NULL)
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
@@ -382,7 +398,7 @@ struct ARDrone_StreamConfiguration
    , userData (NULL)
   {};
 
-  struct ARDrone_GtkCBData*     GtkCBData;
+  struct ARDrone_GtkCBData*     CBData;
   ARDrone_IControlInitialize_t* initializeControl;
   ARDrone_IMAVLinkInitialize_t* initializeMAVLink;
   ARDrone_INavDataInitialize_t* initializeNavData;

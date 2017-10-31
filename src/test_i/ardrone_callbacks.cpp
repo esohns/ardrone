@@ -613,7 +613,7 @@ stream_processing_function (void* arg_in)
 
   GtkStatusbar* statusbar_p = NULL;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2;
-  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
+//  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
@@ -629,38 +629,41 @@ stream_processing_function (void* arg_in)
 //#endif
 
     // configure streams and retrieve stream handles
-    ARDrone_ConnectionConfigurationIterator_t iterator_3;
+//    ARDrone_ConnectionConfigurationIterator_t iterator_3;
     ARDrone_StreamConfigurationsIterator_t iterator_4;
 //    Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
     Common_IGetP_T<ARDrone_IController>* iget_p = NULL;
 
-    // navdata
-    iterator_3 =
-      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
-    iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
-    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
-    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-    configuration_p =
-      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
-    ACE_ASSERT (configuration_p);
-    configuration_p->targetFileName =
-      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
-                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-    configuration_p->stream = data_p->GtkCBData->NavDataStream;
-    result_2 =
-      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
-    if (!result_2)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-      goto done;
-    } // end IF
+//    // navdata
+////    iterator_3 =
+////      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+////    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+//    iterator_4 =
+//      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
+//    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+//    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
+//    logfile_name_string = (*iterator_2).second.targetFileName;
+////    configuration_p =
+////      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
+////    ACE_ASSERT (configuration_p);
+////    configuration_p->targetFileName =
+//    (*iterator_2).second.targetFileName =
+//        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+//                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
+////    configuration_p->stream = data_p->GtkCBData->NavDataStream;
+//    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
+//    result_2 =
+//      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
+//    if (!result_2)
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+//      goto done;
+//    } // end IF
+//    (*iterator_2).second.targetFileName = logfile_name_string;
     iget_p =
       dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->GtkCBData->NavDataStream);
     ACE_ASSERT (iget_p);
@@ -669,39 +672,39 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (data_p->GtkCBData->controller);
 
     // control
-    iterator_3 =
-      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
-    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+//    iterator_3 =
+//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
+//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
-    iterator_2 =
-        (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.targetFileName;
     (*iterator_2).second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
     (*iterator_2).second.stream = data_p->GtkCBData->controlStream;
-    result_2 = data_p->GtkCBData->controlStream->initialize ((*iterator_4).second);
+    result_2 =
+        data_p->GtkCBData->controlStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
+    (*iterator_2).second.targetFileName = logfile_name_string;
     //session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->controlStream);
     //ACE_ASSERT (session_p);
     data_p->GtkCBData->controlStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
-    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // mavlink
-    iterator_3 =
-      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
-    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+//    iterator_3 =
+//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
+//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
@@ -719,12 +722,40 @@ stream_processing_function (void* arg_in)
                   ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
       goto done;
     } // end IF
+    (*iterator_2).second.targetFileName = logfile_name_string;
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->MAVLinkStream);
 //    ACE_ASSERT (session_p);
     data_p->GtkCBData->MAVLinkStream->start ();
 //    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
+//    iterator_3 =
+//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+    iterator_4 =
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
+    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
+    logfile_name_string = (*iterator_2).second.targetFileName;
+//    configuration_p =
+//      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
+//    ACE_ASSERT (configuration_p);
+//    configuration_p->targetFileName =
+    (*iterator_2).second.targetFileName =
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
+//    configuration_p->stream = data_p->GtkCBData->NavDataStream;
+    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
+    result_2 =
+      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
+    if (!result_2)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+      goto done;
+    } // end IF
+    (*iterator_2).second.targetFileName = logfile_name_string;
     data_p->GtkCBData->NavDataStream->start ();
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->NavDataStream);
 //    ACE_ASSERT (session_p);
@@ -761,8 +792,6 @@ stream_processing_function (void* arg_in)
     converter << session_data_p->sessionId;
 
     // set context id
-    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     gdk_threads_enter ();
     statusbar_p =
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
@@ -2404,7 +2433,7 @@ idle_update_state_cb (gpointer userData_in)
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
-  uint32_t device_state = data_p->controller->get ();
+//  uint32_t device_state = data_p->controller->get ();
   struct _navdata_demo_t device_state_2 = data_p->controller->get_2 ();
   std::ostringstream converter;
 
@@ -3803,8 +3832,8 @@ combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_DISPLAY_FORMAT)));
   ACE_ASSERT (combo_box_p);
   gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), (n_rows > 0));
-  //if (n_rows > 0)
-  //  gtk_combo_box_set_active (combo_box_p, 0);
+  if (n_rows > 0)
+    gtk_combo_box_set_active (combo_box_p, 0);
 }
 
 void

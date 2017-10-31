@@ -33,6 +33,8 @@
 class ACE_Message_Block;
 class Stream_IAllocator;
 
+extern const char ardrone_default_pave_decoder_module_name_string[];
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           ////////////////////////////////

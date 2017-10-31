@@ -81,8 +81,8 @@
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS                      "frame_options"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE                 "frame_save_options"
 #define ARDRONE_UI_WIDGET_NAME_LABEL_ROLL                         "label_roll_value"
-#define ARDRONE_UI_WIDGET_NAME_LABEL_PITCH                        "label_roll_pitch"
-#define ARDRONE_UI_WIDGET_NAME_LABEL_YAW                          "label_roll_yaw"
+#define ARDRONE_UI_WIDGET_NAME_LABEL_PITCH                        "label_pitch_value"
+#define ARDRONE_UI_WIDGET_NAME_LABEL_YAW                          "label_yaw_value"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE           "liststore_display_device"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT           "liststore_display_format"
 #define ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT              "liststore_save_format"
@@ -151,6 +151,11 @@
 //#define ARDRONE_PROTOCOL_DEFAULT_USER_ID                   1
 //#define ARDRONE_PROTOCOL_DEFAULT_APPLICATION_ID            1
 
+// *** stream-related ***
+//#define ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING        "Controller"
+#define ARDRONE_STREAM_MDOULE_HANDLER_NAME_STRING           "EventHandler"
+#define ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING      "PaVEDecoder"
+
 // control
 #define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH          1024 // #characters
 
@@ -166,6 +171,8 @@
 #define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_MODE_STRING     "navdata_demo"
 #define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_CODEC_STRING    "video_codec"
 #define ARDRONE_PROTOCOL_AT_COMMAND_SETTING_OPTIONS_STRING  "navdata_options"
+
+#define ARDRONE_CONTROL_STREAM_NAME_STRING                  "ControlStream"
 
 // navdata
 #if defined (_DEBUG)
@@ -183,6 +190,9 @@
 #define ARDRONE_NAVDATA_STREAM_NAME_STRING                 "NavDataStream"
 
 //#define ARDRONE_STATISTIC_REPORTING_INTERVAL               0 // seconds [0 --> OFF]
+
+#define ARDRONE_MAVLINK_STREAM_NAME_STRING                 "MAVLinkStream"
+#define ARDRONE_VIDEO_STREAM_NAME_STRING                   "VideoStream"
 
 // *** device-related ***
 //#define ARDRONE_ACCELEROMETER_LSB_FACTOR_2                16384.0F // LSB/g

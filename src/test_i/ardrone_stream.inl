@@ -25,9 +25,14 @@
 
 #include "ace/Log_Msg.h"
 
+#include "stream_dec_defines.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_dev_directshow_tools.h"
 #endif
+#include "stream_file_defines.h"
+#include "stream_net_defines.h"
+#include "stream_stat_defines.h"
+#include "stream_vis_defines.h"
 
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
@@ -84,13 +89,13 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_FileWriter_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR ("FileWriter")),
+                                                    ACE_TEXT_ALWAYS_CHAR (MODULE_FILE_SINK_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_AVIEncoder_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR ("AVIEncoder")),
+                                                    ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -98,44 +103,44 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
   if (inherited::configuration_->configuration_.useMediaFoundation)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_MediaFoundationDisplay_Module (this,
-                                                                  ACE_TEXT_ALWAYS_CHAR ("Display")),
+                                                                  ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING)),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_DirectShowDisplay_Module (this,
-                                                             ACE_TEXT_ALWAYS_CHAR ("Display")),
+                                                             ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING)),
                     false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #else
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Display_Module (this,
-                                                 ACE_TEXT_ALWAYS_CHAR ("Display")),
+                                                 ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
 #endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_H264Decoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("H264Decoder")),
+                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                                                         ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_PaVEDecoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("PaVEDecoder")),
+                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   SourceModuleType (this,
-                                    ACE_TEXT_ALWAYS_CHAR ("VideoSource")),
+                                    ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
 
@@ -232,13 +237,13 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("VideoSource")));
+    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (video_stream_name_string_),
-                ACE_TEXT ("VideoSource")));
+                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
 
@@ -321,12 +326,13 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("StatisticReport")));
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (video_stream_name_string_),
+                ACE_TEXT (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
     return false;
   } // end IF
   ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
@@ -334,7 +340,8 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n"),
+                ACE_TEXT (video_stream_name_string_)));
     return false;
   } // end IF
 
@@ -345,7 +352,8 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
     if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n"),
+                  ACE_TEXT (video_stream_name_string_)));
       return false;
     } // end IF
   } // end IF
@@ -358,11 +366,13 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
     result_2 = statistic_impl_p->collect (data_out);
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Common_IStatistic_T::collect(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Common_IStatistic_T::collect(), continuing\n"),
+                ACE_TEXT (video_stream_name_string_)));
   }
   if (!result)
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
+                ACE_TEXT ("%s: failed to Common_IStatistic_T::collect(), aborting\n"),
+                ACE_TEXT (video_stream_name_string_)));
   else
     session_data_r.statistic = data_out;
 
@@ -371,7 +381,8 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
     result = session_data_r.lock->release ();
     if (result == -1)
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n"),
+                  ACE_TEXT (video_stream_name_string_)));
   } // end IF
 
   return result_2;
