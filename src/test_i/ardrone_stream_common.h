@@ -256,8 +256,8 @@ typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionConfiguration,
                           struct ARDrone_ConnectionState,
                           struct ARDrone_Statistic> ARDrone_IConnection_t;
-typedef std::map<std::string,
-                 struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
+typedef std::map<std::string, // module name
+                 struct ARDrone_ConnectionConfiguration> ARDrone_StreamConnectionConfigurations_t;
 struct ARDrone_UserData;
 typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
@@ -340,14 +340,14 @@ struct ARDrone_ModuleHandlerConfiguration
     passive = false;
   };
 
-  bool                                block;                    // H264 decoder module
-  struct ARDrone_GtkCBData*           CBData;                   // controller module
-  enum AVPixelFormat                  codecFormat;              // H264 decoder module
-  enum AVCodecID                      codecId;                  // H264 decoder module
-  ARDrone_IConnection_t*              connection;               // net source/IO module
-  ARDrone_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*       connectionManager;        // IO module
-  std::string                         device;
+  bool                                      block;                    // H264 decoder module
+  struct ARDrone_GtkCBData*                 CBData;                   // controller module
+  enum AVPixelFormat                        codecFormat;              // H264 decoder module
+  enum AVCodecID                            codecId;                  // H264 decoder module
+  ARDrone_IConnection_t*                    connection;               // net source/IO module
+  ARDrone_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
+  ARDrone_IConnectionManager_t*             connectionManager;        // IO module
+  std::string                               device;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagRECT                                 area;                // display module
   bool                                           consoleMode;
@@ -363,23 +363,23 @@ struct ARDrone_ModuleHandlerConfiguration
   IVideoWindow*                                  windowController;    // display module
   //IMFVideoDisplayControl*                    windowController;
 #else
-  GdkRectangle                        area;            // display module
-  enum AVPixelFormat                  format;          // H264 decoder/display module
-  struct AVRational                   frameRate;       // AVI encoder module
-  GdkPixbuf*                          pixelBuffer;     // display module
-  ACE_SYNCH_MUTEX*                    pixelBufferLock; // display module
-  struct _cairo_rectangle_int         sourceFormat;    // H264 decoder module
-  GdkWindow*                          window;          // display module
+  GdkRectangle                              area;            // display module
+  enum AVPixelFormat                        format;          // H264 decoder/display module
+  struct AVRational                         frameRate;       // AVI encoder module
+  GdkPixbuf*                                pixelBuffer;     // display module
+  ACE_SYNCH_MUTEX*                          pixelBufferLock; // display module
+  struct _cairo_rectangle_int               sourceFormat;    // H264 decoder module
+  GdkWindow*                                window;          // display module
 #endif
-  bool                                fullScreen;            // display module
-  bool                                inbound;               // statistic/IO module
-  std::string                         outboundStreamName;    // event handler module
-  bool                                printProgressDot;      // file writer module
-  bool                                pushStatisticMessages; // statistic module
-  ARDrone_StreamConfiguration_t*      streamConfiguration;   // net source/target modules
-  ARDrone_Notification_t*             subscriber; // event handler module
-  ARDrone_Subscribers_t*              subscribers; // event handler module
-  std::string                         targetFileName;
+  bool                                      fullScreen;            // display module
+  bool                                      inbound;               // statistic/IO module
+  std::string                               outboundStreamName;    // event handler module
+  bool                                      printProgressDot;      // file writer module
+  bool                                      pushStatisticMessages; // statistic module
+  ARDrone_StreamConfiguration_t*            streamConfiguration;   // net source/target modules
+  ARDrone_Notification_t*                   subscriber; // event handler module
+  ARDrone_Subscribers_t*                    subscribers; // event handler module
+  std::string                               targetFileName;
 };
 
 typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;

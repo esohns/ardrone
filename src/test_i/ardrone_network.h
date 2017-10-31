@@ -131,7 +131,10 @@ struct ARDrone_ConnectionConfiguration
   struct ARDrone_UserData*                  userData;
 };
 typedef std::map<std::string, // module name
-                 struct ARDrone_ConnectionConfiguration> ARDrone_ConnectionConfigurations_t;
+                 struct ARDrone_ConnectionConfiguration> ARDrone_StreamConnectionConfigurations_t;
+typedef ARDrone_StreamConnectionConfigurations_t::iterator ARDrone_StreamConnectionConfigurationIterator_t;
+typedef std::map<std::string, // stream name
+                 ARDrone_StreamConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
 typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 
 struct ARDrone_Configuration;

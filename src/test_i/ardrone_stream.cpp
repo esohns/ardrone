@@ -720,7 +720,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
 
       // reset event dispatch notification for outbound data
       typename ARDrone_StreamConfiguration_t::ITERATOR_T iterator;
-      ARDrone_ConnectionConfigurationIterator_t iterator_2;
+      ARDrone_StreamConnectionConfigurationIterator_t iterator_2;
       struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
       ARDrone_IConnectionManager_t* iconnection_manager_p =
           ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
@@ -733,8 +733,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
 
-      iterator =
-          inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
+      iterator = inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator != inherited::configuration_->end ());
       iterator_2 =
           (*iterator).second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));

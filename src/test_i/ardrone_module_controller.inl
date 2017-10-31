@@ -372,7 +372,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       ACE_ASSERT (inherited::configuration_);
       ACE_ASSERT (inherited::configuration_->connectionConfigurations);
       iterator =
-        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       // sanity check(s)
       ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
       ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
