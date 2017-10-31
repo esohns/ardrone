@@ -23,6 +23,8 @@
 
 #include <algorithm>
 #include <deque>
+#include <map>
+#include <string>
 
 #if defined (GTKGL_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -43,10 +45,13 @@
 
 #include "stream_common.h"
 
+#include "stream_dec_defines.h"
+
 #include "stream_lib_common.h"
 #include "stream_lib_defines.h"
 
 #include "net_configuration.h"
+#include "net_iconnector.h"
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
@@ -96,8 +101,8 @@ struct ARDrone_DirectShow_FilterConfiguration
 #endif
 
 struct ARDrone_SocketHandlerConfiguration;
-//typedef Net_IConnector_T<ACE_INET_Addr,
-//                         struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
+typedef Net_IConnector_T<ACE_INET_Addr,
+                         struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
 struct ARDrone_SignalHandlerConfiguration
  : Common_SignalHandlerConfiguration
 {
@@ -111,6 +116,19 @@ struct ARDrone_SignalHandlerConfiguration
   long                  actionTimerID;
   ARDrone_IConnector_t* connector;
   ACE_INET_Addr         peerAddress;
+};
+
+struct ARDrone_WLANMonitorConfiguration
+ : Net_WLANMonitorConfiguration
+{
+  ARDrone_WLANMonitorConfiguration ()
+   : Net_WLANMonitorConfiguration ()
+   , userData (NULL)
+  {
+    autoAssociate = ARDRONE_DEFAULT_SSID_AUTOASSOCIATE;
+  };
+
+  struct ARDrone_UserData* userData;
 };
 
 struct ARDrone_ConnectionConfiguration;

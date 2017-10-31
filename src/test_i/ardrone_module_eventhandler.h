@@ -38,6 +38,8 @@
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
+extern const char ardrone_default_handler_module_name_string[];
+
 class ARDrone_Module_EventHandler
  : public Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
                                           Common_TimePolicy_t,
@@ -94,12 +96,13 @@ class ARDrone_Module_EventHandler
 typedef ARDrone_Module_EventHandler::READER_TASK_T ARDrone_EventHandler_ReaderTask_t;
 
 // declare module
-DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                // session data type
-                            enum Stream_SessionMessageType,            // session event type
-                            struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
-                            Stream_INotify_t,                          // stream notification interface type
-                            ARDrone_EventHandler_ReaderTask_t,         // reader type
-                            ARDrone_Module_EventHandler,               // writer type
-                            ARDrone_Module_EventHandler);              // name
+DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                 // session data type
+                            enum Stream_SessionMessageType,             // session event type
+                            struct ARDrone_ModuleHandlerConfiguration,  // module handler configuration type
+                            ardrone_default_handler_module_name_string, // module name
+                            Stream_INotify_t,                           // stream notification interface type
+                            ARDrone_EventHandler_ReaderTask_t,          // reader type
+                            ARDrone_Module_EventHandler,                // writer type
+                            ARDrone_Module_EventHandler);               // class name
 
 #endif

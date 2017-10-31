@@ -100,21 +100,14 @@ extern "C"
 #include "ardrone_stream.h"
 #include "ardrone_types.h"
 
-const char net_video_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("NetVideoStream");
-const char net_control_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("NetControlStream");
-const char net_navdata_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("NetNavDataStream");
-const char net_mavlink_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkStream");
-const char video_stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("VideoStream");
-const char control_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("ControlStream");
-const char navdata_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING);
-const char mavlink_stream_name_string_[] =
-  ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream");
+//const char net_video_stream_name_string_[] =
+//  ACE_TEXT_ALWAYS_CHAR ("NetVideoStream");
+//const char net_control_stream_name_string_[] =
+//  ACE_TEXT_ALWAYS_CHAR ("NetControlStream");
+//const char net_navdata_stream_name_string_[] =
+//  ACE_TEXT_ALWAYS_CHAR ("NetNavDataStream");
+//const char net_mavlink_stream_name_string_[] =
+//  ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkStream");
 
 //----------------------------------------
 
@@ -980,6 +973,7 @@ do_work (int argc_in,
   CBData_in.configuration->parserConfiguration.debugScanner = debugScanner_in;
 
   ARDrone_StreamConfiguration_t stream_configuration;
+  stream_configuration.configuration_.CBData = &CBData_in;
   stream_configuration.configuration_.messageAllocator = &message_allocator;
   stream_configuration.configuration_.module = &event_handler_module;
   stream_configuration.configuration_.printFinalReport = false;
@@ -990,6 +984,8 @@ do_work (int argc_in,
                                                                         stream_configuration));
   CBData_in.configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"),
                                                                         stream_configuration));
+  stream_configuration.configuration_.moduleConfiguration->generateUniqueNames =
+      true;
   CBData_in.configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("NavData"),
                                                                         stream_configuration));
   //CBData_in.configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR ("Video_In"),
@@ -1018,8 +1014,6 @@ do_work (int argc_in,
   (*mavlink_streamconfiguration_iterator).second.moduleConfiguration_.notify =
     &mavlink_stream;
 
-  (*navdata_streamconfiguration_iterator).second.configuration_.GtkCBData =
-    &CBData_in;
   (*navdata_streamconfiguration_iterator).second.configuration_.initializeNavData =
     &event_handler;
   (*navdata_streamconfiguration_iterator).second.moduleConfiguration_.notify =
@@ -1071,6 +1065,7 @@ do_work (int argc_in,
   connection_configuration.socketHandlerConfiguration.userData =
     CBData_in.configuration->userData;
   connection_configuration.connectionManager = connection_manager_p;
+  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
   connection_configuration.PDUSize =
     std::max (bufferSize_in,

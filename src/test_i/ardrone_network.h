@@ -37,7 +37,7 @@
 #include "stream_control_message.h"
 #include "stream_session_data.h"
 
-#include "stream_module_io_stream.h"
+#include "stream_net_io_stream.h"
 
 #include "stream_stat_statistic_handler.h"
 
@@ -104,14 +104,10 @@ struct ARDrone_SocketHandlerConfiguration
   struct ARDrone_UserData*                userData;
 };
 
-//extern const char video_stream_name_string_[];
-//extern const char control_stream_name_string_[];
-//extern const char navdata_stream_name_string_[];
-//extern const char mavlink_stream_name_string_[];
+struct ARDrone_AllocatorConfiguration;
 struct ARDrone_StreamConfiguration;
 struct ARDrone_ModuleHandlerConfiguration;
-typedef Stream_Configuration_T<//stream_name_string_,
-                               struct ARDrone_AllocatorConfiguration,
+typedef Stream_Configuration_T<struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
                                struct Stream_ModuleConfiguration,
                                struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
@@ -179,7 +175,7 @@ typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  struct ARDrone_UserData> ARDrone_ConnectionManager_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
-                                      default_net_stream_name_string_,
+                                      libacestream_default_net_stream_name_string,
                                       enum Stream_ControlType,
                                       enum Stream_SessionMessageType,
                                       enum Stream_StateMachine_ControlState,
@@ -206,20 +202,6 @@ typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  struct ARDrone_SocketHandlerConfiguration,
                                  ARDrone_NetStream_t,
                                  enum Stream_StateMachine_ControlState> ARDrone_IStreamConnection_t;
-
-struct ARDrone_WLANMonitorConfiguration
- : Net_WLANMonitorConfiguration
-{
-  ARDrone_WLANMonitorConfiguration ()
-   : Net_WLANMonitorConfiguration ()
-   , userData (NULL)
-  {
-    autoAssociate = ARDRONE_DEFAULT_SSID_AUTOASSOCIATE;
-  };
-//  inline virtual ~ARDrone_WLANMonitorConfiguration () {};
-
-  struct ARDrone_UserData* userData;
-};
 
 typedef Net_WLANInetMonitor_T<ACE_MT_SYNCH,
                               Common_TimePolicy_t,

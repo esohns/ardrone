@@ -27,7 +27,7 @@
 #include "stream_messageallocatorheap_base.h"
 #include "stream_session_message_base.h"
 
-#include "ardrone_message.h"
+//#include "ardrone_message.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
@@ -35,11 +35,12 @@
 class ACE_Allocator;
 class ACE_Data_Block;
 class ACE_Message_Block;
+class ARDrone_Message;
 
 class ARDrone_SessionMessage
  : public Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
-                                      ARDrone_StreamSessionData_t,
+                                      ARDrone_SessionData_t,
                                       struct ARDrone_UserData>
 {
   // enable access to private ctor(s)
@@ -53,7 +54,7 @@ class ARDrone_SessionMessage
   // *NOTE*: assume lifetime responsibility for the third argument
   ARDrone_SessionMessage (Stream_SessionId_t,             // session id
                           enum Stream_SessionMessageType, // session message type
-                          ARDrone_StreamSessionData_t*&,  // session data handle
+                          ARDrone_SessionData_t*&,        // session data handle
                           struct ARDrone_UserData*);      // user data handle
   // *NOTE*: to be used by message allocators
   ARDrone_SessionMessage (Stream_SessionId_t, // session id
@@ -61,7 +62,7 @@ class ARDrone_SessionMessage
   ARDrone_SessionMessage (Stream_SessionId_t, // session id
                           ACE_Data_Block*,    // data block to use
                           ACE_Allocator*);    // message allocator
-  virtual ~ARDrone_SessionMessage ();
+  inline virtual ~ARDrone_SessionMessage () {}
 
   // override from ACE_Message_Block
   // *WARNING*: any children need to override this as well
@@ -70,7 +71,7 @@ class ARDrone_SessionMessage
  private:
   typedef Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
-                                      ARDrone_StreamSessionData_t,
+                                      ARDrone_SessionData_t,
                                       struct ARDrone_UserData> inherited;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SessionMessage ())

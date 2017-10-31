@@ -22,23 +22,35 @@
 #include "ace/Synch.h"
 #include "ardrone_stream.h"
 
+#include "stream_misc_defines.h"
+
+#include "ardrone_defines.h"
 #include "ardrone_modules_common.h"
+
+const char video_stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING);
+const char control_stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING);
+const char navdata_stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING);
+const char mavlink_stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING);
 
 std::string 
 ARDroneStreamTypeToString (const enum ARDrone_StreamType type_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::ARDroneStreamTypeToString"));
-  
+
   switch (type_in)
   {
     case ARDRONE_STREAM_CONTROL:
-      return ACE_TEXT_ALWAYS_CHAR ("ControlStream");
+      return ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING);
     case ARDRONE_STREAM_MAVLINK:
-      return ACE_TEXT_ALWAYS_CHAR ("MAVLinkStream");
+      return ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING);
     case ARDRONE_STREAM_NAVDATA:
-      return ACE_TEXT_ALWAYS_CHAR ("NavDataStream");
+      return ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING);
     case ARDRONE_STREAM_VIDEO:
-      return ACE_TEXT_ALWAYS_CHAR ("VideoStream");
+      return ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING);
     default:
     {
       ACE_DEBUG ((LM_ERROR,
@@ -131,35 +143,35 @@ ARDrone_ControlStream::load (Stream_ModuleList_t& modules_out,
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
-#if defined (_DEBUG)
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
-#endif
+//#if defined (_DEBUG)
+//  ACE_NEW_RETURN (module_p,
+//                  ARDrone_Module_Dump_Module (this,
+//                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
+//                  false);
+//  modules_out.push_back (module_p);
+//  module_p = NULL;
+//#endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_ControlDecoder_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR ("ControlDecoder")),
+                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                                                         ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_TCPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
+                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchTCPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("ControlSource")),
+                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   modules_out.push_back (module_p);
 
@@ -203,9 +215,9 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT ((configuration_in).configuration_.GtkCBData);
+  ACE_ASSERT (configuration_in.configuration_.CBData);
 
-  configuration_ = (configuration_in).configuration_.GtkCBData->controller;
+  configuration_ = configuration_in.configuration_.CBData->controller;
 
   // sanity check(s)
   ACE_ASSERT (configuration_);
@@ -231,12 +243,13 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("ControlSource")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("ControlSource")));
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (control_stream_name_string_),
+                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
 
@@ -331,12 +344,13 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("StatisticReport")));
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (control_stream_name_string_),
+                ACE_TEXT (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
     return false;
   } // end IF
   ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
@@ -344,7 +358,8 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n"),
+                ACE_TEXT (control_stream_name_string_)));
     return false;
   } // end IF
 
@@ -355,7 +370,8 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
     if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n"),
+                  ACE_TEXT (control_stream_name_string_)));
       return false;
     } // end IF
   } // end IF
@@ -368,11 +384,13 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
     result_2 = statistic_impl_p->collect (data_out);
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Common_IStatistic_T::collect(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Common_IStatistic_T::collect(), continuing\n"),
+                ACE_TEXT (control_stream_name_string_)));
   }
   if (!result_2)
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
+                ACE_TEXT ("%s: failed to Common_IStatistic_T::collect(), aborting\n"),
+                ACE_TEXT (control_stream_name_string_)));
   else
     session_data_r.statistic = data_out;
 
@@ -381,7 +399,8 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
     result = session_data_r.lock->release ();
     if (result == -1)
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n"),
+                  ACE_TEXT (control_stream_name_string_)));
   } // end IF
 
   return result_2;
@@ -413,7 +432,8 @@ ARDrone_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceCon
     configuration_->setP (&const_cast<ARDrone_DeviceConfiguration_t&> (deviceConfiguration_in));
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in ARDrone_IDeviceConfiguration::setP(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in ARDrone_IDeviceConfiguration::setP(), continuing\n"),
+                ACE_TEXT (control_stream_name_string_)));
   }
 
 //#if defined (_DEBUG)
@@ -483,12 +503,12 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_Controller_Module (this,
-                                                      ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
+                                                      ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchController_Module (this,
-                                                            ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")),
+                                                            ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
                     false);
   modules_out.push_back (module_p);
   module_p = NULL;
@@ -497,35 +517,35 @@ ARDrone_NavDataStream::load (Stream_ModuleList_t& modules_out,
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
-#if defined (_DEBUG)
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
-#endif
+//#if defined (_DEBUG)
+//  ACE_NEW_RETURN (module_p,
+//                  ARDrone_Module_Dump_Module (this,
+//                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
+//                  false);
+//  modules_out.push_back (module_p);
+//  module_p = NULL;
+//#endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                                                         ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_NavDataDecoder_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR ("NavDataDecoder")),
+                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
+                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("NavDataSource")),
+                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   modules_out.push_back (module_p);
 
@@ -593,13 +613,13 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT ("NavDataSource")));
+                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
 
@@ -670,7 +690,8 @@ ARDrone_NavDataStream::start (Stream_SessionId_t sessionId_in,
     inherited2::startCB ();
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Stream_ISessionCB::startCB(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Stream_ISessionCB::startCB(), continuing\n"),
+                ACE_TEXT (navdata_stream_name_string_)));
   }
 }
 void
@@ -716,7 +737,7 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
           inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator != inherited::configuration_->end ());
       iterator_2 =
-          (*iterator).second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget"));
+          (*iterator).second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_2 != (*iterator).second.connectionConfigurations->end ());
       ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
@@ -728,7 +749,8 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
       if (!connection_p)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to Net_IConnectionManager::get(0x%@), returning"),
+                    ACE_TEXT ("%s: failed to Net_IConnectionManager::get(0x%@), returning"),
+                    ACE_TEXT (navdata_stream_name_string_),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
         return;
       } // end IF
@@ -777,7 +799,8 @@ ARDrone_NavDataStream::end (Stream_SessionId_t sessionId_in)
     inherited2::endCB ();
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Stream_ISessionCB::endCB(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Stream_ISessionCB::endCB(), continuing\n"),
+                ACE_TEXT (navdata_stream_name_string_)));
   }
 
   ACE_ASSERT (inherited2::lock_);
@@ -795,12 +818,13 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("StatisticReport")));
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (navdata_stream_name_string_),
+                ACE_TEXT (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
     return false;
   } // end IF
   ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
@@ -808,7 +832,8 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n"),
+                ACE_TEXT (navdata_stream_name_string_)));
     return false;
   } // end IF
 
@@ -819,7 +844,8 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
     if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n"),
+                  ACE_TEXT (navdata_stream_name_string_)));
       return false;
     } // end IF
   } // end IF
@@ -832,11 +858,13 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
     result_2 = statistic_impl_p->collect (data_out);
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Common_IStatistic_T::collect(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Common_IStatistic_T::collect(), continuing\n"),
+                ACE_TEXT (navdata_stream_name_string_)));
   }
   if (!result_2)
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
+                ACE_TEXT ("%s: failed to Common_IStatistic_T::collect(), aborting\n"),
+                ACE_TEXT (navdata_stream_name_string_)));
   else
     session_data_r.statistic = data_out;
 
@@ -872,45 +900,45 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream::messageCB"));
 
-#if defined (_DEBUG)
-  // dump state
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling mask: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
-              ((record_in.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
-              ((record_in.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
-              ((record_in.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
-              ((record_in.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
-              ((record_in.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
-              ((record_in.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
-              ((record_in.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
-              ((record_in.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
-              ((record_in.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
-              ((record_in.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
+//#if defined (_DEBUG)
+//  // dump state
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
+//              ((record_in.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
+//              ((record_in.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
+//              ((record_in.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
+//              ((record_in.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
+//              ((record_in.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
+//              ((record_in.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
+//              ((record_in.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
+//              ((record_in.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+//              ((record_in.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+//              ((record_in.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
 
-  // *TODO*: dump options
-#endif
+//  // *TODO*: dump options
+//#endif
 
   struct _navdata_option_t* option_p = NULL;
   for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
@@ -1140,13 +1168,13 @@ const ARDrone_IController* const
 ARDrone_NavDataStream::getP () const
 {
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("NavDataTarget")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT ("NavDataTarget")));
+                ACE_TEXT (MODULE_NET_TARGET_DEFAULT_NAME_STRING)));
     return NULL;
   } // end IF
 
@@ -1189,15 +1217,16 @@ ARDrone_NavDataStream::onAssociate (const std::string& interfaceIdentifier_in,
   // update GUI ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: move this to onConnect() (see below)
-  if (inherited::configuration_->configuration_.GtkCBData)
+  if (inherited::configuration_->configuration_.CBData)
   {
     guint event_source_id =
       g_idle_add (idle_associated_SSID_cb,
-                  inherited::configuration_->configuration_.GtkCBData);
+                  inherited::configuration_->configuration_.CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
+                  ACE_TEXT ("%s: failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n"),
+                  ACE_TEXT (navdata_stream_name_string_)));
       return;
     } // end IF
   } // end IF
@@ -1266,12 +1295,11 @@ ARDrone_NavDataStream::onConnect (const std::string& interfaceIdentifier_in,
   // update GUI ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  // *TODO*: move this to onConnect() (see below)
-  if (inherited::configuration_->configuration_.GtkCBData)
+  if (inherited::configuration_->configuration_.CBData)
   {
     guint event_source_id =
       g_idle_add (idle_associated_SSID_cb,
-                  inherited::configuration_->configuration_.GtkCBData);
+                  inherited::configuration_->configuration_.CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -1358,35 +1386,35 @@ ARDrone_MAVLinkStream::load (Stream_ModuleList_t& modules_out,
 //                  false);
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
-#if defined (_DEBUG)
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_Dump_Module (this,
-                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
-                  false);
-  modules_out.push_back (module_p);
-  module_p = NULL;
-#endif
+//#if defined (_DEBUG)
+//  ACE_NEW_RETURN (module_p,
+//                  ARDrone_Module_Dump_Module (this,
+//                                              ACE_TEXT_ALWAYS_CHAR ("Dump")),
+//                  false);
+//  modules_out.push_back (module_p);
+//  module_p = NULL;
+//#endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_StatisticReport_Module (this,
-                                                         ACE_TEXT_ALWAYS_CHAR ("StatisticReport")),
+                                                         ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_MAVLinkDecoder_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR ("MAVLinkDecoder")),
+                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;
   if (inherited::configuration_->configuration_.useReactor)
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
+                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   else
     ACE_NEW_RETURN (module_p,
                     ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")),
+                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
                     false);
   modules_out.push_back (module_p);
 
@@ -1472,13 +1500,13 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (mavlink_stream_name_string_),
-                ACE_TEXT ("MAVLinkSource")));
+                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
 
@@ -1549,7 +1577,8 @@ ARDrone_MAVLinkStream::start (Stream_SessionId_t sessionId_in,
     inherited2::startCB ();
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Stream_ISessionCB::startCB(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Stream_ISessionCB::startCB(), continuing\n"),
+                ACE_TEXT (mavlink_stream_name_string_)));
   }
 }
 void
@@ -1583,7 +1612,8 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
     inherited2::endCB ();
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Stream_ISessionCB::endCB(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Stream_ISessionCB::endCB(), continuing\n"),
+                ACE_TEXT (mavlink_stream_name_string_)));
   }
 
   ACE_ASSERT (inherited2::lock_);
@@ -1591,29 +1621,6 @@ ARDrone_MAVLinkStream::end (Stream_SessionId_t sessionId_in)
     inherited2::inSession_ = false;
   } // end lock scope
 }
-
-//void
-//ARDrone_MAVLinkStream::ping ()
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream::ping"));
-//
-////  Net_Module_ProtocolHandler* protocolHandler_impl = NULL;
-////  protocolHandler_impl = dynamic_cast<Net_Module_ProtocolHandler*> (protocolHandler_.writer ());
-////  if (!protocolHandler_impl)
-////  {
-////    ACE_DEBUG ((LM_ERROR,
-////                ACE_TEXT ("dynamic_cast<Net_Module_ProtocolHandler> failed, returning\n")));
-//
-////    return;
-////  } // end IF
-//
-////  // delegate to this module
-////  protocolHandler_impl->handleTimeout (NULL);
-//
-//  ACE_ASSERT (false);
-//  ACE_NOTSUP;
-//  ACE_NOTREACHED (return;)
-//}
 
 bool
 ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
@@ -1624,12 +1631,13 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR ("StatisticReport")));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT ("StatisticReport")));
+                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+                ACE_TEXT (mavlink_stream_name_string_),
+                ACE_TEXT (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
     return false;
   } // end IF
   ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
@@ -1637,7 +1645,8 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
   if (!statistic_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n")));
+                ACE_TEXT ("%s: dynamic_cast<ARDrone_Module_Statistic_WriterTask_t> failed, aborting\n"),
+                ACE_TEXT (mavlink_stream_name_string_)));
     return false;
   } // end IF
 
@@ -1648,7 +1657,8 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
     if (result == -1)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", aborting\n"),
+                  ACE_TEXT (mavlink_stream_name_string_)));
       return false;
     } // end IF
   } // end IF
@@ -1661,11 +1671,13 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
     result_2 = statistic_impl_p->collect (data_out);
   } catch (...) {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in Common_IStatistic_T::collect(), continuing\n")));
+                ACE_TEXT ("%s: caught exception in Common_IStatistic_T::collect(), continuing\n"),
+                ACE_TEXT (mavlink_stream_name_string_)));
   }
   if (!result)
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_IStatistic_T::collect(), aborting\n")));
+                ACE_TEXT ("%s: failed to Common_IStatistic_T::collect(), aborting\n"),
+                ACE_TEXT (mavlink_stream_name_string_)));
   else
     session_data_r.statistic = data_out;
 
@@ -1674,7 +1686,8 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
     result = session_data_r.lock->release ();
     if (result == -1)
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n")));
+                  ACE_TEXT ("%s: failed to ACE_SYNCH_MUTEX::release(): \"%m\", continuing\n"),
+                  ACE_TEXT (mavlink_stream_name_string_)));
   } // end IF
 
   return result_2;
@@ -1756,7 +1769,8 @@ ARDrone_MAVLinkStream::messageCB (const struct __mavlink_message& record_in,
     default:
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown MAVLink message id (was: %u), continuing\n"),
+                  ACE_TEXT ("%s: invalid/unknown MAVLink message id (was: %u), continuing\n"),
+                  ACE_TEXT (mavlink_stream_name_string_),
                   record_in.msgid));
       break;
     }

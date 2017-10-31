@@ -599,7 +599,7 @@ error:
       // sanity check(s)
       ACE_ASSERT (GtkCBData_);
 
-      if (codec_e != GtkCBData_->videoMode)
+      if (codec_e != static_cast<enum _codec_type_t> (GtkCBData_->videoMode))
       {
         ACE_DEBUG ((LM_DEBUG,
                     ACE_TEXT ("%s: navdata initialized, setting video mode...\n"),

@@ -393,7 +393,11 @@ if (WIN32)
 endif ()
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Device)
+target_link_libraries (${EXECUTABLE} ACEStream_File)
+target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
 target_link_libraries (${EXECUTABLE} ACEStream_Network)
+target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
+target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 target_link_libraries (${EXECUTABLE} ACENetwork)
 
 # add PCH

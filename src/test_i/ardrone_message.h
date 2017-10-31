@@ -31,7 +31,7 @@
 #include "stream_data_message_base.h"
 #include "stream_messageallocatorheap_base.h"
 
-#include "ardrone_configuration.h"
+//#include "ardrone_configuration.h"
 #include "ardrone_common.h"
 #include "ardrone_types.h"
 

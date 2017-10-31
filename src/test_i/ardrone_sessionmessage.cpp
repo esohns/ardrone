@@ -28,7 +28,7 @@
 
 ARDrone_SessionMessage::ARDrone_SessionMessage (Stream_SessionId_t sessionId_in,
                                                 enum Stream_SessionMessageType messageType_in,
-                                                ARDrone_StreamSessionData_t*& sessionData_inout,
+                                                ARDrone_SessionData_t*& sessionData_inout,
                                                 struct ARDrone_UserData* userData_in)
  : inherited (sessionId_in, 
               messageType_in,
@@ -63,12 +63,6 @@ ARDrone_SessionMessage::ARDrone_SessionMessage (Stream_SessionId_t sessionId_in,
               messageAllocator_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SessionMessage::ARDrone_SessionMessage"));
-
-}
-
-ARDrone_SessionMessage::~ARDrone_SessionMessage ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_SessionMessage::~ARDrone_SessionMessage"));
 
 }
 

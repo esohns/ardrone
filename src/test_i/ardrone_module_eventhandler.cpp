@@ -24,7 +24,11 @@
 
 #include "ace/Log_Msg.h"
 
+#include "ardrone_defines.h"
 #include "ardrone_macros.h"
+
+const char ardrone_default_handler_module_name_string[] =
+  ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_HANDLER_NAME_STRING);
 
 ARDrone_Module_EventHandler::ARDrone_Module_EventHandler (ISTREAM_T* stream_in)
  : inherited (stream_in)
@@ -74,7 +78,7 @@ ARDrone_Module_EventHandler::handleSessionMessage (ARDrone_SessionMessage*& mess
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler::handleSessionMessage"));
 
   Stream_SessionId_t session_id = message_inout->sessionId ();
-  const ARDrone_StreamSessionData_t& session_data_container_r =
+  const ARDrone_SessionData_t& session_data_container_r =
     message_inout->getR ();
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());

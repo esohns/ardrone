@@ -38,18 +38,15 @@
 #include "stream_statemachine_control.h"
 
 #include "ardrone_message.h"
+#include "ardrone_modules_common.h"
 #include "ardrone_sessionmessage.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 extern const char video_stream_name_string_[];
-
-std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
-std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
-// *TODO*: use libav here
-void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
-                                   unsigned int&,  // return value: width
-                                   unsigned int&); // return value: height
+extern const char control_stream_name_string_[];
+extern const char navdata_stream_name_string_[];
+extern const char mavlink_stream_name_string_[];
 
 template <typename SourceModuleType>
 class ARDrone_VideoStream_T
@@ -119,8 +116,6 @@ typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_Asy
 typedef ARDrone_VideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
 
 //////////////////////////////////////////
-
-extern const char control_stream_name_string_[];
 
 class ARDrone_ControlStream
  : public Stream_Base_T<ACE_MT_SYNCH,
@@ -209,8 +204,6 @@ class ARDrone_ControlStream
 };
 
 //////////////////////////////////////////
-
-extern const char navdata_stream_name_string_[];
 
 class ARDrone_NavDataStream
  : public Stream_Base_T<ACE_MT_SYNCH,
@@ -338,8 +331,6 @@ class ARDrone_NavDataStream
 };
 
 //////////////////////////////////////////
-
-extern const char mavlink_stream_name_string_[];
 
 class ARDrone_MAVLinkStream
  : public Stream_Base_T<ACE_MT_SYNCH,

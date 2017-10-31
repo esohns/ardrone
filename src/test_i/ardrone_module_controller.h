@@ -37,7 +37,7 @@
 
 #include "stream_task_base_synch.h"
 
-#include "stream_module_target.h"
+#include "stream_net_target.h"
 
 #include "ardrone_common.h"
 #include "ardrone_statemachine_navdata.h"
@@ -45,6 +45,8 @@
 // forward declaration(s)
 class Stream_IAllocator;
 struct ARDrone_GtkCBData;
+
+//extern const char ardrone_default_controller_module_name_string[];
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
