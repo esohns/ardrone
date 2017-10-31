@@ -950,10 +950,13 @@ idle_initialize_ui_cb (gpointer userData_in)
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
   ARDrone_ConnectionConfigurationIterator_t iterator_2 =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
+  ARDrone_StreamConnectionConfigurationIterator_t iterator_2_2 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  ACE_ASSERT (iterator_2_2 != (*iterator_2).second.end ());
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddressToString ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
+                      Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
                                                            true).c_str ());
 
   GtkSpinButton* spin_button_p =
@@ -2896,8 +2899,11 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
   ACE_ASSERT (spin_button_p);
   ARDrone_ConnectionConfigurationIterator_t iterator_3 =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("VideoSource"));
+    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
+  ARDrone_StreamConnectionConfigurationIterator_t iterator_3_2 =
+    (*iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  ACE_ASSERT (iterator_3_2 != (*iterator_3).second.end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
   std::string address_string =
@@ -2908,8 +2914,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
   result =
-    (*iterator_3).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
-                                                                                       AF_INET);
+    (*iterator_3_2).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
+                                                                                         AF_INET);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2923,7 +2929,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (iterator_4 != cb_data_p->configuration->streamConfigurations.end ());
   iterator_5 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_5 != (*iterator_4).second.end ());
-  iterator_6 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+  iterator_6 =
+      (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING));
   ACE_ASSERT (iterator_6 != (*iterator_4).second.end ());
   // retrieve buffer
   spin_button_p =
