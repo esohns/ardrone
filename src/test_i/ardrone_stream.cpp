@@ -229,7 +229,7 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
   ACE_ASSERT (iterator != configuration_in.end ());
 
   configuration_p =
-    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second.second));
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
@@ -243,7 +243,9 @@ ARDrone_ControlStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -344,7 +346,9 @@ ARDrone_ControlStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -599,7 +603,7 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
   ACE_ASSERT (iterator != configuration_in.end ());
 
   configuration_p =
-      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second.second));
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
@@ -613,7 +617,9 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -736,8 +742,8 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
       iterator = inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator != inherited::configuration_->end ());
       iterator_2 =
-          (*iterator).second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (iterator_2 != (*iterator).second.connectionConfigurations->end ());
+          (*iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+      ACE_ASSERT (iterator_2 != (*iterator).second.second.connectionConfigurations->end ());
       ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
           dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
@@ -817,7 +823,9 @@ ARDrone_NavDataStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1167,7 +1175,9 @@ const ARDrone_IController* const
 ARDrone_NavDataStream::getP () const
 {
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1467,7 +1477,7 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
   ACE_ASSERT (iterator != configuration_in.end ());
 
   configuration_p =
-      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+      dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second.second));
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
@@ -1499,7 +1509,9 @@ ARDrone_MAVLinkStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1630,7 +1642,9 @@ ARDrone_MAVLinkStream::collect (struct ARDrone_Statistic& data_out)
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,

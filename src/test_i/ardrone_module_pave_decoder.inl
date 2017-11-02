@@ -194,12 +194,14 @@ next:
         break;
       buffer_p += bytes_to_copy;
     } // end FOR
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
+#if defined (_DEBUG)
     // *WARNING*: the PAVE_CHECK macro is endian- (i.e. platform-)dependent and
     //            therefore needs to be generated/compiled for each targeted
     //            platform separately (see: video_encapsulation.h)
-    ACE_ASSERT (PAVE_CHECK (header_.signature));
+    if (!PAVE_CHECK (header_.signature))
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: corrupt PaVE header, continuing\n"),
+                  inherited::mod_->name ()));
 #endif
 
     buffered_bytes -= missing_bytes;

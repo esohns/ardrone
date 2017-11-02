@@ -380,7 +380,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
       ACE_ASSERT (socket_configuration_p);
       iterator_2 =
-        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ()));
+        inherited::configuration_->connectionConfigurations->find (Stream_Tools::sanitizeUniqueName (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ())));
       // sanity check(s)
       ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
       ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);

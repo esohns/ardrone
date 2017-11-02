@@ -178,7 +178,9 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
   struct ARDrone_SessionData* session_data_p = NULL;
 #endif
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
+#endif
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
   typename SourceModuleType::WRITER_T* sourceWriter_impl_p = NULL;
 
@@ -197,19 +199,15 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
     setup_pipeline;
   reset_setup_pipeline = false;
 
-  // things to be done here:
-  // - create modules (done for the ones "owned" by the stream itself)
-  // - initialize modules
-  // - push them onto the stream (tail-first)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
   configuration_p =
-    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second));
+    dynamic_cast<struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator).second.second));
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (configuration_p->filterConfiguration);
   ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration);
   ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
@@ -237,7 +235,9 @@ ARDrone_VideoStream_T<SourceModuleType>::initialize (const typename inherited::C
 
   // ******************************** Source ***********************************
   module_p =
-    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+    const_cast<typename inherited::ISTREAM_T::MODULE_T*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+                                                                           true,
+                                                                           false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -326,7 +326,9 @@ ARDrone_VideoStream_T<SourceModuleType>::collect (struct ARDrone_Statistic& data
   struct ARDrone_SessionData& session_data_r =
       const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING)));
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING),
+                                                   true,
+                                                   false));
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,

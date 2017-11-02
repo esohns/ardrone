@@ -141,7 +141,8 @@ typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigura
 struct ARDrone_Configuration
 {
   ARDrone_Configuration ()
-   : signalHandlerConfiguration ()
+   : allocatorConfiguration ()
+   , signalHandlerConfiguration ()
    , WLANMonitorConfiguration ()
    , connectionConfigurations ()
    , parserConfiguration ()
@@ -159,6 +160,8 @@ struct ARDrone_Configuration
       &directShowPinConfiguration;
 #endif
   };
+
+  struct ARDrone_AllocatorConfiguration                          allocatorConfiguration;
 
   struct ARDrone_SignalHandlerConfiguration                      signalHandlerConfiguration;
 
