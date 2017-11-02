@@ -289,7 +289,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
 
       if (session_data_r.lock)
@@ -303,33 +303,33 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         // sanity check(s)
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_p =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.filterConfiguration->pinConfiguration->format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-        ACE_ASSERT ((*iterator_3).second.format);
-        ACE_ASSERT ((*iterator_3).second.format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        ACE_ASSERT ((*iterator_3).second.second.format);
+        ACE_ASSERT ((*iterator_3).second.second.format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_2 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.format->pbFormat);
 
-        ACE_ASSERT ((*iterator_4).second.filterConfiguration);
-        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format);
-        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_4).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration);
+        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format);
+        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_3 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.filterConfiguration->pinConfiguration->format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-        ACE_ASSERT ((*iterator_4).second.format);
-        ACE_ASSERT ((*iterator_4).second.format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_4).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        ACE_ASSERT ((*iterator_4).second.second.format);
+        ACE_ASSERT ((*iterator_4).second.second.format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_4).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_4 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.second.format->pbFormat);
 
         ACE_ASSERT (session_data_r.format);
         ACE_ASSERT (session_data_r.format->formattype == FORMAT_VideoInfo);
@@ -354,10 +354,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         video_info_header_4->bmiHeader.biSizeImage =
           DIBSIZE (video_info_header_4->bmiHeader);
 #else
-        (*iterator_3).second.sourceFormat.height = session_data_r.height;
-        (*iterator_3).second.sourceFormat.width = session_data_r.width;
-        (*iterator_4).second.sourceFormat.height = session_data_r.height;
-        (*iterator_4).second.sourceFormat.width = session_data_r.width;
+        (*iterator_3).second.second.sourceFormat.height = session_data_r.height;
+        (*iterator_3).second.second.sourceFormat.width = session_data_r.width;
+        (*iterator_4).second.second.sourceFormat.height = session_data_r.height;
+        (*iterator_4).second.second.sourceFormat.width = session_data_r.width;
 #endif
       } // end lock scope
 
