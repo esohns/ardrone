@@ -314,11 +314,10 @@ struct ARDrone_ModuleHandlerConfiguration
    , window (NULL)
 #endif
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
-   , inbound (true)
+//   , inbound (true)
    , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
    , printProgressDot (false)
    , pushStatisticMessages (true)
-   , streamConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
    , targetFileName ()
@@ -372,11 +371,10 @@ struct ARDrone_ModuleHandlerConfiguration
   GdkWindow*                                window;          // display module
 #endif
   bool                                      fullScreen;            // display module
-  bool                                      inbound;               // statistic/IO module
+//  bool                                      inbound;               // statistic/IO module
   std::string                               outboundStreamName;    // event handler module
   bool                                      printProgressDot;      // file writer module
   bool                                      pushStatisticMessages; // statistic module
-  ARDrone_StreamConfiguration_t*            streamConfiguration;   // net source/target modules
   ARDrone_Notification_t*                   subscriber; // event handler module
   ARDrone_Subscribers_t*                    subscribers; // event handler module
   std::string                               targetFileName;

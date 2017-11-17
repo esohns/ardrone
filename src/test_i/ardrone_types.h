@@ -33,6 +33,7 @@
 #else
 #include "video_encapsulation.h"
 #endif
+#undef FFMPEG_SUPPORT
 #include "VLIB/video_codec.h"
 
 #include "ace/Message_Block.h"
@@ -43,7 +44,11 @@
 
 #include "ardrone_defines.h"
 
+#if defined (__llvm__)
+enum ARDrone_MessageType
+#else
 enum ARDrone_MessageType : int
+#endif
 {
   ARDRONE_MESSAGE_INVALID = -1,
   ARDRONE_MESSAGE_ATCOMMAND = ACE_Message_Block::MB_PROTO, // outbound navdata
@@ -55,7 +60,11 @@ enum ARDrone_MessageType : int
   ARDRONE_MESSAGE_MAX
 };
 
+#if defined (__llvm__)
+enum ARDrone_StreamType
+#else
 enum ARDrone_StreamType : int
+#endif
 {
   ARDRONE_STREAM_INVALID = -1,
   ARDRONE_STREAM_CONTROL,
@@ -66,7 +75,11 @@ enum ARDrone_StreamType : int
   ARDRONE_STREAM_MAX
 };
 
+#if defined (__llvm__)
+enum ARDrone_EventType
+#else
 enum ARDrone_EventType : int
+#endif
 {
   ARDRONE_EVENT_INVALID = -1,
   ARDRONE_EVENT_CONNECT,
@@ -115,7 +128,7 @@ typedef ARDrone_NavDataOptionOffsets_t::const_iterator ARDrone_NavDataOptionOffs
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 __pragma (pack (push, 1))
-struct ARDrone_ParrotVideoEncapsulation_Header
+struct parrot_video_encapsulation_t
 {
   /*00*/ uint8_t  signature[4];
   /*04*/ uint8_t  version;
@@ -154,7 +167,11 @@ struct ARDrone_UserData
   {};
 };
 
+#if defined (__llvm__)
+enum ARDrone_VideoMode
+#else
 enum ARDrone_VideoMode : int
+#endif
 {
   ARDRONE_VIDEOMODE_INVALID = -1,
   ARDRONE_VIDEOMODE_360P = H264_360P_CODEC,

@@ -162,18 +162,12 @@ next:
   buffered_bytes = buffer_->total_length ();
   message_block_p = buffer_;
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  missing_bytes =
-    sizeof (struct ARDrone_ParrotVideoEncapsulation_Header);
-#else
-  missing_bytes = sizeof (parrot_video_encapsulation_t);
-#endif
   if (!headerDecoded_)
   {
     // PaVE header has not been received yet
 
     // --> wait for more data ?
-    if (buffered_bytes < missing_bytes)
+    if (buffered_bytes < sizeof (parrot_video_encapsulation_t))
       return; // done
 
     // received a PaVE header --> decode
@@ -185,12 +179,12 @@ next:
     {
       length = message_block_p->length ();
       bytes_to_copy =
-        ((length < (missing_bytes - skipped_bytes)) ? length
-                                                    : (missing_bytes - skipped_bytes));
+        ((length < (sizeof (parrot_video_encapsulation_t) - skipped_bytes)) ? length
+                                                                            : (sizeof (parrot_video_encapsulation_t) - skipped_bytes));
       ACE_OS::memcpy (buffer_p, message_block_p->rd_ptr (), bytes_to_copy);
       message_block_p->rd_ptr (bytes_to_copy);
       skipped_bytes += bytes_to_copy;
-      if (skipped_bytes == missing_bytes)
+      if (skipped_bytes == sizeof (parrot_video_encapsulation_t))
         break;
       buffer_p += bytes_to_copy;
     } // end FOR
@@ -204,7 +198,7 @@ next:
                   inherited::mod_->name ()));
 #endif
 
-    buffered_bytes -= missing_bytes;
+    buffered_bytes -= sizeof (parrot_video_encapsulation_t);
 
     headerDecoded_ = true;
   } // end IF
@@ -241,7 +235,8 @@ next:
   } // end ELSE
 
   // --> wait for more data ?
-  missing_bytes = header_.header_size - missing_bytes;
+  missing_bytes =
+      header_.header_size - sizeof (parrot_video_encapsulation_t);
   ACE_ASSERT (missing_bytes >= 0);
   if (buffered_bytes < (missing_bytes + header_.payload_size))
     return; // done

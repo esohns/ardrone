@@ -117,7 +117,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // sanity check(s)
   // *TODO*: remove type inferences
   ACE_ASSERT (configuration_in.parserConfiguration);
-  ACE_ASSERT (configuration_in.streamConfiguration);
 
   if (inherited::isInitialized_)
   {
@@ -797,6 +796,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::svc"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
   ACE_ASSERT (scannerState_);
 
   ACE_Message_Block* message_block_p = NULL;
@@ -805,6 +805,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   bool do_scan_end = false;
+  const typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
 
   do
   {
@@ -816,7 +817,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       error = ACE_OS::last_error ();
       if (error != EWOULDBLOCK) // Win32: 10035
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: worker thread (ID: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
+                    ACE_TEXT ("%s: worker thread (id: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
                     inherited::mod_->name ()));
       break;
     } // end IF
@@ -852,6 +853,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
           goto continue_;
         } // end IF
 
+        // sanity check(s)
+        ACE_ASSERT (inherited::sessionData_);
+
+        session_data_p = &inherited::sessionData_->getR ();
+
         ACE_NEW_NORETURN (message_data_p,
                           typename DataMessageType::DATA_T::DATA_T ());
         if (!message_data_p)
@@ -876,7 +882,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
         } // end IF
         message_data_p = NULL;
         buffer_->initialize (message_data_container_p,
-                             buffer_->sessionId (),
+                             session_data_p->sessionId,
                              NULL);
         message_data_container_p = NULL;
         buffer_->set (ARDRONE_MESSAGE_NAVDATA);
