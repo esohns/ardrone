@@ -739,8 +739,10 @@ ARDrone_NavDataStream::notify (Stream_SessionId_t sessionId_in,
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
 
-      iterator = inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
+      iterator =
+          inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator != inherited::configuration_->end ());
+      ACE_ASSERT ((*iterator).second.second.connectionConfigurations);
       iterator_2 =
           (*iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_2 != (*iterator).second.second.connectionConfigurations->end ());

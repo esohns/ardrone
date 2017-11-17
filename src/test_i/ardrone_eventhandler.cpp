@@ -30,6 +30,7 @@
 #include "ardrone_common.h"
 #include "ardrone_callbacks.h"
 #include "ardrone_configuration.h"
+#include "ardrone_defines.h"
 #include "ardrone_macros.h"
 #include "ardrone_stream.h"
 
@@ -450,8 +451,27 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
     {
       // *NOTE*: the device closes the control connection after transmitting
       //         configuration data
-      //         --> reconnect automatically
+      //         --> reconnect automatically ?
       ACE_ASSERT (GtkCBData_->controlStream);
+
+      Common_UI_GTKBuildersIterator_t iterator =
+        GtkCBData_->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+      // sanity check(s)
+      ACE_ASSERT (iterator != GtkCBData_->builders.end ());
+
+      // disconnecting ?
+      GtkToggleAction* toggle_action_p =
+          GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
+      ACE_ASSERT (toggle_action_p);
+      gdk_threads_enter ();
+      if (!gtk_toggle_action_get_active (toggle_action_p))
+      {
+        gdk_threads_leave ();
+
+        break;
+      } // end IF
+      gdk_threads_leave ();
 
       GtkCBData_->controlStream->start ();
   

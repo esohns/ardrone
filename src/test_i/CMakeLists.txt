@@ -8,9 +8,11 @@ if (WIN32)
 endif ()
 
 if (UNIX)
- include (CheckLibraryExists)
+# include (CheckLibraryExists)
 # check_library_exists (pthread pthread_create "" HAVE_LIB_PTHREAD)
- find_package (Threads REQUIRED)
+ include (FindThreads)
+ set (CMAKE_THREAD_PREFER_PTHREAD ON)
+ find_package (Threads)
  check_library_exists (iwlib iw_sockets_open "" HAVE_LIB_IW)
 endif ()
 
@@ -71,6 +73,8 @@ endif ()
 set (GLUT_LIB_FILE libglut.so.3)
 if (UNIX)
  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
+               HINTS /usr/lib
+               PATH_SUFFIXES x86_64-linux-gnu
                DOC "searching for ${GLUT_LIB_FILE} (system paths)")
 elseif (WIN32)
  unset (LIB_FILE_SUFFIX)
@@ -111,11 +115,14 @@ if (UNIX)
 endif ()
 # *TODO*: repair WIN32 pkgconfig support
 
-find_package (Common 0.0.1 EXACT
+get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/../.. REALPATH DIRECTORY)
+get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
+#find_package (Common 0.0.1 EXACT
+find_package (Common
               REQUIRED
               CONFIG
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-              PATH_SUFFIXES libCommon/cmake
+              PATH_SUFFIXES libCommon/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${Common_DIR})
  message (FATAL_ERROR "could not find package \"Common\", aborting")
@@ -126,20 +133,21 @@ add_definitions (-DCOMMON_HAS_DLL)
 find_package (ACEStream
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-              PATH_SUFFIXES libACEStream/build libACEStream/cmake
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+              PATH_SUFFIXES libACEStream/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACEStream_DIR})
  message (FATAL_ERROR "could not find package \"ACEStream\", aborting")
 endif ()
 add_definitions (-DSTREAM_HAS_DLL)
+add_definitions (-DSTREAM_DEC_HAS_DLL)
 
 #find_package (ACENetwork 0.0.1 EXACT
 find_package (ACENetwork
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-              PATH_SUFFIXES libACENetwork/build libACENetwork/cmake
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+              PATH_SUFFIXES libACENetwork/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
@@ -311,6 +319,14 @@ set (ardrone_SCRIPTS
      scripts/mavlink_scanner.l
      scripts/navdata_scanner.l)
 
+set (LLVM_COMPILER_ID_STRING "Clang")
+string (TOLOWER "${LLVM_COMPILER_ID_STRING}" LLVM_COMPILER_ID_STRING_LOWER)
+string (TOLOWER "${CMAKE_CXX_COMPILER_ID}" CXX_COMPILER_ID_STRING_LOWER)
+if (CXX_COMPILER_ID_STRING_LOWER STREQUAL LLVM_COMPILER_ID_STRING_LOWER)
+ add_compile_options (-std=c++11)
+ add_definitions (-D_GLIBCXX_USE_CXX11_ABI=0)
+endif ()
+
 set (EXECUTABLE ardrone)
 add_executable (${EXECUTABLE}
                 ${ardrone_EXE_SRCS}
@@ -359,6 +375,9 @@ elseif (WIN32)
  else ()
   target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbase.lib)
  endif ()
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libswscale/swscale.lib)
 # *TODO*: repair WIN32 pkgconfig support
  if (GTK3_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gio-2.0.lib)
@@ -381,23 +400,27 @@ elseif (WIN32)
  # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk/.libs/libgdkglext-win32-1.0.dll.a)
 endif ()
 target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
-target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
-target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
-target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libswscale/swscale.lib)
+
 target_link_libraries (${EXECUTABLE} Common)
 target_link_libraries (${EXECUTABLE} CommonImage)
-target_link_libraries (${EXECUTABLE} CommonUI)
 if (WIN32)
  # *WARNING*: linking CommonUI requires "/FORCE:MULTIPLE""
  set_target_properties (${EXECUTABLE} PROPERTIES LINK_FLAGS "/FORCE:MULTIPLE /SAFESEH:NO")
 endif ()
+target_link_libraries (${EXECUTABLE} CommonUI)
+
 target_link_libraries (${EXECUTABLE} ACEStream)
-target_link_libraries (${EXECUTABLE} ACEStream_Device)
+
+target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
+if (WIN32)
+ target_link_libraries (${EXECUTABLE} ACEStream_Device)
+endif ()
 target_link_libraries (${EXECUTABLE} ACEStream_File)
 target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
 target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
+
 target_link_libraries (${EXECUTABLE} ACENetwork)
 
 # add PCH

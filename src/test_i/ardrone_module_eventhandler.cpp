@@ -50,7 +50,8 @@ ARDrone_Module_EventHandler::handleDataMessage (ARDrone_Message*& message_inout,
   enum ARDrone_MessageType message_type_e = message_inout->type ();
   ARDrone_Message* message_p = message_inout;
 
-  // the base class release()s all messages --> create duplicates
+  // the base class release()s all messages; 'this' needs to forward AT commands
+  // --> create duplicates
   if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
   {
     message_p =

@@ -672,11 +672,8 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (data_p->GtkCBData->controller);
 
     // control
-//    iterator_3 =
-//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("ControlSource"));
-//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Control"));
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -706,7 +703,7 @@ stream_processing_function (void* arg_in)
 //      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
 //    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLink_In"));
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -733,7 +730,7 @@ stream_processing_function (void* arg_in)
 //      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
 //    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -768,7 +765,7 @@ stream_processing_function (void* arg_in)
       goto continue_;
 
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
@@ -967,7 +964,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                              0.0,
                              std::numeric_limits<unsigned int>::max ());
   ARDrone_StreamConfigurationsIterator_t iterator_3 =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->streamConfigurations.end ());
   gtk_spin_button_set_value (spin_button_p,
                              (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
@@ -2488,17 +2485,15 @@ idle_update_video_display_cb (gpointer userData_in)
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
-  ARDrone_StreamConfigurationsIterator_t iterator_2 =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-  ACE_ASSERT (iterator_2 != data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
-    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+  GtkToggleAction* toggle_action_p =
+      GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
+  ACE_ASSERT (toggle_action_p);
 
   GtkDrawingArea* drawing_area_p =
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
-                                              ((*iterator_3).second.second.fullScreen ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)
-                                                                                      : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO))));
+                                              gtk_toggle_action_get_active (toggle_action_p) ? ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)
+                                                                                             : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
   ACE_ASSERT (drawing_area_p);
 
   gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (drawing_area_p)),
@@ -2876,6 +2871,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GValue value;
 #if GTK_CHECK_VERSION (3,0,0)
   value = G_VALUE_INIT;
+#if GTK_CHECK_VERSION (3,22,0)
+  GdkMonitor* monitor_p = NULL;
+#endif
 #else
   g_value_init (&value, G_TYPE_NONE);
 #endif
@@ -2929,7 +2927,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   } // end IF
 
   iterator_4 =
-      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_4 != cb_data_p->configuration->streamConfigurations.end ());
   iterator_5 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_5 != (*iterator_4).second.end ());
@@ -3096,7 +3094,6 @@ continue_:
   list_p = gdk_display_manager_list_displays (display_manager_p);
   ACE_ASSERT (list_p);
 #if GTK_CHECK_VERSION (3,22,0)
-  GdkMonitor* monitor_p = NULL;
   for (GSList* list_2 = list_p;
        list_2;
        list_2 = list_2->next)
@@ -3113,7 +3110,7 @@ continue_:
       ACE_ASSERT (monitor_p);
 
       if (!ACE_OS::strcmp (gdk_monitor_get_model (monitor_p),
-                           (*iterator_5).second.device.c_str ()))
+                           (*iterator_5).second.second.device.c_str ()))
         break;
     } // end FOR
   } // end FOR
@@ -3121,7 +3118,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.device.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.device.c_str ())));
     goto error;
   } // end IF
   display_p = gdk_monitor_get_display (monitor_p);
@@ -4334,25 +4331,37 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
-  ACE_ASSERT (cb_data_p->configuration);
 
-  ARDrone_StreamConfigurationsIterator_t iterator =
-      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
-    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
 
+  GtkToggleButton* toggle_button_p =
+      GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
+  ACE_ASSERT (toggle_button_p);
   GdkWindow* window_p = gtk_widget_get_window (widget_in);
+
   // sanity check(s)
   if (!window_p)
     return; // window is not (yet) realized, nothing to do
   if (!gdk_window_is_viewable (window_p))
     return; // window is not (yet) mapped, nothing to do
-  if ((*iterator_2).second.second.fullScreen &&
+  if (gtk_toggle_button_get_active (toggle_button_p) &&
       ACE_OS::strcmp (gtk_buildable_get_name (GTK_BUILDABLE (widget_in)),
                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)))
     return; // use the fullscreen window, not the applications'
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p->configuration);
+
+  ARDrone_StreamConfigurationsIterator_t iterator_2 =
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (iterator_2 != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate
@@ -4365,14 +4374,14 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   //                                    &(*iterator_2).second.area.x,
   //                                    &(*iterator_2).second.area.y);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  (*iterator_2).second.second.area.left = allocation_in->x;
-  (*iterator_2).second.second.area.right =
+  (*iterator_3).second.second.area.left = allocation_in->x;
+  (*iterator_3).second.second.area.right =
     allocation_in->x + allocation_in->width;
-  (*iterator_2).second.second.area.top = allocation_in->y;
-  (*iterator_2).second.second.area.bottom =
+  (*iterator_3).second.second.area.top = allocation_in->y;
+  (*iterator_3).second.second.area.bottom =
     allocation_in->y + allocation_in->height;
 #else
-  (*iterator_2).second.second.area = *allocation_in;
+  (*iterator_3).second.second.area = *allocation_in;
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -4383,7 +4392,7 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
       gdk_pixbuf_new (GDK_COLORSPACE_RGB,
                       TRUE,
                       8,
-                      (*iterator_2).second.area.width, (*iterator_2).second.area.height);
+                      (*iterator_3).second.area.width, (*iterator_3).second.area.height);
   if (!pixbuf_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -4392,14 +4401,14 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   } // end IF
 #endif
 
-  { ACE_ASSERT (&cb_data_p->lock == (*iterator_2).second.second.pixelBufferLock);
-    ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+  ACE_ASSERT (&cb_data_p->lock == (*iterator_3).second.second.pixelBufferLock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
     if (cb_data_p->pixelBuffer)
     {
       g_object_unref (cb_data_p->pixelBuffer);
       cb_data_p->pixelBuffer = NULL;
     } // end IF
-//    (*iterator_2).second.pixelBuffer = NULL;
+//    (*iterator_3).second.second.pixelBuffer = NULL;
     cb_data_p->pixelBuffer =
 #if GTK_CHECK_VERSION (3,0,0)
         gdk_pixbuf_get_from_window (window_p,
@@ -4444,7 +4453,7 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
     // sanity check(s)
     ACE_ASSERT (gdk_pixbuf_get_has_alpha (cb_data_p->pixelBuffer));
     ACE_ASSERT (gdk_pixbuf_get_n_channels (cb_data_p->pixelBuffer) == 4);
-    (*iterator_2).second.second.pixelBuffer = cb_data_p->pixelBuffer;
+    (*iterator_3).second.second.pixelBuffer = cb_data_p->pixelBuffer;
 
 //    GHashTable* hash_table_p = gdk_pixbuf_get_options (cb_data_p->pixelBuffer);
 //    GHashTableIter iterator;
@@ -4615,20 +4624,22 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
-  ACE_ASSERT (cb_data_p->configuration);
 
-  ARDrone_StreamConfigurationsIterator_t iterator =
-      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
-    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+  Common_UI_GTKBuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  GtkToggleButton* toggle_button_p =
+      GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN)));
+  ACE_ASSERT (toggle_button_p);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   if (!cb_data_p->pixelBuffer)
     return TRUE; // --> widget has not been realized yet
-  if ((*iterator_2).second.second.fullScreen &&
+  if (gtk_toggle_button_get_active (toggle_button_p) &&
       ACE_OS::strcmp (gtk_buildable_get_name (GTK_BUILDABLE (widget_in)),
                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN)))
     return TRUE; // use the fullscreen window, not the applications'

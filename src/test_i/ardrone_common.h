@@ -27,6 +27,8 @@
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <mfobjects.h>
 #include <strmif.h>
+#else
+#include <cstdint>
 #endif
 
 #include "ace/OS.h"
@@ -48,8 +50,8 @@
 struct ARDrone_NavData
 {
   ARDrone_NavData ()
-   : NavData ()
-   , NavDataOptionOffsets ()
+//   : NavData ()
+   : NavDataOptionOffsets ()
   {
     ACE_OS::memset (&NavData, 0, sizeof (struct _navdata_t));
     NavDataOptionOffsets.reserve (10);
