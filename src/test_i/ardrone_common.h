@@ -42,7 +42,7 @@
 #include "stream_data_base.h"
 #include "stream_iparser.h"
 
-#include "net_iwlanmonitor.h"
+#include "net_wlan_imonitor.h"
 
 #include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
