@@ -302,7 +302,7 @@ error:
   {
     if (!ifaddrs_2->ifa_addr                                        ||
         !(ifaddrs_2->ifa_addr->sa_family == AF_INET)                ||
-        !Net_Common_Tools::interfaceIsWLAN (ifaddrs_2->ifa_name))
+        !Net_WLAN_Tools::interfaceIsWLAN (ifaddrs_2->ifa_name))
       continue;
 
     gtk_list_store_append (listStore_in, &iterator);
@@ -3732,7 +3732,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (WLAN_monitor_p->get (),
                                                                                                     cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
 #else
-  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
+  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
 #endif
       cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
   {
@@ -3769,10 +3769,6 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
     ACE_ASSERT (entry_p);
     ACE_INET_Addr interface_address, gateway_address;
     if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-                                                 const_cast<struct DBusConnection*> (WLAN_monitor_p->getP ()),
-#endif
                                                  interface_address,
                                                  gateway_address))
     {

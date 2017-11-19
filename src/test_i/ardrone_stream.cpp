@@ -1269,10 +1269,6 @@ ARDrone_NavDataStream::onConnect (const std::string& interfaceIdentifier_in,
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (wlan_monitor_p);
   if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-                                               const_cast<struct DBusConnection*> (wlan_monitor_p->getP ()),
-#endif
                                                local_SAP,
                                                peer_SAP))
   {

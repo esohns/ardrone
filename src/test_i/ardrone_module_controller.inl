@@ -395,16 +395,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_2->peerAddress).c_str ())));
         goto error;
       } // end IF
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
       if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
                                                              local_SAP,
                                                              gateway_address)))
-#else
-      if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
-                                                             NULL,
-                                                             local_SAP,
-                                                             gateway_address)))
-#endif
       {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         ACE_DEBUG ((LM_ERROR,

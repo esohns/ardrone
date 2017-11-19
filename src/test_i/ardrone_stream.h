@@ -229,7 +229,7 @@ class ARDrone_NavDataStream
                                ARDrone_Message,
                                ARDrone_SessionMessage>
  , public ARDrone_INavDataNotify
- , public Net_IWLANCB
+ , public Net_WLAN_IMonitorCB
  , public Common_IGetP_T<ARDrone_IController>
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
@@ -296,7 +296,7 @@ class ARDrone_NavDataStream
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 
-  // implement Net_IWLANCB
+  // implement Net_WLAN_IMonitorCB
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   virtual void onAssociate (REFGUID,            // device identifier
 #else

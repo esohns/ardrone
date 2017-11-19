@@ -50,8 +50,9 @@
 #include "stream_lib_common.h"
 #include "stream_lib_defines.h"
 
-#include "net_configuration.h"
 #include "net_iconnector.h"
+
+#include "net_wlan_configuration.h"
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
@@ -119,10 +120,10 @@ struct ARDrone_SignalHandlerConfiguration
 };
 
 struct ARDrone_WLANMonitorConfiguration
- : Net_WLANMonitorConfiguration
+ : Net_WLAN_MonitorConfiguration
 {
   ARDrone_WLANMonitorConfiguration ()
-   : Net_WLANMonitorConfiguration ()
+   : Net_WLAN_MonitorConfiguration ()
    , userData (NULL)
   {
     autoAssociate = ARDRONE_DEFAULT_SSID_AUTOASSOCIATE;

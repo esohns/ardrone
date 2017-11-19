@@ -61,7 +61,8 @@
 #include "net_configuration.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
-#include "net_wlaninetmonitor.h"
+
+#include "net_wlan_inetmonitor.h"
 
 #include "ardrone_defines.h"
 #include "ardrone_types.h"
@@ -206,10 +207,15 @@ typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  ARDrone_NetStream_t,
                                  enum Stream_StateMachine_ControlState> ARDrone_IStreamConnection_t;
 
-typedef Net_WLANInetMonitor_T<ACE_MT_SYNCH,
-                              Common_TimePolicy_t,
-                              struct ARDrone_WLANMonitorConfiguration,
-                              struct ARDrone_UserData> ARDrone_WLANMonitor_t;
+typedef Net_WLAN_InetMonitor_T<ACE_MT_SYNCH,
+                               Common_TimePolicy_t,
+                               struct ARDrone_WLANMonitorConfiguration,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                               NET_WLAN_MONITOR_API_WLANAPI,
+#else
+                               NET_WLAN_MONITOR_API_IOCTL,
+#endif
+                               struct ARDrone_UserData> ARDrone_WLANMonitor_t;
 
 typedef Net_TCPSocketHandler_T<ACE_NULL_SYNCH,
                                ACE_SOCK_STREAM,
