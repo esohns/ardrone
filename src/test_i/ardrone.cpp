@@ -1110,6 +1110,7 @@ do_work (int argc_in,
 
   // ******************* socket configuration data ****************************
   CBData_in.configuration->WLANMonitorConfiguration.SSID = SSID_in;
+  CBData_in.configuration->WLANMonitorConfiguration.useReactor = useReactor_in;
   CBData_in.configuration->WLANMonitorConfiguration.userData =
     CBData_in.configuration->userData;
   if (!WLAN_monitor_p->initialize (CBData_in.configuration->WLANMonitorConfiguration))

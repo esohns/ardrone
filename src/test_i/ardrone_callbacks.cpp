@@ -2865,9 +2865,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GdkDisplay* display_p = NULL;
   int number_of_monitors = 0;
   int monitor_number = -1;
-  int number_of_screens = 0;
+//  int number_of_screens = 0;
   GdkScreen* screen_p = NULL;
-  bool device_found = false;
+//  bool device_found = false;
   GValue value;
 #if GTK_CHECK_VERSION (3,0,0)
   value = G_VALUE_INIT;
@@ -3729,12 +3729,15 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_Common_Tools::associatedSSID (WLAN_monitor_p->get (),
-                                                                                                    cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
+  if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
+                                Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get (),
+                                                                cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ()) &&
 #else
-  if ((cb_data_p->configuration->WLANMonitorConfiguration.SSID != Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier)) &&
+  if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
+                                Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
+                                                                ACE_INVALID_HANDLE).c_str ()) &&
 #endif
-      cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
+                cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate))
   {
     GtkSpinner* spinner_p =
       GTK_SPINNER (gtk_builder_get_object ((*iterator).second.second,
@@ -3743,23 +3746,6 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
     gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
                               TRUE);
     gtk_spinner_start (spinner_p);
-
-    if (!WLAN_monitor_p->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
-                                    cb_data_p->configuration->WLANMonitorConfiguration.SSID))
-    {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (Net_Common_Tools::interfaceToString (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ()),
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
-#else
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ()),
-                  ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
-#endif
-      return;
-    } // end IF
   } // end IF
   else
   {
@@ -4275,21 +4261,29 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
 
-  Common_UI_GTKBuildersIterator_t iterator =
-    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
-  // sanity check(s)
-  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+  // update configuration
+  cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate =
+    gtk_toggle_action_get_active (toggleAction_in);
 
   ARDrone_WLANMonitor_t* WLAN_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
-  cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate =
-    gtk_toggle_action_get_active (toggleAction_in);
-  if ((WLAN_monitor_p->SSID () != cb_data_p->configuration->WLANMonitorConfiguration.SSID) &&
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  struct ether_addr ap_mac_address;
+  ACE_OS::memset (&ap_mac_address, 0, sizeof (struct ether_addr));
+#endif
+
+  if (ACE_OS::strcmp (WLAN_monitor_p->SSID ().c_str (),
+                      cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()) &&
       cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
   {
-    if (!ARDRONE_WLANMONITOR_SINGLETON::instance ()->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
-                                                                cb_data_p->configuration->WLANMonitorConfiguration.SSID))
+    if (!WLAN_monitor_p->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+                                    ap_mac_address,
+#endif
+                                    cb_data_p->configuration->WLANMonitorConfiguration.SSID))
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       ACE_DEBUG ((LM_ERROR,
@@ -4298,8 +4292,9 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #else
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
+                  ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s,%s), returning\n"),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ()),
+                  ACE_TEXT (Net_Common_Tools::LinkLayerAddressToString (reinterpret_cast<unsigned char*> (&ap_mac_address)).c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #endif
       return;

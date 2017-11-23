@@ -439,6 +439,16 @@ set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "s
 cotire (${EXECUTABLE})
 
 if (UNIX)
+# add_custom_command (TARGET ${EXECUTABLE}
+#                     POST_BUILD
+#                     COMMAND ./set_capabilities.sh
+#                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts
+#                     COMMENT "adding file capabilites to \"${EXECUTABLE}\"..." VERBATIM)
+endif ()
+
+#########################################
+
+if (UNIX)
  install (TARGETS ${EXECUTABLE}
           EXPORT ${PROJECT_NAME}Targets
           RUNTIME
