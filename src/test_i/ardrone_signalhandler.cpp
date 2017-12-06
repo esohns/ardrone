@@ -30,6 +30,7 @@
 
 #include "ardrone_configuration.h"
 #include "ardrone_macros.h"
+#include "ardrone_network.h"
 
 ARDrone_SignalHandler::ARDrone_SignalHandler ()
  : inherited (NULL)
@@ -156,16 +157,17 @@ ARDrone_SignalHandler::handle (int signal_in)
       }
     } // end IF
 
+    ARDRONE_WLANMONITOR_SINGLETON::instance ()->stop (true,   // wait ?
+                                                      false); // N/A
+
     // step2: stop GTK event dispatch ?
     if (inherited::configuration_->hasUI)
-      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
+      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
                                                            false); // N/A
-    else
-    {
-      // step3: stop reactor (&& proactor, if applicable)
-      Common_Tools::finalizeEventDispatch (inherited::configuration_->useReactor,  // stop reactor ?
-                                           !inherited::configuration_->useReactor, // stop proactor ?
-                                           -1);                                    // group ID (--> don't block !)
-    } // end ELSE
+
+    // step3: stop reactor (&& proactor, if applicable)
+    Common_Tools::finalizeEventDispatch (inherited::configuration_->useReactor,  // stop reactor ?
+                                         !inherited::configuration_->useReactor, // stop proactor ?
+                                         -1);                                    // group id (--> don't block)
   } // end IF
 }

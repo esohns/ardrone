@@ -1607,9 +1607,9 @@ static const flex_int32_t yy_rule_linenum[9] =
 
 #include "ace/Log_Msg.h"
 
+#include "ace/Synch.h"
 #include "common_tools.h"
 
-#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
 /* %option c++ yyclass="ARDrone_Control_Scanner" */
