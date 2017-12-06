@@ -27,6 +27,7 @@
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include <control.h>
 #include <d3d9.h>
 #include <strmif.h>
 #include <minwindef.h>

@@ -701,58 +701,6 @@ template <ACE_SYNCH_DECL,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType>
-bool
-ARDrone_Module_Controller_T<ACE_SYNCH_USE,
-                            TimePolicyType,
-                            ConfigurationType,
-                            ControlMessageType,
-                            DataMessageType,
-                            SessionMessageType,
-                            SessionDataContainerType,
-                            WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
-                            ConnectionManagerType,
-                            ConnectorType>::wait (const ACE_Time_Value* timeout_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::wait"));
-
-  int result = -1;
-  int error = 0;
-
-  { ACE_GUARD_RETURN (ACE_SYNCH_NULL_MUTEX, aGuard, *inherited2::stateLock_, false);
-    result = inherited2::condition_->wait (timeout_in);
-    if (result == -1)
-    {
-      error = ACE_OS::last_error ();
-      if (error != ETIME)
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ACE_SYNCH_CONDITION_T::wait(): \"%m\", continuing\n"),
-                    inherited::mod_->name ()));
-    } // end IF
-    if ((error == ETIME) ||
-        (inherited2::state_ != NAVDATA_STATE_READY))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to initialize NavData, aborting\n"),
-                  inherited::mod_->name ()));
-      return false;
-    } // end IF
-  } // end lock scope
-
-  return true;
-}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType,
-          typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
-          typename ConnectionManagerType,
-          typename ConnectorType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,

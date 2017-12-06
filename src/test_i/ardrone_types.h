@@ -30,6 +30,10 @@
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+/* PaVE signature represented as a 32-bit integer in little and big endian */
+#define PAVE_INT32LE_SIGNATURE (0x45566150)
+#define PAVE_INT32BE_SIGNATURE (0x50615645)
+#define PAVE_CHECK(x) ( (*((uint32_t*)(x)))==PAVE_INT32LE_SIGNATURE )
 #else
 #include "video_encapsulation.h"
 #endif

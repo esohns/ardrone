@@ -93,14 +93,10 @@ class ARDrone_Module_PaVEDecoder_T
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_PaVEDecoder_T (const ARDrone_Module_PaVEDecoder_T&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_PaVEDecoder_T& operator= (const ARDrone_Module_PaVEDecoder_T&))
 
-  DataMessageType*                               buffer_; // <-- continuation chain
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_ParrotVideoEncapsulation_Header header_;
-#else
-  parrot_video_encapsulation_t                   header_;
-#endif
-  bool                                           headerDecoded_;
-  enum ARDrone_VideoMode                         videoMode_; // current-
+  DataMessageType*             buffer_; // <-- continuation chain
+  parrot_video_encapsulation_t header_;
+  bool                         headerDecoded_;
+  enum ARDrone_VideoMode       videoMode_; // current-
 };
 
 // include template definition

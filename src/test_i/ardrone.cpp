@@ -971,12 +971,17 @@ do_work (int argc_in,
   struct ARDrone_StreamConfiguration stream_configuration;
   struct Stream_ModuleConfiguration module_configuration;
   struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
-  ARDrone_StreamConfiguration_t::ITERATOR_T control_modulehandlerconfiguration_iterator;
-  ARDrone_StreamConfiguration_t::ITERATOR_T mavlink_modulehandlerconfiguration_iterator;
-  ARDrone_StreamConfiguration_t::ITERATOR_T navdata_modulehandlerconfiguration_iterator;
-  ARDrone_StreamConfiguration_t::ITERATOR_T video_modulehandlerconfiguration_iterator;
-  ARDrone_StreamConfiguration_t::ITERATOR_T network_modulehandlerconfiguration_iterator;
+  //ARDrone_StreamConfiguration_t::ITERATOR_T control_modulehandlerconfiguration_iterator;
+  //ARDrone_StreamConfiguration_t::ITERATOR_T mavlink_modulehandlerconfiguration_iterator;
+  //ARDrone_StreamConfiguration_t::ITERATOR_T navdata_modulehandlerconfiguration_iterator;
+  //ARDrone_StreamConfiguration_t::ITERATOR_T video_modulehandlerconfiguration_iterator;
+  //ARDrone_StreamConfiguration_t::ITERATOR_T network_modulehandlerconfiguration_iterator;
   ARDrone_StreamConfiguration_t stream_configuration_2;
+  ARDrone_StreamConfigurationsIterator_t control_streamconfiguration_iterator;
+  ARDrone_StreamConfigurationsIterator_t mavlink_streamconfiguration_iterator;
+  ARDrone_StreamConfigurationsIterator_t navdata_streamconfiguration_iterator;
+  ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator;
+  ARDrone_StreamConfigurationsIterator_t network_streamconfiguration_iterator;
 
   // sanity check(s)
   ACE_ASSERT (CBData_in.configuration);
@@ -1074,19 +1079,19 @@ do_work (int argc_in,
   CBData_in.configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
                                                                         stream_configuration_2));
 
-  ARDrone_StreamConfigurationsIterator_t control_streamconfiguration_iterator =
+  control_streamconfiguration_iterator =
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
   ACE_ASSERT (control_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
-  ARDrone_StreamConfigurationsIterator_t mavlink_streamconfiguration_iterator =
+  mavlink_streamconfiguration_iterator =
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
   ACE_ASSERT (mavlink_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
-  ARDrone_StreamConfigurationsIterator_t navdata_streamconfiguration_iterator =
+  navdata_streamconfiguration_iterator =
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
   ACE_ASSERT (navdata_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
-  ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
+  video_streamconfiguration_iterator =
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (video_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
-  ARDrone_StreamConfigurationsIterator_t network_streamconfiguration_iterator =
+  network_streamconfiguration_iterator =
     CBData_in.configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
   ACE_ASSERT (network_streamconfiguration_iterator != CBData_in.configuration->streamConfigurations.end ());
 
@@ -1340,7 +1345,7 @@ do_work (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->directShowPinConfiguration.isTopToBottom = true;
   CBData_in.configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-    (*video_modulehandlerconfiguration_iterator).second.format->lSampleSize;
+    modulehandler_configuration.format->lSampleSize;
 #endif
 
   CBData_in.controlStream = &control_stream;
@@ -1928,10 +1933,10 @@ ACE_TMAIN (int argc_in,
   Stream_Module_Device_Tools::initialize ();
   bool result_2 =
     (use_mediafoundation ? do_initialize_mediafoundation (true)
-                         : do_initialize_directshow ((*video_modulehandlerconfiguration_iterator).second.graphBuilder,
+                         : do_initialize_directshow ((*video_modulehandlerconfiguration_iterator).second.second.graphBuilder,
                                                      configuration.directShowPinConfiguration.format,
                                                      true,
-                                                     fullscreen_display));
+                                                     video_modulehandler_configuration.fullScreen));
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -1995,8 +2000,8 @@ done:
     if (use_mediafoundation)
       do_finalize_mediafoundation ();
     else
-      do_finalize_directshow ((*video_modulehandlerconfiguration_iterator).second.graphBuilder,
-                              (*video_modulehandlerconfiguration_iterator).second.format);
+      do_finalize_directshow ((*video_modulehandlerconfiguration_iterator).second.second.graphBuilder,
+                              (*video_modulehandlerconfiguration_iterator).second.second.format);
 #endif
     Common_Tools::finalizeSignals (signal_set,
                                    previous_signal_actions,
@@ -2051,8 +2056,8 @@ done:
   if (use_mediafoundation)
     do_finalize_mediafoundation ();
   else
-    do_finalize_directshow ((*video_modulehandlerconfiguration_iterator).second.graphBuilder,
-                            (*video_modulehandlerconfiguration_iterator).second.format);
+    do_finalize_directshow ((*video_modulehandlerconfiguration_iterator).second.second.graphBuilder,
+                            (*video_modulehandlerconfiguration_iterator).second.second.format);
 #endif
   Common_Tools::finalizeSignals (signal_set,
                                  previous_signal_actions,
