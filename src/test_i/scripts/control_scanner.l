@@ -35,9 +35,9 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 
 #include "ace/Log_Msg.h"
 
+#include "ace/Synch.h"
 #include "common_tools.h"
 
-#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
 %}
