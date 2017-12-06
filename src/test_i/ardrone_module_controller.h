@@ -118,6 +118,8 @@ class ARDrone_Module_Controller_T
   virtual void land ();
   virtual void set (enum ARDrone_VideoMode); // video mode
 
+  inline bool wait (const ACE_Time_Value* timeout_in = NULL) { return inherited2::wait (NAVDATA_STATE_READY, timeout_in); }
+
  protected:
   // implement (part of) ARDrone_IController
   virtual void ids (const std::string&,  // session id
@@ -148,7 +150,6 @@ class ARDrone_Module_Controller_T
 
   // implement (part of) Common_IStateMachine_T
   virtual void onChange (enum ARDRone_NavDataState); // new state
-  virtual bool wait (const ACE_Time_Value* = NULL);
 
   // helper methods
   void resetACKFlag ();

@@ -29,7 +29,7 @@
 #include "common_istatemachine.h"
 #include "common_statemachine_base.h"
 
-enum ARDRone_NavDataState
+enum ARDRone_NavDataState : int
 {
   NAVDATA_STATE_INVALID = -1,
   // *NOTE*: --> port 5554
@@ -52,30 +52,36 @@ enum ARDRone_NavDataState
 
 class ARDrone_StateMachine_NavData
  : public Common_StateMachine_Base_T<ACE_NULL_SYNCH,
-                                     enum ARDRone_NavDataState>
+                                     enum ARDRone_NavDataState,
+                                     Common_IStateMachine_T<enum ARDRone_NavDataState> >
 {
+  typedef Common_StateMachine_Base_T<ACE_NULL_SYNCH,
+                                     enum ARDRone_NavDataState,
+                                     Common_IStateMachine_T<enum ARDRone_NavDataState> > inherited;
+
  public:
+  // convenient types
+  typedef Common_StateMachine_Base_T<ACE_NULL_SYNCH,
+                                     enum ARDRone_NavDataState,
+                                     Common_IStateMachine_T<enum ARDRone_NavDataState> > STATEMACHINE_BASE_T;
+ 
   ARDrone_StateMachine_NavData ();
   inline virtual ~ARDrone_StateMachine_NavData () {}
 
-  // implement (part of) Common_IStateMachine_T
-  virtual void initialize ();
-  inline virtual void reset () { initialize (); };
+  // implement/override (part of) Common_IStateMachine_T
+  inline virtual bool initialize () { change (NAVDATA_STATE_INVALID); return true; }
+  inline virtual void reset () { bool result = initialize (); ACE_UNUSED_ARG (result); }
   virtual std::string stateToString (enum ARDRone_NavDataState) const;
 
  protected:
-   ACE_SYNCH_NULL_MUTEX lock_;
-
   // implement (part of) Common_IStateMachine_T
-  // *NOTE*: only derived classes can change state
   virtual bool change (enum ARDRone_NavDataState); // new state
 
  private:
-  typedef Common_StateMachine_Base_T<ACE_NULL_SYNCH,
-                                     enum ARDRone_NavDataState> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_StateMachine_NavData (const ARDrone_StateMachine_NavData&))
   ACE_UNIMPLEMENTED_FUNC (ARDrone_StateMachine_NavData& operator= (const ARDrone_StateMachine_NavData&))
+
+  ACE_SYNCH_NULL_MUTEX lock_;
 };
 
 // convenient types

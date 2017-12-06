@@ -185,7 +185,9 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/dbus)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/image)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/timer)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dec)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dev)
@@ -244,7 +246,9 @@ elseif (WIN32)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/image)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/timer)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/ui)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/dec)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/dev)
@@ -350,9 +354,11 @@ endif ()
 add_definitions (-DFFMPEG_SUPPORT)
 
 #add_dependencies (${ACESTREAM_TARGET_NAME} ACE)
-#add_dependencies (${PROJECT_NAME} Common)
-#add_dependencies (${PROJECT_NAME} ACEStream)
-#add_dependencies (${PROJECT_NAME} ACENetwork)
+add_dependencies (${EXECUTABLE} Common)
+add_dependencies (${EXECUTABLE} CommonTimer)
+add_dependencies (${EXECUTABLE} CommonUI)
+add_dependencies (${EXECUTABLE} ACEStream)
+add_dependencies (${EXECUTABLE} ACENetwork)
 
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
@@ -410,6 +416,7 @@ endif ()
 target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
 
 target_link_libraries (${EXECUTABLE} Common)
+target_link_libraries (${EXECUTABLE} CommonTimer)
 #if (UNIX)
 # target_link_libraries (${EXECUTABLE} Common_DBus)
 #endif ()
@@ -518,11 +525,12 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net
-                                               ${PROJECT_SOURCE_DIR}/cmake/src/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/Debug
+#                                              ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})
  else ()
@@ -547,7 +555,11 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/Debug
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/Debug
                                                ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})

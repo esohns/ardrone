@@ -48,13 +48,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::ARDrone_Module_PaVEDecoder_T"));
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_OS::memset (&header_,
-                  0,
-                  sizeof (struct ARDrone_ParrotVideoEncapsulation_Header));
-#else
   ACE_OS::memset (&header_, 0, sizeof (parrot_video_encapsulation_t));
-#endif
 }
 
 template <ACE_SYNCH_DECL,

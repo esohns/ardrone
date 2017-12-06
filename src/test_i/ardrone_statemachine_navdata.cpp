@@ -28,22 +28,12 @@
 #include "ardrone_macros.h"
 
 ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData ()
- : inherited (&lock_,                // lock handle
+ : lock_ ()
+ , inherited (&lock_,                // lock handle
               NAVDATA_STATE_INVALID) // (initial) state
- , lock_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData"));
 
-}
-
-void
-ARDrone_StateMachine_NavData::initialize ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::initialize"));
-
-  if (!change (NAVDATA_STATE_INVALID))
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ARDrone_StateMachine_NavData::change(NAVDATA_STATE_INVALID), continuing\n")));
 }
 
 bool

@@ -205,11 +205,11 @@ monitor_clip_cb (HMONITOR monitor_in,
     (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_2 != (*iterator).second.end ());
   if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                      (*iterator_2).second.device.c_str ()))
+                      (*iterator_2).second.second.device.c_str ()))
     return TRUE;
 
-  if ((*iterator_2).second.fullScreen)
-    (*iterator_2).second.area = *clippingArea_in;
+  if ((*iterator_2).second.second.fullScreen)
+    (*iterator_2).second.second.area = *clippingArea_in;
 
   return TRUE;
 };
@@ -1633,7 +1633,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (window_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
-  ACE_ASSERT (!(*iterator_4).second.window);
+  ACE_ASSERT (!(*iterator_4).second.second.window);
   //(*iterator_4).second.window =
   //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
     //gdk_win32_window_get_impl_hwnd (window_p);
@@ -1839,33 +1839,34 @@ idle_finalize_ui_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  // synch access
+  unsigned int num_messages = 0;
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, G_SOURCE_REMOVE);
-    unsigned int num_messages = cb_data_p->messages.size ();
+    num_messages = cb_data_p->messages.size ();
     while (!cb_data_p->messages.empty ())
     {
       cb_data_p->messages.front ()->release ();
       cb_data_p->messages.pop_front ();
     } // end WHILE
-    if (num_messages)
-      ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("flushed %u message(s)\n"),
-                  num_messages));
+
+    //if (cb_data_p->openGLRefreshId)
+    //{
+    //  g_source_remove (cb_data_p->openGLRefreshId);
+    //  cb_data_p->openGLRefreshId = 0;
+    //} // end iF
+    cb_data_p->eventSourceIds.clear ();
+
+    //if (glIsList (cb_data_p->openGLAxesListId))
+    //{
+    //  glDeleteLists (cb_data_p->openGLAxesListId, 1);
+    //  cb_data_p->openGLAxesListId = 0;
+    //} // end IF
   } // end lock scope
+  if (num_messages)
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("flushed %u message(s)\n"),
+                num_messages));
 
-  //if (cb_data_p->openGLRefreshId)
-  //{
-  //  g_source_remove (cb_data_p->openGLRefreshId);
-  //  cb_data_p->openGLRefreshId = 0;
-  //} // end iF
-  cb_data_p->eventSourceIds.clear ();
-
-  //if (glIsList (cb_data_p->openGLAxesListId))
-  //{
-  //  glDeleteLists (cb_data_p->openGLAxesListId, 1);
-  //  cb_data_p->openGLAxesListId = 0;
-  //} // end IF
-
+  // leave GTK
   gtk_main_quit ();
 
   // one-shot action
@@ -2232,14 +2233,14 @@ idle_update_info_display_cb (gpointer userData_in)
         ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
 
         // sanity check(s)
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format);
 
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
         struct tagVIDEOINFOHEADER* video_info_header_p =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.filterConfiguration->pinConfiguration->format->pbFormat);
+          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
         height = video_info_header_p->bmiHeader.biHeight;
         width = video_info_header_p->bmiHeader.biWidth;
 #else
@@ -3024,8 +3025,8 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                               1, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-    &(*iterator_5).second.second.format->subtype =
-        Common_Tools::StringToGUID (g_value_get_string (&value));
+    (*iterator_5).second.second.format->subtype =
+      Common_Tools::StringToGUID (g_value_get_string (&value));
 #else
                               2, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
@@ -3038,19 +3039,19 @@ continue_:
   // retrieve display settings
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // sanity check(s)
-  ACE_ASSERT ((*iterator_5).second.filterConfiguration);
-  ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration);
-  ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format);
-  ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT ((*iterator_5).second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration);
+  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration);
+  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format);
+  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_p =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.filterConfiguration->pinConfiguration->format->pbFormat);
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-  ACE_ASSERT ((*iterator_5).second.format);
-  ACE_ASSERT ((*iterator_5).second.format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT ((*iterator_5).second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+  ACE_ASSERT ((*iterator_5).second.second.format);
+  ACE_ASSERT ((*iterator_5).second.second.format->formattype == FORMAT_VideoInfo);
+  ACE_ASSERT ((*iterator_5).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
   struct tagVIDEOINFOHEADER* video_info_header_2 =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.format->pbFormat);
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.second.format->pbFormat);
 #endif
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
@@ -3260,12 +3261,12 @@ continue_:
   video_info_header_p->dwBitRate =
     (video_info_header_p->bmiHeader.biWidth         *
      abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
-  (*iterator_5).second.filterConfiguration->pinConfiguration->format->lSampleSize =
+  (*iterator_5).second.second.filterConfiguration->pinConfiguration->format->lSampleSize =
     video_info_header_p->bmiHeader.biSizeImage;
   cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
     video_info_header_p->bmiHeader.biSizeImage;
 
-  (*iterator_5).second.window =
+  (*iterator_5).second.second.window =
     static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
 #endif
 
@@ -3281,16 +3282,16 @@ continue_:
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     video_info_header_2->bmiHeader.biHeight =
-      -((*iterator_5).second.area.bottom -
-      (*iterator_5).second.area.top);
+      -((*iterator_5).second.second.area.bottom -
+      (*iterator_5).second.second.area.top);
     video_info_header_2->bmiHeader.biWidth =
-      ((*iterator_5).second.area.right -
-      (*iterator_5).second.area.left);
+      ((*iterator_5).second.second.area.right -
+      (*iterator_5).second.second.area.left);
     video_info_header_2->bmiHeader.biSizeImage =
       DIBSIZE (video_info_header_2->bmiHeader);
 
     unsigned int source_buffer_size =
-      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*iterator_5).second.format->subtype),
+      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*iterator_5).second.second.format->subtype),
                                 video_info_header_p->bmiHeader.biWidth,
                                 ::abs (video_info_header_p->bmiHeader.biHeight),
                                 1); // *TODO*: linesize alignment
@@ -3298,7 +3299,7 @@ continue_:
       std::max (video_info_header_2->bmiHeader.biSizeImage,
                 static_cast<ULONG> (source_buffer_size));
 
-    (*iterator_5).second.format->lSampleSize =
+    (*iterator_5).second.second.format->lSampleSize =
       video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       video_info_header_2->bmiHeader.biSizeImage;
@@ -3346,24 +3347,24 @@ continue_:
   else
   { // --> not fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    (*iterator_5).second.area.left = 0;
-    (*iterator_5).second.area.right =
+    (*iterator_5).second.second.area.left = 0;
+    (*iterator_5).second.second.area.right =
       video_info_header_p->bmiHeader.biWidth;
-    (*iterator_5).second.area.top = 0;
-    (*iterator_5).second.area.bottom =
+    (*iterator_5).second.second.area.top = 0;
+    (*iterator_5).second.second.area.bottom =
       abs (video_info_header_p->bmiHeader.biHeight);
 
     // *NOTE*: if the chosen display device screen area contains the drawing
     //         area, use it[; otherwise open a new window]
     DWORD flags = MONITOR_DEFAULTTONULL;
     HMONITOR monitor_h =
-      MonitorFromWindow ((*iterator_5).second.window,
+      MonitorFromWindow ((*iterator_5).second.second.window,
                          flags);
     if (!monitor_h)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to MonitorFromWindow(%@): \"%s\", returning\n"),
-                  (*iterator_5).second.window,
+                  (*iterator_5).second.second.window,
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
@@ -3379,7 +3380,7 @@ continue_:
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
-    if (ACE_OS::strcmp (ACE_TEXT ((*iterator_5).second.device.c_str ()),
+    if (ACE_OS::strcmp (ACE_TEXT ((*iterator_5).second.second.device.c_str ()),
                         ACE_TEXT (monitor_info_ex_s.szDevice)))
     { // --> the drawing area is NOT currently displayed on the selected monitor
       // *NOTE*: center the window on the display device
@@ -3405,10 +3406,12 @@ continue_:
     else
     { // --> the drawing area is currently displayed on the selected monitor
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      (*iterator_5).second.area.bottom = rectangle_s.y + rectangle_s.height;
-      (*iterator_5).second.area.left = rectangle_s.x;
-      (*iterator_5).second.area.right = rectangle_s.x + rectangle_s.width;
-      (*iterator_5).second.area.top = rectangle_s.y;
+      (*iterator_5).second.second.area.bottom =
+        rectangle_s.y + rectangle_s.height;
+      (*iterator_5).second.second.area.left = rectangle_s.x;
+      (*iterator_5).second.second.area.right =
+          rectangle_s.x + rectangle_s.width;
+      (*iterator_5).second.second.area.top = rectangle_s.y;
 #else
       (*iterator_5).second.area = rectangle_s;
 #endif
@@ -3420,7 +3423,7 @@ continue_:
       DIBSIZE (video_info_header_2->bmiHeader);
     video_info_header_2->dwBitRate =
       (video_info_header_2->bmiHeader.biWidth * abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
-    (*iterator_5).second.format->lSampleSize =
+    (*iterator_5).second.second.format->lSampleSize =
       video_info_header_2->bmiHeader.biSizeImage;
     cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
       std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
@@ -3435,15 +3438,15 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-              ACE_TEXT ((*iterator_5).second.device.c_str ()),
-              (*iterator_5).second.area.left,
-              (*iterator_5).second.area.right,
-              (*iterator_5).second.area.top,
-              (*iterator_5).second.area.bottom,
-              ((*iterator_5).second.area.right -
-               (*iterator_5).second.area.left),
-              ((*iterator_5).second.area.bottom -
-               (*iterator_5).second.area.top)));
+              ACE_TEXT ((*iterator_5).second.second.device.c_str ()),
+              (*iterator_5).second.second.area.left,
+              (*iterator_5).second.second.area.right,
+              (*iterator_5).second.second.area.top,
+              (*iterator_5).second.second.area.bottom,
+              ((*iterator_5).second.second.area.right -
+               (*iterator_5).second.second.area.left),
+              ((*iterator_5).second.second.area.bottom -
+               (*iterator_5).second.second.area.top)));
 #else
   (*iterator_5).second.second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
@@ -3732,12 +3735,13 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
                                 Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get (),
                                                                 cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier).c_str ()) &&
+                cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate))
 #else
   if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
                                 Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
                                                                 ACE_INVALID_HANDLE).c_str ()) &&
-#endif
                 cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate))
+#endif
   {
     GtkSpinner* spinner_p =
       GTK_SPINNER (gtk_builder_get_object ((*iterator).second.second,
