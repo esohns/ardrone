@@ -23,26 +23,29 @@
 
 #include "ace/config-lite.h"
 
-//// *** OpenGL-related
+// *** OpenGL-related
 //#define ARDRONE_OPENGL_DOUBLE_BUFFERED                     true
-//#define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
-//#define ARDRONE_OPENGL_AXES_SIZE                           0.2 // percentage --> 10%
-//// fonts
-////#define ARDRONE_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
-//#define ARDRONE_OPENGL_FONT_AXES                           GLUT_STROKE_MONO_ROMAN
+#define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
+#define ARDRONE_OPENGL_AXES_SIZE                           0.2 // percentage --> 10%
+// fonts
+//#define ARDRONE_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
+#define ARDRONE_OPENGL_FONT_AXES                           GLUT_STROKE_MONO_ROMAN
 //#define ARDRONE_OPENGL_FONT_FPS                            GLUT_BITMAP_HELVETICA_12
-//// camera calibration
-//#define ARDRONE_OPENGL_CAMERA_ROTATION_FACTOR              0.8F
-//#define ARDRONE_OPENGL_CAMERA_TRANSLATION_FACTOR           0.01F
-//#define ARDRONE_OPENGL_CAMERA_ZOOM_FACTOR                  0.03F
-//// defaults
-//#define ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM                 5.0F
-//// perspective(s)
-//#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    60.0
-//#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
-//#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    100.0
-//#define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
-//#define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
+// camera calibration
+#define ARDRONE_OPENGL_CAMERA_ROTATION_FACTOR              0.8F
+#define ARDRONE_OPENGL_CAMERA_TRANSLATION_FACTOR           0.01F
+#define ARDRONE_OPENGL_CAMERA_ZOOM_FACTOR                  0.03F
+// defaults
+#define ARDRONE_OPENGL_CAMERA_DEFAULT_Z                    -7.0F
+// perspective(s)
+#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    45.0
+#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
+#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    100.0
+#define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
+#define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
+
+// textures
+#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                "ardrone.png"
 
 // *** Gtk UI-related ***
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.glade"
@@ -50,13 +53,14 @@
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
 // *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
 //#define ARDRONE_UI_WIDGET_GL_REFRESH_INTERVAL              1000.0F / 30.0F // Hz
-#define ARDRONE_UI_PROCESSING_THREAD_NAME                  "stream processor"
+#define ARDRONE_UI_PROCESSING_THREAD_NAME                  "streams processor"
 
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_WIDTH  320
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE                   "action_calibrate"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CUT                         "action_cut"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_TRIM                        "action_trim"
+#define ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION                    "box_orientation"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                       "button_about"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_CLEAR                       "button_clear"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_QUIT                        "button_quit"
@@ -107,11 +111,12 @@
 #define ARDRONE_UI_WIDGET_NAME_SPINBUTTON_SESSIONMESSAGES_VIDEO   "spinbutton_session_messages_video"
 #define ARDRONE_UI_WIDGET_NAME_SPINNER                            "spinner"
 #define ARDRONE_UI_WIDGET_NAME_STATUSBAR                          "statusbar"
-//#define ARDRONE_UI_WIDGET_NAME_TEXTVIEW_LOG                "textview_log"
 #define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT               "toggleaction_connect"
-#define ARDRONE_UI_WIDGET_NAME_TOGGLEBUTTON_FULLSCREEN            "togglebutton_fullscreen"
+#define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN            "toggleaction_fullscreen"
+#define ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_ORIENTATION           "toggleaction_orientation"
 #define ARDRONE_UI_WIDGET_NAME_WINDOW_FULLSCREEN                  "window_fullscreen"
 
+// pango
 //#define ARDRONE_UI_GTK_PANGO_LOG_FONT_DESCRIPTION          "Monospace 8"
 //#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_BASE                "#FFFFFF" // white
 //#define ARDRONE_UI_GTK_PANGO_LOG_COLOR_TEXT                "#000000" // black
@@ -212,6 +217,7 @@
 #define ARDRONE_H264_720P_VIDEO_HEIGHT                     720
 
 // *** application-related ***
+#define ARDRONE_CONFIGURATION_DIRECTORY                    "etc"
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
 #define ARDRONE_CONTROL_LOG_FILE_PREFIX                    "ardrone_control"
 #define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"

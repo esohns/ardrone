@@ -37,6 +37,7 @@ gboolean idle_update_info_display_cb (gpointer);
 //gboolean idle_update_log_display_cb (gpointer);
 gboolean idle_update_state_cb (gpointer);
 gboolean idle_update_progress_cb (gpointer);
+gboolean idle_update_orientation_display_cb (gpointer);
 gboolean idle_update_video_display_cb (gpointer);
 
 #ifdef __cplusplus
@@ -68,8 +69,27 @@ G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            gpointer);
 #endif
 //------------------------------------------------------------------------------
-G_MODULE_EXPORT gboolean drawingarea_opengl_draw_cb (GtkWidget*, cairo_t*, gpointer);
-G_MODULE_EXPORT void drawingarea_opengl_realize_cb (GtkWidget*, gpointer);
+#if defined (GTKGL_SUPPORT)
+G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
+#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION (3,16,0)
+G_MODULE_EXPORT GdkGLContext* glarea_create_context_cb (GtkGLArea*, gpointer);
+G_MODULE_EXPORT gboolean glarea_render_cb (GtkGLArea*, GdkGLContext*, gpointer);
+G_MODULE_EXPORT void glarea_resize_cb (GtkGLArea*, gint, gint, gpointer);
+#else
+G_MODULE_EXPORT void glarea_size_allocate_event_cb (GtkWidget*, GdkRectangle*, gpointer);
+G_MODULE_EXPORT gboolean glarea_draw_cb (GtkWidget*, cairo_t*, gpointer);
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
+G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
+G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
+#else
+G_MODULE_EXPORT gboolean drawingarea_3d_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+#endif /* GTKGL_SUPPORT */
 //------------------------------------------------------------------------------
 G_MODULE_EXPORT void toggleaction_video_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void toggleaction_fullscreen_toggled_cb (GtkToggleAction*, gpointer);
