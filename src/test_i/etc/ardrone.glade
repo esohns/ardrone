@@ -1948,6 +1948,7 @@ Author: Erik Sohns
         <property name="app_paintable">True</property>
         <property name="can_focus">False</property>
         <property name="events">GDK_EXPOSURE_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+        <property name="no_show_all">True</property>
         <property name="double_buffered">False</property>
         <signal name="configure-event" handler="drawingarea_video_configure_cb" swapped="no"/>
         <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
