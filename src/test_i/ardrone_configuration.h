@@ -286,9 +286,11 @@ struct ARDrone_GtkCBData
    , NavDataStream (NULL)
 #if defined (GTKGL_SUPPORT)
    , openGLAxesListId (0)
-   , openGLCamera ()
-   , openGLRefreshId (0)
-   , openGLDoubleBuffered (ARDRONE_OPENGL_DOUBLE_BUFFERED)
+//   , openGLCamera ()
+//   , openGLDoubleBuffered (ARDRONE_OPENGL_DOUBLE_BUFFERED)
+//   , openGLRefreshId (0)
+   , openGLTextureId (0)
+   , orientationEventId (0)
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -304,16 +306,16 @@ struct ARDrone_GtkCBData
    , videoStream (NULL)
   {
 #if defined (GTKGL_SUPPORT)
-    resetCamera ();
+//    resetCamera ();
 #endif
   };
 
 #if defined (GTKGL_SUPPORT)
-  void resetCamera ()
-  {
-    ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
-    openGLCamera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
-  };
+//  void resetCamera ()
+//  {
+//    ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
+//    openGLCamera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
+//  };
 #endif
 
   struct ARDrone_Configuration*   configuration;
@@ -332,9 +334,11 @@ struct ARDrone_GtkCBData
   ARDrone_NavDataStreamBase_t*    NavDataStream;
 #if defined (GTKGL_SUPPORT)
   GLuint                          openGLAxesListId;
-  struct ARDrone_Camera           openGLCamera;
-  guint                           openGLRefreshId;
-  bool                            openGLDoubleBuffered;
+//  struct ARDrone_Camera           openGLCamera;
+//  bool                            openGLDoubleBuffered;
+//  guint                           openGLRefreshId;
+  GLuint                          openGLTextureId;
+  guint                           orientationEventId;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else

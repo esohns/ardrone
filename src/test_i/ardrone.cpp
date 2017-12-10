@@ -1907,7 +1907,7 @@ ACE_TMAIN (int argc_in,
   //                0,
   //                sizeof (gtk_cb_data.clientSensorBias));
 #if defined (GTKGL_SUPPORT)
-  gtk_cb_data.openGLDoubleBuffered = ARDRONE_OPENGL_DOUBLE_BUFFERED;
+//  gtk_cb_data.openGLDoubleBuffered = ARDRONE_OPENGL_DOUBLE_BUFFERED;
 #endif
   //ACE_OS::memset (gtk_cb_data.temperature,
   //                0,
