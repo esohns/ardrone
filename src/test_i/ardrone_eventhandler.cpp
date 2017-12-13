@@ -290,7 +290,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING));
+        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
 
       if (session_data_r.lock)

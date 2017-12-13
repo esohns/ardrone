@@ -122,7 +122,7 @@ ARDrone_VideoStream_T<SourceModuleType>::load (Stream_ModuleList_t& modules_out,
 #endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_H264Decoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING)),
+                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
                   false);
   modules_out.push_back (module_p);
   module_p = NULL;

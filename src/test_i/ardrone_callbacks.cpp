@@ -1884,15 +1884,15 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (frame_clock_p);
   gdk_frame_clock_end_updating (frame_clock_p);
 
-  ACE_ASSERT (!cb_data_p->orientationEventId);
+  ACE_ASSERT (!cb_data_p->openGLRefreshId);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard,  cb_data_p->lock, G_SOURCE_REMOVE);
     // schedule asynchronous updates of the state
-    cb_data_p->orientationEventId =
+    cb_data_p->openGLRefreshId =
       g_timeout_add (COMMON_UI_GTK_OPENGL_UPDATE_INTERVAL,
                      idle_update_orientation_display_cb,
                      userData_in);
-    if (cb_data_p->orientationEventId > 0)
-      cb_data_p->eventSourceIds.insert (cb_data_p->orientationEventId);
+    if (cb_data_p->openGLRefreshId > 0)
+      cb_data_p->eventSourceIds.insert (cb_data_p->openGLRefreshId);
     else
     {
       ACE_DEBUG ((LM_ERROR,
@@ -3037,7 +3037,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   iterator_5 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_5 != (*iterator_4).second.end ());
   iterator_6 =
-      (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING));
+      (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
   ACE_ASSERT (iterator_6 != (*iterator_4).second.end ());
   // retrieve buffer
   spin_button_p =
@@ -3134,7 +3134,7 @@ continue_:
 #else
                               2, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
-    (*iterator_5).second.second.format =
+    (*iterator_5).second.second.inputFormat =
       static_cast<enum AVPixelFormat> (g_value_get_int (&value));
 #endif
     g_value_unset (&value);
@@ -3180,7 +3180,8 @@ continue_:
                             0, &value);
 #endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-  (*iterator_5).second.second.device = g_value_get_string (&value);
+  (*iterator_5).second.second.displayDeviceIdentifier =
+      g_value_get_string (&value);
   g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (!EnumDisplayMonitors (NULL,                                     // hdc
@@ -3215,7 +3216,7 @@ continue_:
       ACE_ASSERT (monitor_p);
 
       if (!ACE_OS::strcmp (gdk_monitor_get_model (monitor_p),
-                           (*iterator_5).second.second.device.c_str ()))
+                           (*iterator_5).second.second.displayDeviceIdentifier.c_str ()))
         break;
     } // end FOR
   } // end FOR
@@ -3223,7 +3224,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.device.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ())));
     goto error;
   } // end IF
   display_p = gdk_monitor_get_display (monitor_p);
@@ -3271,7 +3272,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.device.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ())));
     goto error;
   } // end IF
 #endif
@@ -3555,7 +3556,7 @@ continue_:
   (*iterator_5).second.second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d\n"),
-              ACE_TEXT ((*iterator_5).second.second.device.c_str ()),
+              ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ()),
               ACE_TEXT (gdk_display_get_name (display_p)),
               monitor_number,
               (*iterator_5).second.second.area.x,
@@ -4306,77 +4307,66 @@ glarea_realize_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (gtk_gl_area_get_has_depth_buffer (gl_area_p));
 
-  // load texture
-  GLuint* texture_id_p = NULL;
+  // load model mesh
+  GLuint* model_list_id_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (data_p->useMediaFoundation)
-    texture_id_p = &mediafoundation_data_p->openGLTextureId;
+    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
   else
-    texture_id_p = &directshow_data_p->openGLTextureId;
+    model_list_id_p = &directshow_data_p->openGLModelListId;
 #else
-  texture_id_p = &data_p->openGLTextureId;
+  model_list_id_p = &data_p->openGLModelListId;
 #endif
-  ACE_ASSERT (texture_id_p);
-  if (*texture_id_p > 0)
+  ACE_ASSERT (model_list_id_p);
+  if (*model_list_id_p > 0)
   {
-    glDeleteTextures (1, texture_id_p);
+    glDeleteLists (*model_list_id_p, 1);
+//    glDeleteTextures (1, model_list_id_p);
     COMMON_GL_ASSERT;
-    *texture_id_p = 0;
+    *model_list_id_p = 0;
   } // end IF
 
-  static GLubyte* image_p = NULL;
-  if (!image_p)
+  if (!*model_list_id_p)
   {
     std::string filename = Common_File_Tools::getWorkingDirectory ();
     filename += ACE_DIRECTORY_SEPARATOR_CHAR;
     filename += ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONFIGURATION_DIRECTORY);
     filename += ACE_DIRECTORY_SEPARATOR_CHAR;
     filename +=
-      ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE);
-    unsigned int width = 0, height = 0;
-    bool has_alpha = false;
-    if (!Common_Image_Tools::loadPNG2OpenGL (filename,
-                                             width, height,
-                                             has_alpha,
-                                             image_p))
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_MODEL_DEFAULT_FILE);
+//        ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE);
+    *model_list_id_p =
+        Common_GL_Tools::loadModel (filename,
+                                    data_p->openGLScene.boundingBox,
+                                    data_p->openGLScene.center);
+//        Common_GL_Tools::loadTexture (filename);
+    if (!*model_list_id_p)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Common_Image_Tools::loadPNG2OpenGL(\"%s\"): \"%s\", aborting\n"),
+                  ACE_TEXT ("failed to Common_GL_Tools::loadModel(\"%s\"), aborting\n"),
                   ACE_TEXT (filename.c_str ())));
       goto error;
     } // end IF
-    ACE_ASSERT (width && height);
+//    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    COMMON_GL_ASSERT;
+//    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    COMMON_GL_ASSERT;
 
-    glGenTextures (1, texture_id_p);
-    // *TODO*: find out why this reports GL_INVALID_OPERATION
-    COMMON_GL_PRINT_ERROR;
-    glBindTexture (GL_TEXTURE_2D, *texture_id_p);
-    COMMON_GL_ASSERT;
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
-                  (has_alpha ? GL_RGBA : GL_RGB),
-                  GL_UNSIGNED_BYTE, image_p);
-    COMMON_GL_ASSERT;
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    COMMON_GL_ASSERT;
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    COMMON_GL_ASSERT;
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("OpenGL texture id: %u\n"),
-                *texture_id_p));
+                ACE_TEXT ("OpenGL model list id: %u\n"),
+                *model_list_id_p));
   } // end IF
 
   // initialize perspective
   GtkAllocation allocation;
   gtk_widget_get_allocation (widget_in,
                              &allocation);
-  glViewport (0, 0,
-              static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
-  COMMON_GL_ASSERT;
 
   glMatrixMode (GL_PROJECTION);
   COMMON_GL_ASSERT;
 
-  glLoadIdentity ();				// Reset The Projection Matrix
+  // reset the projection matrix
+  glLoadIdentity ();
   COMMON_GL_ASSERT;
 
   gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
@@ -4385,10 +4375,15 @@ glarea_realize_cb (GtkWidget* widget_in,
                   ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
   COMMON_GL_ASSERT;
 
+  glViewport (0, 0,
+              static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
+  COMMON_GL_ASSERT;
+
   glMatrixMode (GL_MODELVIEW);
   COMMON_GL_ASSERT;
 
-  glLoadIdentity (); // reset the projection matrix
+  // reset the projection matrix
+  glLoadIdentity ();
   COMMON_GL_ASSERT;
 
   return;
@@ -4460,39 +4455,53 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   gdk_gl_context_make_current (result_p);
 
   // initialize options
-  glClearColor (0.0F, 0.0F, 0.0F, 1.0F);              // Black Background
+  glClearColor (0.0f, 0.0f, 0.0f, 1.0f);              // Black Background
+//  glClearColor (0.1f, 0.1f, 0.1f, 1.0f);              // Black Background
   COMMON_GL_ASSERT;
   //glClearDepth (1.0);                                 // Depth Buffer Setup
   //COMMON_GL_ASSERT;
   /* speedups */
   //  glDisable (GL_CULL_FACE);
   //  glEnable (GL_DITHER);
-  //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-  //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
 //  COMMON_GL_ASSERT;
-  //glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  //COMMON_GL_ASSERT;
-  //glEnable (GL_COLOR_MATERIAL);
-  //COMMON_GL_ASSERT;
-  //glEnable (GL_LIGHTING);
-  //COMMON_GL_ASSERT;
+//  glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+  glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  COMMON_GL_ASSERT;
+  glEnable (GL_COLOR_MATERIAL);
+  COMMON_GL_ASSERT;
+  glEnable (GL_LIGHTING);
+  COMMON_GL_ASSERT;
+  glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
+  COMMON_GL_ASSERT;
+  glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  COMMON_GL_ASSERT;
+  //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
   COMMON_GL_ASSERT;
   glDepthFunc (GL_LESS);                              // The Type Of Depth Testing To Do
   COMMON_GL_ASSERT;
   glDepthMask (GL_TRUE);
   COMMON_GL_ASSERT;
-  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
-  COMMON_GL_ASSERT;
+//  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
+//  COMMON_GL_ASSERT;
+//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//  COMMON_GL_ASSERT;
+//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//  COMMON_GL_ASSERT;
   glShadeModel (GL_SMOOTH);                           // Enable Smooth Shading
   COMMON_GL_ASSERT;
+//  // XXX docs say all polygons are emitted CCW, but tests show that some aren't
+//  glFrontFace (GL_CW);
+  //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
   glHint (GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   COMMON_GL_ASSERT;
-  //glEnable (GL_BLEND);                                // Enable Semi-Transparency
-  //COMMON_GL_ASSERT;
-  //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //COMMON_GL_ASSERT;
+  glEnable (GL_BLEND);                                // Enable Semi-Transparency
+  COMMON_GL_ASSERT;
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  COMMON_GL_ASSERT;
   glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
+  COMMON_GL_ASSERT;
+  glEnable (GL_NORMALIZE);
   COMMON_GL_ASSERT;
 
   return result_p;
@@ -4512,7 +4521,7 @@ glarea_render_cb (GtkGLArea* GLArea_in,
 
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
-  struct Stream_Module_Visualization_OpenGLInstruction* instruction_p = NULL;
+//  struct Stream_Module_Visualization_OpenGLInstruction* instruction_p = NULL;
 
   // sanity check(s)
   ACE_ASSERT (data_p);
@@ -4558,110 +4567,72 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
 #endif
 
-  GLuint* texture_id_p = NULL;
+  GLuint* model_list_id_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (data_p->useMediaFoundation)
-    texture_id_p = &mediafoundation_data_p->openGLTextureId;
+    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
   else
-    texture_id_p = &directshow_data_p->openGLTextureId;
+    model_list_id_p = &directshow_data_p->openGLModelListId;
 #else
-  texture_id_p = &data_p->openGLTextureId;
+  model_list_id_p = &data_p->openGLModelListId;
 #endif
-  ACE_ASSERT (texture_id_p);
-  ACE_ASSERT (*texture_id_p);
+  ACE_ASSERT (model_list_id_p);
+  ACE_ASSERT (*model_list_id_p);
+
+//  glBindTexture (GL_TEXTURE_2D, *model_list_id_p);
+//  COMMON_GL_ASSERT;
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // *TODO*: find out why this reports GL_INVALID_OPERATION
-  COMMON_GL_PRINT_ERROR;
-
-  glBindTexture (GL_TEXTURE_2D, *texture_id_p);
   COMMON_GL_ASSERT;
 
-  glLoadIdentity ();				// Reset the transformation matrix.
+  glLoadIdentity ();
+  COMMON_GL_ASSERT;
+  // left
+  //  gluLookAt (0.0f,0.0f,3.0f,  // eye xyz
+//             0.0f,0.0f,0.0f,  // center xyz
+//             0.0f,1.0f,0.0f); // up xyz
+  // top
+//  gluLookAt (0.0f,3.0f,0.0f,  // eye xyz
+//             0.0f,0.0f,0.0f,  // center xyz
+//             -1.0f,0.0f,0.0f); // up xyz
+  // behind
+  gluLookAt (3.0f,0.0f,0.0f,  // eye xyz
+             0.0f,0.0f,0.0f,  // center xyz
+             0.0f,1.0f,0.0f); // up xyz
   COMMON_GL_ASSERT;
 
-  glTranslatef (0.0f, 0.0f, ARDRONE_OPENGL_CAMERA_DEFAULT_Z);
+//  glTranslatef (0.0f, 0.0f, ARDRONE_OPENGL_CAMERA_DEFAULT_Z);
+//  COMMON_GL_ASSERT;
+
+  // rotate it around the all axes
+  static GLfloat rotation_angle = 0.0f;
+  glRotatef (rotation_angle, 0.0f, 1.0f, 0.0f);
+//  glRotatef (rotation_angle, 1.0f, 1.0f, 1.0f);
   COMMON_GL_ASSERT;
 
-  static GLfloat cube_rotation = 0.0f;
-  glRotatef (cube_rotation, 1.0f, 1.0f, 1.0f);		// Rotate The Cube On X, Y, and Z
+  // scale the whole asset to fit into the view frustum
+  static GLfloat scale_factor = 0.0f;
+  scale_factor = (data_p->openGLScene.boundingBox.second.x -
+                  data_p->openGLScene.boundingBox.first.x);
+  scale_factor =
+      COMMON_GL_ASSIMP_MAX (data_p->openGLScene.boundingBox.second.y - data_p->openGLScene.boundingBox.first.y, scale_factor);
+  scale_factor =
+      COMMON_GL_ASSIMP_MAX (data_p->openGLScene.boundingBox.second.z - data_p->openGLScene.boundingBox.first.z, scale_factor);
+  scale_factor = (1.0f / scale_factor) * 2.0f;
+  glScalef (scale_factor, scale_factor, scale_factor);
   COMMON_GL_ASSERT;
 
-  //static GLfloat rot_x = 0.0f;
-  //static GLfloat rot_y = 0.0f;
-  //static GLfloat rot_z = 0.0f;
-  //glRotatef (rot_x, 1.0f, 0.0f, 0.0f); // Rotate On The X Axis
-  //glRotatef (rot_y, 0.0f, 1.0f, 0.0f); // Rotate On The Y Axis
-  //glRotatef (rot_z, 0.0f, 0.0f, 1.0f); // Rotate On The Z Axis
-
-  glBegin (GL_QUADS);
-
-  // Front Face
-  glTexCoord2f (0.0f, 0.0f); glVertex3f (-1.0f, -1.0f,  1.0f); // Bottom Left Of The Texture and Quad
-  glTexCoord2f (1.0f, 0.0f); glVertex3f ( 1.0f, -1.0f,  1.0f); // Bottom Right Of The Texture and Quad
-  glTexCoord2f (1.0f, 1.0f); glVertex3f ( 1.0f,  1.0f,  1.0f); // Top Right Of The Texture and Quad
-  glTexCoord2f (0.0f, 1.0f); glVertex3f (-1.0f,  1.0f,  1.0f); // Top Left Of The Texture and Quad
-  // Back Face
-  glTexCoord2f (1.0f, 0.0f); glVertex3f (-1.0f, -1.0f, -1.0f); // Bottom Right Of The Texture and Quad
-  glTexCoord2f (1.0f, 1.0f); glVertex3f (-1.0f,  1.0f, -1.0f); // Top Right Of The Texture and Quad
-  glTexCoord2f (0.0f, 1.0f); glVertex3f ( 1.0f,  1.0f, -1.0f); // Top Left Of The Texture and Quad
-  glTexCoord2f (0.0f, 0.0f); glVertex3f ( 1.0f, -1.0f, -1.0f); // Bottom Left Of The Texture and Quad
-  // Top Face
-  glTexCoord2f (0.0f, 1.0f); glVertex3f (-1.0f,  1.0f, -1.0f); // Top Left Of The Texture and Quad
-  glTexCoord2f (0.0f, 0.0f); glVertex3f (-1.0f,  1.0f,  1.0f); // Bottom Left Of The Texture and Quad
-  glTexCoord2f (1.0f, 0.0f); glVertex3f ( 1.0f,  1.0f,  1.0f); // Bottom Right Of The Texture and Quad
-  glTexCoord2f (1.0f, 1.0f); glVertex3f ( 1.0f,  1.0f, -1.0f); // Top Right Of The Texture and Quad
-  // Bottom Face
-  glTexCoord2f (1.0f, 1.0f); glVertex3f (-1.0f, -1.0f, -1.0f); // Top Right Of The Texture and Quad
-  glTexCoord2f (0.0f, 1.0f); glVertex3f ( 1.0f, -1.0f, -1.0f); // Top Left Of The Texture and Quad
-  glTexCoord2f (0.0f, 0.0f); glVertex3f ( 1.0f, -1.0f,  1.0f); // Bottom Left Of The Texture and Quad
-  glTexCoord2f (1.0f, 0.0f); glVertex3f (-1.0f, -1.0f,  1.0f); // Bottom Right Of The Texture and Quad
-  // Right face
-  glTexCoord2f (1.0f, 0.0f); glVertex3f ( 1.0f, -1.0f, -1.0f); // Bottom Right Of The Texture and Quad
-  glTexCoord2f (1.0f, 1.0f); glVertex3f ( 1.0f,  1.0f, -1.0f); // Top Right Of The Texture and Quad
-  glTexCoord2f (0.0f, 1.0f); glVertex3f ( 1.0f,  1.0f,  1.0f); // Top Left Of The Texture and Quad
-  glTexCoord2f (0.0f, 0.0f); glVertex3f ( 1.0f, -1.0f,  1.0f); // Bottom Left Of The Texture and Quad
-  // Left Face
-  glTexCoord2f (0.0f, 0.0f); glVertex3f (-1.0f, -1.0f, -1.0f); // Bottom Left Of The Texture and Quad
-  glTexCoord2f (1.0f, 0.0f); glVertex3f (-1.0f, -1.0f,  1.0f); // Bottom Right Of The Texture and Quad
-  glTexCoord2f (1.0f, 1.0f); glVertex3f (-1.0f,  1.0f,  1.0f); // Top Right Of The Texture and Quad
-  glTexCoord2f (0.0f, 1.0f); glVertex3f (-1.0f,  1.0f, -1.0f); // Top Left Of The Texture and Quad
-
-  //// top of cube
-  //glVertex3f (1.0f, 1.0f, -1.0f);		// Top Right Of The Quad (Top)
-  //glVertex3f (-1.0f, 1.0f, -1.0f);		// Top Left Of The Quad (Top)
-  //glVertex3f (-1.0f, 1.0f, 1.0f);		// Bottom Left Of The Quad (Top)
-  //glVertex3f (1.0f, 1.0f, 1.0f);		// Bottom Right Of The Quad (Top)
-  //// bottom of cube
-  //glVertex3f (1.0f, -1.0f, 1.0f);		// Top Right Of The Quad (Bottom)
-  //glVertex3f (-1.0f, -1.0f, 1.0f);		// Top Left Of The Quad (Bottom)
-  //glVertex3f (-1.0f, -1.0f, -1.0f);		// Bottom Left Of The Quad (Bottom)
-  //glVertex3f (1.0f, -1.0f, -1.0f);		// Bottom Right Of The Quad (Bottom)
-  //// front of cube
-  //glVertex3f (1.0f, 1.0f, 1.0f);		// Top Right Of The Quad (Front)
-  //glVertex3f (-1.0f, 1.0f, 1.0f);		// Top Left Of The Quad (Front)
-  //glVertex3f (-1.0f, -1.0f, 1.0f);		// Bottom Left Of The Quad (Front)
-  //glVertex3f (1.0f, -1.0f, 1.0f);		// Bottom Right Of The Quad (Front)
-  //// back of cube.
-  //glVertex3f (1.0f, -1.0f, -1.0f);		// Top Right Of The Quad (Back)
-  //glVertex3f (-1.0f, -1.0f, -1.0f);		// Top Left Of The Quad (Back)
-  //glVertex3f (-1.0f, 1.0f, -1.0f);		// Bottom Left Of The Quad (Back)
-  //glVertex3f (1.0f, 1.0f, -1.0f);		// Bottom Right Of The Quad (Back)
-  //// left of cube
-  //glVertex3f (-1.0f, 1.0f, 1.0f);		// Top Right Of The Quad (Left)
-  //glVertex3f (-1.0f, 1.0f, -1.0f);		// Top Left Of The Quad (Left)
-  //glVertex3f (-1.0f, -1.0f, -1.0f);		// Bottom Left Of The Quad (Left)
-  //glVertex3f (-1.0f, -1.0f, 1.0f);		// Bottom Right Of The Quad (Left)
-  //// Right of cube
-  //glVertex3f (1.0f, 1.0f, -1.0f);	        // Top Right Of The Quad (Right)
-  //glVertex3f (1.0f, 1.0f, 1.0f);		// Top Left Of The Quad (Right)
-  //glVertex3f (1.0f, -1.0f, 1.0f);		// Bottom Left Of The Quad (Right)
-  //glVertex3f (1.0f, -1.0f, -1.0f);		// Bottom Right Of The Quad (Right)
-
-  glEnd ();
+  // center the model
+  glTranslatef (-data_p->openGLScene.center.x,
+                -data_p->openGLScene.center.y,
+                -data_p->openGLScene.center.z);
   COMMON_GL_ASSERT;
 
-  cube_rotation -= 1.0f;					// Decrease The Rotation Variable For The Cube
+  glCallList (data_p->openGLModelListId);
+  COMMON_GL_ASSERT;
+
+//  Common_GL_Tools::drawCube (true);
+//  COMMON_GL_ASSERT;
 
 //  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, FALSE);
 //    if (data_p->OpenGLInstructions.empty ())
@@ -4700,42 +4671,9 @@ glarea_render_cb (GtkGLArea* GLArea_in,
 //    } while (!data_p->OpenGLInstructions.empty ());
 //  } // end lock scope
 
-continue_:
-  //rot_x += 0.3f;
-  //rot_y += 0.20f;
-  //rot_z += 0.4f;
+//  rotation_angle -= 1.0f;
 
-  //GLuint vertex_array_id = 0;
-  //glGenVertexArrays (1, &vertex_array_id);
-  //glBindVertexArray (vertex_array_id);
-
-  //static const GLfloat vertex_buffer_data[] = {
-  //  -1.0f, -1.0f, 0.0f,
-  //  1.0f, -1.0f, 0.0f,
-  //  -1.0f,  1.0f, 0.0f,
-  //  -1.0f,  1.0f, 0.0f,
-  //  1.0f, -1.0f, 0.0f,
-  //  1.0f,  1.0f, 0.0f,
-  //};
-
-  //GLuint vertex_buffer;
-  //glGenBuffers (1, &vertex_buffer);
-  //glBindBuffer (GL_ARRAY_BUFFER, vertex_buffer);
-  //glBufferData (GL_ARRAY_BUFFER,
-  //              sizeof (vertex_buffer_data), vertex_buffer_data,
-  //              GL_STATIC_DRAW);
-
-  ////GLuint program_id = LoadShaders ("Passthrough.vertexshader",
-  ////                                 "SimpleTexture.fragmentshader");
-  ////GLuint tex_id = glGetUniformLocation (program_id, "renderedTexture");
-  ////GLuint time_id = glGetUniformLocation (program_id, "time");
-
-  //glBindFramebuffer (GL_FRAMEBUFFER, 0);
-  //glViewport (0, 0,
-  //            data_p->area3D.width, data_p->area3D.height);
-
-  //gtk_gl_area_queue_render (GLArea_in);
-
+//continue_:
   return TRUE;
 }
 void

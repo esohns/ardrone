@@ -39,6 +39,8 @@
 #include "ace/Singleton.h"
 #include "ace/Synch_Traits.h"
 
+#include "common_gl_common.h"
+
 #include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_common.h"
 #include "common_ui_gtk_manager.h"
@@ -285,12 +287,9 @@ struct ARDrone_GtkCBData
    , messageAllocator (NULL)
    , NavDataStream (NULL)
 #if defined (GTKGL_SUPPORT)
-   , openGLAxesListId (0)
-//   , openGLCamera ()
-//   , openGLDoubleBuffered (ARDRONE_OPENGL_DOUBLE_BUFFERED)
-//   , openGLRefreshId (0)
-   , openGLTextureId (0)
-   , orientationEventId (0)
+   , openGLModelListId (0)
+   , openGLRefreshId (0)
+   , openGLScene ()
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -313,8 +312,8 @@ struct ARDrone_GtkCBData
 #if defined (GTKGL_SUPPORT)
 //  void resetCamera ()
 //  {
-//    ACE_OS::memset (&openGLCamera, 0, sizeof (openGLCamera));
-//    openGLCamera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
+//    ACE_OS::memset (&openGLScene, 0, sizeof (openGLScene));
+//    openGLScene.camera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
 //  };
 #endif
 
@@ -333,12 +332,9 @@ struct ARDrone_GtkCBData
   ARDrone_MessageAllocator_t*     messageAllocator;
   ARDrone_NavDataStreamBase_t*    NavDataStream;
 #if defined (GTKGL_SUPPORT)
-  GLuint                          openGLAxesListId;
-//  struct ARDrone_Camera           openGLCamera;
-//  bool                            openGLDoubleBuffered;
-//  guint                           openGLRefreshId;
-  GLuint                          openGLTextureId;
-  guint                           orientationEventId;
+  GLuint                          openGLModelListId;
+  guint                           openGLRefreshId;
+  struct Common_GL_Scene          openGLScene;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
