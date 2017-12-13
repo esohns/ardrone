@@ -478,7 +478,7 @@ target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonOpenGL)
 target_link_libraries (${EXECUTABLE} CommonTimer)
 #if (UNIX)
-# target_link_libraries (${EXECUTABLE} Common_DBus)
+# target_link_libraries (${EXECUTABLE} CommonDBus)
 #endif ()
 if (WIN32)
  # *WARNING*: linking CommonUI requires "/FORCE:MULTIPLE""

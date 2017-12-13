@@ -285,20 +285,20 @@ struct ARDrone_ModuleHandlerConfiguration
    : Stream_ModuleHandlerConfiguration ()
    , block (false)
    , CBData (NULL)
-   , codecFormat (AV_PIX_FMT_YUV420P) // codec output-
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
    , connectionConfigurations ()
    , connectionManager (NULL)
-   , device ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , area ()
    , consoleMode (false)
    , direct3DDevice (NULL)
+   , displayDeviceIdentifier (GUID_NULL)
    , filterCLSID (GUID_NULL)
    , filterConfiguration (NULL)
-   , format (NULL)
    , graphBuilder (NULL)
+   , inputFormat (NULL)
+   , outputFormat (NULL)
    , push (MODULE_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
    , rendererNodeId (0)
    , session (NULL)
@@ -306,16 +306,17 @@ struct ARDrone_ModuleHandlerConfiguration
    , windowController (NULL)
 #else
    , area ()
-   // *NOTE*: GtkPixbuf native format is RGBA
-   , format (AV_PIX_FMT_RGBA)
+   , displayDeviceIdentifier ()
+   // *NOTE*: the GtkPixbuf native format appears to be RGBA
+   , inputFormat (AV_PIX_FMT_RGBA)
    , frameRate ()
+   , outputFormat (AV_PIX_FMT_YUV420P)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
    , sourceFormat ()
    , window (NULL)
 #endif
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
-//   , inbound (true)
    , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
    , printProgressDot (false)
    , pushStatisticMessages (true)
@@ -340,22 +341,22 @@ struct ARDrone_ModuleHandlerConfiguration
     passive = false;
   };
 
-  bool                                      block;                    // H264 decoder module
-  struct ARDrone_GtkCBData*                 CBData;                   // controller module
-  enum AVPixelFormat                        codecFormat;              // H264 decoder module
-  enum AVCodecID                            codecId;                  // H264 decoder module
-  ARDrone_IConnection_t*                    connection;               // net source/IO module
-  ARDrone_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*             connectionManager;        // IO module
-  std::string                               device;
+  bool                                           block;                    // H264 decoder module
+  struct ARDrone_GtkCBData*                      CBData;                   // controller module
+  enum AVCodecID                                 codecId;                  // H264 decoder module
+  ARDrone_IConnection_t*                         connection;               // net source/IO module
+  ARDrone_StreamConnectionConfigurations_t*      connectionConfigurations; // net source/target modules
+  ARDrone_IConnectionManager_t*                  connectionManager;        // IO module
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagRECT                                 area;                // display module
   bool                                           consoleMode;
   IDirect3DDevice9Ex*                            direct3DDevice;      // display module
+  struct _GUID                                   displayDeviceIdentifier;
   struct _GUID                                   filterCLSID;         // display module
   struct ARDrone_DirectShow_FilterConfiguration* filterConfiguration; // display module
-  struct _AMMediaType*                           format;              // H264 decoder/display module
   IGraphBuilder*                                 graphBuilder;        // display module
+  struct _AMMediaType*                           inputFormat;         // H264 decoder/display module
+  struct _AMMediaType*                           outputFormat;        // H264 decoder/display module
   bool                                           push;                // display module
   TOPOID                                         rendererNodeId;
   IMFMediaSession*                               session;
@@ -363,22 +364,23 @@ struct ARDrone_ModuleHandlerConfiguration
   IVideoWindow*                                  windowController;    // display module
   //IMFVideoDisplayControl*                    windowController;
 #else
-  GdkRectangle                              area;            // display module
-  enum AVPixelFormat                        format;          // H264 decoder/display module
-  struct AVRational                         frameRate;       // AVI encoder module
-  GdkPixbuf*                                pixelBuffer;     // display module
-  ACE_SYNCH_MUTEX*                          pixelBufferLock; // display module
-  struct _cairo_rectangle_int               sourceFormat;    // H264 decoder module
-  GdkWindow*                                window;          // display module
+  GdkRectangle                                   area;            // display module
+  std::string                                    displayDeviceIdentifier;
+  struct AVRational                              frameRate;       // AVI encoder module
+  enum AVPixelFormat                             inputFormat;     // H264 decoder/display module
+  enum AVPixelFormat                             outputFormat;    // H264 decoder module
+  GdkPixbuf*                                     pixelBuffer;     // display module
+  ACE_SYNCH_MUTEX*                               pixelBufferLock; // display module
+  struct _cairo_rectangle_int                    sourceFormat;    // H264 decoder module
+  GdkWindow*                                     window;          // display module
 #endif
-  bool                                      fullScreen;            // display module
-//  bool                                      inbound;               // statistic/IO module
-  std::string                               outboundStreamName;    // event handler module
-  bool                                      printProgressDot;      // file writer module
-  bool                                      pushStatisticMessages; // statistic module
-  ARDrone_Notification_t*                   subscriber; // event handler module
-  ARDrone_Subscribers_t*                    subscribers; // event handler module
-  std::string                               targetFileName;
+  bool                                           fullScreen;            // display module
+  std::string                                    outboundStreamName;    // event handler module
+  bool                                           printProgressDot;      // file writer module
+  bool                                           pushStatisticMessages; // statistic module
+  ARDrone_Notification_t*                        subscriber;            // event handler module
+  ARDrone_Subscribers_t*                         subscribers;           // event handler module
+  std::string                                    targetFileName;
 };
 
 typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;

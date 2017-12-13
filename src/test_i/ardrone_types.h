@@ -108,18 +108,6 @@ typedef ARDrone_Events_t::const_iterator ARDrone_EventsIterator_t;
 //  gfloat gz_bias;
 //};
 
-//struct ARDrone_Camera
-//{
-//  //glm::vec3 position;
-//  //glm::vec3 looking_at;
-//  //glm::vec3 up;
-
-//  float zoom;
-//  glm::vec3 rotation;
-//  glm::vec3 translation;
-//  int last[2];
-//};
-
 typedef std::pair<std::string, std::string> ARDrone_DeviceConfigurationKeyValue_t;
 typedef std::list<ARDrone_DeviceConfigurationKeyValue_t> ARDrone_DeviceConfigurationCategory_t;
 typedef ARDrone_DeviceConfigurationCategory_t::const_iterator ARDrone_DeviceConfigurationCategoryIterator_t;

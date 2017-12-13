@@ -1332,7 +1332,7 @@ do_work (int argc_in,
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
   modulehandler_configuration.connectionConfigurations = NULL;
-  (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DEFAULT_NAME_STRING),
+  (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
 

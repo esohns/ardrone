@@ -24,7 +24,6 @@
 #include "ace/config-lite.h"
 
 // *** OpenGL-related
-//#define ARDRONE_OPENGL_DOUBLE_BUFFERED                     true
 #define ARDRONE_OPENGL_RAD_PER_DEG                         0.0174533F
 #define ARDRONE_OPENGL_AXES_SIZE                           0.2 // percentage --> 10%
 // fonts
@@ -40,12 +39,13 @@
 // perspective(s)
 #define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    45.0
 #define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
-#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    100.0
+#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    1000.0
 #define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
 #define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
 
-// textures
-#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                "ardrone.png"
+// model
+#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
+//#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                  "ardrone.png"
 
 // *** Gtk UI-related ***
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.glade"
