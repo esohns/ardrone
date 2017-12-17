@@ -86,7 +86,8 @@ struct ARDrone_StreamState
  : Stream_State
 {
   ARDrone_StreamState ()
-   : sessionData (NULL)
+   : CBData (NULL)
+   , sessionData (NULL)
    , type (ARDRONE_STREAM_INVALID)
    , userData (NULL)
   {};
@@ -105,6 +106,7 @@ struct ARDrone_StreamState
     return *this;
   };
 
+  struct ARDrone_GtkCBData*   CBData;
   struct ARDrone_SessionData* sessionData;
   enum ARDrone_StreamType     type;
 

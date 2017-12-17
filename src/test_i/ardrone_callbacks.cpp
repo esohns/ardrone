@@ -2563,6 +2563,37 @@ idle_update_orientation_display_cb (gpointer userData_in)
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+  std::ostringstream converter;
+  converter.precision (ARDRONE_OPENGL_MODEL_ORIENTATION_PRECISION);
+  GtkLabel* label_p =
+    GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                       ARDRONE_UI_WIDGET_NAME_LABEL_ROLL));
+  ACE_ASSERT (label_p);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
+    converter << data_p->openGLScene.orientation.x;
+    gtk_label_set_text (label_p,
+                        ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
+
+    label_p =
+        GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                           ARDRONE_UI_WIDGET_NAME_LABEL_PITCH));
+    ACE_ASSERT (label_p);
+    converter.clear ();
+    converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+    converter << data_p->openGLScene.orientation.y;
+    gtk_label_set_text (label_p,
+                        ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
+
+    label_p =
+        GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
+                                           ARDRONE_UI_WIDGET_NAME_LABEL_YAW));
+    ACE_ASSERT (label_p);
+    converter.clear ();
+    converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+    converter << data_p->openGLScene.orientation.z;
+    gtk_label_set_text (label_p,
+                        ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
+  } // end .lock scope
   GtkGLArea* gl_area_p =
     GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
                                          ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
