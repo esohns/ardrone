@@ -593,6 +593,9 @@ ARDrone_NavDataStream::initialize (const typename inherited::CONFIGURATION_T& co
 
   //// sanity check(s)
   //ACE_ASSERT (inherited::sessionData_);
+  { ACE_GUARD_RETURN (ACE_SYNCH_RECURSIVE_MUTEX, aGuard, inherited::lock_, false);
+    inherited::state_.CBData = configuration_in.configuration_.CBData;
+  } // end lock scope
 
 //  session_data_p =
 //    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
@@ -962,7 +965,18 @@ ARDrone_NavDataStream::messageCB (const struct _navdata_t& record_in,
       { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_demo_t));
         struct _navdata_demo_t* option_2 =
           reinterpret_cast<struct _navdata_demo_t*> (option_p);
-        ACE_UNUSED_ARG (option_2);
+        ACE_ASSERT (option_2);
+
+        ACE_ASSERT (inherited::state_.CBData);
+        { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::state_.CBData->lock);
+          inherited::state_.CBData->openGLScene.orientation.x =
+              option_2->phi; // roll (--> rotation along x)
+          inherited::state_.CBData->openGLScene.orientation.y =
+              option_2->psi; // yaw (--> rotation along y)
+          inherited::state_.CBData->openGLScene.orientation.z =
+              option_2->theta; // pitch (--> rotation along z)
+        } // end lock scope
+
         break;
       }
       case NAVDATA_TIME_TAG: // 1

@@ -111,12 +111,12 @@ struct ARDrone_SignalHandlerConfiguration
 {
   ARDrone_SignalHandlerConfiguration ()
    : Common_SignalHandlerConfiguration ()
-   , actionTimerID (-1)
+   , actionTimerId (-1)
    , connector (NULL)
    , peerAddress ()
   {};
 
-  long                  actionTimerID;
+  long                  actionTimerId;
   ARDrone_IConnector_t* connector;
   ACE_INET_Addr         peerAddress;
 };
