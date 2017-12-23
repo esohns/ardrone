@@ -80,7 +80,7 @@ i=0
 # [ $? -ne 0 ] && echo "ERROR: failed to chmod +s ${BIN}: \"$?\", aborting" && exit 1
 
 # /sbin/setcap 'cap_net_bind_service=eip' ${BIN_TMP}
- /sbin/setcap 'CAP_NET_ADMIN+eip' ${BIN}
+ /sbin/setcap 'cap_net_admin+eip' ${BIN}
  [ $? -ne 0 ] && echo "ERROR: failed to /sbin/setcap ${BIN}: \"$?\", aborting" && exit 1
 
 # echo "modified \"$BINS\"..."
