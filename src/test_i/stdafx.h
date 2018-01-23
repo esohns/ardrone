@@ -3,7 +3,10 @@
 //      are changed infrequently
 //
 #if defined _MSC_VER
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+
+// *NOTE*: work around quirky MSVC...
+#define NOMINMAX
 
 #define _USE_MATH_DEFINES
 
@@ -12,12 +15,14 @@
 #endif
 
 // C RunTime Header Files
+//#include <iostream>
 #include <string>
-//#include <sstream>
 
-#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
-#include "valgrind/memcheck.h"
+//#ifdef LIBACENETWORK_ENABLE_VALGRIND_SUPPORT
+#if defined (VALGRIND_SUPPORT)
+#include "valgrind/valgrind.h"
 #endif
+
 // System Library Header Files
 #include "ace/config-lite.h"
 #include "ace/Global_Macros.h"
@@ -26,14 +31,22 @@
 // Library Header Files
 #include "common.h"
 #include "common_macros.h"
+#include "common_pragmas.h"
 
 #include "stream_common.h"
 #include "stream_macros.h"
 
+// Local Header Files
 #include "net_common.h"
 #include "net_macros.h"
+
+//#if defined (_MSC_VER)
+//#include "targetver.h"
+//#endif
+
+// *TODO*: reference additional headers your program requires here
 
 // Local Header Files
 #include "ardrone_macros.h"
 
-#define LIGBGLADE_SUPPORT
+//#define LIGBGLADE_SUPPORT

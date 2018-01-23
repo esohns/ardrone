@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef ARDRONE_STREAM_T_H
-#define ARDRONE_STREAM_T_H
+#ifndef ARDRONE_STREAM_H
+#define ARDRONE_STREAM_H
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <minwindef.h>
@@ -48,7 +48,8 @@ extern const char control_stream_name_string_[];
 extern const char navdata_stream_name_string_[];
 extern const char mavlink_stream_name_string_[];
 
-template <typename SourceModuleType>
+template <typename ModuleConfigurationType,
+          typename SourceModuleType>
 class ARDrone_VideoStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -61,7 +62,7 @@ class ARDrone_VideoStream_T
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -79,7 +80,7 @@ class ARDrone_VideoStream_T
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -95,12 +96,11 @@ class ARDrone_VideoStream_T
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual bool initialize (const CONFIGURATION_T&); // configuration
+#else
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
-
-  // implement Common_IStatistic_T
-  // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
-  virtual void report () const;
+#endif
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_VideoStream_T (const ARDrone_VideoStream_T&))
@@ -112,12 +112,26 @@ class ARDrone_VideoStream_T
 #endif
 };
 
-typedef ARDrone_VideoStream_T<ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
-typedef ARDrone_VideoStream_T<ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                              ARDrone_Module_DirectShow_AsynchTCPSource_Module> ARDrone_DirectShow_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                              ARDrone_Module_DirectShow_TCPSource_Module> ARDrone_DirectShow_VideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                              ARDrone_Module_MediaFoundation_AsynchTCPSource_Module> ARDrone_MediaFoundation_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                              ARDrone_Module_MediaFoundation_TCPSource_Module> ARDrone_MediaFoundation_VideoStream_t;
+#else
+typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                              ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                              ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
+#endif
 
 //////////////////////////////////////////
 
-class ARDrone_ControlStream
+template <typename ModuleConfigurationType>
+class ARDrone_ControlStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         control_stream_name_string_,
@@ -129,7 +143,7 @@ class ARDrone_ControlStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -153,7 +167,7 @@ class ARDrone_ControlStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -166,26 +180,28 @@ class ARDrone_ControlStream
                                ARDrone_SessionMessage> inherited2;
 
  public:
-  ARDrone_ControlStream ();
-  inline virtual ~ARDrone_ControlStream () { inherited::shutdown (); }
+  ARDrone_ControlStream_T ();
+  inline virtual ~ARDrone_ControlStream_T () { inherited::shutdown (); }
 
+  using inherited::start;
+  using inherited::wait;
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual bool initialize (const CONFIGURATION_T&); // configuration
+#else
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
-
-  // implement Common_IStatistic_T
-  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
-  virtual void report () const;
+#endif
 
   // implement ARDrone_IControlNotify
   virtual void messageCB (const ARDrone_DeviceConfiguration_t&); // device configuration
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream (const ARDrone_ControlStream&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream& operator= (const ARDrone_ControlStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream_T (const ARDrone_ControlStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_ControlStream_T& operator= (const ARDrone_ControlStream_T&))
 
   // convenient types
   struct SUBSCRIBERS_IS_EQUAL_P
@@ -203,9 +219,18 @@ class ARDrone_ControlStream
   ARDrone_IDeviceConfiguration* configuration_;
 };
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_ControlStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_ControlStream_t;
+typedef ARDrone_ControlStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_ControlStream_t;
+#else
+typedef ARDrone_ControlStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_ControlStream_t;
+#endif
+
 //////////////////////////////////////////
 
-class ARDrone_NavDataStream
+template <typename ModuleConfigurationType,
+          typename ConnectionConfigurationIteratorType>
+class ARDrone_NavDataStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         navdata_stream_name_string_,
@@ -217,7 +242,7 @@ class ARDrone_NavDataStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -243,7 +268,7 @@ class ARDrone_NavDataStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -256,20 +281,21 @@ class ARDrone_NavDataStream
                                ARDrone_SessionMessage> inherited2;
 
  public:
-  ARDrone_NavDataStream ();
-  virtual ~ARDrone_NavDataStream ();
+  ARDrone_NavDataStream_T ();
+  virtual ~ARDrone_NavDataStream_T ();
 
+  using inherited::start;
+  using inherited::wait;
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual bool initialize (const CONFIGURATION_T&); // configuration
+#else
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
-
-  // implement Common_IStatistic_T
-  // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
-  virtual void report () const;
+#endif
 
   // implement ARDrone_INavDataNotify
   virtual void messageCB (const struct _navdata_t&,              // message record
@@ -280,8 +306,8 @@ class ARDrone_NavDataStream
   virtual const ARDrone_IController* const getP () const;
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream (const ARDrone_NavDataStream&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream& operator= (const ARDrone_NavDataStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream_T (const ARDrone_NavDataStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream_T& operator= (const ARDrone_NavDataStream_T&))
 
   // convenient types
   struct SUBSCRIBERS_IS_EQUAL_P
@@ -298,12 +324,26 @@ class ARDrone_NavDataStream
 
   // implement Net_WLAN_IMonitorCB
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onSignalQualityChange (REFGUID,              // interface identifier
+                                      WLAN_SIGNAL_QUALITY); // signal quality (of current association)
+#else
+  virtual void onSignalQualityChange (const std::string&, // interface identifier
+                                      unsigned int);      // signal quality (of current association)
+#endif
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   virtual void onAssociate (REFGUID,            // device identifier
 #else
   virtual void onAssociate (const std::string&, // device identifier
 #endif
                             const std::string&, // SSID
                             bool);              // success ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onDisassociate (REFGUID,            // device identifier
+#else
+  virtual void onDisassociate (const std::string&, // device identifier
+#endif
+                               const std::string&, // SSID
+                               bool);              // success ?
   // *IMPORTANT NOTE*: Net_IWLANMonitor_T::addresses() may not return
   //                   significant data before this, as the link layer
   //                   configuration (e.g. DHCP handshake, ...) most likely has
@@ -316,11 +356,24 @@ class ARDrone_NavDataStream
                           const std::string&, // SSID
                           bool);              // success ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onDisconnect (REFGUID,            // device identifier
+#else
+  virtual void onDisconnect (const std::string&, // device identifier
+#endif
+                             const std::string&, // SSID
+                             bool);              // success ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   virtual void onHotPlug (REFGUID,            // device identifier
 #else
   virtual void onHotPlug (const std::string&, // device identifier
 #endif
-                          bool);              // enabled ? : disabled/removed
+                          bool);              // success ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void onRemove (REFGUID,            // device identifier
+#else
+  virtual void onRemove (const std::string&, // device identifier
+#endif
+                         bool);              // success ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   virtual void onScanComplete (REFGUID);            // device identifier
 #else
@@ -330,9 +383,20 @@ class ARDrone_NavDataStream
   bool isFirst_;
 };
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_NavDataStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                                ARDrone_DirectShow_StreamConnectionConfigurationIterator_t> ARDrone_DirectShow_NavDataStream_t;
+typedef ARDrone_NavDataStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                                ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t> ARDrone_MediaFoundation_NavDataStream_t;
+#else
+typedef ARDrone_NavDataStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                                ARDrone_StreamConnectionConfigurationIterator_t> ARDrone_NavDataStream_t;
+#endif
+
 //////////////////////////////////////////
 
-class ARDrone_MAVLinkStream
+template <typename ModuleConfigurationType>
+class ARDrone_MAVLinkStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
                         mavlink_stream_name_string_,
@@ -344,7 +408,7 @@ class ARDrone_MAVLinkStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -368,7 +432,7 @@ class ARDrone_MAVLinkStream
                         struct ARDrone_Statistic,
                         struct ARDrone_AllocatorConfiguration,
                         struct Stream_ModuleConfiguration,
-                        struct ARDrone_ModuleHandlerConfiguration,
+                        ModuleConfigurationType,
                         struct ARDrone_SessionData,
                         ARDrone_StreamSessionData_t,
                         ARDrone_ControlMessage_t,
@@ -381,28 +445,29 @@ class ARDrone_MAVLinkStream
                                ARDrone_SessionMessage> inherited2;
 
  public:
-  ARDrone_MAVLinkStream ();
-  inline virtual ~ARDrone_MAVLinkStream () { inherited::shutdown (); }
+  ARDrone_MAVLinkStream_T ();
+  inline virtual ~ARDrone_MAVLinkStream_T () { inherited::shutdown (); }
 
+  using inherited::start;
+  using inherited::wait;
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ModuleList_t&, // return value: module list
                      bool&);               // return value: delete modules ?
 
   // implement Common_IInitialize_T
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual bool initialize (const CONFIGURATION_T&); // configuration
+#else
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
-
-  // implement Common_IStatistic_T
-  // *NOTE*: these delegate to runtimeStatistic_
-  virtual bool collect (struct ARDrone_Statistic&); // return value: statistic data
-  virtual void report () const;
+#endif
 
   // implement ARDrone_IMAVLinkNotify
   virtual void messageCB (const struct __mavlink_message&, // message record
                           void*);                          // payload handle
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream (const ARDrone_MAVLinkStream&))
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream& operator= (const ARDrone_MAVLinkStream&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream_T (const ARDrone_MAVLinkStream_T&))
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_MAVLinkStream_T& operator= (const ARDrone_MAVLinkStream_T&))
 
   // convenient types
   struct SUBSCRIBERS_IS_EQUAL_P
@@ -417,6 +482,15 @@ class ARDrone_MAVLinkStream
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 };
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_MAVLinkStream_t;
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_MAVLinkStream_t;
+#else
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_MAVLinkStream_t;
+#endif
+
+//////////////////////////////////////////
 
 // include template definition
 #include "ardrone_stream.inl"

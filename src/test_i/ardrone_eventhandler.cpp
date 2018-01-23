@@ -34,10 +34,10 @@
 #include "ardrone_macros.h"
 #include "ardrone_stream.h"
 
-ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_in,
+ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* CBData_in,
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
- , GtkCBData_ (GtkCBData_in)
+ , CBData_ (CBData_in)
  , ControlNotify_ (NULL)
  , MAVLinkNotify_ (NULL)
  , NavDataNotify_ (NULL)
@@ -46,7 +46,7 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData* GtkCBData_
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
   // sanity check(s)
-  ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (CBData_);
 }
 
 void
@@ -56,25 +56,25 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
   // sanity check(s)
-  ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (CBData_);
   ACE_ASSERT (sessionData_in.state);
 
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
     streams_.insert (std::make_pair (sessionId_in, sessionData_in.state->type));
   } // end lock scope
 
   if (sessionData_in.state->type == ARDRONE_STREAM_NAVDATA)
   {
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
       guint event_source_id = g_idle_add (idle_session_start_cb,
-                                          GtkCBData_);
+                                          CBData_);
       if (event_source_id == 0)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
         return;
       } // end IF
-      GtkCBData_->eventSourceIds.insert (event_source_id);
+      CBData_->eventSourceIds.insert (event_source_id);
     } // end lock scope
   } // end IF
 }
@@ -88,7 +88,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   ACE_UNUSED_ARG (sessionId_in);
 
   // sanity check(s)
-  ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (CBData_);
 
   bool message_event = true;
   enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
@@ -178,16 +178,16 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   } // end SWITCH
 
   if (message_event)
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
 //    iterator =
-//      GtkCBData_->progressData->statistic.streamStatistic.find (stream_type_e);
-//    ACE_ASSERT (iterator != GtkCBData_->progressData->statistic.streamStatistic.end ());
+//      CBData_->progressData->statistic.streamStatistic.find (stream_type_e);
+//    ACE_ASSERT (iterator != CBData_->progressData->statistic.streamStatistic.end ());
 //    (*iterator).second.bytes += message_in.total_length ();
 //    ++(*iterator).second.dataMessages;
-//    +GtkCBData_->progressData->statistic;
+//    +CBData_->progressData->statistic;
 
-    GtkCBData_->eventStack.push_back (std::make_pair (stream_type_e,
-                                                      ARDRONE_EVENT_MESSAGE_DATA));
+    CBData_->eventStack.push_back (std::make_pair (stream_type_e,
+                                                   ARDRONE_EVENT_MESSAGE_DATA));
   } // end lock scope
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -195,7 +195,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   if (refresh_display)
   {
     guint event_source_id = g_idle_add (idle_update_video_display_cb,
-                                        GtkCBData_);
+                                        CBData_);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -219,10 +219,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   ARDroneStreamStatisticIterator_t iterator_2;
 
   // sanity check(s)
-  ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (CBData_);
 
   // update session id <-> stream mapping ?
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
       const ARDrone_StreamSessionData_t& session_data_container_r =
@@ -273,7 +273,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     case STREAM_SESSION_MESSAGE_RESIZE:
     {
       // sanity check(s)
-      ACE_ASSERT (GtkCBData_->configuration);
+      ACE_ASSERT (CBData_->configuration);
 
       event_e = ARDRONE_EVENT_RESIZE;
 
@@ -283,15 +283,60 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_video_streamconfiguration_iterator;
+      ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_3;
+      ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_4;
+      ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_video_streamconfiguration_iterator;
+      ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
+      ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_4;
+      switch (CBData_->mediaFramework)
+      {
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+        {
+          directshow_video_streamconfiguration_iterator =
+            CBData_->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+          ACE_ASSERT (directshow_video_streamconfiguration_iterator != CBData_->configuration->directShowStreamConfigurations.end ());
+          directshow_iterator_3 =
+            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+          ACE_ASSERT (directshow_iterator_3 != (*directshow_video_streamconfiguration_iterator).second.end ());
+          directshow_iterator_4 =
+            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+          ACE_ASSERT (directshow_iterator_4 != (*directshow_video_streamconfiguration_iterator).second.end ());
+          break;
+        }
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        {
+          mediafoundation_video_streamconfiguration_iterator =
+            CBData_->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+          ACE_ASSERT (mediafoundation_video_streamconfiguration_iterator != CBData_->configuration->mediaFoundationStreamConfigurations.end ());
+          mediafoundation_iterator_3 =
+            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+          ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
+          mediafoundation_iterator_4 =
+            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+          ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
+          break;
+        }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                      CBData_->mediaFramework));
+          return;
+        }
+    } // end SWITCH
+#else
       ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
-          GtkCBData_->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-      ACE_ASSERT (video_streamconfiguration_iterator != GtkCBData_->configuration->streamConfigurations.end ());
+          CBData_->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (video_streamconfiguration_iterator != CBData_->configuration->streamConfigurations.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
         (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
         (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
+#endif
 
       if (session_data_r.lock)
       {
@@ -301,59 +346,78 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
       } // end IF
 
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-        // sanity check(s)
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_p =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+      switch (CBData_->mediaFramework)
+      {
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+        {
+          // sanity check(s)
+          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+          struct tagVIDEOINFOHEADER* video_info_header_p =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-        ACE_ASSERT ((*iterator_3).second.second.format);
-        ACE_ASSERT ((*iterator_3).second.second.format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_2 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.format->pbFormat);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat->formattype == FORMAT_VideoInfo);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+          struct tagVIDEOINFOHEADER* video_info_header_2 =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.inputFormat->pbFormat);
 
-        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration);
-        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format);
-        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_3 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+          struct tagVIDEOINFOHEADER* video_info_header_3 =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-        ACE_ASSERT ((*iterator_4).second.second.format);
-        ACE_ASSERT ((*iterator_4).second.second.format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_4).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_4 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_4).second.second.format->pbFormat);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat->formattype == FORMAT_VideoInfo);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+          struct tagVIDEOINFOHEADER* video_info_header_4 =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_4).second.second.inputFormat->pbFormat);
 
-        ACE_ASSERT (session_data_r.format);
-        ACE_ASSERT (session_data_r.format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT (session_data_r.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_5 =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.format->pbFormat);
+          ACE_ASSERT (session_data_r.inputFormat);
+          ACE_ASSERT (session_data_r.inputFormat->formattype == FORMAT_VideoInfo);
+          ACE_ASSERT (session_data_r.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+          struct tagVIDEOINFOHEADER* video_info_header_5 =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.inputFormat->pbFormat);
 
-        video_info_header_p->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-        video_info_header_p->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-        video_info_header_p->bmiHeader.biSizeImage =
-          DIBSIZE (video_info_header_p->bmiHeader);
-        video_info_header_2->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-        video_info_header_2->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-        video_info_header_2->bmiHeader.biSizeImage =
-          DIBSIZE (video_info_header_2->bmiHeader);
-        video_info_header_3->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-        video_info_header_3->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-        video_info_header_3->bmiHeader.biSizeImage =
-          DIBSIZE (video_info_header_3->bmiHeader);
-        video_info_header_4->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-        video_info_header_4->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-        video_info_header_4->bmiHeader.biSizeImage =
-          DIBSIZE (video_info_header_4->bmiHeader);
+          video_info_header_p->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+          video_info_header_p->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+          video_info_header_p->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_p->bmiHeader);
+          video_info_header_2->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+          video_info_header_2->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+          video_info_header_2->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_2->bmiHeader);
+          video_info_header_3->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+          video_info_header_3->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+          video_info_header_3->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_3->bmiHeader);
+          video_info_header_4->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
+          video_info_header_4->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
+          video_info_header_4->bmiHeader.biSizeImage =
+            DIBSIZE (video_info_header_4->bmiHeader);
+          break;
+        }
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        {
+          ACE_ASSERT (false); // *TODO*
+          break;
+        }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                      CBData_->mediaFramework));
+          return;
+        }
+      } // end SWITCH
 #else
         (*iterator_3).second.second.sourceFormat.height = session_data_r.height;
         (*iterator_3).second.second.sourceFormat.width = session_data_r.width;
@@ -377,7 +441,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
       // sanity check(s)
-      ACE_ASSERT (GtkCBData_->progressData);
+      ACE_ASSERT (CBData_->progressData);
 
       const ARDrone_StreamSessionData_t& session_data_container_r =
         message_in.getR ();
@@ -392,8 +456,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
       } // end IF
 
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-        GtkCBData_->progressData->statistic = session_data_r.statistic;
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+        CBData_->progressData->statistic = session_data_r.statistic;
       } // end lock scope
 
       if (session_data_r.lock)
@@ -415,8 +479,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
   } // end SWITCH
 
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
-    GtkCBData_->eventStack.push_back (std::make_pair (stream_type_e,
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+    CBData_->eventStack.push_back (std::make_pair (stream_type_e,
                                                       event_e));
   } // end lock scope
 }
@@ -427,12 +491,12 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
   // sanity check(s)
-  ACE_ASSERT (GtkCBData_);
+  ACE_ASSERT (CBData_);
 
   enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
     iterator = streams_.find (sessionId_in);
     if (iterator != streams_.end ())
     {
@@ -452,12 +516,10 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       // *NOTE*: the device closes the control connection after transmitting
       //         configuration data
       //         --> reconnect automatically ?
-      ACE_ASSERT (GtkCBData_->controlStream);
-
-      Common_UI_GTKBuildersIterator_t iterator =
-        GtkCBData_->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+      Common_UI_GTK_BuildersIterator_t iterator =
+        CBData_->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
       // sanity check(s)
-      ACE_ASSERT (iterator != GtkCBData_->builders.end ());
+      ACE_ASSERT (iterator != CBData_->builders.end ());
 
       // disconnecting ?
       GtkToggleAction* toggle_action_p =
@@ -473,24 +535,50 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       } // end IF
       gdk_threads_leave ();
 
-      GtkCBData_->controlStream->start ();
-  
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      switch (CBData_->mediaFramework)
+      {
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+        {
+          ACE_ASSERT (CBData_->directShowControlStream);
+          CBData_->directShowControlStream->start ();
+          break;
+        }
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        {
+          ACE_ASSERT (CBData_->mediaFoundationControlStream);
+          CBData_->mediaFoundationControlStream->start ();
+          break;
+      }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                      CBData_->mediaFramework));
+          return;
+        }
+    } // end SWITCH
+#else
+      ACE_ASSERT (CBData_->controlStream);
+      CBData_->controlStream->start ();
+#endif
+
       break;
     }
     case ARDRONE_STREAM_MAVLINK:
       break;
     case ARDRONE_STREAM_NAVDATA:
     {
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, GtkCBData_->lock);
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
         guint event_source_id = g_idle_add (idle_session_end_cb,
-                                            GtkCBData_);
+                                            CBData_);
         if (event_source_id == 0)
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
           return;
         } // end IF
-        GtkCBData_->eventSourceIds.insert (event_source_id);
+        CBData_->eventSourceIds.insert (event_source_id);
       } // end lock scope
 
       break;

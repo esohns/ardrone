@@ -82,7 +82,7 @@ class ARDrone_EventHandler
   };
 
   bool                      consoleMode_;
-  struct ARDrone_GtkCBData* GtkCBData_;
+  struct ARDrone_GtkCBData* CBData_;
   ARDrone_IControlNotify*   ControlNotify_;
   ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
   ARDrone_INavDataNotify*   NavDataNotify_;

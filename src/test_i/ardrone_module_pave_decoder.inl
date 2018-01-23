@@ -359,11 +359,11 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
           const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       // sanity check(s)
-      ACE_ASSERT (session_data_r.format);
-      ACE_ASSERT (session_data_r.format->formattype == FORMAT_VideoInfo);
-      ACE_ASSERT (session_data_r.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      ACE_ASSERT (session_data_r.inputFormat);
+      ACE_ASSERT (session_data_r.inputFormat->formattype == FORMAT_VideoInfo);
+      ACE_ASSERT (session_data_r.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
       struct tagVIDEOINFOHEADER* video_info_header_p =
-        reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.format->pbFormat);
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.inputFormat->pbFormat);
 #endif
       // *TODO*: remove type inferences
       switch (videoMode_)
