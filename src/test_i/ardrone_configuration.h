@@ -42,7 +42,7 @@
 #include "common_gl_common.h"
 
 #include "common_ui_gtk_builder_definition.h"
-#include "common_ui_gtk_common.h"
+#include "common_ui_gtk_gl_common.h"
 #include "common_ui_gtk_manager.h"
 
 #include "stream_common.h"
@@ -58,34 +58,13 @@
 
 #include "ardrone_defines.h"
 #include "ardrone_network.h"
+#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 // forward declarations
 class ARDrone_MAVLinkMessage;
 class ARDrone_NavDataMessage;
-
-struct ARDrone_AllocatorConfiguration
- : Stream_AllocatorConfiguration
-{
-  ARDrone_AllocatorConfiguration ()
-   : Stream_AllocatorConfiguration ()
-  {
-    defaultBufferSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-
-    // *NOTE*: facilitate (message block) data buffers to be scanned with
-    //         (f)lexs' yy_scan_buffer() method, and support 'padding' in ffmpeg
-    paddingBytes =
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      AV_INPUT_BUFFER_PADDING_SIZE;
-#else
-      FF_INPUT_BUFFER_PADDING_SIZE;
-#endif
-    paddingBytes =
-      std::max (static_cast<unsigned int> (STREAM_DECODER_FLEX_BUFFER_BOUNDARY_SIZE),
-                paddingBytes);
-  };
-};
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_FilterConfiguration
@@ -128,32 +107,58 @@ struct ARDrone_WLANMonitorConfiguration
    : Net_WLAN_MonitorConfiguration ()
    , userData (NULL)
   {
-    autoAssociate = ARDRONE_DEFAULT_SSID_AUTOASSOCIATE;
+    autoAssociate = ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+    enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
   };
 
   struct ARDrone_UserData* userData;
 };
 
-struct ARDrone_ConnectionConfiguration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef std::map<std::string, // module name
-                 struct ARDrone_ConnectionConfiguration> ARDrone_StreamConnectionConfigurations_t;
+                 ARDrone_DirectShow_ConnectionConfiguration_t> ARDrone_DirectShow_StreamConnectionConfigurations_t;
+typedef ARDrone_DirectShow_StreamConnectionConfigurations_t::iterator ARDrone_DirectShow_StreamConnectionConfigurationIterator_t;
+typedef std::map<std::string, // stream name
+                 ARDrone_DirectShow_StreamConnectionConfigurations_t> ARDrone_DirectShow_ConnectionConfigurations_t;
+typedef ARDrone_DirectShow_ConnectionConfigurations_t::iterator ARDrone_DirectShow_ConnectionConfigurationIterator_t;
+
+typedef std::map<std::string, // module name
+                 ARDrone_MediaFoundation_ConnectionConfiguration_t> ARDrone_MediaFoundation_StreamConnectionConfigurations_t;
+typedef ARDrone_MediaFoundation_StreamConnectionConfigurations_t::iterator ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t;
+typedef std::map<std::string, // stream name
+                 ARDrone_MediaFoundation_StreamConnectionConfigurations_t> ARDrone_MediaFoundation_ConnectionConfigurations_t;
+typedef ARDrone_MediaFoundation_ConnectionConfigurations_t::iterator ARDrone_MediaFoundation_ConnectionConfigurationIterator_t;
+#else
+typedef std::map<std::string, // module name
+                 ARDrone_ConnectionConfiguration_t> ARDrone_StreamConnectionConfigurations_t;
 typedef ARDrone_StreamConnectionConfigurations_t::iterator ARDrone_StreamConnectionConfigurationIterator_t;
 typedef std::map<std::string, // stream name
                  ARDrone_StreamConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
 typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
+#endif
 struct ARDrone_Configuration
 {
   ARDrone_Configuration ()
    : allocatorConfiguration ()
    , signalHandlerConfiguration ()
    , WLANMonitorConfiguration ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , directShowConnectionConfigurations ()
+   , mediaFoundationConnectionConfigurations ()
+#else
    , connectionConfigurations ()
+#endif
    , parserConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowFilterConfiguration ()
    , directShowPinConfiguration ()
 #endif
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , directShowStreamConfigurations ()
+   , mediaFoundationStreamConfigurations ()
+#else
    , streamConfigurations ()
+#endif
    , streamSubscribers ()
    , streamSubscribersLock ()
    , userData (NULL)
@@ -169,13 +174,23 @@ struct ARDrone_Configuration
   struct ARDrone_SignalHandlerConfiguration                      signalHandlerConfiguration;
 
   struct ARDrone_WLANMonitorConfiguration                        WLANMonitorConfiguration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_ConnectionConfigurations_t                  directShowConnectionConfigurations;
+  ARDrone_MediaFoundation_ConnectionConfigurations_t             mediaFoundationConnectionConfigurations;
+#else
   ARDrone_ConnectionConfigurations_t                             connectionConfigurations;
+#endif
   struct Common_ParserConfiguration                              parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_FilterConfiguration                  directShowFilterConfiguration;
   struct Stream_MediaFramework_DirectShow_FilterPinConfiguration directShowPinConfiguration;
 #endif
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurations_t                      directShowStreamConfigurations;
+  ARDrone_MediaFoundation_StreamConfigurations_t                 mediaFoundationStreamConfigurations;
+#else
   ARDrone_StreamConfigurations_t                                 streamConfigurations;
+#endif
   ARDrone_Subscribers_t                                          streamSubscribers;
   ACE_SYNCH_RECURSIVE_MUTEX                                      streamSubscribersLock;
 
@@ -198,94 +213,48 @@ struct ARDrone_GtkProgressData
   struct ARDrone_Statistic statistic;
 };
 
-extern const char video_stream_name_string_[];
-typedef Stream_Base_T<ACE_MT_SYNCH,
-                      Common_TimePolicy_t,
-                      video_stream_name_string_,
-                      enum Stream_ControlType,
-                      enum Stream_SessionMessageType,
-                      enum Stream_StateMachine_ControlState,
-                      struct ARDrone_StreamState,
-                      struct ARDrone_StreamConfiguration,
-                      struct ARDrone_Statistic,
-                      struct ARDrone_AllocatorConfiguration,
-                      struct Stream_ModuleConfiguration,
-                      struct ARDrone_ModuleHandlerConfiguration,
-                      struct ARDrone_SessionData,
-                      ARDrone_SessionData_t,
-                      ARDrone_ControlMessage_t,
-                      ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_VideoStreamBase_t;
-extern const char control_stream_name_string_[];
-typedef Stream_Base_T<ACE_MT_SYNCH,
-                      Common_TimePolicy_t,
-                      control_stream_name_string_,
-                      enum Stream_ControlType,
-                      enum Stream_SessionMessageType,
-                      enum Stream_StateMachine_ControlState,
-                      struct ARDrone_StreamState,
-                      struct ARDrone_StreamConfiguration,
-                      struct ARDrone_Statistic,
-                      struct ARDrone_AllocatorConfiguration,
-                      struct Stream_ModuleConfiguration,
-                      struct ARDrone_ModuleHandlerConfiguration,
-                      struct ARDrone_SessionData,
-                      ARDrone_SessionData_t,
-                      ARDrone_ControlMessage_t,
-                      ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_ControlStreamBase_t;
-extern const char navdata_stream_name_string_[];
-typedef Stream_Base_T<ACE_MT_SYNCH,
-                      Common_TimePolicy_t,
-                      navdata_stream_name_string_,
-                      enum Stream_ControlType,
-                      enum Stream_SessionMessageType,
-                      enum Stream_StateMachine_ControlState,
-                      struct ARDrone_StreamState,
-                      struct ARDrone_StreamConfiguration,
-                      struct ARDrone_Statistic,
-                      struct ARDrone_AllocatorConfiguration,
-                      struct Stream_ModuleConfiguration,
-                      struct ARDrone_ModuleHandlerConfiguration,
-                      struct ARDrone_SessionData,
-                      ARDrone_SessionData_t,
-                      ARDrone_ControlMessage_t,
-                      ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_NavDataStreamBase_t;
-extern const char mavlink_stream_name_string_[];
-typedef Stream_Base_T<ACE_MT_SYNCH,
-                      Common_TimePolicy_t,
-                      mavlink_stream_name_string_,
-                      enum Stream_ControlType,
-                      enum Stream_SessionMessageType,
-                      enum Stream_StateMachine_ControlState,
-                      struct ARDrone_StreamState,
-                      struct ARDrone_StreamConfiguration,
-                      struct ARDrone_Statistic,
-                      struct ARDrone_AllocatorConfiguration,
-                      struct Stream_ModuleConfiguration,
-                      struct ARDrone_ModuleHandlerConfiguration,
-                      struct ARDrone_SessionData,
-                      ARDrone_SessionData_t,
-                      ARDrone_ControlMessage_t,
-                      ARDrone_Message,
-                      ARDrone_SessionMessage> ARDrone_MAVLinkStreamBase_t;
 struct ARDrone_GtkCBData
- : Common_UI_GTKState
+#if defined (GTKGL_SUPPORT)
+  : Common_UI_GTK_GLState
+#else
+  : Common_UI_GTK_State
+#endif
 {
   ARDrone_GtkCBData ()
-   : Common_UI_GTKState ()
+#if defined (GTKGL_SUPPORT)
+   : Common_UI_GTK_GLState ()
+#else
+   : Common_UI_GTK_State ()
+#endif
    , configuration (NULL)
    , controller (NULL)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , directShowControlStream (NULL)
+   , directShowMAVLinkStream (NULL)
+   , directShowNavDataStream (NULL)
+   , directShowAsynchVideoStream (NULL)
+   , directShowVideoStream (NULL)
+   , mediaFoundationControlStream (NULL)
+   , mediaFoundationMAVLinkStream (NULL)
+   , mediaFoundationNavDataStream (NULL)
+   , mediaFoundationAsynchVideoStream (NULL)
+   , mediaFoundationVideoStream (NULL)
+#else
    , controlStream (NULL)
+   , MAVLinkStream (NULL)
+   , NavDataStream (NULL)
+   , asynchVideoStream (NULL)
+   , videoStream (NULL)
+#endif
    , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
    , eventStack ()
    , frameCounter (0)
    , localSAP ()
-   , MAVLinkStream (NULL)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
+#endif
    , messages ()
    , messageAllocator (NULL)
-   , NavDataStream (NULL)
 #if defined (GTKGL_SUPPORT)
    , openGLModelListId (0)
    , openGLRefreshId (0)
@@ -298,11 +267,7 @@ struct ARDrone_GtkCBData
    , progressData (NULL)
    , stateEventId (0)
    , timeStamp (ACE_Time_Value::zero)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
-#endif
    , videoMode (ARDRONE_DEFAULT_VIDEO_MODE)
-   , videoStream (NULL)
   {
 #if defined (GTKGL_SUPPORT)
 //    resetCamera ();
@@ -317,53 +282,67 @@ struct ARDrone_GtkCBData
 //  };
 #endif
 
-  struct ARDrone_Configuration*   configuration;
-  ARDrone_IController*            controller;
+  struct ARDrone_Configuration*                configuration;
+  ARDrone_IController*                         controller;
   // *NOTE*: on the host ("server"), use the device bias registers instead !
   // *TODO*: implement a client->server protocol to do this
   //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
-  ARDrone_ControlStreamBase_t*    controlStream;
-  bool                            enableVideo;
-  ARDrone_Events_t                eventStack;
-  unsigned int                    frameCounter;
-  ACE_INET_Addr                   localSAP;
-  ARDrone_MAVLinkStreamBase_t*    MAVLinkStream;
-  ARDrone_Messages_t              messages;
-  ARDrone_MessageAllocator_t*     messageAllocator;
-  ARDrone_NavDataStreamBase_t*    NavDataStream;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_ControlStream_t*          directShowControlStream;
+  ARDrone_DirectShow_MAVLinkStream_t*          directShowMAVLinkStream;
+  ARDrone_DirectShow_NavDataStream_t*          directShowNavDataStream;
+  ARDrone_DirectShow_AsynchVideoStream_t*      directShowAsynchVideoStream;
+  ARDrone_DirectShow_VideoStream_t*            directShowVideoStream;
+  ARDrone_MediaFoundation_ControlStream_t*     mediaFoundationControlStream;
+  ARDrone_MediaFoundation_MAVLinkStream_t*     mediaFoundationMAVLinkStream;
+  ARDrone_MediaFoundation_NavDataStream_t*     mediaFoundationNavDataStream;
+  ARDrone_MediaFoundation_AsynchVideoStream_t* mediaFoundationAsynchVideoStream;
+  ARDrone_MediaFoundation_VideoStream_t*       mediaFoundationVideoStream;
+#else
+  ARDrone_ControlStream_t*                     controlStream;
+  ARDrone_MAVLinkStream_t*                     MAVLinkStream;
+  ARDrone_NavDataStream_t*                     NavDataStream;
+  ARDrone_AsynchVideoStream_t*                 asynchVideoStream;
+  ARDrone_VideoStream_t*                       videoStream;
+#endif
+  bool                                         enableVideo;
+  ARDrone_Events_t                             eventStack;
+  unsigned int                                 frameCounter;
+  ACE_INET_Addr                                localSAP;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  enum Stream_MediaFramework_Type              mediaFramework;
+#endif
+  ARDrone_Messages_t                           messages;
+  ARDrone_MessageAllocator_t*                  messageAllocator;
 #if defined (GTKGL_SUPPORT)
-  GLuint                          openGLModelListId;
-  guint                           openGLRefreshId;
-  struct Common_GL_Scene          openGLScene;
+  GLuint                                       openGLModelListId;
+  guint                                        openGLRefreshId;
+  struct Common_GL_Scene                       openGLScene;
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  GdkPixbuf*                      pixelBuffer;
+  GdkPixbuf*                                   pixelBuffer;
 #endif
-  struct ARDrone_GtkProgressData* progressData;
-  guint                           stateEventId;
-  ACE_Time_Value                  timeStamp;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  bool                            useMediaFoundation;
-#endif
-  enum ARDrone_VideoMode          videoMode;
-  ARDrone_VideoStreamBase_t*      videoStream;
+  struct ARDrone_GtkProgressData*              progressData;
+  guint                                        stateEventId;
+  ACE_Time_Value                               timeStamp;
+  enum ARDrone_VideoMode                       videoMode;
 };
 
 struct ARDrone_ThreadData
 {
   ARDrone_ThreadData ()
-   : GtkCBData (NULL)
+   : CBData (NULL)
    , eventSourceId (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , useMediaFoundation (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
+   , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
 #endif
   {};
 
-  struct ARDrone_GtkCBData* GtkCBData;
-  guint                     eventSourceId;
+  struct ARDrone_GtkCBData*       CBData;
+  guint                           eventSourceId;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  bool                      useMediaFoundation;
+  enum Stream_MediaFramework_Type mediaFramework;
 #endif
 };
 

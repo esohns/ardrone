@@ -226,7 +226,10 @@
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.avi"
 #define ARDRONE_VIDEO_RAW_FILE_NAME                        "ardrone.rgb"
 
-#define ARDRONE_DEFAULT_SSID_AUTOASSOCIATE                 true
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#define ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING         true
+#endif
+#define ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE            true
 #define ARDRONE_DEFAULT_VIDEO_DISPLAY                      true
 #define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
 #define ARDRONE_DEFAULT_VIDEO_MODE                         ARDRONE_VIDEOMODE_360P

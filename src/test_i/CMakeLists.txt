@@ -82,6 +82,67 @@ else ()
 endif ()
 add_definitions (-DACE_HAS_DLL)
 
+set (ACE_XML_LIB_FILE libACEXML.so)
+if (UNIX)
+# message ("CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
+ find_library (ACE_XML_LIBRARY ${ACE_XML_LIB_FILE}
+               HINTS ${CMAKE_CURRENT_BINARY_DIR}/../../../ATCD/ACE /usr/local
+               PATHS ENV ACE_ROOT
+               PATH_SUFFIXES lib
+               DOC "searching for ${ACE_XML_LIB_FILE}"
+               NO_DEFAULT_PATH)
+# else ()
+#  find_library (ACEXML_LIBRARY ${ACE_XML_LIB_FILE}
+#                DOC "searching for ${ACE_XML_LIB_FILE} (system paths)")
+# endif ()
+elseif (WIN32)
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  set (LIB_FILE_SUFFIX d)
+ endif ()
+ unset (ACE_XML_LIB_FILE)
+ set (ACE_XML_LIB_FILE ACEXML${LIB_FILE_SUFFIX}.lib)
+ find_library (ACE_XML_LIBRARY ${ACE_XML_LIB_FILE}
+               PATHS ENV ACE_ROOT
+               PATH_SUFFIXES lib lib\\${CMAKE_BUILD_TYPE}\\Win32
+               DOC "searching for ${ACE_XML_LIB_FILE}")
+endif ()
+#if (NOT EXISTS ACE_XML_LIBRARY)
+if (NOT ACE_XML_LIBRARY)
+ message (FATAL_ERROR "Could not find ${ACE_XML_LIB_FILE} (was: \"${ACE_XML_LIBRARY}\"), aborting")
+else ()
+ #message (STATUS "Found ACEXML library \"${ACE_XML_LIBRARY}\"")
+endif ()
+set (ACE_XML_PARSER_LIB_FILE libACEXML_Parser.so)
+if (UNIX)
+# message ("CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
+ find_library (ACE_XML_PARSER_LIBRARY ${ACE_XML_PARSER_LIB_FILE}
+               HINTS ${CMAKE_CURRENT_BINARY_DIR}/../../../ATCD/ACE /usr/local
+               PATHS ENV ACE_ROOT
+               PATH_SUFFIXES lib
+               DOC "searching for ${ACE_XML_PARSER_LIB_FILE}"
+               NO_DEFAULT_PATH)
+# else ()
+#  find_library (ACE_XML_PARSER_LIBRARY ${ACE_XML_PARSER_LIB_FILE}
+#                DOC "searching for ${ACE_XML_PARSER_LIB_FILE} (system paths)")
+# endif ()
+elseif (WIN32)
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  set (LIB_FILE_SUFFIX d)
+ endif ()
+ unset (ACE_XML_PARSER_LIB_FILE)
+ set (ACE_XML_PARSER_LIB_FILE ACEXML_Parser${LIB_FILE_SUFFIX}.lib)
+ find_library (ACE_XML_PARSER_LIBRARY ${ACE_XML_PARSER_LIB_FILE}
+               PATHS ENV ACE_ROOT
+               PATH_SUFFIXES lib lib\\${CMAKE_BUILD_TYPE}\\Win32
+               DOC "searching for ${ACE_XML_PARSER_LIB_FILE}")
+endif ()
+#if (NOT EXISTS ACE_XML_PARSER_LIBRARY)
+if (NOT ACE_XML_PARSER_LIBRARY)
+ message (FATAL_ERROR "Could not find ${ACE_XML_PARSER_LIB_FILE} (was: \"${ACE_XML_PARSER_LIBRARY}\"), aborting")
+else ()
+ #message (STATUS "Found ACEXML parser library \"${ACE_XML_PARSER_LIBRARY}\"")
+endif ()
+
 if (WIN32)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   add_definitions (-DDEBUG) # activate DirectShow debug logging
@@ -143,6 +204,7 @@ if (UNIX)
  pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libswscale)
  pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
  pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
+ pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
  if (GTK3_SUPPORT)
   pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
 #  if (GTKGL_SUPPORT AND GTKGLAREA_SUPPORT)
@@ -271,7 +333,9 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/gl)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/image)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/timer)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui/gtk)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dec)
@@ -282,6 +346,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/net)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/vis)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/client_server)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/wlan)
@@ -301,6 +366,8 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/cmake/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
  include_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY})
  # *TODO*: repair pkgconfig support
@@ -334,6 +401,8 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/image)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/timer)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/ui)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/ui/gtk)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src/xml)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/dec)
@@ -344,6 +413,7 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/net)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/vis)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/client_server)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/wlan)
@@ -381,6 +451,7 @@ set (ardrone_EXE_SRCS
      ardrone_module_controller.inl
      ardrone_module_eventhandler.cpp
      ardrone_module_eventhandler.h
+     ardrone_module_eventhandler.inl
      ardrone_module_mavlink_decoder.cpp
      ardrone_module_mavlink_decoder.h
      ardrone_module_mavlink_decoder.inl
@@ -464,6 +535,7 @@ if (UNIX)
  target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
  target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
  target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${PKG_ASSIMP_LIBRARIES})
 # link_directories (/usr/local/lib/dbus-1.0)
 # target_link_libraries (${EXECUTABLE} /usr/local/lib/dbus-1.0/libdbus-1.so)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/../../../../dbus/dbus/.libs/libdbus-1.so.3)
@@ -487,9 +559,14 @@ elseif (WIN32)
  else ()
   target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbase.lib)
  endif ()
+
+ target_link_libraries (${EXECUTABLE} ${ACE_XML_LIBRARY})
+ target_link_libraries (${EXECUTABLE} ${ACE_XML_PARSER_LIBRARY})
+
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libswscale/swscale.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
 # *TODO*: repair WIN32 pkgconfig support
  if (GTK3_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gio-2.0.lib)
@@ -522,6 +599,7 @@ if (WIN32)
  set_target_properties (${EXECUTABLE} PROPERTIES LINK_FLAGS "/FORCE:MULTIPLE /SAFESEH:NO")
 endif ()
 target_link_libraries (${EXECUTABLE} CommonUI)
+target_link_libraries (${EXECUTABLE} CommonUI_GTK)
 
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
@@ -610,28 +688,29 @@ elseif (WIN32)
 #                        FORWARD_ARGS
                           RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
 #                                              ${PROJECT_SOURCE_DIR}/../openssl/bin
-                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/Debug
+                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavformat
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
                                                ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin
+                                               ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
                                                G:/software/Development/dll
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/Debug
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/Debug
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/Debug
-#                                              ${PROJECT_SOURCE_DIR}/cmake/src/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/${CMAKE_BUILD_TYPE}
+#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/${CMAKE_BUILD_TYPE}
+#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
+#                                              ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})
  else ()
@@ -640,7 +719,7 @@ elseif (WIN32)
 #                        FORWARD_ARGS
                           RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
 #                                              ${PROJECT_SOURCE_DIR}/../openssl/bin
-                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/Debug
+                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavformat
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
@@ -648,20 +727,20 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
                                                ${PROJECT_SOURCE_DIR}/../gtk2/bin
                                                G:/software/Development/dll
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/Debug
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/Debug
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/Debug
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/Debug
-                                               ${PROJECT_SOURCE_DIR}/cmake/src/Debug
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/${CMAKE_BUILD_TYPE}
+#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/${CMAKE_BUILD_TYPE}
+#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
+                                               ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
                           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
                           ENVIRONMENT ${ENVIRONMENT})
  endif ()

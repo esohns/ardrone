@@ -205,20 +205,48 @@ monitor_clip_cb (HMONITOR monitor_in,
     return FALSE;
   } // end IF
 
-  ARDrone_StreamConfigurationsIterator_t iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
-    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
-  if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                      (*iterator_2).second.second.device.c_str ()))
-    return TRUE;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      ARDrone_DirectShow_StreamConfigurationsIterator_t iterator =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (iterator != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T iterator_2 =
+        (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+      if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
+                          (*iterator_2).second.second.deviceName.c_str ()))
+        return TRUE;
+      if ((*iterator_2).second.second.fullScreen)
+        (*iterator_2).second.second.area = *clippingArea_in;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      ARDrone_MediaFoundation_StreamConfigurationsIterator_t iterator =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (iterator != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T iterator_2 =
+        (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+      if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
+                          (*iterator_2).second.second.deviceName.c_str ()))
+        return TRUE;
+      if ((*iterator_2).second.second.fullScreen)
+        (*iterator_2).second.second.area = *clippingArea_in;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_p->mediaFramework));
+      break;
+    }
+  } // end SWITCH
 
-  if ((*iterator_2).second.second.fullScreen)
-    (*iterator_2).second.second.area = *clippingArea_in;
-
-  return TRUE;
+  return FALSE;
 };
 #endif
 
@@ -601,26 +629,31 @@ stream_processing_function (void* arg_in)
   result = arg_in;
 #endif
 
-  Common_UI_GTKBuildersIterator_t iterator;
+  Common_UI_GTK_BuildersIterator_t iterator;
   //ACE_SYNCH_MUTEX* lock_p = NULL;
   struct ARDrone_ThreadData* data_p =
       static_cast<struct ARDrone_ThreadData*> (arg_in);
 
   // sanity check(s)
   ACE_ASSERT (data_p);
-  ACE_ASSERT (data_p->GtkCBData);
-  ACE_ASSERT (data_p->GtkCBData->configuration);
+  ACE_ASSERT (data_p->CBData);
+  ACE_ASSERT (data_p->CBData->configuration);
 
   iterator =
-    data_p->GtkCBData->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
-  //lock_p = &data_p->GtkCBData->lock;
+    data_p->CBData->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  //lock_p = &data_p->CBData->lock;
 
   // sanity check(s)
-  ACE_ASSERT (iterator != data_p->GtkCBData->builders.end ());
+  ACE_ASSERT (iterator != data_p->CBData->builders.end ());
 
   GtkStatusbar* statusbar_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_2;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_2;
+#else
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2;
-//  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
+#endif
+  //  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   std::ostringstream converter;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
@@ -637,19 +670,24 @@ stream_processing_function (void* arg_in)
 
     // configure streams and retrieve stream handles
 //    ARDrone_ConnectionConfigurationIterator_t iterator_3;
-    ARDrone_StreamConfigurationsIterator_t iterator_4;
-//    Stream_ISession* session_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_4;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_4;
+#else
+  ARDrone_StreamConfigurationsIterator_t iterator_4;
+#endif
+  //    Stream_ISession* session_p = NULL;
     ACE_Time_Value session_start_timeout =
         COMMON_TIME_NOW + ACE_Time_Value (3, 0);
     Common_IGetP_T<ARDrone_IController>* iget_p = NULL;
 
 //    // navdata
 ////    iterator_3 =
-////      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-////    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+////      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+////    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
 //    iterator_4 =
-//      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
-//    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+//      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
+//    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
 //    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
 //    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
 //    logfile_name_string = (*iterator_2).second.targetFileName;
@@ -660,10 +698,10 @@ stream_processing_function (void* arg_in)
 //    (*iterator_2).second.targetFileName =
 //        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
 //                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-////    configuration_p->stream = data_p->GtkCBData->NavDataStream;
-//    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
+////    configuration_p->stream = data_p->CBData->NavDataStream;
+//    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
 //    result_2 =
-//      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
+//      data_p->CBData->NavDataStream->initialize ((*iterator_4).second);
 //    if (!result_2)
 //    {
 //      ACE_DEBUG ((LM_ERROR,
@@ -671,26 +709,217 @@ stream_processing_function (void* arg_in)
 //      goto done;
 //    } // end IF
 //    (*iterator_2).second.targetFileName = logfile_name_string;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        iget_p =
+          dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->directShowNavDataStream);
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        iget_p =
+          dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->mediaFoundationNavDataStream);
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                    data_p->mediaFramework));
+        break;
+      }
+    } // end SWITCH
+#else
     iget_p =
-      dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->GtkCBData->NavDataStream);
+      dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->NavDataStream);
+#endif
     ACE_ASSERT (iget_p);
-    data_p->GtkCBData->controller =
+    data_p->CBData->controller =
       const_cast<ARDrone_IController*> (iget_p->getP ());
-    ACE_ASSERT (data_p->GtkCBData->controller);
+    ACE_ASSERT (data_p->CBData->controller);
 
     // control
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        directshow_iterator_4 =
+          data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+        ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
+        directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
+        logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
+        (*directshow_iterator_2).second.second.targetFileName =
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
+
+        //    (*iterator_2).second.stream = data_p->CBData->controlStream;
+        result_2 =
+          data_p->CBData->directShowControlStream->initialize ((*directshow_iterator_4).second);
+        if (!result_2)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
+          goto done;
+        } // end IF
+        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
+        //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
+        //ACE_ASSERT (session_p);
+        data_p->CBData->directShowControlStream->start ();
+        // *IMPORTANT NOTE*: race condition here --> add timeout
+        //    session_p->wait (false,
+        //                     &session_start_timeout);
+
+        // mavlink
+        //    iterator_3 =
+        //      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
+        //    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
+        directshow_iterator_4 =
+          data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+        ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
+        directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
+        logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
+        (*directshow_iterator_2).second.second.targetFileName =
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
+        //    (*iterator_2).second.second.stream = data_p->CBData->MAVLinkStream;
+        result_2 = data_p->CBData->directShowMAVLinkStream->initialize ((*directshow_iterator_4).second);
+        if (!result_2)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
+          goto done;
+        } // end IF
+        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
+        //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
+        //    ACE_ASSERT (session_p);
+        data_p->CBData->directShowMAVLinkStream->start ();
+        //    (*iterator_2).second.targetFileName = logfile_name_string;
+
+        // navdata
+        //    iterator_3 =
+        //      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+        //    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
+        directshow_iterator_4 =
+          data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+        ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
+        directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
+        logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
+        //    configuration_p =
+        //      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
+        //    ACE_ASSERT (configuration_p);
+        //    configuration_p->targetFileName =
+        (*directshow_iterator_2).second.second.targetFileName =
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
+        //    configuration_p->stream = data_p->CBData->NavDataStream;
+        //    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
+        result_2 =
+          data_p->CBData->directShowNavDataStream->initialize ((*directshow_iterator_4).second);
+        if (!result_2)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
+          goto done;
+        } // end IF
+        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
+        data_p->CBData->directShowNavDataStream->start ();
+        //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
+        //    ACE_ASSERT (session_p);
+        //    // *IMPORTANT NOTE*: race condition here --> add timeout
+        //    session_p->wait (false,
+        //                     &session_start_timeout);
+
+        // video
+        if (!data_p->CBData->enableVideo)
+          goto continue_;
+
+        directshow_iterator_4 =
+          data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+        ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
+        directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
+        //    (*iterator_2).second.stream = data_p->CBData->videoStream;
+        result_2 =
+          data_p->CBData->directShowVideoStream->initialize ((*directshow_iterator_4).second);
+        if (!result_2)
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to initialize video stream: \"%m\", aborting\n")));
+          goto done;
+        } // end IF
+
+        session_data_container_p = &data_p->CBData->directShowVideoStream->getR ();
+        ACE_ASSERT (session_data_container_p);
+        session_data_p =
+          &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
+        ACE_ASSERT (session_data_p);
+        converter.clear ();
+        converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+        converter << session_data_p->sessionId;
+
+        // set context id
+        gdk_threads_enter ();
+        statusbar_p =
+          GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
+                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
+        ACE_ASSERT (statusbar_p);
+        data_p->CBData->contextIds[COMMON_UI_GTK_STATUSCONTEXT_DATA] =
+          gtk_statusbar_get_context_id (statusbar_p,
+                                        converter.str ().c_str ());
+        gdk_threads_leave ();
+        //  } // end lock scope
+        data_p->CBData->directShowVideoStream->start ();
+        //    if (!data_p->CBData->videoStream->isRunning ())
+        //    {
+        //      ACE_DEBUG ((LM_ERROR,
+        //                  ACE_TEXT ("failed to start stream, aborting\n")));
+        //      return;
+        //    } // end IF
+
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        mediafoundation_iterator_4 =
+          data_p->CBData->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+        ACE_ASSERT (mediafoundation_iterator_4 != data_p->CBData->configuration->mediaFoundationStreamConfigurations.end ());
+        mediafoundation_iterator_2 = (*mediafoundation_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        ACE_ASSERT (mediafoundation_iterator_2 != (*mediafoundation_iterator_4).second.end ());
+        logfile_name_string = (*mediafoundation_iterator_2).second.second.targetFileName;
+        (*mediafoundation_iterator_2).second.second.targetFileName =
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                    data_p->mediaFramework));
+        break;
+      }
+    } // end SWITCH
+#else
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
-//    (*iterator_2).second.stream = data_p->GtkCBData->controlStream;
+    
+    //    (*iterator_2).second.stream = data_p->CBData->controlStream;
     result_2 =
-        data_p->GtkCBData->controlStream->initialize ((*iterator_4).second);
+        data_p->CBData->controlStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -698,28 +927,28 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     (*iterator_2).second.second.targetFileName = logfile_name_string;
-    //session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->controlStream);
+    //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
     //ACE_ASSERT (session_p);
-    data_p->GtkCBData->controlStream->start ();
+    data_p->CBData->controlStream->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
 
     // mavlink
 //    iterator_3 =
-//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
-//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+//      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
+//    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
-//    (*iterator_2).second.second.stream = data_p->GtkCBData->MAVLinkStream;
-    result_2 = data_p->GtkCBData->MAVLinkStream->initialize ((*iterator_4).second);
+//    (*iterator_2).second.second.stream = data_p->CBData->MAVLinkStream;
+    result_2 = data_p->CBData->MAVLinkStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -727,18 +956,18 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     (*iterator_2).second.second.targetFileName = logfile_name_string;
-//    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->MAVLinkStream);
+//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
 //    ACE_ASSERT (session_p);
-    data_p->GtkCBData->MAVLinkStream->start ();
+    data_p->CBData->MAVLinkStream->start ();
 //    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
 //    iterator_3 =
-//      data_p->GtkCBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-//    ACE_ASSERT (iterator_3 != data_p->GtkCBData->configuration->connectionConfigurations.end ());
+//      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
+//    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
@@ -749,10 +978,10 @@ stream_processing_function (void* arg_in)
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-//    configuration_p->stream = data_p->GtkCBData->NavDataStream;
-//    (*iterator_2).second.stream = data_p->GtkCBData->NavDataStream;
+//    configuration_p->stream = data_p->CBData->NavDataStream;
+//    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
     result_2 =
-      data_p->GtkCBData->NavDataStream->initialize ((*iterator_4).second);
+      data_p->CBData->NavDataStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -760,25 +989,25 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     (*iterator_2).second.second.targetFileName = logfile_name_string;
-    data_p->GtkCBData->NavDataStream->start ();
-//    session_p = dynamic_cast<Stream_ISession*> (data_p->GtkCBData->NavDataStream);
+    data_p->CBData->NavDataStream->start ();
+//    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
 //    ACE_ASSERT (session_p);
 //    // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
 
     // video
-    if (!data_p->GtkCBData->enableVideo)
+    if (!data_p->CBData->enableVideo)
       goto continue_;
 
     iterator_4 =
-      data_p->GtkCBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-    ACE_ASSERT (iterator_4 != data_p->GtkCBData->configuration->streamConfigurations.end ());
+      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-//    (*iterator_2).second.stream = data_p->GtkCBData->videoStream;
+//    (*iterator_2).second.stream = data_p->CBData->videoStream;
     result_2 =
-        data_p->GtkCBData->videoStream->initialize ((*iterator_4).second);
+        data_p->CBData->videoStream->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -786,7 +1015,7 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = &data_p->GtkCBData->videoStream->getR ();
+    session_data_container_p = &data_p->CBData->videoStream->getR ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
@@ -801,26 +1030,57 @@ stream_processing_function (void* arg_in)
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
     ACE_ASSERT (statusbar_p);
-    data_p->GtkCBData->contextIds[GTK_STATUSCONTEXT_DATA] =
+    data_p->CBData->contextIds[COMMON_UI_GTK_STATUSCONTEXT_DATA] =
         gtk_statusbar_get_context_id (statusbar_p,
                                       converter.str ().c_str ());
     gdk_threads_leave ();
 //  } // end lock scope
-    data_p->GtkCBData->videoStream->start ();
-
-  //    if (!stream_p->isRunning ())
+    data_p->CBData->videoStream->start ();
+  //    if (!data_p->CBData->videoStream->isRunning ())
   //    {
   //      ACE_DEBUG ((LM_ERROR,
   //                  ACE_TEXT ("failed to start stream, aborting\n")));
   //      return;
   //    } // end IF
+#endif
 
 continue_:
-  data_p->GtkCBData->controlStream->wait (true, false, false);
-  data_p->GtkCBData->MAVLinkStream->wait (true, false, false);
-  data_p->GtkCBData->NavDataStream->wait (true, false, false);
-  if (data_p->GtkCBData->enableVideo)
-    data_p->GtkCBData->videoStream->wait (true, false, false);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        data_p->CBData->directShowControlStream->wait (true, false, false);
+        data_p->CBData->directShowMAVLinkStream->wait (true, false, false);
+        data_p->CBData->directShowNavDataStream->wait (true, false, false);
+        if (data_p->CBData->enableVideo)
+          data_p->CBData->directShowVideoStream->wait (true, false, false);
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        data_p->CBData->mediaFoundationControlStream->wait (true, false, false);
+        data_p->CBData->mediaFoundationMAVLinkStream->wait (true, false, false);
+        data_p->CBData->mediaFoundationNavDataStream->wait (true, false, false);
+        if (data_p->CBData->enableVideo)
+          data_p->CBData->mediaFoundationVideoStream->wait (true, false, false);
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                    data_p->mediaFramework));
+        break;
+      }
+    } // end SWITCH
+#else
+  data_p->CBData->controlStream->wait (true, false, false);
+  data_p->CBData->MAVLinkStream->wait (true, false, false);
+  data_p->CBData->NavDataStream->wait (true, false, false);
+  if (data_p->CBData->enableVideo)
+    data_p->CBData->videoStream->wait (true, false, false);
+#endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = 0;
@@ -831,11 +1091,11 @@ continue_:
 done:
   { // synch access
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GtkCBData->lock, -1);
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->CBData->lock, -1);
 #else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GtkCBData->lock, std::numeric_limits<void*>::max ());
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->CBData->lock, std::numeric_limits<void*>::max ());
 #endif
-    data_p->GtkCBData->progressData->completedActions.insert (data_p->eventSourceId);
+    data_p->CBData->progressData->completedActions.insert (data_p->eventSourceId);
   } // end lock scope
 
   // clean up
@@ -857,7 +1117,7 @@ idle_associated_SSID_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -891,7 +1151,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -912,7 +1172,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                             ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_WLAN_INTERFACE)));
   ACE_ASSERT (list_store_p);
   gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (list_store_p),
-                                        1, GTK_SORT_ASCENDING);
+                                        0, GTK_SORT_ASCENDING);
   if (!load_wlan_interfaces (list_store_p))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -954,6 +1214,48 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
   ACE_ASSERT (entry_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_iterator_2;
+  ARDrone_DirectShow_StreamConnectionConfigurationIterator_t directshow_iterator_2_2;
+  ARDrone_MediaFoundation_ConnectionConfigurationIterator_t mediafoundation_iterator_2;
+  ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t mediafoundation_iterator_2_2;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_2 =
+        cb_data_p->configuration->directShowConnectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_2 != cb_data_p->configuration->directShowConnectionConfigurations.end ());
+      directshow_iterator_2_2 =
+        (*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_2_2 != (*directshow_iterator_2).second.end ());
+      gtk_entry_set_text (entry_p,
+                          Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
+                                                               true).c_str ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_2 =
+        cb_data_p->configuration->mediaFoundationConnectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_2 != cb_data_p->configuration->mediaFoundationConnectionConfigurations.end ());
+      mediafoundation_iterator_2_2 =
+        (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_2_2 != (*mediafoundation_iterator_2).second.end ());
+      gtk_entry_set_text (entry_p,
+                          Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
+                                                               true).c_str ());
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_p->mediaFramework));
+      return G_SOURCE_REMOVE;
+    }
+  } // end SWITCH
+#else
   ARDrone_ConnectionConfigurationIterator_t iterator_2 =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
@@ -963,6 +1265,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_entry_set_text (entry_p,
                       Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
                                                            true).c_str ());
+#endif
 
   GtkSpinButton* spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -971,11 +1274,44 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
                              std::numeric_limits<unsigned int>::max ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_3;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_3;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_3 =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_3 != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      gtk_spin_button_set_value (spin_button_p,
+                                 (*directshow_iterator_3).second.allocatorConfiguration_.defaultBufferSize);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_3 =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_3 != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      gtk_spin_button_set_value (spin_button_p,
+                                 (*mediafoundation_iterator_3).second.allocatorConfiguration_.defaultBufferSize);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_p->mediaFramework));
+      return G_SOURCE_REMOVE;
+    }
+  } // end SWITCH
+#else
   ARDrone_StreamConfigurationsIterator_t iterator_3 =
     cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->streamConfigurations.end ());
   gtk_spin_button_set_value (spin_button_p,
-                             (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
+    (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
+#endif
 
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -1133,33 +1469,72 @@ idle_initialize_ui_cb (gpointer userData_in)
   //GFile* file_p = NULL;
   struct _GString* string_p = NULL;
   gchar* filename_p = NULL;
+  std::string target_filename_string;
+  bool is_fullscreen = false;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_4;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_4;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_4 =
+        (*directshow_iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_iterator_4 != (*directshow_iterator_3).second.end ());
+      target_filename_string =
+        (*directshow_iterator_4).second.second.targetFileName;
+      is_fullscreen =
+        (*directshow_iterator_4).second.second.fullScreen;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_4 =
+        (*mediafoundation_iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_iterator_3).second.end ());
+      target_filename_string =
+        (*mediafoundation_iterator_4).second.second.targetFileName;
+      is_fullscreen =
+        (*mediafoundation_iterator_4).second.second.fullScreen;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_p->mediaFramework));
+      return G_SOURCE_REMOVE;
+    }
+  } // end SWITCH
+#else
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
     (*iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_4 != (*iterator_3).second.end ());
-  if (!(*iterator_4).second.second.targetFileName.empty ())
+  target_filename_string = (*iterator_4).second.second.targetFileName;
+  is_fullscreen = (*iterator_4).second.second.fullScreen;
+#endif
+  if (!target_filename_string.empty ())
   {
     // *NOTE*: gtk does not complain if the file doesn't exist, but the button
     //         will display "(None)" --> create empty file
-    if (!Common_File_Tools::isReadable ((*iterator_4).second.second.targetFileName))
-      if (!Common_File_Tools::create ((*iterator_4).second.second.targetFileName))
+    if (!Common_File_Tools::isReadable (target_filename_string))
+      if (!Common_File_Tools::create (target_filename_string))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Common_File_Tools::create(\"%s\"): \"%m\", aborting\n"),
-                    ACE_TEXT ((*iterator_4).second.second.targetFileName.c_str ())));
+                    ACE_TEXT (target_filename_string.c_str ())));
         return G_SOURCE_REMOVE;
       } // end IF
-    //file_p =
-    //  g_file_new_for_path (data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ());
+    //file_p = g_file_new_for_path (target_filename_string.c_str ());
     //ACE_ASSERT (file_p);
     //ACE_ASSERT (g_file_query_exists (file_p, NULL));
 
     //std::string file_uri =
     //  ACE_TEXT_ALWAYS_CHAR ("file://") +
-    //  data_p->configuration->moduleHandlerConfiguration.targetFileName;
+    //  target_filename_string;
     //if (!gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (file_chooser_button_p),
     //                                              file_uri.c_str ()))
-    string_p =
-      g_string_new ((*iterator_4).second.second.targetFileName.c_str ());
+    string_p = g_string_new (target_filename_string.c_str ());
     filename_p = string_p->str;
       //Common_UI_Tools::Locale2UTF8 (cb_data_p->configuration->moduleHandlerConfiguration.targetFileName);
     if (!gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (file_chooser_button_p),
@@ -1167,7 +1542,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to gtk_file_chooser_set_filename(\"%s\"): \"%s\", aborting\n"),
-                  ACE_TEXT ((*iterator_4).second.second.targetFileName.c_str ())));
+                  ACE_TEXT (target_filename_string.c_str ())));
 
       // clean up
       g_string_free (string_p, FALSE);
@@ -1184,7 +1559,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     //{
     //  ACE_DEBUG ((LM_ERROR,
     //              ACE_TEXT ("failed to gtk_file_chooser_select_file(\"%s\"): \"%s\", aborting\n"),
-    //              ACE_TEXT (data_p->configuration->moduleHandlerConfiguration.targetFileName.c_str ()),
+    //              ACE_TEXT (target_filename_string.c_str ()),
     //              ACE_TEXT (error_p->message)));
 
     //  // clean up
@@ -1223,7 +1598,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   } // end ELSE
 
   std::string default_folder_uri = ACE_TEXT_ALWAYS_CHAR ("file://");
-  default_folder_uri += (*iterator_4).second.second.targetFileName;
+  default_folder_uri += target_filename_string;
   if (!gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (file_chooser_button_p),
                                                 default_folder_uri.c_str ()))
   {
@@ -1505,10 +1880,10 @@ idle_initialize_ui_cb (gpointer userData_in)
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
   ACE_ASSERT (statusbar_p);
-  cb_data_p->contextIds[GTK_STATUSCONTEXT_DATA] =
+  cb_data_p->contextIds[COMMON_UI_GTK_STATUSCONTEXT_DATA] =
       gtk_statusbar_get_context_id (statusbar_p,
                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_STATUSBAR_CONTEXT_DATA));
-  cb_data_p->contextIds[GTK_STATUSCONTEXT_INFORMATION] =
+  cb_data_p->contextIds[COMMON_UI_GTK_STATUSCONTEXT_INFORMATION] =
     gtk_statusbar_get_context_id (statusbar_p,
                                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION));
 
@@ -1636,9 +2011,10 @@ idle_initialize_ui_cb (gpointer userData_in)
     //  return G_SOURCE_REMOVE;
     //} // end ELSE
     // schedule asynchronous updates of the info view
-    event_source_id = g_timeout_add (COMMON_UI_GTK_WIDGET_UPDATE_INTERVAL,
-                                     idle_update_info_display_cb,
-                                     cb_data_p);
+    event_source_id =
+      g_timeout_add (COMMON_UI_GTK_INTERVAL_DEFAULT_WIDGET_REFRESH,
+                     idle_update_info_display_cb,
+                     cb_data_p);
     if (event_source_id > 0)
       cb_data_p->eventSourceIds.insert (event_source_id);
     else
@@ -1680,11 +2056,34 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (window_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_ASSERT (gdk_win32_window_is_win32 (window_p));
-  ACE_ASSERT (!(*iterator_4).second.second.window);
-  //(*iterator_4).second.window =
-  //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
-    //gdk_win32_window_get_impl_hwnd (window_p);
-  //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      ACE_ASSERT (!(*directshow_iterator_4).second.second.window);
+      //(*iterator_4).second.window =
+      //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+      //gdk_win32_window_get_impl_hwnd (window_p);
+      //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      ACE_ASSERT (!(*mediafoundation_iterator_4).second.second.window);
+      //(*iterator_4).second.window =
+      //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
+      //gdk_win32_window_get_impl_hwnd (window_p);
+      //ACE_ASSERT (cb_data_p->configuration->moduleHandlerConfiguration.window);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_p->mediaFramework));
+      return G_SOURCE_REMOVE;
+    }
+  } // end SWITCH
 #else
   ACE_ASSERT (!(*iterator_4).second.second.window);
   (*iterator_4).second.second.window = window_p;
@@ -1829,7 +2228,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN)));
   ACE_ASSERT (toggle_action_p);
   gtk_toggle_action_set_active (toggle_action_p,
-                                (*iterator_4).second.second.fullScreen);
+                                is_fullscreen);
 //  gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
 //                            cb_data_p->enableVideo);
   toggle_action_p =
@@ -1839,7 +2238,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_toggle_action_set_active (toggle_action_p,
                                 true);
 
-  bool is_active = !(*iterator_4).second.second.targetFileName.empty ();
+  bool is_active = !target_filename_string.empty ();
   if (is_active)
   {
     GtkToggleButton* toggle_button_p =
@@ -1888,7 +2287,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard,  cb_data_p->lock, G_SOURCE_REMOVE);
     // schedule asynchronous updates of the state
     cb_data_p->openGLRefreshId =
-      g_timeout_add (COMMON_UI_GTK_OPENGL_UPDATE_INTERVAL,
+      g_timeout_add (COMMON_UI_GTK_INTERVAL_DEFAULT_OPENGL_REFRESH,
                      idle_update_orientation_display_cb,
                      userData_in);
     if (cb_data_p->openGLRefreshId > 0)
@@ -1962,17 +2361,20 @@ idle_session_end_cb (gpointer userData_in)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->progressData);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
   ARDrone_StreamConfigurationsIterator_t iterator_2 =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_2 != data_p->configuration->streamConfigurations.end ());
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
     (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+#endif
 
   // *IMPORTANT NOTE*: there are two major reasons for being here that are not
   //                   mutually exclusive, so there could be a race:
@@ -1995,14 +2397,14 @@ idle_session_end_cb (gpointer userData_in)
   gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
 
   //// stop progress reporting ?
-  //if (data_p->progressData->eventSourceID)
+  //if (data_p->progressData->eventSourceId)
   //{ ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
-  //  if (!g_source_remove (data_p->progressData->eventSourceID))
+  //  if (!g_source_remove (data_p->progressData->eventSourceId))
   //    ACE_DEBUG ((LM_ERROR,
   //                ACE_TEXT ("failed to g_source_remove(%u), continuing\n"),
-  //                data_p->progressData->eventSourceID));
-  //  data_p->eventSourceIds.erase (data_p->progressData->eventSourceID);
-  //  data_p->progressData->eventSourceID = 0;
+  //                data_p->progressData->eventSourceId));
+  //  data_p->eventSourceIds.erase (data_p->progressData->eventSourceId);
+  //  data_p->progressData->eventSourceId = 0;
 
   //  GtkProgressBar* progress_bar_p =
   //    GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
@@ -2063,7 +2465,7 @@ idle_session_start_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
@@ -2103,7 +2505,7 @@ idle_session_start_cb (gpointer userData_in)
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, G_SOURCE_REMOVE);
     // schedule asynchronous updates of the state
     data_p->stateEventId =
-      g_timeout_add (COMMON_UI_GTK_WIDGET_UPDATE_INTERVAL,
+      g_timeout_add (COMMON_UI_GTK_INTERVAL_DEFAULT_WIDGET_REFRESH,
                      idle_update_state_cb,
                      userData_in);
     if (data_p->stateEventId > 0)
@@ -2131,7 +2533,7 @@ idle_reset_ui_cb (gpointer userData_in)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->progressData);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
@@ -2227,7 +2629,7 @@ idle_update_info_display_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != data_p->builders.end ());
@@ -2301,28 +2703,79 @@ idle_update_info_display_cb (gpointer userData_in)
         ACE_ASSERT (drawing_area_p);
 
         unsigned int height, width;
-        ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
-            data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-        ACE_ASSERT (video_streamconfiguration_iterator != data_p->configuration->streamConfigurations.end ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-        ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
-          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-        ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
+        ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_video_streamconfiguration_iterator;
+        ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_video_streamconfiguration_iterator;
+        switch (data_p->mediaFramework)
+        {
+          case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+          {
+            directshow_video_streamconfiguration_iterator =
+              data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+            ACE_ASSERT (directshow_video_streamconfiguration_iterator != data_p->configuration->directShowStreamConfigurations.end ());
+            break;
+          }
+          case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+          {
+            mediafoundation_video_streamconfiguration_iterator =
+              data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+            ACE_ASSERT (mediafoundation_video_streamconfiguration_iterator != data_p->configuration->mediaFoundationStreamConfigurations.end ());
+            break;
+          }
+          default:
+          {
+            ACE_DEBUG ((LM_ERROR,
+                        ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                        data_p->mediaFramework));
+            return G_SOURCE_REMOVE;
+          }
+        } // end SWITCH
+#else
+        ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
+            data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+        ACE_ASSERT (video_streamconfiguration_iterator != data_p->configuration->streamConfigurations.end ());
+#endif
 
-        // sanity check(s)
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_3;
+        ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
+        switch (data_p->mediaFramework)
+        {
+          case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+          {
+            directshow_iterator_3 =
+              (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+            ACE_ASSERT (directshow_iterator_3 != (*directshow_video_streamconfiguration_iterator).second.end ());
 
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-        ACE_ASSERT ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-        struct tagVIDEOINFOHEADER* video_info_header_p =
-          reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
-        height = video_info_header_p->bmiHeader.biHeight;
-        width = video_info_header_p->bmiHeader.biWidth;
+            // sanity check(s)
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration);
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration);
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
+
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+            struct tagVIDEOINFOHEADER* video_info_header_p =
+              reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+            height = video_info_header_p->bmiHeader.biHeight;
+            width = video_info_header_p->bmiHeader.biWidth;
+            break;
+          }
+          case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+          {
+            ACE_ASSERT (false); // *TODO*
+            break;
+          }
+          default:
+          {
+            ACE_DEBUG ((LM_ERROR,
+                        ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                        data_p->mediaFramework));
+            return G_SOURCE_REMOVE;
+          }
+        } // end SWITCH
 #else
         ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("H264Decoder"));
+          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
         ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
 
         height = (*iterator_4).second.second.sourceFormat.height;
@@ -2425,7 +2878,7 @@ idle_update_info_display_cb (gpointer userData_in)
 //
 //  ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->logStackLock, G_SOURCE_REMOVE);
 //
-//  Common_UI_GTKBuildersIterator_t iterator =
+//  Common_UI_GTK_BuildersIterator_t iterator =
 //      data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
 //  // sanity check(s)
 //  ACE_ASSERT (iterator != data_p->builders.end ());
@@ -2511,7 +2964,7 @@ idle_update_state_cb (gpointer userData_in)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->controller);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
@@ -2559,7 +3012,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
@@ -2617,7 +3070,7 @@ idle_update_video_display_cb (gpointer userData_in)
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != data_p->builders.end ());
 
@@ -2649,7 +3102,7 @@ idle_update_progress_cb (gpointer userData_in)
 
   // sanity check(s)
   ACE_ASSERT (data_p);
-  ACE_ASSERT (data_p->GTKState);
+  ACE_ASSERT (data_p->state);
 
   // done ?
   Common_UI_GTK_PendingActionsIterator_t iterator_2;
@@ -2683,7 +3136,7 @@ idle_update_progress_cb (gpointer userData_in)
 #endif
     } // end ELSE IF
   
-    data_p->GTKState->eventSourceIds.erase (*iterator_3);
+    data_p->state->eventSourceIds.erase (*iterator_3);
     data_p->pendingActions.erase (iterator_2);
   } // end FOR
   data_p->completedActions.clear ();
@@ -2714,10 +3167,10 @@ idle_update_progress_cb (gpointer userData_in)
     done = true;
   } // end IF
 
-  Common_UI_GTKBuildersIterator_t iterator =
-    data_p->GTKState->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  Common_UI_GTK_BuildersIterator_t iterator =
+    data_p->state->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
-  ACE_ASSERT (iterator != data_p->GTKState->builders.end ());
+  ACE_ASSERT (iterator != data_p->state->builders.end ());
 
   GtkProgressBar* progress_bar_p =
     GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
@@ -2742,7 +3195,7 @@ idle_update_progress_cb (gpointer userData_in)
   float fps, speed = 0.0F;
   std::string magnitude_string = ACE_TEXT_ALWAYS_CHAR ("byte(s)/s");
 
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->state->lock, G_SOURCE_REMOVE);
     fps   = data_p->statistic.messagesPerSecond;
     speed = data_p->statistic.bytesPerSecond;
   } // end lock scope
@@ -2777,7 +3230,7 @@ idle_update_progress_cb (gpointer userData_in)
     GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_CONTROL)));
   ACE_ASSERT (progress_bar_p);
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->GTKState->lock, G_SOURCE_REMOVE);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->state->lock, G_SOURCE_REMOVE);
     iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_CONTROL);
     ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
     fps = (*iterator_4).second.messagesPerSecond;
@@ -2928,12 +3381,23 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (cb_data_p->progressData);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ACE_ASSERT (cb_data_p->directShowControlStream);
+  ACE_ASSERT (cb_data_p->directShowMAVLinkStream);
+  ACE_ASSERT (cb_data_p->directShowNavDataStream);
+  ACE_ASSERT (cb_data_p->directShowVideoStream);
+  ACE_ASSERT (cb_data_p->mediaFoundationControlStream);
+  ACE_ASSERT (cb_data_p->mediaFoundationMAVLinkStream);
+  ACE_ASSERT (cb_data_p->mediaFoundationNavDataStream);
+  ACE_ASSERT (cb_data_p->mediaFoundationVideoStream);
+#else
   ACE_ASSERT (cb_data_p->controlStream);
   ACE_ASSERT (cb_data_p->MAVLinkStream);
   ACE_ASSERT (cb_data_p->NavDataStream);
   ACE_ASSERT (cb_data_p->videoStream);
+#endif
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -2967,11 +3431,39 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
     // stop stream
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        cb_data_p->directShowControlStream->stop (false, false, true);
+        cb_data_p->directShowMAVLinkStream->stop (false, false, true);
+        cb_data_p->directShowNavDataStream->stop (false, false, true);
+        cb_data_p->directShowVideoStream->stop (false, false, true);
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        cb_data_p->mediaFoundationControlStream->stop (false, false, true);
+        cb_data_p->mediaFoundationMAVLinkStream->stop (false, false, true);
+        cb_data_p->mediaFoundationNavDataStream->stop (false, false, true);
+        cb_data_p->mediaFoundationVideoStream->stop (false, false, true);
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        return;
+      }
+    } // end SWITCH
+#else
     cb_data_p->controlStream->stop (false, false, true);
     cb_data_p->MAVLinkStream->stop (false, false, true);
     cb_data_p->NavDataStream->stop (false, false, true);
     cb_data_p->videoStream->stop (false, false, true);
-
+#endif
     return;
   } // end IF
 
@@ -3036,6 +3528,46 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
   ACE_ASSERT (spin_button_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_iterator_3;
+  ARDrone_DirectShow_StreamConnectionConfigurationIterator_t directshow_iterator_3_2;
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_4;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_5, directshow_iterator_6;
+  ARDrone_MediaFoundation_ConnectionConfigurationIterator_t mediafoundation_iterator_3;
+  ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t mediafoundation_iterator_3_2;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_4;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_5, mediafoundation_iterator_6;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_3 =
+        cb_data_p->configuration->directShowConnectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_3 != cb_data_p->configuration->directShowConnectionConfigurations.end ());
+      directshow_iterator_3_2 =
+        (*directshow_iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_3_2 != (*directshow_iterator_3).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_3 =
+        cb_data_p->configuration->mediaFoundationConnectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_3 != cb_data_p->configuration->mediaFoundationConnectionConfigurations.end ());
+      mediafoundation_iterator_3_2 =
+        (*mediafoundation_iterator_3).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_3_2 != (*mediafoundation_iterator_3).second.end ());
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
   ARDrone_ConnectionConfigurationIterator_t iterator_3 =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->connectionConfigurations.end ());
@@ -3044,6 +3576,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (iterator_3_2 != (*iterator_3).second.end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
+#endif
   std::string address_string =
     ACE_TEXT_ALWAYS_CHAR (gtk_entry_get_text (entry_p));
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
@@ -3051,9 +3584,37 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   converter <<
     static_cast<unsigned short> (gtk_spin_button_get_value_as_int (spin_button_p));
   address_string += converter.str ();
+  bool is_fullscreen = false;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      result =
+        (*directshow_iterator_3_2).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
+                                                                                                        AF_INET);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      result =
+        (*mediafoundation_iterator_3_2).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
+                                                                                                             AF_INET);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
   result =
     (*iterator_3_2).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
                                                                                          AF_INET);
+#endif
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -3062,6 +3623,46 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_4 =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_4 != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      directshow_iterator_5 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_iterator_5 != (*directshow_iterator_4).second.end ());
+      directshow_iterator_6 =
+        (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_6 != (*directshow_iterator_4).second.end ());
+
+      is_fullscreen = (*directshow_iterator_5).second.second.fullScreen;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_4 =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_4 != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      mediafoundation_iterator_5 = (*mediafoundation_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_iterator_5 != (*mediafoundation_iterator_4).second.end ());
+      mediafoundation_iterator_6 =
+        (*mediafoundation_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_6 != (*mediafoundation_iterator_4).second.end ());
+
+      is_fullscreen = (*mediafoundation_iterator_5).second.second.fullScreen;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
   iterator_4 =
       cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_4 != cb_data_p->configuration->streamConfigurations.end ());
@@ -3070,22 +3671,72 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   iterator_6 =
       (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
   ACE_ASSERT (iterator_6 != (*iterator_4).second.end ());
+  is_fullscreen = (*iterator_5).second.second.fullScreen;
+#endif
   // retrieve buffer
   spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_BUFFERSIZE)));
   ACE_ASSERT (spin_button_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_iterator_4).second.allocatorConfiguration_.defaultBufferSize =
+        static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_4).second.allocatorConfiguration_.defaultBufferSize =
+        static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
   (*iterator_4).second.allocatorConfiguration_.defaultBufferSize =
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
-
+#endif
   // set fullscreen ?
   toggle_action_p =
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN)));
   ACE_ASSERT (toggle_action_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_iterator_5).second.second.fullScreen =
+        gtk_toggle_action_get_active (toggle_action_p);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_5).second.second.fullScreen =
+        gtk_toggle_action_get_active (toggle_action_p);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
   (*iterator_5).second.second.fullScreen =
     gtk_toggle_action_get_active (toggle_action_p);
-
+#endif
   // retrieve filename ?
   check_button_p =
       GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -3093,7 +3744,30 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (check_button_p);
   if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p)))
   {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        (*directshow_iterator_5).second.second.targetFileName.clear ();
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        (*mediafoundation_iterator_5).second.second.targetFileName.clear ();
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        goto error;
+      }
+    } // end SWITCH
+#else
     (*iterator_5).second.second.targetFileName.clear ();
+#endif
     goto continue_;
   } // end IF
 
@@ -3125,12 +3799,46 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     goto error;
   } // end IF
   ACE_ASSERT (!hostname_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_iterator_5).second.second.targetFileName = directory_p;
+      ACE_ASSERT (Common_File_Tools::isDirectory ((*directshow_iterator_5).second.second.targetFileName));
+      (*directshow_iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
+      (*directshow_iterator_5).second.second.targetFileName +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_5).second.second.targetFileName = directory_p;
+      ACE_ASSERT (Common_File_Tools::isDirectory ((*mediafoundation_iterator_5).second.second.targetFileName));
+      (*mediafoundation_iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
+      (*mediafoundation_iterator_5).second.second.targetFileName +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+
+      g_free (directory_p);
+
+      goto error;
+    }
+  } // end SWITCH
+#else
   (*iterator_5).second.second.targetFileName = directory_p;
-  g_free (directory_p);
   ACE_ASSERT (Common_File_Tools::isDirectory ((*iterator_5).second.second.targetFileName));
   (*iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
   (*iterator_5).second.second.targetFileName +=
-      ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+#endif
+  g_free (directory_p);
 
 continue_:
   // retrieve save format
@@ -3160,8 +3868,28 @@ continue_:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                               1, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-    (*iterator_5).second.second.format->subtype =
-      Common_Tools::StringToGUID (g_value_get_string (&value));
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      {
+        (*directshow_iterator_5).second.second.inputFormat->subtype =
+          Common_Tools::StringToGUID (g_value_get_string (&value));
+        break;
+  }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        (*mediafoundation_iterator_5).second.second.inputFormat->subtype =
+          Common_Tools::StringToGUID (g_value_get_string (&value));
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        goto error;
+      }
+    } // end SWITCH
 #else
                               2, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
@@ -3173,20 +3901,41 @@ continue_:
 
   // retrieve display settings
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  // sanity check(s)
-  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration);
-  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration);
-  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format);
-  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-  struct tagVIDEOINFOHEADER* video_info_header_p =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+  struct tagVIDEOINFOHEADER* video_info_header_p = NULL;
+  struct tagVIDEOINFOHEADER* video_info_header_2 = NULL;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      // sanity check(s)
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      video_info_header_p =
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
 
-  ACE_ASSERT ((*iterator_5).second.second.format);
-  ACE_ASSERT ((*iterator_5).second.second.format->formattype == FORMAT_VideoInfo);
-  ACE_ASSERT ((*iterator_5).second.second.format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-  struct tagVIDEOINFOHEADER* video_info_header_2 =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*iterator_5).second.second.format->pbFormat);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat->formattype == FORMAT_VideoInfo);
+      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      video_info_header_2 =
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.inputFormat->pbFormat);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      ACE_ASSERT (false); // *TODO*
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
 #endif
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
@@ -3211,8 +3960,32 @@ continue_:
                             0, &value);
 #endif
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_STRING);
-  (*iterator_5).second.second.displayDeviceIdentifier =
-      g_value_get_string (&value);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_iterator_5).second.second.deviceName =
+        g_value_get_string (&value);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_5).second.second.deviceName =
+        g_value_get_string (&value);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  (*iterator_5).second.second.deviceName = g_value_get_string (&value);
+#endif
   g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (!EnumDisplayMonitors (NULL,                                     // hdc
@@ -3338,6 +4111,7 @@ continue_:
     case ARDRONE_VIDEOMODE_360P:
     { // *TODO*: use ffmpeg to determine the format resolution
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+      ACE_ASSERT (video_info_header_p);
       video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
       video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
       video_info_header_p->bmiHeader.biSizeImage =
@@ -3357,6 +4131,7 @@ continue_:
     case ARDRONE_VIDEOMODE_720P:
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+      ACE_ASSERT (video_info_header_p);
       video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
       video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
       video_info_header_p->bmiHeader.biSizeImage =
@@ -3392,18 +4167,40 @@ continue_:
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
   ACE_ASSERT (drawing_area_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  video_info_header_p->bmiHeader.biSizeImage =
-    DIBSIZE (video_info_header_p->bmiHeader);
-  video_info_header_p->dwBitRate =
-    (video_info_header_p->bmiHeader.biWidth         *
-     abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
-  (*iterator_5).second.second.filterConfiguration->pinConfiguration->format->lSampleSize =
-    video_info_header_p->bmiHeader.biSizeImage;
-  cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-    video_info_header_p->bmiHeader.biSizeImage;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    { ACE_ASSERT (video_info_header_p);
+      video_info_header_p->bmiHeader.biSizeImage =
+        DIBSIZE (video_info_header_p->bmiHeader);
+      video_info_header_p->dwBitRate =
+        (video_info_header_p->bmiHeader.biWidth         *
+         abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
+      (*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->lSampleSize =
+        video_info_header_p->bmiHeader.biSizeImage;
+      cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+        video_info_header_p->bmiHeader.biSizeImage;
 
-  (*iterator_5).second.second.window =
-    static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
+      (*directshow_iterator_5).second.second.window =
+        static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
+
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_5).second.second.window =
+        static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
+      ACE_ASSERT (false); // *TODO*
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
 #endif
 
   //GtkWindow* window_p = NULL;
@@ -3414,31 +4211,51 @@ continue_:
 #endif
   gtk_widget_get_allocation (GTK_WIDGET (drawing_area_p),
                              &rectangle_s);
-  if ((*iterator_5).second.second.fullScreen)
+  if (is_fullscreen)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    video_info_header_2->bmiHeader.biHeight =
-      -((*iterator_5).second.second.area.bottom -
-      (*iterator_5).second.second.area.top);
-    video_info_header_2->bmiHeader.biWidth =
-      ((*iterator_5).second.second.area.right -
-      (*iterator_5).second.second.area.left);
-    video_info_header_2->bmiHeader.biSizeImage =
-      DIBSIZE (video_info_header_2->bmiHeader);
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      { ACE_ASSERT (video_info_header_p);
+        ACE_ASSERT (video_info_header_2);
+        video_info_header_2->bmiHeader.biHeight =
+          -((*directshow_iterator_5).second.second.area.bottom -
+          (*directshow_iterator_5).second.second.area.top);
+        video_info_header_2->bmiHeader.biWidth =
+          ((*directshow_iterator_5).second.second.area.right -
+          (*directshow_iterator_5).second.second.area.left);
+        video_info_header_2->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_2->bmiHeader);
 
-    unsigned int source_buffer_size =
-      av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*iterator_5).second.second.format->subtype),
-                                video_info_header_p->bmiHeader.biWidth,
-                                ::abs (video_info_header_p->bmiHeader.biHeight),
-                                1); // *TODO*: linesize alignment
-    video_info_header_2->bmiHeader.biSizeImage =
-      std::max (video_info_header_2->bmiHeader.biSizeImage,
-                static_cast<ULONG> (source_buffer_size));
+        unsigned int source_buffer_size =
+          av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*directshow_iterator_5).second.second.inputFormat->subtype),
+                                    video_info_header_p->bmiHeader.biWidth,
+                                    ::abs (video_info_header_p->bmiHeader.biHeight),
+                                    1); // *TODO*: linesize alignment
+        video_info_header_2->bmiHeader.biSizeImage =
+          std::max (video_info_header_2->bmiHeader.biSizeImage,
+                    static_cast<ULONG> (source_buffer_size));
 
-    (*iterator_5).second.second.format->lSampleSize =
-      video_info_header_2->bmiHeader.biSizeImage;
-    cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-      video_info_header_2->bmiHeader.biSizeImage;
+        (*directshow_iterator_5).second.second.inputFormat->lSampleSize =
+          video_info_header_2->bmiHeader.biSizeImage;
+        cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+          video_info_header_2->bmiHeader.biSizeImage;
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        ACE_ASSERT (false); // *TODO*
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        goto error;
+      }
+    } // end SWITCH
 #else
     gdk_screen_get_monitor_geometry (screen_p,
                                      monitor_number,
@@ -3483,24 +4300,54 @@ continue_:
   else
   { // --> not fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    (*iterator_5).second.second.area.left = 0;
-    (*iterator_5).second.second.area.right =
-      video_info_header_p->bmiHeader.biWidth;
-    (*iterator_5).second.second.area.top = 0;
-    (*iterator_5).second.second.area.bottom =
-      abs (video_info_header_p->bmiHeader.biHeight);
+    HWND window_h;
+#if defined (UNICODE)
+    std::wstring device_name_string;
+#else
+    std::string device_name_string;
+#endif
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      { ACE_ASSERT (video_info_header_p);
+        (*directshow_iterator_5).second.second.area.left = 0;
+        (*directshow_iterator_5).second.second.area.right =
+          video_info_header_p->bmiHeader.biWidth;
+        (*directshow_iterator_5).second.second.area.top = 0;
+        (*directshow_iterator_5).second.second.area.bottom =
+          std::abs (video_info_header_p->bmiHeader.biHeight);
 
+        window_h = (*directshow_iterator_5).second.second.window;
+        device_name_string =
+          (*directshow_iterator_5).second.second.deviceName;
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        ACE_ASSERT (false); // *TODO*
+        window_h = (*mediafoundation_iterator_5).second.second.window;
+        device_name_string =
+          (*mediafoundation_iterator_5).second.second.deviceName;
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        goto error;
+      }
+    } // end SWITCH
     // *NOTE*: if the chosen display device screen area contains the drawing
     //         area, use it[; otherwise open a new window]
     DWORD flags = MONITOR_DEFAULTTONULL;
-    HMONITOR monitor_h =
-      MonitorFromWindow ((*iterator_5).second.second.window,
-                         flags);
+    HMONITOR monitor_h = MonitorFromWindow (window_h,
+                                            flags);
     if (!monitor_h)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to MonitorFromWindow(%@): \"%s\", returning\n"),
-                  (*iterator_5).second.second.window,
+                  window_h,
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
@@ -3516,8 +4363,8 @@ continue_:
                   ACE_TEXT (Common_Tools::errorToString (GetLastError ()).c_str ())));
       goto error;
     } // end IF
-    if (ACE_OS::strcmp (ACE_TEXT ((*iterator_5).second.second.device.c_str ()),
-                        ACE_TEXT (monitor_info_ex_s.szDevice)))
+    if (ACE_OS::strcmp (device_name_string.c_str (),
+                        monitor_info_ex_s.szDevice))
     { // --> the drawing area is NOT currently displayed on the selected monitor
       // *NOTE*: center the window on the display device
       //unsigned int delta_x =
@@ -3541,48 +4388,119 @@ continue_:
     } // end IF
     else
     { // --> the drawing area is currently displayed on the selected monitor
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      (*iterator_5).second.second.area.bottom =
-        rectangle_s.y + rectangle_s.height;
-      (*iterator_5).second.second.area.left = rectangle_s.x;
-      (*iterator_5).second.second.area.right =
-          rectangle_s.x + rectangle_s.width;
-      (*iterator_5).second.second.area.top = rectangle_s.y;
-#else
-      (*iterator_5).second.area = rectangle_s;
-#endif
+      switch (cb_data_p->mediaFramework)
+      {
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+        {
+          (*directshow_iterator_5).second.second.area.bottom =
+            rectangle_s.y + rectangle_s.height;
+          (*directshow_iterator_5).second.second.area.left = rectangle_s.x;
+          (*directshow_iterator_5).second.second.area.right =
+            rectangle_s.x + rectangle_s.width;
+          (*directshow_iterator_5).second.second.area.top = rectangle_s.y;
+          break;
+        }
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        {
+          (*mediafoundation_iterator_5).second.second.area.bottom =
+            rectangle_s.y + rectangle_s.height;
+          (*mediafoundation_iterator_5).second.second.area.left = rectangle_s.x;
+          (*mediafoundation_iterator_5).second.second.area.right =
+            rectangle_s.x + rectangle_s.width;
+          (*mediafoundation_iterator_5).second.second.area.top = rectangle_s.y;
+          break;
+        }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                      cb_data_p->mediaFramework));
+          goto error;
+        }
+      } // end SWITCH
     } // end ELSE
 
-    video_info_header_2->bmiHeader.biHeight = rectangle_s.height;
-    video_info_header_2->bmiHeader.biWidth = rectangle_s.width;
-    video_info_header_2->bmiHeader.biSizeImage =
-      DIBSIZE (video_info_header_2->bmiHeader);
-    video_info_header_2->dwBitRate =
-      (video_info_header_2->bmiHeader.biWidth * abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
-    (*iterator_5).second.second.format->lSampleSize =
-      video_info_header_2->bmiHeader.biSizeImage;
-    cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
-      std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
-                static_cast<long> (video_info_header_2->bmiHeader.biSizeImage));
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      { ACE_ASSERT (video_info_header_2);
+        video_info_header_2->bmiHeader.biHeight = rectangle_s.height;
+        video_info_header_2->bmiHeader.biWidth = rectangle_s.width;
+        video_info_header_2->bmiHeader.biSizeImage =
+          DIBSIZE (video_info_header_2->bmiHeader);
+        video_info_header_2->dwBitRate =
+          (video_info_header_2->bmiHeader.biWidth * std::abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
+        (*directshow_iterator_5).second.second.inputFormat->lSampleSize =
+          video_info_header_2->bmiHeader.biSizeImage;
+        cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer =
+          std::max (cb_data_p->configuration->directShowFilterConfiguration.allocatorProperties.cbBuffer,
+                    static_cast<long> (video_info_header_2->bmiHeader.biSizeImage));
 
-    // *TODO*: for some reason DirectShow fails to paint into the drawing area
-    //         --> open a dedicated window
-    //(*iterator_5).second.window = NULL;
+        // *TODO*: for some reason DirectShow fails to paint into the drawing area
+        //         --> open a dedicated window
+        //(*iterator_5).second.window = NULL;
+        break;
+      }
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      {
+        ACE_ASSERT (false); // *TODO*
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                    cb_data_p->mediaFramework));
+        goto error;
+      }
+    } // end SWITCH
 #else
+    (*iterator_5).second.area = rectangle_s;
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-              ACE_TEXT ((*iterator_5).second.second.device.c_str ()),
-              (*iterator_5).second.second.area.left,
-              (*iterator_5).second.second.area.right,
-              (*iterator_5).second.second.area.top,
-              (*iterator_5).second.second.area.bottom,
-              ((*iterator_5).second.second.area.right -
-               (*iterator_5).second.second.area.left),
-              ((*iterator_5).second.second.area.bottom -
-               (*iterator_5).second.second.area.top)));
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
+                  ACE_TEXT ((*directshow_iterator_5).second.second.deviceName.c_str ()),
+                  (*directshow_iterator_5).second.second.area.left,
+                  (*directshow_iterator_5).second.second.area.right,
+                  (*directshow_iterator_5).second.second.area.top,
+                  (*directshow_iterator_5).second.second.area.bottom,
+                  ((*directshow_iterator_5).second.second.area.right -
+                  (*directshow_iterator_5).second.second.area.left),
+                   ((*directshow_iterator_5).second.second.area.bottom -
+                  (*directshow_iterator_5).second.second.area.top)));
+      ACE_ASSERT ((*directshow_iterator_5).second.second.window);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
+                  ACE_TEXT ((*mediafoundation_iterator_5).second.second.deviceName.c_str ()),
+                  (*mediafoundation_iterator_5).second.second.area.left,
+                  (*mediafoundation_iterator_5).second.second.area.right,
+                  (*mediafoundation_iterator_5).second.second.area.top,
+                  (*mediafoundation_iterator_5).second.second.area.bottom,
+                  ((*mediafoundation_iterator_5).second.second.area.right -
+                  (*mediafoundation_iterator_5).second.second.area.left),
+                   ((*mediafoundation_iterator_5).second.second.area.bottom -
+                  (*mediafoundation_iterator_5).second.second.area.top)));
+      ACE_ASSERT ((*mediafoundation_iterator_5).second.second.window);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
 #else
   (*iterator_5).second.second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
@@ -3596,8 +4514,8 @@ continue_:
               (*iterator_5).second.second.area.height,
               (*iterator_5).second.second.area.width,
               (*iterator_5).second.second.area.height));
-#endif
   ACE_ASSERT ((*iterator_5).second.second.window);
+#endif
 
   // *NOTE*: the surface / pixel buffer haven't been created yet, as the window
   //         wasn't 'viewable' during the first 'configure' event
@@ -3656,7 +4574,7 @@ continue_:
                 ACE_TEXT ("failed to allocate memory: \"%m\", returning\n")));
     goto error;
   } // end IF
-  thread_data_p->GtkCBData = cb_data_p;
+  thread_data_p->CBData = cb_data_p;
 
   ACE_OS::memset (thread_name, 0, sizeof (thread_name));
   //  char* thread_name_p = NULL;
@@ -3714,8 +4632,8 @@ continue_:
         //                 idle_update_progress_cb,
         //                 &data_p->progressData,
         //                 NULL);
-        g_timeout_add_full (G_PRIORITY_DEFAULT_IDLE,                   // _LOW doesn't work (on Win32)
-                            COMMON_UI_GTK_PROGRESSBAR_UPDATE_INTERVAL, // ms (?)
+        g_timeout_add_full (G_PRIORITY_DEFAULT_IDLE,                            // _LOW doesn't work (on Win32)
+                            COMMON_UI_GTK_INTERVAL_DEFAULT_PROGRESSBAR_REFRESH, // ms (?)
                             idle_update_progress_cb,
                             cb_data_p->progressData,
                             NULL);
@@ -3824,7 +4742,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -3947,7 +4865,7 @@ combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -3984,7 +4902,7 @@ combobox_display_format_changed_cb (GtkComboBox* comboBox_in,
   ACE_ASSERT (cb_data_p);
   //ACE_ASSERT (cb_data_p->controller);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -4274,48 +5192,71 @@ glarea_realize_cb (GtkWidget* widget_in,
   struct ARDrone_GtkCBData* data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
   ACE_ASSERT (data_p);
-
-  // load the texture
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
-  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
-    NULL;
-  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
-  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
-  if (data_p->useMediaFoundation)
-  {
-    mediafoundation_data_p =
-      static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-
-    mediafoundation_modulehandler_configuration_iterator =
-      mediafoundation_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->streamConfiguration.end ());
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-
-    directshow_modulehandler_configuration_iterator =
-      directshow_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->streamConfiguration.end ());
-  } // end ELSE
-#else
   ACE_ASSERT (data_p->configuration);
 
-  ARDrone_StreamConfigurationsIterator_t streams_iterator =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
-    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
-#endif
+  // load the texture
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  //struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+//  //struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
+//  //  NULL;
+//  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
+//  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
+//  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+//  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+//  switch (data_p->mediaFramework)
+//  {
+//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+//    {
+//      //directshow_data_p =
+//      //  static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+//      //// sanity check(s)
+//      //ACE_ASSERT (directshow_data_p);
+//      //ACE_ASSERT (directshow_data_p->configuration);
+//
+//      directshow_streams_iterator =
+//        data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+//      ACE_ASSERT (directshow_streams_iterator != data_p->configuration->directShowStreamConfigurations.end ());
+//      directshow_modulehandler_configuration_iterator =
+//        //directshow_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
+//        (*directshow_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//        //ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->directShowStreamConfigurations.end ());
+//        ACE_ASSERT (directshow_modulehandler_configuration_iterator != (*directshow_streams_iterator).second.end ());
+//      break;
+//    }
+//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+//    {
+//      //mediafoundation_data_p =
+//      //  static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+//      //// sanity check(s)
+//      //ACE_ASSERT (mediafoundation_data_p);
+//      //ACE_ASSERT (mediafoundation_data_p->configuration);
+//
+//      mediafoundation_streams_iterator =
+//        data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+//      ACE_ASSERT (mediafoundation_streams_iterator != data_p->configuration->mediaFoundationStreamConfigurations.end ());
+//      mediafoundation_modulehandler_configuration_iterator =
+//        //mediafoundation_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
+//        (*mediafoundation_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//      //ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->directShowStreamConfigurations.end ());
+//      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != (*mediafoundation_streams_iterator).second.end ());
+//      break;
+//    }
+//    default:
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+//                  data_p->mediaFramework));
+//      goto error;
+//    }
+//  } // end SWITCH
+//#else
+//  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+//      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+//  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
+//  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+//    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
+//#endif
 
   gtk_gl_area_attach_buffers (gl_area_p);
   gdk_gl_context_make_current (context_p);
@@ -4340,14 +5281,26 @@ glarea_realize_cb (GtkWidget* widget_in,
 
   // load model mesh
   GLuint* model_list_id_p = NULL;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (data_p->useMediaFoundation)
-    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
-  else
-    model_list_id_p = &directshow_data_p->openGLModelListId;
-#else
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  switch (data_p->mediaFramework)
+//  {
+//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+//      //model_list_id_p = &directshow_data_p->openGLModelListId;
+//      break;
+//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+//      //model_list_id_p = &mediafoundation_data_p->openGLModelListId;
+//      break;
+//    default:
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+//                  data_p->mediaFramework));
+//      goto error;
+//    }
+//  } // end SWITCH
+//#else
   model_list_id_p = &data_p->openGLModelListId;
-#endif
+//#endif
   ACE_ASSERT (model_list_id_p);
   if (*model_list_id_p > 0)
   {
@@ -4557,56 +5510,68 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
-  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
-    NULL;
-  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
-  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
-  if (data_p->useMediaFoundation)
-  {
-    mediafoundation_data_p =
-      static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-
-    mediafoundation_modulehandler_configuration_iterator =
-      mediafoundation_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->streamConfiguration.end ());
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-
-    directshow_modulehandler_configuration_iterator =
-      directshow_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->streamConfiguration.end ());
-  } // end ELSE
-#else
-  ACE_ASSERT (data_p->configuration);
-
-  ARDrone_StreamConfigurationsIterator_t streams_iterator =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
-    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
-#endif
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+//  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
+//    NULL;
+//  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+//  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+//  switch (data_p->mediaFramework)
+//  {
+//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+//    {
+//      directshow_data_p =
+//        static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+//      // sanity check(s)
+//      ACE_ASSERT (directshow_data_p);
+//      ACE_ASSERT (directshow_data_p->configuration);
+//
+//      directshow_modulehandler_configuration_iterator =
+//        directshow_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
+//      ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->streamConfiguration.end ());
+//      break;
+//    }
+//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+//    {
+//      mediafoundation_data_p =
+//        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+//      // sanity check(s)
+//      ACE_ASSERT (mediafoundation_data_p);
+//      ACE_ASSERT (mediafoundation_data_p->configuration);
+//
+//      mediafoundation_modulehandler_configuration_iterator =
+//        mediafoundation_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
+//      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->streamConfiguration.end ());
+//      break;
+//    }
+//    default:
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+//                  data_p->mediaFramework));
+//      goto error;
+//    }
+//  } // end SWITCH
+//#else
+//  ACE_ASSERT (data_p->configuration);
+//
+//  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+//      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+//  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
+//  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+//    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
+//#endif
 
   GLuint* model_list_id_p = NULL;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (data_p->useMediaFoundation)
-    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
-  else
-    model_list_id_p = &directshow_data_p->openGLModelListId;
-#else
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  if (data_p->useMediaFoundation)
+//    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
+//  else
+//    model_list_id_p = &directshow_data_p->openGLModelListId;
+//#else
   model_list_id_p = &data_p->openGLModelListId;
-#endif
+//#endif
   ACE_ASSERT (model_list_id_p);
   ACE_ASSERT (*model_list_id_p);
 
@@ -4725,46 +5690,46 @@ glarea_resize_cb (GtkGLArea* GLArea_in,
   // sanity check(s)
   ACE_ASSERT (data_p);
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
-  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
-    NULL;
-  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
-  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
-  if (data_p->useMediaFoundation)
-  {
-    mediafoundation_data_p =
-      static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-
-    mediafoundation_modulehandler_configuration_iterator =
-      mediafoundation_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->streamConfiguration.end ());
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-
-    directshow_modulehandler_configuration_iterator =
-      directshow_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-    ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->streamConfiguration.end ());
-  } // end ELSE
-#else
-  ACE_ASSERT (data_p->configuration);
-
-  ARDrone_StreamConfigurationsIterator_t streams_iterator =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
-    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
-#endif
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+//  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
+//    NULL;
+//  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+//  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+//  if (data_p->useMediaFoundation)
+//  {
+//    mediafoundation_data_p =
+//      static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+//    // sanity check(s)
+//    ACE_ASSERT (mediafoundation_data_p);
+//    ACE_ASSERT (mediafoundation_data_p->configuration);
+//
+//    mediafoundation_modulehandler_configuration_iterator =
+//      mediafoundation_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
+//    ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->streamConfiguration.end ());
+//  } // end IF
+//  else
+//  {
+//    directshow_data_p =
+//      static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+//    // sanity check(s)
+//    ACE_ASSERT (directshow_data_p);
+//    ACE_ASSERT (directshow_data_p->configuration);
+//
+//    directshow_modulehandler_configuration_iterator =
+//      directshow_data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
+//    ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->streamConfiguration.end ());
+//  } // end ELSE
+//#else
+//  ACE_ASSERT (data_p->configuration);
+//
+//  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+//      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+//  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
+//  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+//    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+//  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
+//#endif
 
   //gtk_gl_area_make_current (GLArea_in);
 
@@ -6033,7 +6998,7 @@ toggleaction_video_toggled_cb (GtkToggleAction* toggleAction_in,
 
   cb_data_p->enableVideo = gtk_toggle_action_get_active (toggleAction_in);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -6072,34 +7037,115 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_UNUSED_ARG (toggleAction_in);
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
 
   // sanity check(s)
-  ACE_ASSERT (cb_data_p->videoStream);
+  Stream_IStreamControlBase* stream_base_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+        stream_base_p = cb_data_p->directShowVideoStream;
+      else
+        stream_base_p = cb_data_p->directShowAsynchVideoStream;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+        stream_base_p = cb_data_p->mediaFoundationVideoStream;
+      else
+        stream_base_p = cb_data_p->mediaFoundationAsynchVideoStream;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
+  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+    stream_base_p = cb_data_p->videoStream;
+  else
+    stream_base_p = cb_data_p->asynchVideoStream;
+#endif
+  ACE_ASSERT (stream_base_p);
   if (!cb_data_p->enableVideo ||
-      !cb_data_p->videoStream->isRunning ())
+      !stream_base_p->isRunning ())
     return;
 
   const Stream_Module_t* module_p = NULL;
+  std::string stream_name_string;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (cb_data_p->useMediaFoundation)
-    module_p =
-        cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
-  else
-    module_p =
-        cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+      {
+        module_p =
+          cb_data_p->directShowVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
+        stream_name_string = cb_data_p->directShowVideoStream->name ();
+      } // end IF
+      else
+      {
+        module_p =
+          cb_data_p->directShowAsynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
+        stream_name_string = cb_data_p->directShowAsynchVideoStream->name ();
+      } // end ELSE
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+      {
+        module_p =
+          cb_data_p->mediaFoundationVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
+        stream_name_string = cb_data_p->mediaFoundationVideoStream->name ();
+      } // end IF
+      else
+      {
+        module_p =
+          cb_data_p->mediaFoundationAsynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
+        stream_name_string = cb_data_p->mediaFoundationAsynchVideoStream->name ();
+      } // end ELSE
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
 #else
-  module_p =
+  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+  {
+    module_p =
       cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING));
+    stream_name_string = cb_data_p->videoStream->name ();
+  } // end IF
+  else
+  {
+    module_p =
+      cb_data_p->asynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING));
+    stream_name_string = cb_data_p->asynchVideoStream->name ();
+  } // end ELSE
 #endif
   if (!module_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to Stream_IStream::find(\"Display\"), returning\n"),
-                ACE_TEXT (cb_data_p->videoStream->name ().c_str ())));
+                ACE_TEXT (stream_name_string.c_str ())));
     return;
   } // end IF
   Stream_Module_Visualization_IFullscreen* ifullscreen_p =
@@ -6135,7 +7181,7 @@ toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
   if (!cb_data_p->enableVideo)
     return;
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -6237,7 +7283,7 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -6260,13 +7306,49 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
 
   // sanity check(s)
   ACE_ASSERT (cb_data_p->configuration);
-
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_2;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_3;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_2;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_2 =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_2 != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      directshow_iterator_3 =
+        (*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_iterator_3 != (*directshow_iterator_2).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_2 =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_2 != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      mediafoundation_iterator_3 =
+        (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_iterator_2).second.end ());
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
   ARDrone_StreamConfigurationsIterator_t iterator_2 =
       cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_2 != cb_data_p->configuration->streamConfigurations.end ());
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
     (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+#endif
 
   // *NOTE*: x,y members are relative to the parent window
   //         --> no need to translate
@@ -6279,12 +7361,32 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   //                                    &(*iterator_2).second.area.x,
   //                                    &(*iterator_2).second.area.y);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  (*iterator_3).second.second.area.left = allocation_in->x;
-  (*iterator_3).second.second.area.right =
-    allocation_in->x + allocation_in->width;
-  (*iterator_3).second.second.area.top = allocation_in->y;
-  (*iterator_3).second.second.area.bottom =
-    allocation_in->y + allocation_in->height;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      (*directshow_iterator_3).second.second.area.left = allocation_in->x;
+      (*directshow_iterator_3).second.second.area.right =
+        allocation_in->x + allocation_in->width;
+      (*directshow_iterator_3).second.second.area.top = allocation_in->y;
+      (*directshow_iterator_3).second.second.area.bottom =
+        allocation_in->y + allocation_in->height;
+      break;
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      (*mediafoundation_iterator_3).second.second.area.left = allocation_in->x;
+      (*mediafoundation_iterator_3).second.second.area.right =
+        allocation_in->x + allocation_in->width;
+      (*mediafoundation_iterator_3).second.second.area.top = allocation_in->y;
+      (*mediafoundation_iterator_3).second.second.area.bottom =
+        allocation_in->y + allocation_in->height;
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
 #else
   (*iterator_3).second.second.area = *allocation_in;
 #endif
@@ -6531,7 +7633,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -6609,10 +7711,56 @@ key_cb (GtkWidget* widget_in,
   ACE_ASSERT (event_in);
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  // sanity check(s)
+  ACE_ASSERT (cb_data_p->configuration);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_2;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_3;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_2;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_iterator_2 =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_2 != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      directshow_iterator_3 =
+        (*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_iterator_3 != (*directshow_iterator_2).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_iterator_2 =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_2 != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      mediafoundation_iterator_3 =
+        (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_iterator_2).second.end ());
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return TRUE; // done (do not propagate further)
+    }
+  } // end SWITCH
+#else
+  ARDrone_StreamConfigurationsIterator_t iterator_2 =
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (iterator_2 != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+#endif
 
   switch (event_in->keyval)
   {
@@ -6625,22 +7773,36 @@ key_cb (GtkWidget* widget_in,
                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN)));
       ACE_ASSERT (toggle_action_p);
 
-      ARDrone_StreamConfigurationsIterator_t iterator =
-        cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
-      ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
-      ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
-        (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-      ACE_ASSERT (iterator_2 != (*iterator).second.end ());
-      (*iterator_2).second.second.fullScreen =
-        gtk_toggle_action_get_active (toggle_action_p);
+      bool is_fullscreen = gtk_toggle_action_get_active (toggle_action_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      switch (cb_data_p->mediaFramework)
+      {
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+          (*directshow_iterator_3).second.second.fullScreen = is_fullscreen;
+          break;
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+          (*mediafoundation_iterator_3).second.second.fullScreen =
+            is_fullscreen;
+          break;
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                      cb_data_p->mediaFramework));
+          return TRUE; // done (do not propagate further)
+        }
+      } // end SWITCH
+#else
+      (*iterator_3).second.second.fullScreen = is_fullscreen;
+#endif
 
       // sanity check(s)
       if ((event_in->keyval == GDK_KEY_Escape) &&
-          !(*iterator_2).second.second.fullScreen)
+          !is_fullscreen)
         break; // <-- not in fullscreen mode, nothing to do
 
       gtk_toggle_action_set_active (toggle_action_p,
-                                    !(*iterator_2).second.second.fullScreen);
+                                    !is_fullscreen);
 
       break;
     }
@@ -6768,7 +7930,7 @@ dialog_main_key_press_event_cb (GtkWidget* widget_in,
 //  // sanity check(s)
 //  ACE_ASSERT (cb_data_p);
 //
-//  Common_UI_GTKBuildersIterator_t iterator =
+//  Common_UI_GTK_BuildersIterator_t iterator =
 //    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
 //  // sanity check(s)
 //  ACE_ASSERT (iterator != cb_data_p->builders.end ());
@@ -6800,7 +7962,7 @@ button_about_clicked_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (cb_data_p);
 
-  Common_UI_GTKBuildersIterator_t iterator =
+  Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());

@@ -25,7 +25,7 @@
 #include "VLIB/video_codec.h"
 
 #include "ardrone_callbacks.h"
-#include "ardrone_configuration.h"
+//#include "ardrone_configuration.h"
 #include "ardrone_macros.h"
 
 // initialize statics

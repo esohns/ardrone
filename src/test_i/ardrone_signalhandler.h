@@ -34,8 +34,9 @@ class ARDrone_SignalHandler
   typedef Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration> inherited;
 
  public:
-  ARDrone_SignalHandler ();
-  inline virtual ~ARDrone_SignalHandler () {};
+  ARDrone_SignalHandler (enum Common_SignalDispatchType, // dispatch mode
+                         ACE_SYNCH_MUTEX*);               // lock handle
+  inline virtual ~ARDrone_SignalHandler () {}
 
   // override Common_IInitialize_T
   virtual bool initialize (const struct ARDrone_SignalHandlerConfiguration&);
@@ -44,6 +45,7 @@ class ARDrone_SignalHandler
   virtual void handle (int); // signal
 
  private:
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler ());
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler (const ARDrone_SignalHandler&));
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
 
