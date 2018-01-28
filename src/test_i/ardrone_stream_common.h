@@ -391,9 +391,9 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
   ARDrone_DirectShow_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
   ARDrone_DirectShow_IConnectionManager_t*             connectionManager;        // IO module
 #if defined (UNICODE)
-  std::wstring                                         deviceName; // 'FriendlyName'
+  std::wstring                                         deviceName; // 'FriendlyName' (display-)
 #else
-  std::string                                          deviceName; // 'FriendlyName'
+  std::string                                          deviceName; // 'FriendlyName' (display-)
 #endif
   IDirect3DDevice9Ex*                                  direct3DDevice;           // display module
   struct _GUID                                         filterCLSID;              // display module
@@ -430,9 +430,9 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
   ARDrone_MediaFoundation_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
   ARDrone_MediaFoundation_IConnectionManager_t*             connectionManager;        // IO module
 #if defined (UNICODE)
-  std::wstring                                              deviceName; // 'FriendlyName'
+  std::wstring                                              deviceName; // 'FriendlyName' (display-)
 #else
-  std::string                                               deviceName; // 'FriendlyName'
+  std::string                                               deviceName; // 'FriendlyName' (display-)
 #endif
   IDirect3DDevice9Ex*                                       direct3DDevice;           // display module
   struct _AMMediaType*                                      inputFormat;              // H264 decoder/display module
@@ -454,8 +454,9 @@ struct ARDrone_ModuleHandlerConfiguration
    , connectionManager (NULL)
    , displayDeviceIdentifier ()
    // *NOTE*: the GtkPixbuf native format appears to be RGBA
-   , inputFormat (AV_PIX_FMT_RGBA)
+   , format (AV_PIX_FMT_RGBA)
    , frameRate ()
+   , inputFormat (AV_PIX_FMT_RGBA)
    , outputFormat (AV_PIX_FMT_YUV420P)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
@@ -470,8 +471,9 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
   ARDrone_IConnectionManager_t*             connectionManager;        // IO module
   std::string                               displayDeviceIdentifier;
+  enum AVPixelFormat                        format;                   // H264 decoder/display module
   struct AVRational                         frameRate;                // AVI encoder module
-  enum AVPixelFormat                        inputFormat;              // H264 decoder/display module
+  enum AVPixelFormat                        inputFormat;              // display module
   enum AVPixelFormat                        outputFormat;             // H264 decoder module
   GdkPixbuf*                                pixelBuffer;              // display module
   ACE_SYNCH_MUTEX*                          pixelBufferLock;          // display module

@@ -1445,19 +1445,19 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       } // end SWITCH
 #else
       try {
-        if (!ioutbound_data_notify->initialize (directshow_connection_p->notification (),
+        if (!ioutbound_data_notify->initialize (connection_p->notification (),
                                                 module_name_string))
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
                       ACE_TEXT (navdata_stream_name_string_),
-                      directshow_connection_p->notification (),
+                      connection_p->notification (),
                       ACE_TEXT (module_name_string.c_str ())));
         return;
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
                     ACE_TEXT (navdata_stream_name_string_),
-                    directshow_connection_p->notification (),
+                    connection_p->notification (),
                     ACE_TEXT (module_name_string.c_str ())));
         return;
       }

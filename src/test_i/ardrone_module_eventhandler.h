@@ -93,7 +93,7 @@ class ARDrone_Module_EventHandler_T
                                  ardrone_default_handler_module_name_string,
                                  Stream_INotify_t,
                                  typename OWN_TYPE_T::READER_TASK_T,
-                                 typename OWN_TYPE_T> MODULE_T;
+                                 OWN_TYPE_T> MODULE_T;
 };
 
 // include template definition
