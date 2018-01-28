@@ -337,7 +337,7 @@ error:
   {
     if (!ifaddrs_2->ifa_addr                                        ||
         !(ifaddrs_2->ifa_addr->sa_family == AF_INET)                ||
-        !Net_WLAN_Tools::interfaceIsWLAN (ifaddrs_2->ifa_name))
+        !Net_WLAN_Tools::isWireless (ifaddrs_2->ifa_name))
       continue;
 
     gtk_list_store_append (listStore_in, &iterator);
@@ -3984,7 +3984,8 @@ continue_:
     }
   } // end SWITCH
 #else
-  (*iterator_5).second.second.deviceName = g_value_get_string (&value);
+  (*iterator_5).second.second.displayDeviceIdentifier =
+      g_value_get_string (&value);
 #endif
   g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

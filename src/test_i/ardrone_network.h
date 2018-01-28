@@ -208,7 +208,7 @@ typedef std::map<std::string, // stream name
 typedef ARDrone_MediaFoundation_ConnectionConfigurations_t::iterator ARDrone_MediaFoundation_ConnectionConfigurationIterator_t;
 #else
 struct ARDrone_ConnectionConfiguration;
-typedef Net_StreamConnectionConfiguration_T<struct ARDrone_ConnectionConfiguration_t,
+typedef Net_StreamConnectionConfiguration_T<struct ARDrone_ConnectionConfiguration,
                                             struct ARDrone_AllocatorConfiguration,
                                             ARDrone_StreamConfiguration_t> ARDrone_ConnectionConfiguration_t;
 typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
@@ -224,7 +224,6 @@ struct ARDrone_ConnectionConfiguration
    : Net_ConnectionConfiguration ()
    , connectionManager (NULL)
    , socketHandlerConfiguration ()
-   , streamConfiguration ()
    , userData (NULL)
   {
     PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;

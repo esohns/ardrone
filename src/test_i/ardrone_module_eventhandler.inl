@@ -24,7 +24,7 @@
 #include "ardrone_macros.h"
 
 template <typename ConfigurationType>
-ARDrone_Module_EventHandler_T<ConfigurationType>::ARDrone_Module_EventHandler_T (ISTREAM_T* stream_in)
+ARDrone_Module_EventHandler_T<ConfigurationType>::ARDrone_Module_EventHandler_T (typename inherited::ISTREAM_T* stream_in)
  : inherited (stream_in)
  //, streams_ ()
 {
@@ -85,7 +85,7 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
     // retain statistic data for each stream separately
     // *TODO*: move this into the base-class
 
-    SESSION_DATA_ITERATOR_T iterator_2;
+    typename inherited::SESSION_DATA_ITERATOR_T iterator_2;
     struct ARDrone_SessionData* session_data_p = NULL;
     ARDroneStreamStatisticIterator_t iterator_3, iterator_4;
     struct ARDrone_Statistic statistic_s;

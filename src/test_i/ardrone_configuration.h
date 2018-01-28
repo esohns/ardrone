@@ -108,7 +108,9 @@ struct ARDrone_WLANMonitorConfiguration
    , userData (NULL)
   {
     autoAssociate = ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
     enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+#endif
   };
 
   struct ARDrone_UserData* userData;
