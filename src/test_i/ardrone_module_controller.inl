@@ -20,6 +20,8 @@
 
 #include "ace/Log_Msg.h"
 
+#include "stream_net_defines.h"
+
 //#include "ATcodec/ATcodec_api.h"
 #include "Soft/Common/ardrone_api.h"
 #include "VLIB/video_codec.h"
@@ -85,7 +87,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
  , deviceInitialized_ (false)
  , deviceState_ (0)
  , deviceState_2 ()
- , GtkCBData_ (NULL)
+ , CBData_ (NULL)
  , isFirst_ (true)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));
@@ -126,11 +128,11 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     deviceInitialized_ = false;
     deviceState_ = 0;
     ACE_OS::memset (&deviceState_2, 0, sizeof (struct _navdata_demo_t));
-    GtkCBData_ = NULL;
+    CBData_ = NULL;
     isFirst_ = true;
   } // end IF
 
-  GtkCBData_ = configuration_in.CBData;
+  CBData_ = configuration_in.CBData;
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
@@ -590,21 +592,21 @@ error:
       enum _codec_type_t codec_e = static_cast<enum _codec_type_t> (value_i);
 
       // sanity check(s)
-      ACE_ASSERT (GtkCBData_);
+      ACE_ASSERT (CBData_);
 
-      if (codec_e != static_cast<enum _codec_type_t> (GtkCBData_->videoMode))
+      if (codec_e != static_cast<enum _codec_type_t> (CBData_->videoMode))
       {
         ACE_DEBUG ((LM_DEBUG,
                     ACE_TEXT ("%s: navdata initialized, setting video mode...\n"),
                     inherited::mod_->name ()));
 
         try {
-          set (GtkCBData_->videoMode);
+          set (CBData_->videoMode);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in ARDrone_IController::set(%d), returning\n"),
                       inherited::mod_->name (),
-                      GtkCBData_->videoMode));
+                      CBData_->videoMode));
           return;
         }
       } // end IF

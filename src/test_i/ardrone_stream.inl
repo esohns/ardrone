@@ -36,7 +36,6 @@
 
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
-#include "ardrone_stream_common.h"
 
 template <typename ModuleConfigurationType,
           typename SourceModuleType>

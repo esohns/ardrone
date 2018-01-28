@@ -4456,7 +4456,7 @@ continue_:
       }
     } // end SWITCH
 #else
-    (*iterator_5).second.area = rectangle_s;
+    (*iterator_5).second.second.area = rectangle_s;
 #endif
   } // end ELSE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
