@@ -96,7 +96,7 @@ class ARDrone_Module_Controller_T
 #else
   ARDrone_Module_Controller_T (typename inherited::ISTREAM_T*); // stream handle
 #endif
-  inline virtual ~ARDrone_Module_Controller_T () {};
+  inline virtual ~ARDrone_Module_Controller_T () {}
 
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
@@ -125,8 +125,8 @@ class ARDrone_Module_Controller_T
   virtual void ids (const std::string&,  // session id
                     const std::string&,  // user id
                     const std::string&); // application id
-  inline virtual void init () { inherited2::change (NAVDATA_STATE_INITIAL); };
-  inline virtual void start () { inherited2::change (NAVDATA_STATE_GET_CONFIGURATION); };
+  inline virtual void init () { inherited2::change (NAVDATA_STATE_INITIAL); }
+  inline virtual void start () { inherited2::change (NAVDATA_STATE_GET_CONFIGURATION); }
   virtual void resetWatchdog ();
   virtual void trim ();
 
@@ -160,11 +160,11 @@ class ARDrone_Module_Controller_T
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
 
+  struct ARDrone_GtkCBData*         CBData_;
   ARDrone_DeviceConfiguration_t     deviceConfiguration_;
   bool                              deviceInitialized_;
   uint32_t                          deviceState_;
   struct _navdata_demo_t            deviceState_2;
-  struct ARDrone_GtkCBData*         GtkCBData_;
   bool                              isFirst_;
 };
 

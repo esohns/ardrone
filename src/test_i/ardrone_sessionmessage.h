@@ -27,7 +27,6 @@
 #include "stream_messageallocatorheap_base.h"
 #include "stream_session_message_base.h"
 
-//#include "ardrone_message.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 

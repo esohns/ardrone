@@ -66,7 +66,6 @@
 #include "net_wlan_inetmonitor.h"
 
 #include "ardrone_defines.h"
-//#include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 // forward declarations

@@ -25,7 +25,7 @@
 #include "stream_misc_defines.h"
 
 #include "ardrone_defines.h"
-#include "ardrone_modules_common.h"
+//#include "ardrone_modules_common.h"
 
 const char video_stream_name_string_[] =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING);
