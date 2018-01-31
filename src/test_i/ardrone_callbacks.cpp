@@ -1114,13 +1114,19 @@ idle_associated_SSID_cb (gpointer userData_in)
   struct ARDrone_GtkCBData* cb_data_p =
     static_cast<struct ARDrone_GtkCBData*> (userData_in);
 
-  // sanity check(s)
-  ACE_ASSERT (cb_data_p);
-
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
   Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+
   // sanity check(s)
+  ACE_ASSERT (cb_data_p);
+  ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
+  ACE_ASSERT (WLAN_monitor_p);
+  if (ACE_OS::strcmp (WLAN_monitor_p->SSID ().c_str (),
+                      cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()))
+    return G_SOURCE_REMOVE;
 
   GtkToggleAction* toggle_action_p =
     GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
@@ -1135,6 +1141,8 @@ idle_associated_SSID_cb (gpointer userData_in)
   gtk_spinner_stop (spinner_p);
   gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
                             FALSE);
+  gtk_widget_set_visible (GTK_WIDGET (spinner_p),
+                          FALSE);
 
   return G_SOURCE_REMOVE;
 }
@@ -1937,47 +1945,47 @@ idle_initialize_ui_cb (gpointer userData_in)
                       G_CALLBACK (glarea_resize_cb),
                       userData_in);
 #else
-  result_2 =
+  result =
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
                       G_CALLBACK (glarea_size_allocate_event_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
-  result_2 =
+  ACE_ASSERT (result);
+  result =
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("draw"),
                       G_CALLBACK (glarea_draw_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
+  ACE_ASSERT (result);
 #endif
 #else
-  result_2 =
+  result =
     g_signal_connect (G_OBJECT (drawing_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("expose-event"),
                       G_CALLBACK (drawingarea_2d_expose_event_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
+  ACE_ASSERT (result);
 #if defined (GTKGLAREA_SUPPORT)
-  result_2 =
+  result =
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("configure-event"),
                       G_CALLBACK (glarea_configure_event_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
-  result_2 =
+  ACE_ASSERT (result);
+  result =
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("expose-event"),
                       G_CALLBACK (glarea_expose_event_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
+  ACE_ASSERT (result);
 #else
-  result_2 =
+  result =
     g_signal_connect (G_OBJECT (drawing_area_2),
                       ACE_TEXT_ALWAYS_CHAR ("configure-event"),
                       G_CALLBACK (drawingarea_configure_event_cb),
                       userData_in);
-  ACE_ASSERT (result_2);
-  result_2 =
+  ACE_ASSERT (result);
+  result =
     g_signal_connect (G_OBJECT (drawing_area_2),
                       ACE_TEXT_ALWAYS_CHAR ("expose-event"),
                       G_CALLBACK (drawingarea_3d_expose_event_cb),
@@ -2213,7 +2221,7 @@ idle_initialize_ui_cb (gpointer userData_in)
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT)));
     ACE_ASSERT (combo_box_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), true);
+    gtk_widget_set_sensitive (GTK_WIDGET (combo_box_p), TRUE);
     gtk_combo_box_set_active (combo_box_p, 0);
   } // end IF
 
@@ -2227,16 +2235,14 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN)));
   ACE_ASSERT (toggle_action_p);
-  gtk_toggle_action_set_active (toggle_action_p,
-                                is_fullscreen);
+  gtk_toggle_action_set_active (toggle_action_p, is_fullscreen);
 //  gtk_widget_set_sensitive (GTK_WIDGET (toggle_button_p),
 //                            cb_data_p->enableVideo);
   toggle_action_p =
         GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_ORIENTATION)));
   ACE_ASSERT (toggle_action_p);
-  gtk_toggle_action_set_active (toggle_action_p,
-                                true);
+  gtk_toggle_action_set_active (toggle_action_p, TRUE);
 
   bool is_active = !target_filename_string.empty ();
   if (is_active)
@@ -2245,14 +2251,7 @@ idle_initialize_ui_cb (gpointer userData_in)
           GTK_TOGGLE_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
     ACE_ASSERT (toggle_button_p);
-    gtk_toggle_button_set_active (toggle_button_p,
-                                  true);
-    GtkFrame* frame_p =
-      GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
-                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE)));
-    ACE_ASSERT (frame_p);
-    gtk_widget_set_sensitive (GTK_WIDGET (frame_p),
-                              true);
+    gtk_toggle_button_set_active (toggle_button_p, TRUE);
   } // end IF
 
   check_button_p =
@@ -3394,7 +3393,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p->controlStream);
   ACE_ASSERT (cb_data_p->MAVLinkStream);
   ACE_ASSERT (cb_data_p->NavDataStream);
-  ACE_ASSERT (cb_data_p->videoStream);
+  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
+    ACE_ASSERT (cb_data_p->videoStream);
+  else
+    ACE_ASSERT (cb_data_p->asynchVideoStream);
 #endif
 
   Common_UI_GTK_BuildersIterator_t iterator =
@@ -3737,111 +3739,15 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   (*iterator_5).second.second.fullScreen =
     gtk_toggle_action_get_active (toggle_action_p);
 #endif
-  // retrieve filename ?
+  // save streams ?
   check_button_p =
       GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_SAVE)));
   ACE_ASSERT (check_button_p);
   if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (check_button_p)))
-  {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    switch (cb_data_p->mediaFramework)
-    {
-      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-      {
-        (*directshow_iterator_5).second.second.targetFileName.clear ();
-        break;
-      }
-      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      {
-        (*mediafoundation_iterator_5).second.second.targetFileName.clear ();
-        break;
-      }
-      default:
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                    cb_data_p->mediaFramework));
-        goto error;
-      }
-    } // end SWITCH
-#else
-    (*iterator_5).second.second.targetFileName.clear ();
-#endif
     goto continue_;
-  } // end IF
 
-  file_chooser_button_p =
-      GTK_FILE_CHOOSER_BUTTON (gtk_builder_get_object ((*iterator).second.second,
-                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE)));
-  ACE_ASSERT (file_chooser_button_p);
-  URI_p =
-      gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (file_chooser_button_p));
-  if (!URI_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to gtk_file_chooser_get_uri(), returning\n")));
-    goto error;
-  } // end IF
-  directory_p = g_filename_from_uri (URI_p,
-                                     &hostname_p,
-                                     &error_p);
-  g_free (URI_p);
-  if (!directory_p)
-  { ACE_ASSERT (error_p);
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", returning\n"),
-                ACE_TEXT (error_p->message)));
-
-    // clean up
-    g_error_free (error_p);
-
-    goto error;
-  } // end IF
-  ACE_ASSERT (!hostname_p);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (cb_data_p->mediaFramework)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-      (*directshow_iterator_5).second.second.targetFileName = directory_p;
-      ACE_ASSERT (Common_File_Tools::isDirectory ((*directshow_iterator_5).second.second.targetFileName));
-      (*directshow_iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
-      (*directshow_iterator_5).second.second.targetFileName +=
-        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      (*mediafoundation_iterator_5).second.second.targetFileName = directory_p;
-      ACE_ASSERT (Common_File_Tools::isDirectory ((*mediafoundation_iterator_5).second.second.targetFileName));
-      (*mediafoundation_iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
-      (*mediafoundation_iterator_5).second.second.targetFileName +=
-        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  cb_data_p->mediaFramework));
-
-      g_free (directory_p);
-
-      goto error;
-    }
-  } // end SWITCH
-#else
-  (*iterator_5).second.second.targetFileName = directory_p;
-  ACE_ASSERT (Common_File_Tools::isDirectory ((*iterator_5).second.second.targetFileName));
-  (*iterator_5).second.second.targetFileName += ACE_DIRECTORY_SEPARATOR_STR;
-  (*iterator_5).second.second.targetFileName +=
-    ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
-#endif
-  g_free (directory_p);
-
-continue_:
-  // retrieve save format
+  // retrieve save format ?
   combo_box_p =
       GTK_COMBO_BOX (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_COMBOBOX_SAVE_FORMAT)));
@@ -3899,7 +3805,8 @@ continue_:
     g_value_unset (&value);
   } // end IF
 
-  // retrieve display settings
+continue_:
+  // retrieve display settings ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct tagVIDEOINFOHEADER* video_info_header_p = NULL;
   struct tagVIDEOINFOHEADER* video_info_header_2 = NULL;
@@ -5185,13 +5092,22 @@ glarea_realize_cb (GtkWidget* widget_in,
   ACE_ASSERT (widget_in);
   ACE_ASSERT (userData_in);
 
+  struct ARDrone_GtkCBData* data_p = NULL;
+  GLuint* model_list_id_p = NULL;
+  GtkAllocation allocation;
+
   GtkGLArea* gl_area_p = GTK_GL_AREA (widget_in);
   ACE_ASSERT (gl_area_p);
   // NOTE*: the OpenGL context has been created at this point
   GdkGLContext* context_p = gtk_gl_area_get_context (gl_area_p);
-  ACE_ASSERT (context_p);
-  struct ARDrone_GtkCBData* data_p =
-    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+  if (unlikely (!context_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_gl_area_get_context(%@), returning\n"),
+                gl_area_p));
+    goto error;
+  } // end IF
+  data_p = static_cast<struct ARDrone_GtkCBData*> (userData_in);
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->configuration);
 
@@ -5281,7 +5197,6 @@ glarea_realize_cb (GtkWidget* widget_in,
   ACE_ASSERT (gtk_gl_area_get_has_depth_buffer (gl_area_p));
 
   // load model mesh
-  GLuint* model_list_id_p = NULL;
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //  switch (data_p->mediaFramework)
 //  {
@@ -5343,7 +5258,6 @@ glarea_realize_cb (GtkWidget* widget_in,
   } // end IF
 
   // initialize perspective
-  GtkAllocation allocation;
   gtk_widget_get_allocation (widget_in,
                              &allocation);
 
@@ -7187,12 +7101,162 @@ toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
   // sanity check(s)
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_stream_configurations_iterator;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_stream_configuration_iterator;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_stream_configurations_iterator;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_stream_configuration_iterator;
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_stream_configurations_iterator =
+        cb_data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_stream_configurations_iterator != cb_data_p->configuration->directShowStreamConfigurations.end ());
+      directshow_stream_configuration_iterator =
+        (*directshow_stream_configurations_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_stream_configuration_iterator != (*directshow_stream_configurations_iterator).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_stream_configurations_iterator =
+        cb_data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_stream_configurations_iterator != cb_data_p->configuration->mediaFoundationStreamConfigurations.end ());
+      mediafoundation_stream_configuration_iterator =
+        (*mediafoundation_stream_configurations_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_stream_configuration_iterator != (*mediafoundation_stream_configurations_iterator).second.end ());
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
+  ARDrone_StreamConfigurationsIterator_t stream_configurations_iterator =
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (stream_configurations_iterator != cb_data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T stream_configuration_iterator =
+    (*stream_configurations_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (stream_configuration_iterator != (*stream_configurations_iterator).second.end ());
+#endif
+
+  bool save_streams = false;
+  GtkFileChooserButton* file_chooser_button_p = NULL;
+  gchar* URI_p = NULL;
+  gchar* directory_p = NULL;
+  gchar* hostname_p = NULL;
+  GError* error_p = NULL;
+
+  save_streams = gtk_toggle_action_get_active (toggleAction_in);
+  if (!save_streams)
+  {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    switch (cb_data_p->mediaFramework)
+    {
+      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+        (*directshow_stream_configuration_iterator).second.second.targetFileName.clear ();
+        break;
+      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        (*mediafoundation_stream_configuration_iterator).second.second.targetFileName.clear ();
+        break;
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("invalid/unknown media framework (was: %d), continuing\n"),
+                    cb_data_p->mediaFramework));
+        break;
+      }
+    } // end SWITCH
+#else
+    (*stream_configuration_iterator).second.second.targetFileName.clear ();
+#endif
+    goto continue_;
+  } // end IF
+
+  file_chooser_button_p =
+      GTK_FILE_CHOOSER_BUTTON (gtk_builder_get_object ((*iterator).second.second,
+                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE)));
+  ACE_ASSERT (file_chooser_button_p);
+  URI_p = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (file_chooser_button_p));
+  if (!URI_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_file_chooser_get_uri(), returning\n")));
+    goto continue_;
+  } // end IF
+  directory_p = g_filename_from_uri (URI_p,
+                                     &hostname_p,
+                                     &error_p);
+  g_free (URI_p);
+  if (!directory_p)
+  { ACE_ASSERT (error_p);
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to g_filename_from_uri(): \"%s\", returning\n"),
+                ACE_TEXT (error_p->message)));
+
+    // clean up
+    g_error_free (error_p);
+
+    goto continue_;
+  } // end IF
+  ACE_ASSERT (!hostname_p);
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_stream_configuration_iterator).second.second.targetFileName =
+          directory_p;
+      ACE_ASSERT (Common_File_Tools::isDirectory ((*directshow_stream_configuration_iterator).second.second.targetFileName));
+      (*directshow_stream_configuration_iterator).second.second.targetFileName +=
+          ACE_DIRECTORY_SEPARATOR_STR;
+      (*directshow_stream_configuration_iterator).second.second.targetFileName +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName =
+          directory_p;
+      ACE_ASSERT (Common_File_Tools::isDirectory ((*mediafoundation_stream_configurations_iterator).second.second.targetFileName));
+      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName +=
+          ACE_DIRECTORY_SEPARATOR_STR;
+      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName +=
+        ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_p->mediaFramework));
+      g_free (directory_p);
+      goto continue_;
+    }
+  } // end SWITCH
+#else
+  (*stream_configuration_iterator).second.second.targetFileName = directory_p;
+  ACE_ASSERT (Common_File_Tools::isDirectory ((*stream_configuration_iterator).second.second.targetFileName));
+  (*stream_configuration_iterator).second.second.targetFileName +=
+      ACE_DIRECTORY_SEPARATOR_STR;
+  (*stream_configuration_iterator).second.second.targetFileName +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
+#endif
+  g_free (directory_p);
+
+continue_:
   GtkFrame* frame_p =
     GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS_SAVE)));
   ACE_ASSERT (frame_p);
   gtk_widget_set_sensitive (GTK_WIDGET (frame_p),
-                            gtk_toggle_action_get_active (toggleAction_in));
+                            save_streams);
 }
 
 void
@@ -7222,6 +7286,16 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
 
+  Common_UI_GTK_BuildersIterator_t iterator =
+    cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != cb_data_p->builders.end ());
+
+  GtkSpinner* spinner_p =
+    GTK_SPINNER (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINNER)));
+  ACE_ASSERT (spinner_p);
+
   // update configuration
   cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate =
     gtk_toggle_action_get_active (toggleAction_in);
@@ -7239,6 +7313,12 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
                       cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()) &&
       cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate)
   {
+    gtk_spinner_start (spinner_p);
+    gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
+                              TRUE);
+    gtk_widget_set_visible (GTK_WIDGET (spinner_p),
+                            TRUE);
+
     if (!WLAN_monitor_p->associate (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -7258,9 +7338,15 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
                   ACE_TEXT (Net_Common_Tools::LinkLayerAddressToString (reinterpret_cast<unsigned char*> (&ap_mac_address)).c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
 #endif
-      return;
     } // end IF
+
+    return;
   } // end IF
+
+  gtk_widget_set_sensitive (GTK_WIDGET (spinner_p),
+                            FALSE);
+  gtk_widget_set_visible (GTK_WIDGET (spinner_p),
+                          FALSE);
 }
 
 //------------------------------------------------------------------------------
@@ -7506,7 +7592,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   ACE_ASSERT (cb_data_p->configuration);
 
   ARDrone_StreamConfigurationsIterator_t iterator =
-      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("Video_In"));
+      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
     (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));

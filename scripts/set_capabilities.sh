@@ -21,6 +21,7 @@ command -v /sbin/getcap >/dev/null 2>&1 || { echo "getcap is not installed, abor
 command -v dirname >/dev/null 2>&1 || { echo "dirname is not installed, aborting" >&2; exit 1; }
 command -v echo >/dev/null 2>&1 || { echo "echo is not supported, aborting" >&2; exit 1; }
 command -v readlink >/dev/null 2>&1 || { echo "readlink is not installed, aborting" >&2; exit 1; }
+command -v tr >/dev/null 2>&1 || { echo "tr is not installed, aborting" >&2; exit 1; }
 command -v /sbin/setcap >/dev/null 2>&1 || { echo "setcap is not installed, aborting" >&2; exit 1; }
 
 DEFAULT_PROJECT_DIR="$(dirname $(readlink -f $0))/.."
@@ -83,8 +84,18 @@ i=0
  /sbin/setcap 'cap_net_admin+eip' ${BIN}
  [ $? -ne 0 ] && echo "ERROR: failed to /sbin/setcap ${BIN}: \"$?\", aborting" && exit 1
 
-# echo "modified \"$BINS\"..."
-
-# i=$i+1
+ CMD_OUTPUT=$(/sbin/getcap ${BIN})
+ j=0
+ for k in $(echo $CMD_OUTPUT | tr " " "\n")
+ do
+#  echo "$j: \"$k\""
+  if [ $j -eq 2 ]
+  then
+   CAPABILITIES=$k
+  fi
+  j=$(($j+1))
+ done
+ echo "modified \"$BINS\": ${CAPABILITIES}"
+# i=$(($i+1))
 #done
 

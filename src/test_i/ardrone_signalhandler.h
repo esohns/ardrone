@@ -42,7 +42,7 @@ class ARDrone_SignalHandler
   virtual bool initialize (const struct ARDrone_SignalHandlerConfiguration&);
 
   // implement Common_ISignal
-  virtual void handle (int); // signal
+  virtual void handle (const struct Common_Signal&);
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler ());
