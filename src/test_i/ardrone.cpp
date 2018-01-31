@@ -1454,13 +1454,8 @@ do_work (int argc_in,
                 ACE_TEXT ("failed to Net_WLANMonitor_T::initialize(), returning\n")));
     goto clean;
   } // end IF
-  WLAN_monitor_p->start ();
-  if (!WLAN_monitor_p->isRunning ())
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_WLANMonitor_T::start(), returning\n")));
-    goto clean;
-  } // end IF
+  // *NOTE*: start the WLAN monitor after initializing the NavData stream to
+  //         enable the event notification callbacks (see below #2174)
 
   // control
   // *TODO*: bind to a specific interface
@@ -2185,6 +2180,16 @@ do_work (int argc_in,
                 ACE_TEXT (stream_name_string.c_str ())));
     goto clean;
   } // end IF
+
+  ACE_ASSERT (WLAN_monitor_p);
+  WLAN_monitor_p->start ();
+  if (!WLAN_monitor_p->isRunning ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLANMonitor_T::start(), returning\n")));
+    goto clean;
+  } // end IF
+
   if (UIInterfaceDefinitionFile_in.empty ())
   {
 //    // *TODO*: verify the given address

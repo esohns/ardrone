@@ -55,7 +55,7 @@ ARDrone_SignalHandler::initialize (const struct ARDrone_SignalHandlerConfigurati
 }
 
 void
-ARDrone_SignalHandler::handle (int signal_in)
+ARDrone_SignalHandler::handle (const struct Common_Signal& signal_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::handle"));
 
@@ -65,7 +65,7 @@ ARDrone_SignalHandler::handle (int signal_in)
   bool stop_event_dispatching = false;
   bool connect = false;
 //  bool abort = false;
-  switch (signal_in)
+  switch (signal_in.signal)
   {
     case SIGINT:
 // *PORTABILITY*: on Windows SIGQUIT is not defined
@@ -112,7 +112,7 @@ ARDrone_SignalHandler::handle (int signal_in)
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("received invalid/unknown signal: \"%S\", returning\n"),
-                  signal_in));
+                  signal_in.signal));
       return;
     }
   } // end SWITCH
