@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -25,7 +25,11 @@
 #include "ace/Guard_T.h"
 #include "ace/Log_Msg.h"
 
+#include "ardrone_defines.h"
 #include "ardrone_macros.h"
+
+const char ardrone_navdata_statemachine_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_STATEMACHINE_NAVDATA_NAME);
 
 ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData ()
  : lock_ ()

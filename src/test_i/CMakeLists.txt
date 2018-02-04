@@ -1,10 +1,20 @@
-option (GTK3_SUPPORT "enable Gtk3 support"
-        ON)
-option (GTKGL_SUPPORT "enable Gtk OpenGL support"
-        ON)
+﻿option (GTK_SUPPORT "enable GTK support" ON)
+# option (GTK3_SUPPORT "enable Gtk3 support" ON)
+ # *NOTE*: implies DHCLIENT_SUPPORT off
+include (CMakeDependentOption)
+CMAKE_DEPENDENT_OPTION (GTK3_SUPPORT "enable GTK 3 support" ON
+                        "GTK_SUPPORT" OFF)
+CMAKE_DEPENDENT_OPTION (GTK2_SUPPORT "enable GTK 2 support" ON
+                        "GTK_SUPPORT; NOT GTK3_SUPPORT" OFF)
+CMAKE_DEPENDENT_OPTION (GTKGL_SUPPORT "enable GTK OpenGL support" ON
+                        "GTK_SUPPORT" OFF)
+# *IMPORTANT NOTE*: to use gtkglarea on gtk2, check out the 'gtkglarea-2' branch
+#                   of the project
+#option (GTKGLAREA_SUPPORT "enable GtkGLArea support" OFF)
+CMAKE_DEPENDENT_OPTION (GTKGLAREA_SUPPORT "enable GtkGLArea support" OFF
+                        "GTK_SUPPORT; GTK2_SUPPORT; GTKGL_SUPPORT" OFF)
 if (WIN32)
- option (DEBUG_HEAP_SUPPORT "enable CRT debug heap"
-         OFF)
+ option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
 endif ()
 
 if (UNIX)
@@ -13,6 +23,47 @@ if (UNIX)
  include (FindThreads)
  set (CMAKE_THREAD_PREFER_PTHREAD ON)
  find_package (Threads)
+endif ()
+
+include (FindPkgConfig)
+
+if (GTKGL_SUPPORT)
+ include (FindOpenGL)
+ if (NOT OPENGL_FOUND)
+  message (FATAL_ERROR "OpenGL support not found on this system, aborting")
+ endif ()
+
+ if (UNIX)
+  pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
+ endif ()
+
+ set (GLUT_LIB_FILE libglut.so.3)
+ if (UNIX)
+  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
+                HINTS /usr/lib
+                PATH_SUFFIXES x86_64-linux-gnu
+                DOC "searching for ${GLUT_LIB_FILE} (system paths)")
+ elseif (WIN32)
+  unset (LIB_FILE_SUFFIX)
+  set (GLUT_LIB_FILE freeglut)
+  if (CMAKE_BUILD_TYPE STREQUAL Debug)
+   set (LIB_FILE_SUFFIX d)
+  endif ()
+  set (GLUT_LIB_FILE ${GLUT_LIB_FILE}${LIB_FILE_SUFFIX}.lib)
+ # message (STATUS "${GLUT_LIB_FILE} search path: \"${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}\"")
+  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
+                PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}
+                DOC "searching for ${GLUT_LIB_FILE}")
+ endif ()
+ #if (NOT EXISTS GLUT_LIBRARY)
+ if (NOT GLUT_LIBRARY)
+  message (FATAL_ERROR "could not find ${GLUT_LIB_FILE} (was: \"${GLUT_LIBRARY}\"), aborting")
+ else ()
+  message (STATUS "Found Glut library \"${GLUT_LIBRARY}\"")
+ endif ()
+endif (GTKGL_SUPPORT)
+
+if (UNIX)
  check_library_exists (iwlib iw_sockets_open "" HAVE_LIB_IW)
 
  set (JSON_LIB_FILE libjson-c.so.3)
@@ -28,8 +79,8 @@ if (UNIX)
 
  set (ISC_LIB_FILE libisc.a)
  find_library (ISC_LIBRARY ${ISC_LIB_FILE}
-               HINTS /usr/lib
-               PATH_SUFFIXES x86_64-linux-gnu
+               HINTS /usr/lib64 /usr/lib
+               PATH_SUFFIXES dhcp x86_64-linux-gnu
                DOC "searching for ${ISC_LIB_FILE} (system paths)")
  if (NOT ISC_LIBRARY)
   message (FATAL_ERROR "could not find ${ISC_LIB_FILE}, aborting")
@@ -39,8 +90,8 @@ if (UNIX)
 
  set (DHCPCTL_LIB_FILE libdhcpctl.a)
  find_library (DHCPCTL_LIBRARY ${DHCPCTL_LIB_FILE}
-               HINTS /usr/lib
-#               PATH_SUFFIXES x86_64-linux-gnu
+               HINTS /usr/lib64 /usr/lib
+               PATH_SUFFIXES dhcp x86_64-linux-gnu
                DOC "searching for ${DHCPCTL_LIB_FILE} (system paths)")
  if (NOT DHCPCTL_LIBRARY)
   message (FATAL_ERROR "could not find ${DHCPCTL_LIB_FILE}, aborting")
@@ -150,76 +201,41 @@ if (WIN32)
  set (DIRECTSHOW_BASECLASSES_DIRECTORY "$ENV{PROGRAMFILES(X86)}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
 endif ()
 
-include (FindOpenGL)
-if (NOT OPENGL_FOUND)
- set (OPENGL_LIB_FILE libGL.so)
- if (UNIX)
-#  find_library (OPENGL_LIBRARY
-#                NAMES ${OPENGL_LIB_FILE}
-#                PATHS /usr/lib/x86_64-linux-gnu
-#                DOC "searching for ${OPENGL_LIB_FILE}")
- endif ()
-# if (NOT OPENGL_LIBRARY)
-#  message (FATAL_ERROR "could not find ${OPENGL_LIB_FILE} (was: \"${OPENGL_LIBRARY}\"), aborting")
-# else ()
-#  message (STATUS "Found OpenGL library \"${OPENGL_LIBRARY}\"")
-# endif ()
-endif ()
-
-set (GLUT_LIB_FILE libglut.so.3)
-if (UNIX)
- find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
-               HINTS /usr/lib
-               PATH_SUFFIXES x86_64-linux-gnu
-               DOC "searching for ${GLUT_LIB_FILE} (system paths)")
-elseif (WIN32)
- unset (LIB_FILE_SUFFIX)
- set (GLUT_LIB_FILE freeglut)
- if (CMAKE_BUILD_TYPE STREQUAL Debug)
-  set (LIB_FILE_SUFFIX d)
- endif ()
- set (GLUT_LIB_FILE ${GLUT_LIB_FILE}${LIB_FILE_SUFFIX}.lib)
-# message (STATUS "${GLUT_LIB_FILE} search path: \"${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}\"")
- find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
-               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}
-               DOC "searching for ${GLUT_LIB_FILE}")
-endif ()
-#if (NOT EXISTS GLUT_LIBRARY)
-if (NOT GLUT_LIBRARY)
- message (FATAL_ERROR "could not find ${GLUT_LIB_FILE} (was: \"${GLUT_LIBRARY}\"), aborting")
-else ()
- message (STATUS "Found Glut library \"${GLUT_LIBRARY}\"")
-endif ()
-
 include (FindGettext)
-include (FindPkgConfig)
 
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 if (UNIX)
 # *NOTE*: libCommon requires libcap
  pkg_check_modules (PKG_CAP REQUIRED libcap)
- pkg_check_modules (PKG_LIBXML REQUIRED libxml-2.0)
- pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
+ pkg_check_modules (PKG_GETTEXT REQUIRED tinygettext)
+ if (DBUS_SUPPORT)
+  pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
+ endif ()
 # pkg_check_modules (PKG_OPENSSL REQUIRED openssl)
- pkg_check_modules (PKG_FFMPEG REQUIRED libswscale libavutil libavformat libavcodec)
- pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
  pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
- pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
- if (GTK3_SUPPORT)
-  pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
+ if (GTK_SUPPORT)
+  if (GTKGL_SUPPORT)
+   pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
+   pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
+  endif (GTKGL_SUPPORT)
+  if (GTK3_SUPPORT)
+   pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
 #  if (GTKGL_SUPPORT AND GTKGLAREA_SUPPORT)
 #   pkg_check_modules (PKG_GTKGLAREA3 REQUIRED gtkgl-3.0)
 #  endif ()
- else ()
-  pkg_check_modules (PKG_GTK2 REQUIRED gmodule-2.0 gthread-2.0 gtk+-2.0)
-  if (GTKGL_SUPPORT)
-   if (GTKGLAREA_SUPPORT)
+  else ()
+   pkg_check_modules (PKG_GTK2 REQUIRED gmodule-2.0 gthread-2.0 gtk+-2.0)
+   if (GTKGL_SUPPORT)
+    if (GTKGLAREA_SUPPORT)
 #    pkg_check_modules (PKG_GTKGLAREA2 REQUIRED gtkgl-2.0)
-   else ()
-    pkg_check_modules (PKG_GTKGL2 REQUIRED gdkglext-1.0 gtkglext-1.0)
-   endif ()
-  endif ()
- endif ()
+    else ()
+     pkg_check_modules (PKG_GTKGL2 REQUIRED gdkglext-1.0 gtkglext-1.0)
+    endif (GTKGLAREA_SUPPORT)
+   endif (GTKGL_SUPPORT)
+  endif (GTK3_SUPPORT)
+ endif (GTK_SUPPORT)
+ pkg_check_modules (PKG_LIBXML REQUIRED libxml-2.0)
+ pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libavformat libswscale)
 endif ()
 # *TODO*: repair WIN32 pkgconfig support
 
@@ -311,22 +327,33 @@ endif ()
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 if (UNIX)
- include_directories (/usr/share/gettext)
- include_directories (/usr/include/bind-export)
+ include_directories (${PKG_CAP_INCLUDE_DIRS})
+ include_directories (${PKG_GETTEXT_INCLUDE_DIRS})
+ if (DBUS_SUPPORT)
+  include_directories (${PKG_DBUS_INCLUDE_DIRS})
+ endif (DBUS_SUPPORT)
+ if (GTK3_SUPPORT)
+  include_directories (${PKG_GTK3_INCLUDE_DIRS})
+ else ()
+  include_directories (${PKG_GTK2_INCLUDE_DIRS})
+  include_directories (${PKG_GLADE_INCLUDE_DIRS})
+ endif (GTK3_SUPPORT)
+
+# include_directories (/usr/share/gettext)
+ include_directories (${PKG_FFMPEG_INCLUDE_DIRS})
+
+ if (DHCLIENT_SUPPORT)
+  include_directories (/usr/include/bind-export)
+  include_directories (/usr/include/dhcp)
+ endif (DHCLIENT_SUPPORT)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/linux)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACE)
- include_directories (${PKG_CAP_INCLUDE_DIRS})
- include_directories (${PKG_DBUS_INCLUDE_DIRS})
- if (GTK3_SUPPORT)
-  include_directories (${PKG_GTK3_INCLUDE_DIRS})
- else ()
-  include_directories (${PKG_GTK2_INCLUDE_DIRS})
- endif ()
- include_directories (${PKG_GLADE_INCLUDE_DIRS})
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src)
  #include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/dbus)
@@ -336,6 +363,10 @@ if (UNIX)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui/gtk)
+
+ # *NOTE*: mavlink also has a header common.h
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dec)
@@ -351,10 +382,8 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/client_server)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/wlan)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/3rd_party/bison)
- include_directories (${CMAKE_CURRENT_BINARY_DIR}/../..)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
+ include_directories (${CMAKE_CURRENT_BINARY_DIR}/../..)
 elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../openssl/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib)

@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2010 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -35,8 +35,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #endif
-#include <GL/glut.h>
-#include <glm/glm.hpp>
+//#include <GL/glut.h>
+#include "glm/glm.hpp"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <cguid.h>
@@ -916,7 +916,7 @@ stream_processing_function (void* arg_in)
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
-    
+
     //    (*iterator_2).second.stream = data_p->CBData->controlStream;
     result_2 =
         data_p->CBData->controlStream->initialize ((*iterator_4).second);
@@ -3134,12 +3134,12 @@ idle_update_progress_cb (gpointer userData_in)
                   exit_status));
 #endif
     } // end ELSE IF
-  
+
     data_p->state->eventSourceIds.erase (*iterator_3);
     data_p->pendingActions.erase (iterator_2);
   } // end FOR
   data_p->completedActions.clear ();
-  
+
   bool done = false;
   if (data_p->pendingActions.empty ())
   {
@@ -3162,7 +3162,7 @@ idle_update_progress_cb (gpointer userData_in)
     //  gdk_window_set_cursor (window_2, cursor_p);
     //  data_p->cursorType = GDK_LAST_CURSOR;
     //} // end IF
-  
+
     done = true;
   } // end IF
 
@@ -4715,7 +4715,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   } // end IF
   else
   {
-    GtkEntry* entry_p = 
+    GtkEntry* entry_p =
       GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
     ACE_ASSERT (entry_p);

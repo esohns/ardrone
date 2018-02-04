@@ -162,6 +162,9 @@
 #define ARDRONE_STREAM_MDOULE_HANDLER_NAME_STRING           "EventHandler"
 #define ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING      "PaVEDecoder"
 
+// state-machine
+#define ARDRONE_STATEMACHINE_NAVDATA_NAME                   "ARDroneStateMachineNavData"
+
 // control
 #define ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH          1024 // #characters
 

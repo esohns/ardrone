@@ -4,14 +4,28 @@
 # return value: - 0 success, 1 failure
 
 # sanity checks
-command -v gksudo >/dev/null 2>&1 || { echo "gksudo is not installed, aborting" >&2; exit 1; }
-command -v /sbin/getcap >/dev/null 2>&1 || { echo "getcap is not installed, aborting" >&2; exit 1; }
+command -v sudo >/dev/null 2>&1 || { echo "sudo is not installed, aborting" >&2; exit 1; }
+#command -v gksudo >/dev/null 2>&1 || { echo "gksudo is not installed, aborting" >&2; exit 1; }
+command -v exec >/dev/null 2>&1 || { echo "exec is not installed, aborting" >&2; exit 1; }
 
 # *NOTE*: regular users may not have the CAP_SETFCAP capability needed to modify
 #         (executable) file capabilities --> run as root
 # *TODO*: verify this programmatically
-[ "root" != "$USER" ] && exec gksudo --disable-grab $0 "$@"
+HAS_GKSUDO=0
+if [ -x gksudo ]; then
+ HAS_GKSUDO=1
+fi
 
+if [ "${USER}" != "root" ]; then
+ SUDO=sudo
+ CMDLINE_ARGS="$@"
+ if [ ${HAS_GKSUDO} -eq 1 ]; then
+  SUDO=gksudo
+  CMDLINE_ARGS="--disable-grab $0 $@"
+ fi
+# echo "invoking sudo $0 \"${CMDLINE_ARGS}\"..."
+ exec ${SUDO} $0 ${CMDLINE_ARGS}
+fi
 #echo "starting..."
 
 # sanity checks
@@ -22,7 +36,8 @@ command -v dirname >/dev/null 2>&1 || { echo "dirname is not installed, aborting
 command -v echo >/dev/null 2>&1 || { echo "echo is not supported, aborting" >&2; exit 1; }
 command -v readlink >/dev/null 2>&1 || { echo "readlink is not installed, aborting" >&2; exit 1; }
 command -v tr >/dev/null 2>&1 || { echo "tr is not installed, aborting" >&2; exit 1; }
-command -v /sbin/setcap >/dev/null 2>&1 || { echo "setcap is not installed, aborting" >&2; exit 1; }
+command -v setcap >/dev/null 2>&1 || { echo "setcap is not installed, aborting" >&2; exit 1; }
+command -v getcap >/dev/null 2>&1 || { echo "getcap is not installed, aborting" >&2; exit 1; }
 
 DEFAULT_PROJECT_DIR="$(dirname $(readlink -f $0))/.."
 PROJECT_DIR=${DEFAULT_PROJECT_DIR}
@@ -81,10 +96,10 @@ i=0
 # [ $? -ne 0 ] && echo "ERROR: failed to chmod +s ${BIN}: \"$?\", aborting" && exit 1
 
 # /sbin/setcap 'cap_net_bind_service=eip' ${BIN_TMP}
- /sbin/setcap 'cap_net_admin+eip' ${BIN}
- [ $? -ne 0 ] && echo "ERROR: failed to /sbin/setcap ${BIN}: \"$?\", aborting" && exit 1
+ setcap 'cap_net_admin+eip' ${BIN}
+ [ $? -ne 0 ] && echo "ERROR: failed to setcap ${BIN}: \"$?\", aborting" && exit 1
 
- CMD_OUTPUT=$(/sbin/getcap ${BIN})
+ CMD_OUTPUT=$(getcap ${BIN})
  j=0
  for k in $(echo $CMD_OUTPUT | tr " " "\n")
  do

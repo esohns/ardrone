@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -50,21 +50,20 @@ enum ARDRone_NavDataState : int
   NAVDATA_STATE_MAX
 };
 
+extern const char ardrone_navdata_statemachine_name_string_[];
+
 class ARDrone_StateMachine_NavData
- : public Common_StateMachine_Base_T<ACE_NULL_SYNCH,
+ : public Common_StateMachine_Base_T<ardrone_navdata_statemachine_name_string_,
+                                     ACE_NULL_SYNCH,
                                      enum ARDRone_NavDataState,
                                      Common_IStateMachine_T<enum ARDRone_NavDataState> >
 {
-  typedef Common_StateMachine_Base_T<ACE_NULL_SYNCH,
+  typedef Common_StateMachine_Base_T<ardrone_navdata_statemachine_name_string_,
+                                     ACE_NULL_SYNCH,
                                      enum ARDRone_NavDataState,
                                      Common_IStateMachine_T<enum ARDRone_NavDataState> > inherited;
 
  public:
-  // convenient types
-  typedef Common_StateMachine_Base_T<ACE_NULL_SYNCH,
-                                     enum ARDRone_NavDataState,
-                                     Common_IStateMachine_T<enum ARDRone_NavDataState> > STATEMACHINE_BASE_T;
- 
   ARDrone_StateMachine_NavData ();
   inline virtual ~ARDrone_StateMachine_NavData () {}
 
