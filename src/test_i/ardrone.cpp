@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
 *   Copyright (C) 2010 by Erik Sohns   *
 *   erik.sohns@web.de   *
 *                                                                         *
@@ -25,10 +25,15 @@
 #include <sstream>
 
 #if defined (ENABLE_NLS)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "gettext.h"
+#else
 #include "locale.h"
 #include "libintl.h"
-#endif
-#include "gettext.h"
+
+#include "tinygettext.h"
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // ENABLE_NLS
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <dshow.h>
@@ -175,6 +180,11 @@ do_printUsage (const std::string& programName_in)
   // enable verbatim boolean output
   std::cout.setf (ios::boolalpha);
 
+  enum Common_PlatformOSType os_type_e;
+#if defined (ACE_LINUX)
+  Common_Tools::isLinux (os_type_e);
+#endif
+
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
 
@@ -212,7 +222,7 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11)).c_str ())
 #else
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [STRING] : network interface [\"")
-            << ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN)
+            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11).c_str ())
 #endif
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
             << std::endl;
@@ -311,13 +321,8 @@ do_processArguments (int argc_in,
 #endif
   debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   interfaceIdentifier_out     =
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
-#else
-  interfaceIdentifier_out     =
-    ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN);
-#endif
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   useMediaFoundation_out      =
@@ -2182,6 +2187,9 @@ do_work (int argc_in,
   } // end IF
 
   ACE_ASSERT (WLAN_monitor_p);
+#if defined (ACE_LINUX)
+  Common_Tools::printCapabilities ();
+#endif
   WLAN_monitor_p->start ();
   if (!WLAN_monitor_p->isRunning ())
   {
@@ -2660,12 +2668,8 @@ ACE_TMAIN (int argc_in,
   debug_scanner          = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   log_to_file            = false;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   interface_identifier   =
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
-#else
-  interface_identifier   = ACE_TEXT_ALWAYS_CHAR (NET_INTERFACE_DEFAULT_WLAN);
-#endif
   port_number            = ARDRONE_PORT_TCP_VIDEO;
   use_reactor            = NET_EVENT_USE_REACTOR;
   SSID_string            = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
@@ -2903,8 +2907,8 @@ ACE_TMAIN (int argc_in,
   gtk_cb_data.initializationHook = idle_initialize_ui_cb;
   gtk_cb_data.progressData = &gtk_progress_data;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  gtk_cb_data.mediaFramework = 
-    (use_mediafoundation ? STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION 
+  gtk_cb_data.mediaFramework =
+    (use_mediafoundation ? STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION
                          : STREAM_MEDIAFRAMEWORK_DIRECTSHOW);
 #endif
   gtk_cb_data.userData = &gtk_cb_data;
