@@ -654,7 +654,9 @@ stream_processing_function (void* arg_in)
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2;
 #endif
   //  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
+  Stream_IStreamControlBase* istream_base_p = NULL;
   std::ostringstream converter;
+  Common_IGetR_T<ARDrone_SessionData_t>* iget_p = NULL;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
   std::string logfile_name_string;
@@ -676,72 +678,38 @@ stream_processing_function (void* arg_in)
 #else
   ARDrone_StreamConfigurationsIterator_t iterator_4;
 #endif
+  typename ARDrone_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
   //    Stream_ISession* session_p = NULL;
-    ACE_Time_Value session_start_timeout =
-        COMMON_TIME_NOW + ACE_Time_Value (3, 0);
-    Common_IGetP_T<ARDrone_IController>* iget_p = NULL;
+  ACE_Time_Value session_start_timeout =
+      COMMON_TIME_NOW + ACE_Time_Value (3, 0);
+  Common_IGetP_T<ARDrone_IController>* iget_2 = NULL;
+  ARDrone_StreamsIterator_t streams_iterator =
+      data_p->CBData->streams.find (navdata_stream_name_string_);
+  ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
 
-//    // navdata
-////    iterator_3 =
-////      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-////    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
-//    iterator_4 =
-//      data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavData"));
-//    ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
-//    iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-//    ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-//    logfile_name_string = (*iterator_2).second.targetFileName;
-////    configuration_p =
-////      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
-////    ACE_ASSERT (configuration_p);
-////    configuration_p->targetFileName =
-//    (*iterator_2).second.targetFileName =
-//        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
-//                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-////    configuration_p->stream = data_p->CBData->NavDataStream;
-//    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
-//    result_2 =
-//      data_p->CBData->NavDataStream->initialize ((*iterator_4).second);
-//    if (!result_2)
-//    {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
-//      goto done;
-//    } // end IF
-//    (*iterator_2).second.targetFileName = logfile_name_string;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    switch (data_p->mediaFramework)
-    {
-      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-      {
-        iget_p =
-          dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->directShowNavDataStream);
-        break;
-      }
-      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      {
-        iget_p =
-          dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->mediaFoundationNavDataStream);
-        break;
-      }
-      default:
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
-                    data_p->mediaFramework));
-        break;
-      }
-    } // end SWITCH
-#else
-    iget_p =
-      dynamic_cast<Common_IGetP_T<ARDrone_IController>*> (data_p->CBData->NavDataStream);
-#endif
-    ACE_ASSERT (iget_p);
+    // navdata
+//    iinitialize_p = data_p->CBData->NavDataStream;
+//    ACE_ASSERT (iinitialize_p);
+    iget_2 =
+      dynamic_cast<Common_IGetP_T<ARDrone_IController>*> ((*streams_iterator).second);
+    ACE_ASSERT (iget_2);
     data_p->CBData->controller =
-      const_cast<ARDrone_IController*> (iget_p->getP ());
+        const_cast<ARDrone_IController*> (iget_2->getP ());
     ACE_ASSERT (data_p->CBData->controller);
+//    istream_base_p =
+//        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+//    ACE_ASSERT (istream_base_p);
 
     // control
+    streams_iterator =
+          data_p->CBData->streams.find (control_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    iinitialize_p =
+        dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+    ACE_ASSERT (iinitialize_p);
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     switch (data_p->mediaFramework)
     {
@@ -757,60 +725,66 @@ stream_processing_function (void* arg_in)
           Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
 
-        //    (*iterator_2).second.stream = data_p->CBData->controlStream;
-        result_2 =
-          data_p->CBData->directShowControlStream->initialize ((*directshow_iterator_4).second);
+        result_2 = iinitialize_p->initialize ((*directshow_iterator_4).second);
         if (!result_2)
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to initialize control stream: \"%m\", aborting\n")));
           goto done;
         } // end IF
-        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
+        (*directshow_iterator_2).second.second.targetFileName =
+            logfile_name_string;
         //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
         //ACE_ASSERT (session_p);
-        data_p->CBData->directShowControlStream->start ();
+        istream_base_p->start ();
         // *IMPORTANT NOTE*: race condition here --> add timeout
         //    session_p->wait (false,
         //                     &session_start_timeout);
 
         // mavlink
-        //    iterator_3 =
-        //      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
-        //    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
         directshow_iterator_4 =
           data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
         ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
         directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
         ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
-        logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
+        logfile_name_string =
+            (*directshow_iterator_2).second.second.targetFileName;
         (*directshow_iterator_2).second.second.targetFileName =
           Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
-        //    (*iterator_2).second.second.stream = data_p->CBData->MAVLinkStream;
-        result_2 = data_p->CBData->directShowMAVLinkStream->initialize ((*directshow_iterator_4).second);
+
+        streams_iterator =
+              data_p->CBData->streams.find (mavlink_stream_name_string_);
+        ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+        iinitialize_p =
+            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+        ACE_ASSERT (iinitialize_p);
+        istream_base_p =
+            dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+        ACE_ASSERT (istream_base_p);
+
+        result_2 = iinitialize_p->initialize ((*directshow_iterator_4).second);
         if (!result_2)
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to initialize MAVLink stream: \"%m\", aborting\n")));
           goto done;
         } // end IF
-        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
+        (*directshow_iterator_2).second.second.targetFileName =
+            logfile_name_string;
         //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
         //    ACE_ASSERT (session_p);
-        data_p->CBData->directShowMAVLinkStream->start ();
+        istream_base_p->start ();
         //    (*iterator_2).second.targetFileName = logfile_name_string;
 
         // navdata
-        //    iterator_3 =
-        //      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-        //    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
         directshow_iterator_4 =
           data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
         ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
         directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
         ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
-        logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
+        logfile_name_string =
+            (*directshow_iterator_2).second.second.targetFileName;
         //    configuration_p =
         //      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
         //    ACE_ASSERT (configuration_p);
@@ -818,18 +792,27 @@ stream_processing_function (void* arg_in)
         (*directshow_iterator_2).second.second.targetFileName =
           Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-        //    configuration_p->stream = data_p->CBData->NavDataStream;
-        //    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
-        result_2 =
-          data_p->CBData->directShowNavDataStream->initialize ((*directshow_iterator_4).second);
+
+        streams_iterator =
+              data_p->CBData->streams.find (navdata_stream_name_string_);
+        ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+        iinitialize_p =
+            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+        ACE_ASSERT (iinitialize_p);
+        istream_base_p =
+            dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+        ACE_ASSERT (istream_base_p);
+
+        result_2 = iinitialize_p->initialize ((*directshow_iterator_4).second);
         if (!result_2)
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("failed to initialize NavData stream: \"%m\", aborting\n")));
           goto done;
         } // end IF
-        (*directshow_iterator_2).second.second.targetFileName = logfile_name_string;
-        data_p->CBData->directShowNavDataStream->start ();
+        (*directshow_iterator_2).second.second.targetFileName =
+            logfile_name_string;
+        istream_base_p->start ();
         //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
         //    ACE_ASSERT (session_p);
         //    // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -843,11 +826,22 @@ stream_processing_function (void* arg_in)
         directshow_iterator_4 =
           data_p->CBData->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
         ACE_ASSERT (directshow_iterator_4 != data_p->CBData->configuration->directShowStreamConfigurations.end ());
-        directshow_iterator_2 = (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+        directshow_iterator_2 =
+            (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
         ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
         //    (*iterator_2).second.stream = data_p->CBData->videoStream;
-        result_2 =
-          data_p->CBData->directShowVideoStream->initialize ((*directshow_iterator_4).second);
+
+        streams_iterator =
+              data_p->CBData->streams.find (video_stream_name_string_);
+        ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+        iinitialize_p =
+            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+        ACE_ASSERT (iinitialize_p);
+        istream_base_p =
+            dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+        ACE_ASSERT (istream_base_p);
+
+        result_2 = iinitialize_p->initialize ((*directshow_iterator_4).second);
         if (!result_2)
         {
           ACE_DEBUG ((LM_ERROR,
@@ -855,7 +849,8 @@ stream_processing_function (void* arg_in)
           goto done;
         } // end IF
 
-        session_data_container_p = &data_p->CBData->directShowVideoStream->getR ();
+        session_data_container_p =
+            &data_p->CBData->directShowVideoStream->getR ();
         ACE_ASSERT (session_data_container_p);
         session_data_p =
           &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
@@ -875,8 +870,8 @@ stream_processing_function (void* arg_in)
                                         converter.str ().c_str ());
         gdk_threads_leave ();
         //  } // end lock scope
-        data_p->CBData->directShowVideoStream->start ();
-        //    if (!data_p->CBData->videoStream->isRunning ())
+        istream_base_p->start ();
+        //    if (!istream_base_p->isRunning ())
         //    {
         //      ACE_DEBUG ((LM_ERROR,
         //                  ACE_TEXT ("failed to start stream, aborting\n")));
@@ -917,9 +912,7 @@ stream_processing_function (void* arg_in)
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
 
-    //    (*iterator_2).second.stream = data_p->CBData->controlStream;
-    result_2 =
-        data_p->CBData->controlStream->initialize ((*iterator_4).second);
+    result_2 = iinitialize_p->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -929,15 +922,12 @@ stream_processing_function (void* arg_in)
     (*iterator_2).second.second.targetFileName = logfile_name_string;
     //session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->controlStream);
     //ACE_ASSERT (session_p);
-    data_p->CBData->controlStream->start ();
+    istream_base_p->start ();
     // *IMPORTANT NOTE*: race condition here --> add timeout
 //    session_p->wait (false,
 //                     &session_start_timeout);
 
     // mavlink
-//    iterator_3 =
-//      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("MAVLinkSource"));
-//    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
@@ -947,8 +937,17 @@ stream_processing_function (void* arg_in)
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
-//    (*iterator_2).second.second.stream = data_p->CBData->MAVLinkStream;
-    result_2 = data_p->CBData->MAVLinkStream->initialize ((*iterator_4).second);
+
+    streams_iterator =
+          data_p->CBData->streams.find (mavlink_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    iinitialize_p =
+        dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+    ACE_ASSERT (iinitialize_p);
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    result_2 = iinitialize_p->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -958,30 +957,30 @@ stream_processing_function (void* arg_in)
     (*iterator_2).second.second.targetFileName = logfile_name_string;
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->MAVLinkStream);
 //    ACE_ASSERT (session_p);
-    data_p->CBData->MAVLinkStream->start ();
+    istream_base_p->start ();
 //    (*iterator_2).second.targetFileName = logfile_name_string;
 
     // navdata
-//    iterator_3 =
-//      data_p->CBData->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR ("NavDataSource"));
-//    ACE_ASSERT (iterator_3 != data_p->CBData->configuration->connectionConfigurations.end ());
     iterator_4 =
       data_p->CBData->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
-//    configuration_p =
-//      const_cast<struct ARDrone_ModuleHandlerConfiguration*> (static_cast<const struct ARDrone_ModuleHandlerConfiguration*> (&((*iterator_2).second)));
-//    ACE_ASSERT (configuration_p);
-//    configuration_p->targetFileName =
     (*iterator_2).second.second.targetFileName =
         Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
-//    configuration_p->stream = data_p->CBData->NavDataStream;
-//    (*iterator_2).second.stream = data_p->CBData->NavDataStream;
-    result_2 =
-      data_p->CBData->NavDataStream->initialize ((*iterator_4).second);
+
+    streams_iterator =
+          data_p->CBData->streams.find (navdata_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    iinitialize_p =
+        dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+    ACE_ASSERT (iinitialize_p);
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    result_2 = iinitialize_p->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -989,7 +988,7 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
     (*iterator_2).second.second.targetFileName = logfile_name_string;
-    data_p->CBData->NavDataStream->start ();
+    istream_base_p->start ();
 //    session_p = dynamic_cast<Stream_ISession*> (data_p->CBData->NavDataStream);
 //    ACE_ASSERT (session_p);
 //    // *IMPORTANT NOTE*: race condition here --> add timeout
@@ -1005,9 +1004,17 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (iterator_4 != data_p->CBData->configuration->streamConfigurations.end ());
     iterator_2 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
-//    (*iterator_2).second.stream = data_p->CBData->videoStream;
-    result_2 =
-        data_p->CBData->videoStream->initialize ((*iterator_4).second);
+
+    streams_iterator =
+          data_p->CBData->streams.find (video_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    iinitialize_p =
+        dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+    ACE_ASSERT (iinitialize_p);
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    result_2 = iinitialize_p->initialize ((*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -1015,7 +1022,10 @@ stream_processing_function (void* arg_in)
       goto done;
     } // end IF
 
-    session_data_container_p = &data_p->CBData->videoStream->getR ();
+    iget_p =
+        dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+    ACE_ASSERT (iget_p);
+    session_data_container_p = &iget_p->getR ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
@@ -1035,7 +1045,7 @@ stream_processing_function (void* arg_in)
                                       converter.str ().c_str ());
     gdk_threads_leave ();
 //  } // end lock scope
-    data_p->CBData->videoStream->start ();
+    istream_base_p->start ();
   //    if (!data_p->CBData->videoStream->isRunning ())
   //    {
   //      ACE_DEBUG ((LM_ERROR,
@@ -1045,42 +1055,37 @@ stream_processing_function (void* arg_in)
 #endif
 
 continue_:
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    switch (data_p->mediaFramework)
-    {
-      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-      {
-        data_p->CBData->directShowControlStream->wait (true, false, false);
-        data_p->CBData->directShowMAVLinkStream->wait (true, false, false);
-        data_p->CBData->directShowNavDataStream->wait (true, false, false);
-        if (data_p->CBData->enableVideo)
-          data_p->CBData->directShowVideoStream->wait (true, false, false);
-        break;
-      }
-      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      {
-        data_p->CBData->mediaFoundationControlStream->wait (true, false, false);
-        data_p->CBData->mediaFoundationMAVLinkStream->wait (true, false, false);
-        data_p->CBData->mediaFoundationNavDataStream->wait (true, false, false);
-        if (data_p->CBData->enableVideo)
-          data_p->CBData->mediaFoundationVideoStream->wait (true, false, false);
-        break;
-      }
-      default:
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
-                    data_p->mediaFramework));
-        break;
-      }
-    } // end SWITCH
-#else
-  data_p->CBData->controlStream->wait (true, false, false);
-  data_p->CBData->MAVLinkStream->wait (true, false, false);
-  data_p->CBData->NavDataStream->wait (true, false, false);
+    streams_iterator =
+        data_p->CBData->streams.find (control_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+    streams_iterator =
+        data_p->CBData->streams.find (mavlink_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+    streams_iterator =
+        data_p->CBData->streams.find (navdata_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
   if (data_p->CBData->enableVideo)
-    data_p->CBData->videoStream->wait (true, false, false);
-#endif
+  {
+    streams_iterator =
+        data_p->CBData->streams.find (video_stream_name_string_);
+    ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+  } // end IF
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = 0;
@@ -3380,24 +3385,6 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (cb_data_p);
   ACE_ASSERT (cb_data_p->configuration);
   ACE_ASSERT (cb_data_p->progressData);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_ASSERT (cb_data_p->directShowControlStream);
-  ACE_ASSERT (cb_data_p->directShowMAVLinkStream);
-  ACE_ASSERT (cb_data_p->directShowNavDataStream);
-  ACE_ASSERT (cb_data_p->directShowVideoStream);
-  ACE_ASSERT (cb_data_p->mediaFoundationControlStream);
-  ACE_ASSERT (cb_data_p->mediaFoundationMAVLinkStream);
-  ACE_ASSERT (cb_data_p->mediaFoundationNavDataStream);
-  ACE_ASSERT (cb_data_p->mediaFoundationVideoStream);
-#else
-  ACE_ASSERT (cb_data_p->controlStream);
-  ACE_ASSERT (cb_data_p->MAVLinkStream);
-  ACE_ASSERT (cb_data_p->NavDataStream);
-  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-    ACE_ASSERT (cb_data_p->videoStream);
-  else
-    ACE_ASSERT (cb_data_p->asynchVideoStream);
-#endif
 
   Common_UI_GTK_BuildersIterator_t iterator =
     cb_data_p->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
@@ -3432,40 +3419,37 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
 
   if (!gtk_toggle_action_get_active (toggleAction_in))
   {
-    // stop stream
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    switch (cb_data_p->mediaFramework)
-    {
-      case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-      {
-        cb_data_p->directShowControlStream->stop (false, false, true);
-        cb_data_p->directShowMAVLinkStream->stop (false, false, true);
-        cb_data_p->directShowNavDataStream->stop (false, false, true);
-        cb_data_p->directShowVideoStream->stop (false, false, true);
-        break;
-      }
-      case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      {
-        cb_data_p->mediaFoundationControlStream->stop (false, false, true);
-        cb_data_p->mediaFoundationMAVLinkStream->stop (false, false, true);
-        cb_data_p->mediaFoundationNavDataStream->stop (false, false, true);
-        cb_data_p->mediaFoundationVideoStream->stop (false, false, true);
-        break;
-      }
-      default:
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                    cb_data_p->mediaFramework));
-        return;
-      }
-    } // end SWITCH
-#else
-    cb_data_p->controlStream->stop (false, false, true);
-    cb_data_p->MAVLinkStream->stop (false, false, true);
-    cb_data_p->NavDataStream->stop (false, false, true);
-    cb_data_p->videoStream->stop (false, false, true);
-#endif
+    // stop streams
+    Stream_IStreamControlBase* istream_base_p = NULL;
+    ARDrone_StreamsIterator_t streams_iterator =
+        cb_data_p->streams.find (control_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->stop (false, false, true);
+    streams_iterator =
+        cb_data_p->streams.find (mavlink_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->stop (false, false, true);
+    streams_iterator =
+        cb_data_p->streams.find (navdata_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->stop (false, false, true);
+    streams_iterator =
+        cb_data_p->streams.find (video_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->stop (false, false, true);
+
     return;
   } // end IF
 
@@ -6958,45 +6942,20 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (iterator != cb_data_p->builders.end ());
 
   // sanity check(s)
-  Stream_IStreamControlBase* stream_base_p = NULL;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (cb_data_p->mediaFramework)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-        stream_base_p = cb_data_p->directShowVideoStream;
-      else
-        stream_base_p = cb_data_p->directShowAsynchVideoStream;
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-        stream_base_p = cb_data_p->mediaFoundationVideoStream;
-      else
-        stream_base_p = cb_data_p->mediaFoundationAsynchVideoStream;
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  cb_data_p->mediaFramework));
-      return;
-    }
-  } // end SWITCH
-#else
-  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-    stream_base_p = cb_data_p->videoStream;
-  else
-    stream_base_p = cb_data_p->asynchVideoStream;
-#endif
-  ACE_ASSERT (stream_base_p);
+  Stream_IStreamControlBase* istream_base_p = NULL;
+  ARDrone_StreamsIterator_t streams_iterator =
+      cb_data_p->streams.find (video_stream_name_string_);
+  ACE_ASSERT (streams_iterator != cb_data_p->streams.end ());
+  istream_base_p =
+      dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+  ACE_ASSERT (istream_base_p);
   if (!cb_data_p->enableVideo ||
-      !stream_base_p->isRunning ())
+      !istream_base_p->isRunning ())
     return;
 
+  Stream_IStream_t* istream_p =
+      dynamic_cast<Stream_IStream_t*> (istream_base_p);
+  ACE_ASSERT (istream_p);
   const Stream_Module_t* module_p = NULL;
   std::string stream_name_string;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -7004,34 +6963,16 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-      {
-        module_p =
-          cb_data_p->directShowVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
-        stream_name_string = cb_data_p->directShowVideoStream->name ();
-      } // end IF
-      else
-      {
-        module_p =
-          cb_data_p->directShowAsynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
-        stream_name_string = cb_data_p->directShowAsynchVideoStream->name ();
-      } // end ELSE
+      module_p =
+          istream_p->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING));
+      stream_name_string = istream_p->name ();
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-      {
-        module_p =
-          cb_data_p->mediaFoundationVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
-        stream_name_string = cb_data_p->mediaFoundationVideoStream->name ();
-      } // end IF
-      else
-      {
-        module_p =
-          cb_data_p->mediaFoundationAsynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
-        stream_name_string = cb_data_p->mediaFoundationAsynchVideoStream->name ();
-      } // end ELSE
+      module_p =
+          istream_p->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING));
+      stream_name_string = istream_p->name ();
       break;
     } // end ELSE
     default:
@@ -7043,18 +6984,9 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
     }
   } // end SWITCH
 #else
-  if (cb_data_p->configuration->signalHandlerConfiguration.useReactor)
-  {
-    module_p =
-      cb_data_p->videoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING));
-    stream_name_string = cb_data_p->videoStream->name ();
-  } // end IF
-  else
-  {
-    module_p =
-      cb_data_p->asynchVideoStream->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING));
-    stream_name_string = cb_data_p->asynchVideoStream->name ();
-  } // end ELSE
+  module_p =
+      istream_p->find (ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING));
+  stream_name_string = istream_p->name ();
 #endif
   if (!module_p)
   {

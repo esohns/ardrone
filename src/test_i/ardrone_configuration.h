@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
 *   Copyright (C) 2010 by Erik Sohns   *
 *   erik.sohns@web.de   *
 *                                                                         *
@@ -215,6 +215,9 @@ struct ARDrone_GtkProgressData
   struct ARDrone_Statistic statistic;
 };
 
+typedef std::map<std::string,
+                 Stream_Base_t*> ARDrone_Streams_t;
+typedef ARDrone_Streams_t::const_iterator ARDrone_StreamsIterator_t;
 struct ARDrone_GtkCBData
 #if defined (GTKGL_SUPPORT)
   : Common_UI_GTK_GLState
@@ -230,24 +233,6 @@ struct ARDrone_GtkCBData
 #endif
    , configuration (NULL)
    , controller (NULL)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , directShowControlStream (NULL)
-   , directShowMAVLinkStream (NULL)
-   , directShowNavDataStream (NULL)
-   , directShowAsynchVideoStream (NULL)
-   , directShowVideoStream (NULL)
-   , mediaFoundationControlStream (NULL)
-   , mediaFoundationMAVLinkStream (NULL)
-   , mediaFoundationNavDataStream (NULL)
-   , mediaFoundationAsynchVideoStream (NULL)
-   , mediaFoundationVideoStream (NULL)
-#else
-   , controlStream (NULL)
-   , MAVLinkStream (NULL)
-   , NavDataStream (NULL)
-   , asynchVideoStream (NULL)
-   , videoStream (NULL)
-#endif
    , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
    , eventStack ()
    , frameCounter (0)
@@ -268,6 +253,7 @@ struct ARDrone_GtkCBData
 #endif
    , progressData (NULL)
    , stateEventId (0)
+   , streams ()
    , timeStamp (ACE_Time_Value::zero)
    , videoMode (ARDRONE_DEFAULT_VIDEO_MODE)
   {
@@ -289,24 +275,6 @@ struct ARDrone_GtkCBData
   // *NOTE*: on the host ("server"), use the device bias registers instead !
   // *TODO*: implement a client->server protocol to do this
   //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_DirectShow_ControlStream_t*          directShowControlStream;
-  ARDrone_DirectShow_MAVLinkStream_t*          directShowMAVLinkStream;
-  ARDrone_DirectShow_NavDataStream_t*          directShowNavDataStream;
-  ARDrone_DirectShow_AsynchVideoStream_t*      directShowAsynchVideoStream;
-  ARDrone_DirectShow_VideoStream_t*            directShowVideoStream;
-  ARDrone_MediaFoundation_ControlStream_t*     mediaFoundationControlStream;
-  ARDrone_MediaFoundation_MAVLinkStream_t*     mediaFoundationMAVLinkStream;
-  ARDrone_MediaFoundation_NavDataStream_t*     mediaFoundationNavDataStream;
-  ARDrone_MediaFoundation_AsynchVideoStream_t* mediaFoundationAsynchVideoStream;
-  ARDrone_MediaFoundation_VideoStream_t*       mediaFoundationVideoStream;
-#else
-  ARDrone_ControlStream_t*                     controlStream;
-  ARDrone_MAVLinkStream_t*                     MAVLinkStream;
-  ARDrone_NavDataStream_t*                     NavDataStream;
-  ARDrone_AsynchVideoStream_t*                 asynchVideoStream;
-  ARDrone_VideoStream_t*                       videoStream;
-#endif
   bool                                         enableVideo;
   ARDrone_Events_t                             eventStack;
   unsigned int                                 frameCounter;
@@ -327,6 +295,7 @@ struct ARDrone_GtkCBData
 #endif
   struct ARDrone_GtkProgressData*              progressData;
   guint                                        stateEventId;
+  ARDrone_Streams_t                            streams;
   ACE_Time_Value                               timeStamp;
   enum ARDrone_VideoMode                       videoMode;
 };

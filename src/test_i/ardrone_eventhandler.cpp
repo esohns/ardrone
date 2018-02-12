@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -116,7 +116,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("caught exception in ARDrone_IControlNotify::messageCB(), returning\n")));
       }
-    
+
       stream_type_e = ARDRONE_STREAM_CONTROL;
 
       break;
@@ -494,6 +494,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (CBData_);
 
   enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+  Stream_IStreamControlBase* istream_base_p = NULL;
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
@@ -530,39 +531,17 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       if (!gtk_toggle_action_get_active (toggle_action_p))
       {
         gdk_threads_leave ();
-
         break;
       } // end IF
       gdk_threads_leave ();
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (CBData_->mediaFramework)
-      {
-        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-        {
-          ACE_ASSERT (CBData_->directShowControlStream);
-          CBData_->directShowControlStream->start ();
-          break;
-        }
-        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-        {
-          ACE_ASSERT (CBData_->mediaFoundationControlStream);
-          CBData_->mediaFoundationControlStream->start ();
-          break;
-      }
-        default:
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                      CBData_->mediaFramework));
-          return;
-        }
-    } // end SWITCH
-#else
-      ACE_ASSERT (CBData_->controlStream);
-      CBData_->controlStream->start ();
-#endif
-
+      ARDrone_StreamsIterator_t iterator_2 =
+          CBData_->streams.find (control_stream_name_string_);
+      ACE_ASSERT (iterator_2 != CBData_->streams.end ());
+      istream_base_p =
+          dynamic_cast<Stream_IStreamControlBase*> ((*iterator_2).second);
+      ACE_ASSERT (istream_base_p);
+      istream_base_p->start ();
       break;
     }
     case ARDRONE_STREAM_MAVLINK:

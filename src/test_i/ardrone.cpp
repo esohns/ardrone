@@ -180,10 +180,10 @@ do_printUsage (const std::string& programName_in)
   // enable verbatim boolean output
   std::cout.setf (ios::boolalpha);
 
-  enum Common_PlatformOSType os_type_e;
-#if defined (ACE_LINUX)
-  Common_Tools::isLinux (os_type_e);
-#endif
+//   enum Common_PlatformOSType os_type_e;
+// #if defined (ACE_LINUX)
+//   Common_Tools::isLinux (os_type_e);
+// #endif
 
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();
@@ -1007,6 +1007,7 @@ do_work (int argc_in,
   connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
 #endif
 
+  Stream_Base_t* stream_base_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ControlStream_t directshow_control_stream;
   ARDrone_DirectShow_MAVLinkStream_t directshow_mavlink_stream;
@@ -2016,6 +2017,10 @@ do_work (int argc_in,
   (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
+  if (useReactor_in)
+    stream_base_p = &video_stream;
+  else
+    stream_base_p = &asynch_video_stream;
 
   //  network
   module_configuration.generateUniqueNames = true;
@@ -2023,13 +2028,14 @@ do_work (int argc_in,
                                                                          std::make_pair (module_configuration,
                                                                                          modulehandler_configuration)));
 
-  CBData_in.controlStream = &control_stream;
-  CBData_in.MAVLinkStream = &mavlink_stream;
-  CBData_in.NavDataStream = &navdata_stream;
-  if (useReactor_in)
-    CBData_in.videoStream = &video_stream;
-  else
-    CBData_in.asynchVideoStream = &asynch_video_stream;
+  CBData_in.streams.insert (std::make_pair (control_stream_name_string_,
+                                            &control_stream));
+  CBData_in.streams.insert (std::make_pair (mavlink_stream_name_string_,
+                                            &mavlink_stream));
+  CBData_in.streams.insert (std::make_pair (navdata_stream_name_string_,
+                                            &navdata_stream));
+  CBData_in.streams.insert (std::make_pair (video_stream_name_string_,
+                                            stream_base_p));
 
   // step2: initialize connection manager
   //configuration_2.streamConfiguration->module = NULL;
@@ -2187,9 +2193,6 @@ do_work (int argc_in,
   } // end IF
 
   ACE_ASSERT (WLAN_monitor_p);
-#if defined (ACE_LINUX)
-  Common_Tools::printCapabilities ();
-#endif
   WLAN_monitor_p->start ();
   if (!WLAN_monitor_p->isRunning ())
   {

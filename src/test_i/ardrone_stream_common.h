@@ -280,54 +280,6 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
-struct ARDrone_ConnectionState;
-struct ARDrone_UserData;
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//class ARDrone_DirectShow_ConnectionConfiguration;
-//typedef Net_IConnection_T<ACE_INET_Addr,
-//                          ARDrone_DirectShow_ConnectionConfiguration,
-//                          struct ARDrone_ConnectionState,
-//                          struct ARDrone_Statistic> ARDrone_DirectShow_IConnection_t;
-//class ARDrone_MediaFoundation_ConnectionConfiguration;
-//typedef Net_IConnection_T<ACE_INET_Addr,
-//                          ARDrone_MediaFoundation_ConnectionConfiguration,
-//                          struct ARDrone_ConnectionState,
-//                          struct ARDrone_Statistic> ARDrone_MediaFoundation_IConnection_t;
-//
-//typedef std::map<std::string, // module name
-//                 ARDrone_DirectShow_ConnectionConfiguration> ARDrone_DirectShow_StreamConnectionConfigurations_t;
-//typedef std::map<std::string, // module name
-//                 ARDrone_MediaFoundation_ConnectionConfiguration> ARDrone_MediaFoundation_StreamConnectionConfigurations_t;
-//
-//typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-//                                 ACE_INET_Addr,
-//                                 ARDrone_DirectShow_ConnectionConfiguration,
-//                                 struct ARDrone_ConnectionState,
-//                                 struct ARDrone_Statistic,
-//                                 struct ARDrone_UserData> ARDrone_DirectShow_IConnectionManager_t;
-//typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-//                                 ACE_INET_Addr,
-//                                 ARDrone_MediaFoundation_ConnectionConfiguration,
-//                                 struct ARDrone_ConnectionState,
-//                                 struct ARDrone_Statistic,
-//                                 struct ARDrone_UserData> ARDrone_MediaFoundation_IConnectionManager_t;
-//#else
-//class ARDrone_ConnectionConfiguration;
-//typedef Net_IConnection_T<ACE_INET_Addr,
-//                          ARDrone_ConnectionConfiguration,
-//                          struct ARDrone_ConnectionState,
-//                          struct ARDrone_Statistic> ARDrone_IConnection_t;
-//
-//typedef std::map<std::string, // module name
-//                 ARDrone_ConnectionConfiguration> ARDrone_StreamConnectionConfigurations_t;
-//
-//typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-//                                 ACE_INET_Addr,
-//                                 ARDrone_ConnectionConfiguration,
-//                                 struct ARDrone_ConnectionState,
-//                                 struct ARDrone_Statistic,
-//                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
-//#endif
 struct ARDrone_GtkCBData;
 struct ARDrone_ModuleHandlerConfigurationBase
  : Stream_ModuleHandlerConfiguration
@@ -350,16 +302,16 @@ struct ARDrone_ModuleHandlerConfigurationBase
     passive = false;
   };
 
-  bool                          block;                 // H264 decoder module
-  struct ARDrone_GtkCBData*     CBData;                // controller module
-  enum AVCodecID                codecId;               // H264 decoder module
-  bool                          fullScreen;            // display module
-  std::string                   outboundStreamName;    // event handler module
-  bool                          printProgressDot;      // file writer module
-  bool                          pushStatisticMessages; // statistic module
-  ARDrone_Notification_t*       subscriber;            // event handler module
-  ARDrone_Subscribers_t*        subscribers;           // event handler module
-  std::string                   targetFileName;        // file sink module
+  bool                      block;                 // H264 decoder module
+  struct ARDrone_GtkCBData* CBData;                // controller module
+  enum AVCodecID            codecId;               // H264 decoder module
+  bool                      fullScreen;            // display module
+  std::string               outboundStreamName;    // event handler module
+  bool                      printProgressDot;      // file writer module
+  bool                      pushStatisticMessages; // statistic module
+  ARDrone_Notification_t*   subscriber;            // event handler module
+  ARDrone_Subscribers_t*    subscribers;           // event handler module
+  std::string               targetFileName;        // file sink module
 };
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_FilterConfiguration;
@@ -484,6 +436,7 @@ struct ARDrone_ModuleHandlerConfiguration
 typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;
 typedef Common_IInitializeP_T<ARDrone_IMAVLinkNotify> ARDrone_IMAVLinkInitialize_t;
 typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize_t;
+struct ARDrone_UserData;
 struct ARDrone_StreamConfiguration
  : Stream_Configuration
 {

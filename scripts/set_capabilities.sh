@@ -86,16 +86,24 @@ i=0
 # BIN_TMP="${TMP_DIR}/${BINS}"
 # [ ! -r "${BIN_TMP}" ] && echo "ERROR: invalid binary file (was: \"${BIN_TMP}\"), aborting" && exit 1
 
+# *NOTE*: test_i/ardrone needs 'cap_net_admin' to scan the WLAN, but gtk does
+#         not support set(g/u)id programs ATM (see:
+#         https://www.gtk.org/setuid.html)
+#         --> use a (setuid) capabilities wrapper (see:
+#             libCommon/test_i/capabilities/capability_wrapper) and file
+#             capabilities (see: scripts/set_capabilities.sh) to grant
+#             'cap_net_admin' to test_i/ardrone
 # chown --quiet root ${BIN_TMP}
-# chown --quiet root ${BIN}
+# chown --quiet root:root ${BIN}
 # [ $? -ne 0 ] && echo "ERROR: failed to chown ${BIN}: \"$?\", aborting" && exit 1
+# echo "modified \"$BINS\": user:group"
 # chgrp --quiet root ${BIN}
 # [ $? -ne 0 ] && echo "ERROR: failed to chgrp ${BIN}: \"$?\", aborting" && exit 1
 # chmod --quiet +s ${BIN_TMP}
-# chmod --quiet +s ${BIN}
-# [ $? -ne 0 ] && echo "ERROR: failed to chmod +s ${BIN}: \"$?\", aborting" && exit 1
+# chmod --quiet ug+s ${BIN}
+# [ $? -ne 0 ] && echo "ERROR: failed to chmod u+s ${BIN}: \"$?\", aborting" && exit 1
+# echo "modified \"$BINS\": uid gid suid sgid"
 
-# /sbin/setcap 'cap_net_bind_service=eip' ${BIN_TMP}
  setcap 'cap_net_admin+eip' ${BIN}
  [ $? -ne 0 ] && echo "ERROR: failed to setcap ${BIN}: \"$?\", aborting" && exit 1
 
