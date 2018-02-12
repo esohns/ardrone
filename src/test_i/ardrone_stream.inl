@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -39,7 +39,7 @@
 
 template <typename ModuleConfigurationType,
           typename SourceModuleType>
-ARDrone_VideoStream_T<ModuleConfigurationType, 
+ARDrone_VideoStream_T<ModuleConfigurationType,
                       SourceModuleType>::ARDrone_VideoStream_T ()
  : inherited ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -54,7 +54,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
 template <typename ModuleConfigurationType,
           typename SourceModuleType>
-ARDrone_VideoStream_T<ModuleConfigurationType, 
+ARDrone_VideoStream_T<ModuleConfigurationType,
                       SourceModuleType>::~ARDrone_VideoStream_T ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::~ARDrone_VideoStream_T"));
@@ -84,7 +84,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 template <typename ModuleConfigurationType,
           typename SourceModuleType>
 bool
-ARDrone_VideoStream_T<ModuleConfigurationType, 
+ARDrone_VideoStream_T<ModuleConfigurationType,
                       SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                                                bool& delete_out)
 {
@@ -1329,7 +1329,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       switch (inherited::configuration_->configuration_.mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-        { 
+        {
           if (!directshow_connection_p)
           {
             ACE_DEBUG ((LM_ERROR,
@@ -1347,7 +1347,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-        { 
+        {
           if (!mediafoundation_connection_p)
           {
             ACE_DEBUG ((LM_ERROR,
@@ -1923,7 +1923,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // update GUI ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  // *TODO*: move this to onConnect() (see below)
+  // *TODO*: move this to onDisconnect() (see below)
   if (inherited::configuration_->configuration_.CBData)
   {
     guint event_source_id =

@@ -1,7 +1,18 @@
-﻿option (GTK_SUPPORT "enable GTK support" ON)
+﻿include (CMakeDependentOption)
+if (UNIX)
+  # *NOTE*: these are mutually exclusive
+  option (DHCLIENT_SUPPORT "enable ISC dhclient support (default)" ON)
+ # option (DBUS_SUPPORT "enable DBus support" OFF)
+  # *NOTE*: implies DHCLIENT_SUPPORT off
+  CMAKE_DEPENDENT_OPTION (DBUS_SUPPORT "enable DBus support" OFF
+                          "NOT DHCLIENT_SUPPORT" OFF)
+elseif (WIN32)
+ option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
+endif ()
+
+option (GTK_SUPPORT "enable GTK support" ON)
 # option (GTK3_SUPPORT "enable Gtk3 support" ON)
  # *NOTE*: implies DHCLIENT_SUPPORT off
-include (CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION (GTK3_SUPPORT "enable GTK 3 support" ON
                         "GTK_SUPPORT" OFF)
 CMAKE_DEPENDENT_OPTION (GTK2_SUPPORT "enable GTK 2 support" ON
@@ -13,9 +24,6 @@ CMAKE_DEPENDENT_OPTION (GTKGL_SUPPORT "enable GTK OpenGL support" ON
 #option (GTKGLAREA_SUPPORT "enable GtkGLArea support" OFF)
 CMAKE_DEPENDENT_OPTION (GTKGLAREA_SUPPORT "enable GtkGLArea support" OFF
                         "GTK_SUPPORT; GTK2_SUPPORT; GTKGL_SUPPORT" OFF)
-if (WIN32)
- option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
-endif ()
 
 if (UNIX)
 # include (CheckLibraryExists)
@@ -690,6 +698,10 @@ install (FILES
 ##########################################
 
 if (UNIX)
+ set (SHELL_WRAPPER "${PROJECT_SOURCE_DIR}/../libCommon/scripts/shell_wrapper.sh")
+ if (NOT EXISTS ${SHELL_WRAPPER})
+  message (FATAL_ERROR "could not find shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting")
+ endif ()
  create_target_launcher (${EXECUTABLE}
                          ARGS "-l -t"
 #                         FORWARD_ARGS
