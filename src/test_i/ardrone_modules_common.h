@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2010 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -508,7 +508,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_StreamConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
-                                    ARDrone_UDPConnector_t> ARDrone_Module_Controller;
+                                    ARDrone_UDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_ModuleHandlerConfiguration,
@@ -519,7 +520,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_StreamConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
-                                    ARDrone_AsynchUDPConnector_t> ARDrone_Module_AsynchController;
+                                    ARDrone_AsynchUDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_AsynchController;
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

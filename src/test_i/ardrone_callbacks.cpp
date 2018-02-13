@@ -1625,7 +1625,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 #if defined (GTKGL_SUPPORT)
 #if GTK_CHECK_VERSION (3,0,0)
 #if GTK_CHECK_VERSION (3,16,0)
-  GError* error_p = NULL;
+//  GError* error_p = NULL;
   GtkGLArea* gl_area_p = GTK_GL_AREA (gtk_gl_area_new ());
   if (!gl_area_p)
   {
@@ -3453,11 +3453,11 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     return;
   } // end IF
 
-  GtkFileChooserButton* file_chooser_button_p = NULL;
-  char* URI_p = NULL;
-  GError* error_p = NULL;
-  gchar* hostname_p = NULL;
-  gchar* directory_p = NULL;
+//  GtkFileChooserButton* file_chooser_button_p = NULL;
+//  char* URI_p = NULL;
+//  GError* error_p = NULL;
+//  gchar* hostname_p = NULL;
+//  gchar* directory_p = NULL;
   GtkComboBox* combo_box_p = NULL;
   GtkTreeIter iterator_2;
   GtkFrame* frame_p = NULL;
