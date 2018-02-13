@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -41,7 +41,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 ACE_Atomic_Op<ACE_SYNCH_MUTEX, unsigned long>
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -53,7 +54,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::currentNavDataMessageId = 1;
+                            ConnectorType,
+                            CBDataType>::currentNavDataMessageId = 1;
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
@@ -65,7 +67,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
                             ConfigurationType,
@@ -76,18 +79,19 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
+                            ConnectorType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                            ConnectorType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
+                            CBDataType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
 #else
-                            ConnectorType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
+                            CBDataType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
 #endif
  : inherited (stream_in)
  , inherited2 ()
+ , CBData_ (NULL)
  , deviceConfiguration_ ()
  , deviceInitialized_ (false)
  , deviceState_ (0)
  , deviceState_2 ()
- , CBData_ (NULL)
  , isFirst_ (true)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));
@@ -105,7 +109,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 bool
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -117,18 +122,19 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::initialize (const ConfigurationType& configuration_in,
-                                                        Stream_IAllocator* allocator_in)
+                            ConnectorType,
+                            CBDataType>::initialize (const ConfigurationType& configuration_in,
+                                                     Stream_IAllocator* allocator_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::initialize"));
 
   if (inherited::isInitialized_)
   {
+    CBData_ = NULL;
     deviceConfiguration_.clear ();
     deviceInitialized_ = false;
     deviceState_ = 0;
     ACE_OS::memset (&deviceState_2, 0, sizeof (struct _navdata_demo_t));
-    CBData_ = NULL;
     isFirst_ = true;
   } // end IF
 
@@ -148,7 +154,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -160,8 +167,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::handleDataMessage (DataMessageType*& message_inout,
-                                                               bool& passMessageDownstream_out)
+                            ConnectorType,
+                            CBDataType>::handleDataMessage (DataMessageType*& message_inout,
+                                                            bool& passMessageDownstream_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::handleDataMessage"));
 
@@ -224,7 +232,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   // received acknowlegement ?
   if (deviceState_ & ARDRONE_COMMAND_MASK)
-  { 
+  {
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("%s: received command acknowlegement\n"),
                 inherited::mod_->name ()));
@@ -259,7 +267,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -271,8 +280,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::handleSessionMessage (SessionMessageType*& message_inout,
-                                                                  bool& passMessageDownstream_out)
+                            ConnectorType,
+                            CBDataType>::handleSessionMessage (SessionMessageType*& message_inout,
+                                                               bool& passMessageDownstream_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::handleSessionMessage"));
 
@@ -327,7 +337,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -339,7 +350,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::onChange (enum ARDRone_NavDataState newState_in)
+                            ConnectorType,
+                            CBDataType>::onChange (enum ARDRone_NavDataState newState_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::onChange"));
 
@@ -702,7 +714,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -714,7 +727,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::resetACKFlag ()
+                            ConnectorType,
+                            CBDataType>::resetACKFlag ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::resetACKFlag"));
 
@@ -757,7 +771,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 bool
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -769,7 +784,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::sendATCommand (const std::string& commandString_in)
+                            ConnectorType,
+                            CBDataType>::sendATCommand (const std::string& commandString_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::sendATCommand"));
 
@@ -837,7 +853,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -849,7 +866,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::ids (const std::string& sessionId_in,
+                            ConnectorType,
+                            CBDataType>::ids (const std::string& sessionId_in,
                                                  const std::string& userId_in,
                                                  const std::string& applicationId_in)
 {
@@ -889,7 +907,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -901,7 +920,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::resetWatchdog ()
+                            ConnectorType,
+                            CBDataType>::resetWatchdog ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::resetWatchdog"));
 
@@ -933,7 +953,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -945,7 +966,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::trim ()
+                            ConnectorType,
+                            CBDataType>::trim ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::trim"));
 
@@ -978,7 +1000,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -990,7 +1013,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::calibrate ()
+                            ConnectorType,
+                            CBDataType>::calibrate ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::calibrate"));
 
@@ -1008,7 +1032,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -1020,7 +1045,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::dump ()
+                            ConnectorType,
+                            CBDataType>::dump ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::dump"));
 
@@ -1062,7 +1088,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -1074,7 +1101,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::takeoff ()
+                            ConnectorType,
+                            CBDataType>::takeoff ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::takeoff"));
 
@@ -1092,7 +1120,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -1104,7 +1133,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::land ()
+                            ConnectorType,
+                            CBDataType>::land ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::land"));
 
@@ -1122,7 +1152,8 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          typename CBDataType>
 void
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
@@ -1134,7 +1165,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
-                            ConnectorType>::set (enum ARDrone_VideoMode videoMode_in)
+                            ConnectorType,
+                            CBDataType>::set (enum ARDrone_VideoMode videoMode_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::set"));
 

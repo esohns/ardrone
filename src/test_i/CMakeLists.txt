@@ -1,11 +1,11 @@
 ﻿include (CMakeDependentOption)
 if (UNIX)
-  # *NOTE*: these are mutually exclusive
-  option (DHCLIENT_SUPPORT "enable ISC dhclient support (default)" ON)
- # option (DBUS_SUPPORT "enable DBus support" OFF)
-  # *NOTE*: implies DHCLIENT_SUPPORT off
-  CMAKE_DEPENDENT_OPTION (DBUS_SUPPORT "enable DBus support" OFF
-                          "NOT DHCLIENT_SUPPORT" OFF)
+ option (DBUS_SUPPORT "enable DBus support" ON)
+ option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
+# option (DBUS_SUPPORT "enable DBus support" OFF)
+# *NOTE*: implies DHCLIENT_SUPPORT off
+# CMAKE_DEPENDENT_OPTION (DBUS_SUPPORT "enable DBus support" OFF
+#                         "NOT DHCLIENT_SUPPORT" OFF)
 elseif (WIN32)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
 endif ()
@@ -74,40 +74,94 @@ endif (GTKGL_SUPPORT)
 if (UNIX)
  check_library_exists (iwlib iw_sockets_open "" HAVE_LIB_IW)
 
- set (JSON_LIB_FILE libjson-c.so.3)
- find_library (JSON_LIBRARY ${JSON_LIB_FILE}
-               HINTS /usr/lib
-               PATH_SUFFIXES x86_64-linux-gnu
-               DOC "searching for ${JSON_LIB_FILE} (system paths)")
- if (NOT JSON_LIBRARY)
-  message (FATAL_ERROR "could not find ${JSON_LIB_FILE}, aborting")
- else ()
-  message (STATUS "Found json library \"${JSON_LIBRARY}\"")
+ if (DBUS_SUPPORT)
+  add_definitions (-DDBUS_SUPPORT)
  endif ()
+ if (DHCLIENT_SUPPORT)
+  set (JSON_LIB_FILE libjson-c.so.3)
+  find_library (JSON_LIBRARY ${JSON_LIB_FILE}
+                HINTS /usr/lib
+                PATH_SUFFIXES x86_64-linux-gnu
+                DOC "searching for ${JSON_LIB_FILE} (system paths)")
+  if (NOT JSON_LIBRARY)
+   message (FATAL_ERROR "could not find ${JSON_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found json library \"${JSON_LIBRARY}\"")
+  endif ()
 
- set (ISC_LIB_FILE libisc.a)
- find_library (ISC_LIBRARY ${ISC_LIB_FILE}
-               HINTS /usr/lib64 /usr/lib
-               PATH_SUFFIXES dhcp x86_64-linux-gnu
-               DOC "searching for ${ISC_LIB_FILE} (system paths)")
- if (NOT ISC_LIBRARY)
-  message (FATAL_ERROR "could not find ${ISC_LIB_FILE}, aborting")
- else ()
-  message (STATUS "Found isc library \"${ISC_LIBRARY}\"")
- endif ()
+  set (ISC_LIB_FILE libisc.a)
+  find_library (ISC_LIBRARY ${ISC_LIB_FILE}
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${ISC_LIB_FILE} (system paths)")
+  if (NOT ISC_LIBRARY)
+   message (FATAL_ERROR "could not find ${ISC_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found isc library \"${ISC_LIBRARY}\"")
+  endif ()
 
- set (DHCPCTL_LIB_FILE libdhcpctl.a)
- find_library (DHCPCTL_LIBRARY ${DHCPCTL_LIB_FILE}
-               HINTS /usr/lib64 /usr/lib
-               PATH_SUFFIXES dhcp x86_64-linux-gnu
-               DOC "searching for ${DHCPCTL_LIB_FILE} (system paths)")
- if (NOT DHCPCTL_LIBRARY)
-  message (FATAL_ERROR "could not find ${DHCPCTL_LIB_FILE}, aborting")
- else ()
-  message (STATUS "Found dhcpctl library \"${DHCPCTL_LIBRARY}\"")
- endif ()
+  set (ISC_CFG_LIB_FILE libisccfg.a)
+  find_library (ISC_CFG_LIBRARY ${ISC_CFG_LIB_FILE}
+#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${ISC_CFG_LIB_FILE} (system paths)")
+  if (NOT ISC_CFG_LIBRARY)
+   message (FATAL_ERROR "could not find ${ISC_CFG_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found isccfg library \"${ISC_CFG_LIBRARY}\"")
+  endif ()
+
+  set (IRS_LIB_FILE libirs.a)
+  find_library (IRS_LIBRARY ${IRS_LIB_FILE}
+#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${IRS_LIB_FILE} (system paths)")
+  if (NOT IRS_LIBRARY)
+   message (FATAL_ERROR "could not find ${IRS_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found irs library \"${IRS_LIBRARY}\"")
+  endif ()
+
+  set (DNS_LIB_FILE libdns.a)
+  find_library (DNS_LIBRARY ${DNS_LIB_FILE}
+#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${DNS_LIB_FILE} (system paths)")
+  if (NOT DNS_LIBRARY)
+   message (FATAL_ERROR "could not find ${DNS_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found dns library \"${DNS_LIBRARY}\"")
+  endif ()
+
+  set (OMAPI_LIB_FILE libomapi.a)
+  find_library (OMAPI_LIBRARY ${OMAPI_LIB_FILE}
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${OMAPI_LIB_FILE} (system paths)")
+  if (NOT OMAPI_LIBRARY)
+   message (FATAL_ERROR "could not find ${OMAPI_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found omapi library \"${OMAPI_LIBRARY}\"")
+  endif ()
+
+  set (DHCPCTL_LIB_FILE libdhcpctl.a)
+  find_library (DHCPCTL_LIBRARY ${DHCPCTL_LIB_FILE}
+                HINTS /usr/lib64 /usr/lib
+                PATH_SUFFIXES dhcp x86_64-linux-gnu
+                DOC "searching for ${DHCPCTL_LIB_FILE} (system paths)")
+  if (NOT DHCPCTL_LIBRARY)
+   message (FATAL_ERROR "could not find ${DHCPCTL_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found dhcpctl library \"${DHCPCTL_LIBRARY}\"")
+  endif ()
 # add_library (dhcpctl STATIC IMPORTED)
 # set_property (TARGET dhcpctl PROPERTY IMPORTED_LOCATION /usr/lib/libdhcpctl.a)
+
+  add_definitions (-DDHCLIENT_SUPPORT)
+ endif ()
 endif ()
 
 set (ACE_LIB_FILE libACE.so)
@@ -340,20 +394,20 @@ if (UNIX)
  if (DBUS_SUPPORT)
   include_directories (${PKG_DBUS_INCLUDE_DIRS})
  endif (DBUS_SUPPORT)
+ if (DHCLIENT_SUPPORT)
+  include_directories (/usr/include/bind-export)
+  include_directories (/usr/include/dhcp)
+ endif (DHCLIENT_SUPPORT)
+
+# include_directories (/usr/share/gettext)
+ include_directories (${PKG_FFMPEG_INCLUDE_DIRS})
+
  if (GTK3_SUPPORT)
   include_directories (${PKG_GTK3_INCLUDE_DIRS})
  else ()
   include_directories (${PKG_GTK2_INCLUDE_DIRS})
   include_directories (${PKG_GLADE_INCLUDE_DIRS})
  endif (GTK3_SUPPORT)
-
-# include_directories (/usr/share/gettext)
- include_directories (${PKG_FFMPEG_INCLUDE_DIRS})
-
- if (DHCLIENT_SUPPORT)
-  include_directories (/usr/include/bind-export)
-  include_directories (/usr/include/dhcp)
- endif (DHCLIENT_SUPPORT)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
@@ -567,15 +621,23 @@ if (UNIX)
  target_link_libraries (${EXECUTABLE} rt)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
  target_link_libraries (${EXECUTABLE} iw)
- target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
- target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
- target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
- target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
- target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
- target_link_libraries (${EXECUTABLE} ${PKG_ASSIMP_LIBRARIES})
+ if (DBUS_SUPPORT)
+  target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
 # link_directories (/usr/local/lib/dbus-1.0)
 # target_link_libraries (${EXECUTABLE} /usr/local/lib/dbus-1.0/libdbus-1.so)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/../../../../dbus/dbus/.libs/libdbus-1.so.3)
+ endif ()
+ if (DHCLIENT_SUPPORT)
+  target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${DNS_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${IRS_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
+ endif ()
+ target_link_libraries (${EXECUTABLE} ${PKG_ASSIMP_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
  target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
  target_link_libraries (${EXECUTABLE} X11)

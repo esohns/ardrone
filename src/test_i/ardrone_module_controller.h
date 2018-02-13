@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -44,7 +44,6 @@
 
 // forward declaration(s)
 class Stream_IAllocator;
-struct ARDrone_GtkCBData;
 
 //extern const char ardrone_default_controller_module_name_string[];
 
@@ -62,7 +61,9 @@ template <ACE_SYNCH_DECL,
           typename WLANMonitorType,
           typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
-          typename ConnectorType>
+          typename ConnectorType,
+          ////////////////////////////////
+          typename CBDataType>
 class ARDrone_Module_Controller_T
  : public Stream_Module_Net_Target_T<ACE_SYNCH_USE,
                                      TimePolicyType,
@@ -142,7 +143,8 @@ class ARDrone_Module_Controller_T
                                       WLANMonitorType,
                                       ConnectionConfigurationIteratorType,
                                       ConnectionManagerType,
-                                      ConnectorType> OWN_TYPE_T;
+                                      ConnectorType,
+                                      CBDataType> OWN_TYPE_T;
 
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T (const ARDrone_Module_Controller_T&))
@@ -160,7 +162,7 @@ class ARDrone_Module_Controller_T
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
 
-  struct ARDrone_GtkCBData*         CBData_;
+  CBDataType*                       CBData_;
   ARDrone_DeviceConfiguration_t     deviceConfiguration_;
   bool                              deviceInitialized_;
   uint32_t                          deviceState_;

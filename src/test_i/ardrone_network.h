@@ -410,12 +410,12 @@ typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  enum Stream_StateMachine_ControlState> ARDrone_IStreamConnection_t;
 #endif
 
-typedef Net_WLAN_InetMonitor_T<ACE_MT_SYNCH,
-                               Common_TimePolicy_t,
-                               struct ARDrone_WLANMonitorConfiguration,
+typedef Net_WLAN_InetMonitor_T<struct ARDrone_WLANMonitorConfiguration,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                                NET_WLAN_MONITOR_API_WLANAPI,
 #else
+                               ACE_MT_SYNCH,
+                               Common_TimePolicy_t,
                                NET_WLAN_MONITOR_API_IOCTL,
 #endif
                                struct ARDrone_UserData> ARDrone_WLANMonitor_t;
