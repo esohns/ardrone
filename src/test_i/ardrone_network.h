@@ -416,7 +416,7 @@ typedef Net_WLAN_InetMonitor_T<struct ARDrone_WLANMonitorConfiguration,
 #else
                                ACE_MT_SYNCH,
                                Common_TimePolicy_t,
-                               NET_WLAN_MONITOR_API_IOCTL,
+                               NET_WLAN_MONITOR_API_NL80211,
 #endif
                                struct ARDrone_UserData> ARDrone_WLANMonitor_t;
 
