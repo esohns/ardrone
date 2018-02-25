@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2010 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -29,6 +29,7 @@ ACE_THR_FUNC_RETURN stream_processing_function (void*);
 //------------------------------------------------------------------------------
 
 gboolean idle_associated_SSID_cb (gpointer);
+gboolean idle_disassociated_SSID_cb (gpointer);
 gboolean idle_finalize_ui_cb (gpointer);
 gboolean idle_initialize_ui_cb (gpointer);
 gboolean idle_session_end_cb (gpointer);

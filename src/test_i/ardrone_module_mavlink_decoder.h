@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -21,7 +21,7 @@
 #ifndef ARDRONE_MODULE_MAVLINK_DECODER_H
 #define ARDRONE_MODULE_MAVLINK_DECODER_H
 
-#include "mavlink.h"
+#include "mavlink/v2.0/common/mavlink.h"
 
 #include "ace/Global_Macros.h"
 

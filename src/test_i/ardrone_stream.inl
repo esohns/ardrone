@@ -2062,17 +2062,17 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 //#endif
 //    return;
 //  } // end IF
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("\"%s\": disconnected from SSID %s\n"),
-              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
-              ACE_TEXT (SSID_in.c_str ())));
-#else
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("\"%s\": disconnected from SSID %s\n"),
-              ACE_TEXT (interfaceIdentifier_in.c_str ()),
-              ACE_TEXT (SSID_in.c_str ())));
-#endif
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": disconnected from access point (SSID was: %s\n"),
+//              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
+//              ACE_TEXT (SSID_in.c_str ())));
+//#else
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": disconnected from access point (SSID was: %s\n"),
+//              ACE_TEXT (interfaceIdentifier_in.c_str ()),
+//              ACE_TEXT (SSID_in.c_str ())));
+//#endif
 
   // update GUI ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2080,12 +2080,12 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   if (inherited::configuration_->configuration_.CBData)
   {
     guint event_source_id =
-      g_idle_add (idle_associated_SSID_cb,
+      g_idle_add (idle_disassociated_SSID_cb,
                   inherited::configuration_->configuration_.CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
+                  ACE_TEXT ("failed to g_idle_add(idle_disassociated_SSID_cb): \"%m\", returning\n")));
       return;
     } // end IF
   } // end IF

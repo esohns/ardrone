@@ -1,8 +1,8 @@
-// stdafx.h : include file for standard system include files,
+﻿// stdafx.h : include file for standard system include files,
 //  or project specific include files that are used frequently, but
 //      are changed infrequently
 //
-#if defined _MSC_VER
+#if defined (_MSC_VER)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 // *NOTE*: work around quirky MSVC...
@@ -12,7 +12,7 @@
 
 // Windows Header Files
 #include <windows.h>
-#endif
+#endif // _MSC_VER
 
 // C RunTime Header Files
 //#include <iostream>
@@ -21,7 +21,7 @@
 //#ifdef LIBACENETWORK_ENABLE_VALGRIND_SUPPORT
 #if defined (VALGRIND_SUPPORT)
 #include "valgrind/valgrind.h"
-#endif
+#endif // VALGRIND_SUPPORT
 
 // System Library Header Files
 #include "ace/config-lite.h"
@@ -36,9 +36,17 @@
 #include "stream_common.h"
 #include "stream_macros.h"
 
+#if defined (HAVE_CONFIG_H)
+#include "libACEStream_config.h"
+#endif // HAVE_CONFIG_H
+
 // Local Header Files
 #include "net_common.h"
 #include "net_macros.h"
+
+#if defined (HAVE_CONFIG_H)
+#include "libACENetwork_config.h"
+#endif // HAVE_CONFIG_H
 
 //#if defined (_MSC_VER)
 //#include "targetver.h"
