@@ -1,13 +1,15 @@
 ﻿include (CMakeDependentOption)
+
 if (UNIX)
- option (WEXT_SUPPORT "enable wext support" ON)
- option (NL80211_SUPPORT "enable nl80211 support" ON)
- option (DBUS_SUPPORT "enable DBus support" ON)
- option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
-# option (DBUS_SUPPORT "enable DBus support" OFF)
-# *NOTE*: implies DHCLIENT_SUPPORT off
+# CMAKE_DEPENDENT_OPTION (WEXT_SUPPORT "enable wext support" OFF
+#                         "NOT NL80211_SUPPORT; NOT DBUS_SUPPORT" OFF)
+# CMAKE_DEPENDENT_OPTION (NL80211_SUPPORT "enable nl80211 support" ON
+#                         "NOT WEXT_SUPPORT; NOT DBUS_SUPPORT" OFF)
+# # *WARNING*; DBus support is out of order ATM (see: "debug" statement below)
+# # *NOTE*: implies DHCLIENT_SUPPORT off
 # CMAKE_DEPENDENT_OPTION (DBUS_SUPPORT "enable DBus support" OFF
-#                         "NOT DHCLIENT_SUPPORT" OFF)
+#                         "NOT WEXT_SUPPORT; NOT NL80211_SUPPORT; NOT DHCLIENT_SUPPORT" OFF)
+# option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
 elseif (WIN32)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
 endif ()
@@ -37,6 +39,10 @@ endif ()
 
 include (FindPkgConfig)
 if (UNIX)
+ # *NOTE*: libCommon requires libcap
+ pkg_check_modules (PKG_CAP REQUIRED libcap)
+ pkg_check_modules (PKG_GETTEXT REQUIRED tinygettext)
+# pkg_check_modules (PKG_OPENSSL REQUIRED openssl)
  if (WEXT_SUPPORT)
   check_library_exists (iwlib iw_sockets_open "" HAVE_LIB_IW)
   add_definitions (-DWEXT_SUPPORT)
@@ -240,19 +246,12 @@ include (FindGettext)
 
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 if (UNIX)
-# *NOTE*: libCommon requires libcap
- pkg_check_modules (PKG_CAP REQUIRED libcap)
- pkg_check_modules (PKG_GETTEXT REQUIRED tinygettext)
- if (DBUS_SUPPORT)
-  pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
- endif ()
-# pkg_check_modules (PKG_OPENSSL REQUIRED openssl)
- pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
+ pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libavformat libswscale)
+ pkg_check_modules (PKG_LIBXML REQUIRED libxml-2.0)
+ pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
+ pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
  if (GTK_SUPPORT)
-  if (GTKGL_SUPPORT)
-   pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
-   pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
-  endif (GTKGL_SUPPORT)
+  pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
   if (GTK3_SUPPORT)
    pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
 #  if (GTKGL_SUPPORT AND GTKGLAREA_SUPPORT)
@@ -263,25 +262,20 @@ if (UNIX)
    if (GTKGL_SUPPORT)
     if (GTKGLAREA_SUPPORT)
 #    pkg_check_modules (PKG_GTKGLAREA2 REQUIRED gtkgl-2.0)
+     add_definitions (-DGTKGLAREA_SUPPORT)
     else ()
      pkg_check_modules (PKG_GTKGL2 REQUIRED gdkglext-1.0 gtkglext-1.0)
     endif (GTKGLAREA_SUPPORT)
    endif (GTKGL_SUPPORT)
   endif (GTK3_SUPPORT)
  endif (GTK_SUPPORT)
- pkg_check_modules (PKG_LIBXML REQUIRED libxml-2.0)
- pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libavformat libswscale)
-endif ()
+endif (UNIX)
 # *TODO*: repair WIN32 pkgconfig support
 
 if (GTKGL_SUPPORT)
  include (FindOpenGL)
  if (NOT OPENGL_FOUND)
   message (FATAL_ERROR "OpenGL support not found on this system, aborting")
- endif ()
-
- if (UNIX)
-  pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
  endif ()
 
  set (GLUT_LIB_FILE libglut.so.3)
@@ -308,42 +302,8 @@ if (GTKGL_SUPPORT)
  else ()
   message (STATUS "Found Glut library \"${GLUT_LIBRARY}\"")
  endif ()
-endif (GTKGL_SUPPORT)
-
-if (GTKGL_SUPPORT)
-# pkg_check_modules (PKGTKGL REQUIRED gtkglarea)
  add_definitions (-DGTKGL_SUPPORT)
-#  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS GTKGL_SUPPORT)
-
- set (GLUT_LIB_FILE libglut.so.3)
- if (UNIX)
-  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
-                HINTS /usr/lib
-                PATH_SUFFIXES x86_64-linux-gnu
-                DOC "searching for ${GLUT_LIB_FILE} (system paths)")
- elseif (WIN32)
-  unset (LIB_FILE_SUFFIX)
-  set (GLUT_LIB_FILE freeglut)
-  if (CMAKE_BUILD_TYPE STREQUAL Debug)
-   set (LIB_FILE_SUFFIX d)
-  endif ()
-  set (GLUT_LIB_FILE ${GLUT_LIB_FILE}${LIB_FILE_SUFFIX}.lib)
-#  message (STATUS "${GLUT_LIB_FILE} search path: \"${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}\"")
-  find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
-                PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}
-                DOC "searching for ${GLUT_LIB_FILE}")
- endif ()
-#if (NOT EXISTS GLUT_LIBRARY)
- if (NOT GLUT_LIBRARY)
-  message (FATAL_ERROR "could not find ${GLUT_LIB_FILE} (was: \"${GLUT_LIBRARY}\"), aborting")
- else ()
-  message (STATUS "Found Glut library \"${GLUT_LIBRARY}\"")
- endif ()
-
- if (GTKGLAREA_SUPPORT)
-  add_definitions (-DGTKGLAREA_SUPPORT)
- endif ()
-endif () # GTKGL_SUPPORT
+endif (GTKGL_SUPPORT)
 
 get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/../.. REALPATH DIRECTORY)
 get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
@@ -402,7 +362,7 @@ if (UNIX)
  include_directories (${PKG_GETTEXT_INCLUDE_DIRS})
  if (NL80211_SUPPORT)
   include_directories (${PKG_NL80211_INCLUDE_DIRS})
- endif (DBUS_SUPPORT)
+ endif (NL80211_SUPPORT)
  if (DBUS_SUPPORT)
   include_directories (${PKG_DBUS_INCLUDE_DIRS})
  endif (DBUS_SUPPORT)
@@ -421,6 +381,9 @@ if (UNIX)
   include_directories (${PKG_GLADE_INCLUDE_DIRS})
  endif (GTK3_SUPPORT)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/generated/include)
+# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
@@ -438,10 +401,6 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libCommon/src/ui/gtk)
 
- # *NOTE*: mavlink also has a header common.h
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
-
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dec)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/dev)
@@ -452,27 +411,17 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACEStream/src/modules/vis)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/3rd_party/bison)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/client_server)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/src/wlan)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/libACENetwork/3rd_party/bison)
 
  include_directories (${CMAKE_CURRENT_BINARY_DIR}/../..)
 elseif (WIN32)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../openssl/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/win32)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../freeglut/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/cmake/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
  include_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY})
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../openssl/include)
+
  # *TODO*: repair pkgconfig support
 # gtk
  if (GTK3_SUPPORT)
@@ -497,6 +446,26 @@ elseif (WIN32)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../freeglut/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/include)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../glm)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/cmake/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/include)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/win32)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libCommon/src)
@@ -517,19 +486,20 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACEStream/src/modules/vis)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/3rd_party)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/3rd_party/bison)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/client_server)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/src/wlan)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/3rd_party)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libACENetwork/3rd_party/bison)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/gettext)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/cmake/include/common)
 endif ()
 
 ############## next target ################
-set (ardrone_EXE_SRCS
+set (source_files
      ardrone.cpp
      ardrone_callbacks.cpp
      ardrone_callbacks.h
@@ -580,13 +550,8 @@ set (ardrone_EXE_SRCS
      ardrone_stream.h
      ardrone_stream.inl
      ardrone_stream_common.h
-     ardrone_types.h
-     stdafx.cpp
-     stdafx.h)
-set (ardrone_SCRIPTS
-     scripts/control_scanner.l
-     scripts/mavlink_scanner.l
-     scripts/navdata_scanner.l)
+     ardrone_types.h)
+file (GLOB script_files scripts/*.l)
 
 set (LLVM_COMPILER_ID_STRING "Clang")
 string (TOLOWER "${LLVM_COMPILER_ID_STRING}" LLVM_COMPILER_ID_STRING_LOWER)
@@ -598,8 +563,10 @@ endif ()
 
 set (EXECUTABLE ardrone)
 add_executable (${EXECUTABLE}
-                ${ardrone_EXE_SRCS}
-                ${ardrone_SCRIPTS}
+                stdafx.cpp
+                stdafx.h
+                ${source_files}
+                ${script_files}
                 etc/ardrone.glade
                 etc/settings.ini)
 
@@ -632,13 +599,18 @@ target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 if (UNIX)
  target_link_libraries (${EXECUTABLE} rt)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
- target_link_libraries (${EXECUTABLE} iw)
+ if (WEXT_SUPPORT)
+  target_link_libraries (${EXECUTABLE} iw)
+ endif (WEXT_SUPPORT)
+ if (NL80211_SUPPORT)
+  target_link_libraries (${EXECUTABLE} ${PKG_NL80211_LIBRARIES})
+ endif (NL80211_SUPPORT)
  if (DBUS_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
 # link_directories (/usr/local/lib/dbus-1.0)
 # target_link_libraries (${EXECUTABLE} /usr/local/lib/dbus-1.0/libdbus-1.so)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/../../../../dbus/dbus/.libs/libdbus-1.so.3)
- endif ()
+ endif (DBUS_SUPPORT)
  if (DHCLIENT_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
@@ -647,7 +619,7 @@ if (UNIX)
   target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
- endif ()
+ endif (DHCLIENT_SUPPORT)
  target_link_libraries (${EXECUTABLE} ${PKG_ASSIMP_LIBRARIES})
  target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
@@ -723,8 +695,8 @@ target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
-target_link_libraries (${EXECUTABLE} ACENetwork)
 target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
+target_link_libraries (${EXECUTABLE} ACENetwork)
 if (UNIX)
  target_link_libraries (${EXECUTABLE} CommonDBus)
  target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})

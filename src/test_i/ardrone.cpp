@@ -208,7 +208,7 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug parser(s) [")
             << COMMON_PARSER_DEFAULT_LEX_TRACE
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -223,7 +223,7 @@ do_printUsage (const std::string& programName_in)
 #else
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [STRING] : network interface [\"")
             << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11).c_str ())
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-l          : log to a file [")
@@ -235,7 +235,7 @@ do_printUsage (const std::string& programName_in)
             << (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-p [UDP]    : drone video port [")
             << ARDRONE_PORT_TCP_VIDEO
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -264,6 +264,17 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-z          : debug nl80211 [")
+            << false
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
 }
 
 bool
@@ -273,24 +284,33 @@ do_processArguments (int argc_in,
                      unsigned int& bufferSize_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& showConsole_out,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                      bool& debugScanner_out,
                      bool& fullScreen_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      struct _GUID& interfaceIdentifier_out,
 #else
                      std::string& interfaceIdentifier_out,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                      bool& logToFile_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& useMediaFoundation_out,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                      unsigned short& portNumber_out,
                      bool& useReactor_out,
                      std::string& SSID_out,
                      bool& traceInformation_out,
                      std::string& interfaceDefinitionFile_out,
-                     bool& printVersionAndExit_out)
+                     bool& printVersionAndExit_out
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+                     ,bool& debugNl80211_out
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
+                     )
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_processArguments"));
 
@@ -341,14 +361,30 @@ do_processArguments (int argc_in,
   interfaceDefinitionFile_out +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
   printVersionAndExit_out     = false;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+  debugNl80211_out = false;
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
 
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                                ACE_TEXT ("a:b:cdfi:lmp:rs:tu::v"),
 #else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vz"),
+#else
                                ACE_TEXT ("a:b:dfi:lp:rs:tu::v"),
-#endif
+#endif // _DEBUG
+#else
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::v"),
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
                                1,                          // skip command name
                                1,                          // report parsing errors
                                ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -463,6 +499,18 @@ do_processArguments (int argc_in,
         printVersionAndExit_out = true;
         break;
       }
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+      case 'z':
+      {
+        debugNl80211_out = true;
+        break;
+      }
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
       // error handling
       case ':':
       {
@@ -932,6 +980,14 @@ do_work (int argc_in,
          bool useReactor_in,
          const std::string& SSID_in,
          const std::string& UIInterfaceDefinitionFile_in,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+         bool debugNl80211_in,
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
          struct ARDrone_GtkCBData& CBData_in,
          const ACE_Sig_Set& signalSet_in,
          const ACE_Sig_Set& ignoredSignalSet_in,
@@ -1443,7 +1499,15 @@ do_work (int argc_in,
 #endif
 
   // ******************* socket configuration data ****************************
-  // *TODO*: find a way to specify a network interface on Win32
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+  CBData_in.configuration->WLANMonitorConfiguration.debug = debugNl80211_in;
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
+  // *TODO*: implement an elegant way to specify a network interface on Win32
   CBData_in.configuration->WLANMonitorConfiguration.interfaceIdentifier =
     interfaceIdentifier_in;
   CBData_in.configuration->WLANMonitorConfiguration.SSID = SSID_in;
@@ -2580,6 +2644,14 @@ ACE_TMAIN (int argc_in,
   std::string SSID_string;
   bool trace_information;
   bool print_version_and_exit;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+  bool debug_nl80211;
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
   ACE_Profile_Timer process_profile;
   struct Stream_ModuleConfiguration module_configuration;
   struct ARDrone_StreamConfiguration stream_configuration;
@@ -2678,6 +2750,14 @@ ACE_TMAIN (int argc_in,
   SSID_string            = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   trace_information      = false;
   print_version_and_exit = false;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+  debug_nl80211          = false;
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
 
   // step0: process profile
   result = process_profile.start ();
@@ -2735,7 +2815,16 @@ ACE_TMAIN (int argc_in,
                             SSID_string,
                             trace_information,
                             interface_definition_file,
-                            print_version_and_exit))
+                            print_version_and_exit
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+                            ,debug_nl80211
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
+                            ))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
@@ -2989,6 +3078,14 @@ ACE_TMAIN (int argc_in,
            use_reactor,
            SSID_string,
            interface_definition_file,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+#if defined (NL80211_SUPPORT)
+#if defined (_DEBUG)
+           debug_nl80211,
+#endif // _DEBUG
+#endif // NL80211_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
            gtk_cb_data,
            signal_set,
            ignored_signal_set,

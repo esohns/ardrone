@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2010 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -31,11 +31,11 @@
 #include <cstdint>
 #endif
 
-#include "ace/OS.h"
-
-#include "mavlink.h"
-
 #include "navdata_common.h"
+
+#include "mavlink/v2.0/common/mavlink.h"
+
+#include "ace/OS.h"
 
 #include "common.h"
 
