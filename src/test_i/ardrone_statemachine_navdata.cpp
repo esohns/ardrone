@@ -32,9 +32,9 @@ const char ardrone_navdata_statemachine_name_string_[] =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STATEMACHINE_NAVDATA_NAME);
 
 ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData ()
- : lock_ ()
- , inherited (&lock_,                // lock handle
+ : inherited (&lock_,                // lock handle
               NAVDATA_STATE_INVALID) // (initial) state
+ , lock_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_StateMachine_NavData::ARDrone_StateMachine_NavData"));
 

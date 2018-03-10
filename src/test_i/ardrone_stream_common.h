@@ -443,18 +443,18 @@ struct ARDrone_StreamConfiguration
   ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
    , CBData (NULL)
+   , dispatch (NET_EVENT_DEFAULT_DISPATCH)
    , initializeControl (NULL)
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
-   , useReactor (NET_EVENT_USE_REACTOR)
    , userData (NULL)
   {};
 
   struct ARDrone_GtkCBData*     CBData;
+  enum Common_EventDispatchType dispatch;
   ARDrone_IControlInitialize_t* initializeControl;
   ARDrone_IMAVLinkInitialize_t* initializeMAVLink;
   ARDrone_INavDataInitialize_t* initializeNavData;
-  bool                          useReactor;
 
   struct ARDrone_UserData*      userData;
 };

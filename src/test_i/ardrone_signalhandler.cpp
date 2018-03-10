@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -35,9 +35,11 @@
 ARDrone_SignalHandler::ARDrone_SignalHandler (enum Common_SignalDispatchType dispatchMode_in,
                                               ACE_SYNCH_MUTEX* lock_in)
  : inherited (dispatchMode_in,
-              lock_in,
+//              lock_in,
+              &lock_,
               this)
  , connector_ (NULL)
+ , lock_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::ARDrone_SignalHandler"));
 
@@ -139,7 +141,7 @@ ARDrone_SignalHandler::handle (const struct Common_Signal& signal_in)
 
   // ...shutdown ?
   if (stop_event_dispatching)
-  {
+  { ACE_ASSERT (inherited::configuration_->eventDispatchState);
     // stop everything, i.e.
     // - leave reactor event loop handling signals, sockets, (maintenance) timers
     // --> (try to) terminate in a well-behaved manner
@@ -169,8 +171,8 @@ ARDrone_SignalHandler::handle (const struct Common_Signal& signal_in)
                                                            false); // N/A
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (inherited::configuration_->useReactor,  // stop reactor ?
-                                         !inherited::configuration_->useReactor, // stop proactor ?
-                                         -1);                                    // group id (--> don't block)
+    Common_Tools::finalizeEventDispatch (inherited::configuration_->eventDispatchState->proactorGroupId,
+                                         inherited::configuration_->eventDispatchState->reactorGroupId,
+                                         false);                                                         // don't block
   } // end IF
 }

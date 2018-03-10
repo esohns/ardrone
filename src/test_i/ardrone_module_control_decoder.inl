@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -316,7 +316,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   // create/initialize a new buffer state
   inherited::buffer_ =
     (inherited::useYYScanBuffer_ ? ARDrone_Control_Scanner__scan_buffer (const_cast<char*> (data_in),
-                                                                         length_in + NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
+                                                                         length_in + COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
                                                                          inherited::state_)
                                  : ARDrone_Control_Scanner__scan_bytes (data_in,
                                                                         length_in,

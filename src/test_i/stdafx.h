@@ -46,6 +46,7 @@
 
 #if defined (HAVE_CONFIG_H)
 #include "libACENetwork_config.h"
+#include "ardrone_config.h"
 #endif // HAVE_CONFIG_H
 
 //#if defined (_MSC_VER)

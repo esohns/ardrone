@@ -1,8 +1,10 @@
-cmake_minimum_required (VERSION 2.8)
+﻿cmake_minimum_required (VERSION 2.8)
 
-# options
+# global options
 #set (CMAKE_VERBOSE_MAKEFILE ON)
+set_property (GLOBAL PROPERTY USE_FOLDERS ON)
 
+# version
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
 set (VERSION_MICRO 0)
@@ -13,8 +15,7 @@ if (VERSION_DEVEL)
  set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}-${VERSION_DEVEL})
 endif ()
 
-set_property (GLOBAL PROPERTY USE_FOLDERS ON)
-
+# build type
 # *NOTE*: if the user specifies -DCMAKE_BUILD_TYPE on the command line, take
 #         their definition and dump it in the cache along with proper
 #         documentation, otherwise set CMAKE_BUILD_TYPE to Debug prior to
@@ -26,11 +27,13 @@ else ()
  set (CMAKE_BUILD_TYPE Debug CACHE STRING ${BUILD_TYPE_CACHE_STRING})
 endif ()
 
+# project
 cmake_policy (SET CMP0048 NEW) # allow project VERSION
 project (ardrone
          VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
          LANGUAGES CXX C)
 
+# directories
 # override the installation directories ?
 set (INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
 set (INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
@@ -50,42 +53,9 @@ foreach (path LIB BIN INCLUDE CMAKE)
  endif ()
 endforeach ()
 
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export (PACKAGE lib${PROJECT_NAME})
-
-# Create the ardroneConfig.cmake and ardroneConfigVersion.cmake files
-file (RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
-# ... for the build tree
-set (CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file (${PROJECT_NAME}Config.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
-# ... for the install tree
-set (CONF_INCLUDE_DIRS "\${LIBACESTREAM_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file (${PROJECT_NAME}Config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY)
-# ... for both
-configure_file (${PROJECT_NAME}ConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
-
-# Install the ardroneConfig.cmake and ardroneConfigVersion.cmake
-install (FILES
-         "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
-         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-         DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
-
-# Install the export set for use with the install-tree
-install (EXPORT ${PROJECT_NAME}Targets
-         DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
-
-set (PACKAGE ${PROJECT_NAME})
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h
-                @ONLY)
-#add_custom_target (${PROJECT_NAME}_config)
-#set_target_properties (${PROJECT_NAME}_config PROPERTIES
-#                       PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h")
-
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
-         DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
-         COMPONENT dev)
+# project options
+set (DEBUG_DEBUGGER TRUE
+     CACHE BOOL "in debugger")
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
  if (DEBUG_DEBUGGER)
@@ -112,8 +82,7 @@ elseif (CMAKE_BUILD_TYPE STREQUAL Release)
  endif ()
 endif ()
 
-option (TRACING
-        "enable tracing" OFF)
+option (TRACING "enable tracing" OFF)
 if (TRACING)
  add_definitions (-DARDRONE_NTRACE=0)
 #  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ARDRONE_NTRACE=0)
@@ -122,8 +91,7 @@ else ()
 #  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS ARDRONE_NTRACE=1)
 endif ()
 
-option (VALGRIND_SUPPORT
-        "enable valgrind support" OFF)
+option (VALGRIND_SUPPORT "enable valgrind support" OFF)
 if (VALGRIND_SUPPORT)
  include (CheckIncludeFiles)
  check_include_files (valgrind/valgrind.h HAVE_VALGRIND_H)
@@ -144,8 +112,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 #  set_property (SOURCE PROPERTY COMPILE_DEFINITIONS _GNU_SOURCE)
 endif ()
 
-option (BUILD_MODULES
-        "build (git) sub-modules" OFF)
+option (BUILD_MODULES "build (git) sub-modules" OFF)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
  add_compile_options (-ansi)
@@ -169,10 +136,50 @@ if (MSVC)
  endforeach ()
 endif (MSVC)
 
+################################################################################
+
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cotire/CMake")
 #list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 include (cotire)
 set_directory_properties (PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+
+################################################################################
+
+list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake-modules")
+include (UseBackportedModules)
+cmake_policy (SET CMP0026 OLD)
+cmake_policy (SET CMP0053 OLD)
+include (CreateLaunchers)
+
+add_subdirectory (src)
+
+################################################################################
+
+# configuration files
+# Export the package for use from the build-tree
+# (this registers the build-tree with a global CMake-registry)
+export (PACKAGE ${PROJECT_NAME})
+
+# Create the ardroneConfig.cmake and ardroneConfigVersion.cmake files
+file (RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
+# ... for the build tree
+set (CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+configure_file (${PROJECT_NAME}Config.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
+# ... for the install tree
+set (CONF_INCLUDE_DIRS "\${LIBACESTREAM_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+configure_file (${PROJECT_NAME}Config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY)
+# ... for both
+configure_file (${PROJECT_NAME}ConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
+
+set (PACKAGE ${PROJECT_NAME})
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake.in
+                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h
+                @ONLY)
+#add_custom_target (${PROJECT_NAME}_config)
+#set_target_properties (${PROJECT_NAME}_config PROPERTIES
+#                       PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h")
+add_definitions (-DHAVE_CONFIG_H)
+#set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 ################################################################################
 
@@ -181,6 +188,28 @@ if (UNIX)
 elseif (WIN32)
  include (InstallRequiredSystemLibraries)
 endif ()
+
+# Install the ardroneConfig.cmake and ardroneConfigVersion.cmake
+install (FILES
+         "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+         DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+# Install the export set for use with the install-tree
+install (EXPORT ${PROJECT_NAME}Targets
+         DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
+         DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
+         COMPONENT dev)
+
+################################################################################
+
+# enable (unit/integration) tests
+#include (CTest)
+enable_testing ()
+
+#add_subdirectory (test_u)
+#add_subdirectory (test_i)
 
 ################################################################################
 
@@ -251,22 +280,6 @@ endif ()
 set (CPACK_COMPONENTS_ALL bin config)
 
 include (CPack)
-
-################################################################################
-
-list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake-modules")
-include (UseBackportedModules)
-cmake_policy (SET CMP0026 OLD)
-cmake_policy (SET CMP0053 OLD)
-include (CreateLaunchers)
-
-# enable (unit/integration) tests
-#include (CTest)
-enable_testing ()
-
-################################################################################
-
-add_subdirectory (src)
 
 ################################################################################
 

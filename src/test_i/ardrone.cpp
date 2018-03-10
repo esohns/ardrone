@@ -241,7 +241,7 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-r          : use reactor [")
-            << NET_EVENT_USE_REACTOR
+            << (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-s          : drone WLAN SSID")
@@ -349,7 +349,8 @@ do_processArguments (int argc_in,
     (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION);
 #endif
   portNumber_out              = ARDRONE_PORT_TCP_VIDEO;
-  useReactor_out              = NET_EVENT_USE_REACTOR;
+  useReactor_out              =
+      (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   SSID_out                    =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   traceInformation_out        = false;
@@ -1094,7 +1095,7 @@ do_work (int argc_in,
   Common_Timer_Manager_t* timer_manager_p = NULL;
   struct Common_TimerConfiguration timer_configuration;
   int group_id = -1;
-  struct Common_EventDispatchThreadData thread_data_s;
+  struct Common_EventDispatchState dispatch_state_s;
   ARDrone_GTK_Manager_t* gtk_manager_p = NULL;
   struct ARDrone_StreamConfiguration stream_configuration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1134,12 +1135,13 @@ do_work (int argc_in,
   //  module_configuration.generateUniqueNames = true;
 
   stream_configuration.CBData = &CBData_in;
+  if (useReactor_in)
+    stream_configuration.dispatch = COMMON_EVENT_DISPATCH_REACTOR;
   stream_configuration.initializeControl = &event_handler;
   stream_configuration.initializeMAVLink = &event_handler;
   stream_configuration.initializeNavData = &event_handler;
   stream_configuration.messageAllocator = &message_allocator;
   stream_configuration.printFinalReport = false;
-  stream_configuration.useReactor = useReactor_in;
   stream_configuration.userData = CBData_in.configuration->userData;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1484,6 +1486,9 @@ do_work (int argc_in,
                 static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
   (*video_streamconfiguration_iterator).second.configuration_.CBData =
       &CBData_in;
+  if (useReactor_in)
+    (*video_streamconfiguration_iterator).second.configuration_.dispatch =
+      COMMON_EVENT_DISPATCH_REACTOR;
   (*video_streamconfiguration_iterator).second.configuration_.finishOnDisconnect =
       true;
   (*video_streamconfiguration_iterator).second.configuration_.messageAllocator =
@@ -1492,8 +1497,6 @@ do_work (int argc_in,
       &event_handler_module;
   (*video_streamconfiguration_iterator).second.configuration_.printFinalReport =
       false;
-  (*video_streamconfiguration_iterator).second.configuration_.useReactor =
-      useReactor_in;
   (*video_streamconfiguration_iterator).second.configuration_.userData =
       CBData_in.configuration->userData;
 #endif
@@ -1507,6 +1510,20 @@ do_work (int argc_in,
 #endif // _DEBUG
 #endif // NL80211_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (useReactor_in)
+#else
+  // *IMPORTANT NOTE*: currently, the default UNIX proactor uses 'asynchronous
+  //                   i/o' (see: aio(7)). aio_read(3) however does not support
+  //                   reporting protocol (source-) addresses back to the caller
+  //                   (see also: recvfrom(2)); it was not designed primarily
+  //                   for socket i/o. Alas, this information is necessary to
+  //                   properly process nl80211 messages (e.g. to distinguish
+  //                   multicast events from unicast replies)
+  //                   --> use the reactor
+#endif // ACE_WIN32 || ACE_WIN64
+  CBData_in.configuration->WLANMonitorConfiguration.dispatch =
+      COMMON_EVENT_DISPATCH_REACTOR;
   // *TODO*: implement an elegant way to specify a network interface on Win32
   CBData_in.configuration->WLANMonitorConfiguration.interfaceIdentifier =
     interfaceIdentifier_in;
@@ -1514,8 +1531,7 @@ do_work (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   CBData_in.configuration->WLANMonitorConfiguration.timerInterface =
     timer_manager_p;
-#endif
-  CBData_in.configuration->WLANMonitorConfiguration.useReactor = useReactor_in;
+#endif // ACE_WIN32 || ACE_WIN64
   CBData_in.configuration->WLANMonitorConfiguration.userData =
     CBData_in.configuration->userData;
   if (!WLAN_monitor_p->initialize (CBData_in.configuration->WLANMonitorConfiguration))
@@ -2108,16 +2124,25 @@ do_work (int argc_in,
 #endif
 
   // step3: initialize event dispatch
-  enum Common_ProactorType proactor_type;
-  enum Common_ReactorType reactor_type;
-  bool serialize_output;
-  if (!Common_Tools::initializeEventDispatch (useReactor_in,                                      // use reactor ? : proactor
-                                              (useReactor_in &&
-                                               (ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS > 1)), // use thread pool reactor ?
-                                              ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS,         // # dispatching threads
-                                              proactor_type,
-                                              reactor_type,
-                                              serialize_output))
+  if (useReactor_in)
+  {
+    CBData_in.configuration->eventDispatchConfiguration.numberOfReactorThreads =
+        ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
+    CBData_in.configuration->eventDispatchConfiguration.useThreadPoolReactor =
+        (CBData_in.configuration->eventDispatchConfiguration.numberOfReactorThreads > 1);
+  } // end IF
+  else
+  {
+    CBData_in.configuration->eventDispatchConfiguration.numberOfProactorThreads =
+        ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+    // *TODO*: reuse the reactor from ace/Asynch_Pseudo_Task
+    CBData_in.configuration->eventDispatchConfiguration.numberOfReactorThreads =
+        1;
+#endif // ACE_WIN32 || ACE_WIN64
+  } // end ELSE
+  if (!Common_Tools::initializeEventDispatch (CBData_in.configuration->eventDispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
@@ -2125,11 +2150,13 @@ do_work (int argc_in,
   } // end IF
 
   // step4: initialize signal handling
+  CBData_in.configuration->signalHandlerConfiguration.dispatch =
+      (useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DISPATCH_PROACTOR);
+  CBData_in.configuration->signalHandlerConfiguration.eventDispatchState =
+      &dispatch_state_s;
   CBData_in.configuration->signalHandlerConfiguration.hasUI =
       !UIInterfaceDefinitionFile_in.empty ();
   CBData_in.configuration->signalHandlerConfiguration.peerAddress = address_in;
-  CBData_in.configuration->signalHandlerConfiguration.useReactor =
-      useReactor_in;
   if (!signalHandler_in.initialize (CBData_in.configuration->signalHandlerConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2194,13 +2221,9 @@ do_work (int argc_in,
   // [- signal timer expiration to perform server queries] (see above)
 
   // step6b: initialize worker(s)
-  thread_data_s.numberOfDispatchThreads =
-    ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
-  thread_data_s.proactorType = proactor_type;
-  thread_data_s.reactorType = reactor_type;
-  thread_data_s.useReactor = useReactor_in;
-  if (!Common_Tools::startEventDispatch (thread_data_s,
-                                         group_id))
+  dispatch_state_s.configuration =
+      &CBData_in.configuration->eventDispatchConfiguration;
+  if (!Common_Tools::startEventDispatch (dispatch_state_s))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start event dispatch, returning\n")));
@@ -2678,8 +2701,8 @@ ACE_TMAIN (int argc_in,
   ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
                                                 argv_in);
   struct ARDrone_GtkProgressData gtk_progress_data;
-  ARDrone_SignalHandler signal_handler ((NET_EVENT_USE_REACTOR ? COMMON_SIGNAL_DISPATCH_REACTOR
-                                                               : COMMON_SIGNAL_DISPATCH_PROACTOR),
+  ARDrone_SignalHandler signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
+                                                                                                      : COMMON_SIGNAL_DISPATCH_REACTOR),
                                         &gtk_cb_data.lock);
   struct ARDrone_Configuration configuration;
   struct ARDrone_UserData user_data;
@@ -2746,7 +2769,8 @@ ACE_TMAIN (int argc_in,
   interface_identifier   =
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
   port_number            = ARDRONE_PORT_TCP_VIDEO;
-  use_reactor            = NET_EVENT_USE_REACTOR;
+  use_reactor            =
+      (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   SSID_string            = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   trace_information      = false;
   print_version_and_exit = false;
@@ -2859,7 +2883,7 @@ ACE_TMAIN (int argc_in,
   // step4: initialize logging and/or tracing
   if (log_to_file)
     log_file_name =
-      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                          ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
                                                                               ACE_DIRECTORY_SEPARATOR_CHAR)));
   if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0]),                      // program name

@@ -92,12 +92,14 @@ struct ARDrone_SignalHandlerConfiguration
    : Common_SignalHandlerConfiguration ()
    , actionTimerId (-1)
    , connector (NULL)
+   , eventDispatchState (NULL)
    , peerAddress ()
-  {};
+  {}
 
-  long                  actionTimerId;
-  ARDrone_IConnector_t* connector;
-  ACE_INET_Addr         peerAddress;
+  long                              actionTimerId;
+  ARDrone_IConnector_t*             connector;
+  struct Common_EventDispatchState* eventDispatchState;
+  ACE_INET_Addr                     peerAddress;
 };
 
 struct ARDrone_WLANMonitorConfiguration
@@ -111,7 +113,7 @@ struct ARDrone_WLANMonitorConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
 #endif
-  };
+  }
 
   struct ARDrone_UserData* userData;
 };
@@ -142,6 +144,7 @@ struct ARDrone_Configuration
 {
   ARDrone_Configuration ()
    : allocatorConfiguration ()
+   , eventDispatchConfiguration ()
    , signalHandlerConfiguration ()
    , WLANMonitorConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -169,9 +172,10 @@ struct ARDrone_Configuration
     directShowFilterConfiguration.pinConfiguration =
       &directShowPinConfiguration;
 #endif
-  };
+  }
 
   struct ARDrone_AllocatorConfiguration                          allocatorConfiguration;
+  struct Common_EventDispatchConfiguration                       eventDispatchConfiguration;
 
   struct ARDrone_SignalHandlerConfiguration                      signalHandlerConfiguration;
 
@@ -210,7 +214,7 @@ struct ARDrone_GtkProgressData
   ARDrone_GtkProgressData ()
    : Common_UI_GTK_ProgressData ()
    , statistic ()
-  {};
+  {}
 
   struct ARDrone_Statistic statistic;
 };
@@ -260,7 +264,7 @@ struct ARDrone_GtkCBData
 #if defined (GTKGL_SUPPORT)
 //    resetCamera ();
 #endif
-  };
+  }
 
 #if defined (GTKGL_SUPPORT)
 //  void resetCamera ()
@@ -308,7 +312,7 @@ struct ARDrone_ThreadData
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
 #endif
-  {};
+  {}
 
   struct ARDrone_GtkCBData*       CBData;
   guint                           eventSourceId;
