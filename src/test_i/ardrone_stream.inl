@@ -568,16 +568,32 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_TCPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchTCPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
+  switch (inherited::configuration_->configuration_.dispatch)
+  {
+    case COMMON_EVENT_DISPATCH_PROACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_AsynchTCPSource_Module (this,
+                                                             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    case COMMON_EVENT_DISPATCH_REACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_TCPSource_Module (this,
+                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
+                  inherited::configuration_->configuration_.dispatch));
+      return false;
+    }
+  } // end SWITCH
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
 #endif
@@ -968,17 +984,33 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     }
   } // end SWITCH
 #else
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_Controller_Module (this,
-                                                      ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchController_Module (this,
-                                                            ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
-                    false);
-  ACE_ASSERT (module_p);
+  switch (inherited::configuration_->configuration_.dispatch)
+  {
+    case COMMON_EVENT_DISPATCH_PROACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_AsynchController_Module (this,
+                                                              ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    case COMMON_EVENT_DISPATCH_REACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_Controller_Module (this,
+                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
+                  inherited::configuration_->configuration_.dispatch));
+      return false;
+    }
+  } // end SWITCH
+    ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
 //  ACE_NEW_RETURN (module_p,
@@ -1008,16 +1040,32 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
+  switch (inherited::configuration_->configuration_.dispatch)
+  {
+    case COMMON_EVENT_DISPATCH_PROACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_AsynchUDPSource_Module (this,
+                                                             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    case COMMON_EVENT_DISPATCH_REACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_UDPSource_Module (this,
+                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
+                  inherited::configuration_->configuration_.dispatch));
+      return false;
+    }
+  } // end SWITCH
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
 #endif
@@ -2330,16 +2378,32 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
-  if (inherited::configuration_->configuration_.useReactor)
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_UDPSource_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
-  else
-    ACE_NEW_RETURN (module_p,
-                    ARDrone_Module_AsynchUDPSource_Module (this,
-                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
-                    false);
+  switch (inherited::configuration_->configuration_.dispatch)
+  {
+    case COMMON_EVENT_DISPATCH_PROACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_AsynchUDPSource_Module (this,
+                                                             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    case COMMON_EVENT_DISPATCH_REACTOR:
+    {
+      ACE_NEW_RETURN (module_p,
+                      ARDrone_Module_UDPSource_Module (this,
+                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
+                      false);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
+                  inherited::configuration_->configuration_.dispatch));
+      return false;
+    }
+  } // end SWITCH
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
 #endif

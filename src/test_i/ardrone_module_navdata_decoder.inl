@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -49,7 +49,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
  , isFirst_ (true)
  , numberOfOptions_ (0)
  , scannerState_ (NULL)
- , useYYScanBuffer_ (NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER)
+ , useYYScanBuffer_ (COMMON_PARSER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::ARDrone_Module_NavDataDecoder_T"));
 
@@ -133,7 +133,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
     isFirst_ = true;
 
-    useYYScanBuffer_ = NET_PROTOCOL_PARSER_FLEX_USE_YY_SCAN_BUFFER;
+    useYYScanBuffer_ = COMMON_PARSER_DEFAULT_FLEX_USE_YY_SCAN_BUFFER;
   } // end IF
 
   ACE_ASSERT (inherited::msg_queue_);
@@ -182,7 +182,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   passMessageDownstream_out = false;
 
   // append the "\0\0"-sequence, as required by flex
-  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
+  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
   *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
   *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
   // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
@@ -369,7 +369,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // validate header
   ACE_ASSERT (record_inout->header == NAVDATA_HEADER);
   // *TODO*: verify checksum
-  
+
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
@@ -724,7 +724,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // create/initialize a new buffer state
   bufferState_ =
     (useYYScanBuffer_ ? ARDrone_NavData_Scanner__scan_buffer (const_cast<char*> (data_in),
-                                                              length_in + NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
+                                                              length_in + COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
                                                               scannerState_)
                       : ARDrone_NavData_Scanner__scan_bytes (data_in,
                                                              length_in,

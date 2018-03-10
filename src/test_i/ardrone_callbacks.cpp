@@ -259,102 +259,37 @@ load_wlan_interfaces (GtkListStore* listStore_in)
   gtk_list_store_clear (listStore_in);
 
   bool result = false;
-  GtkTreeIter iterator;
+  Net_InterfaceIdentifiers_t interface_identifiers_a =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  HANDLE handle_client = NULL;
-  // *TODO*: support WinXP
-  DWORD maximum_client_version =
-    WLAN_API_MAKE_VERSION (2, 0); // *NOTE*: 1 for <= WinXP_SP2
-  DWORD current_version = 0;
-  DWORD result_2 = 0;
-  PWLAN_INTERFACE_INFO_LIST interface_list_p = NULL;
-  PWLAN_INTERFACE_INFO interface_info_p = NULL;
+      Net_WLAN_Tools::getInterfaces (INVALID_HANDLE);
+#else
+      Net_WLAN_Tools::getInterfaces (
+#if defined (WEXT_USE)
+#elif defined (NL80211_USE)
+                                     NULL,
+                                     0,
+#elif defined (DBUS_USE)
+#endif // WEXT_USE
+                                     AF_UNSPEC,
+                                     0);
 
-  result_2 = WlanOpenHandle (maximum_client_version,
-                             NULL,
-                             &current_version,
-                             &handle_client);
-  if (result_2 != ERROR_SUCCESS)
+  GtkTreeIter iterator;
+  for (Net_InterfacesIdentifiersIterator_t iterator_2 = interface_identifiers_a.begin ();
+       iterator_2 != interface_identifiers_a.end ();
+       ++iterator_2)
   {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ::WlanOpenHandle(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
-    return false;
-  } // end IF
-  result_2 = WlanEnumInterfaces (handle_client,
-                                 NULL,
-                                 &interface_list_p);
-  if (result_2 != ERROR_SUCCESS)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ::WlanEnumInterfaces(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
-    goto error;
-  } // end IF
-  ACE_ASSERT (interface_list_p);
-
-  //ACE_DEBUG ((LM_DEBUG,
-  //            ACE_TEXT ("found %u wireless adapter(s)\n"),
-  //            interface_list_p->dwNumberOfItems));
-  for (DWORD i = 0;
-       i < interface_list_p->dwNumberOfItems;
-       ++i)
-  {
-    interface_info_p = &interface_list_p->InterfaceInfo[i];
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (interface_info_p->strInterfaceDescription)),
-                        1, ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (interface_info_p->InterfaceGuid).c_str ()),
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                        0, ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceIdentifierToString (*iterator_2).c_str ()),
+                        1, ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (*iterator_2).c_str ()),
+#else
+                        0, ACE_TEXT_ALWAYS_CHAR ((*iterator_2).c_str ()),
+#endif // ACE_WIN32 || ACE_WIN64
                         -1);
   } // end FOR
 
   result = true;
-
-error:
-  if (interface_list_p)
-    WlanFreeMemory (interface_list_p);
-  result_2 = WlanCloseHandle (handle_client,
-                              NULL);
-  if (result_2 != ERROR_SUCCESS)
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ::WlanCloseHandle(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result_2).c_str ())));
-#else
-#if defined (ACE_HAS_GETIFADDRS)
-  struct ifaddrs* ifaddrs_p = NULL;
-  int result_2 = ::getifaddrs (&ifaddrs_p);
-  if (result_2 == -1)
-  {
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("failed to ::getifaddrs(): \"%m\", aborting\n")));
-    return false;
-  } // end IF
-  ACE_ASSERT (ifaddrs_p);
-
-  for (struct ifaddrs* ifaddrs_2 = ifaddrs_p;
-       ifaddrs_2;
-       ifaddrs_2 = ifaddrs_2->ifa_next)
-  {
-    if (!ifaddrs_2->ifa_addr                                        ||
-        !(ifaddrs_2->ifa_addr->sa_family == AF_INET)                ||
-        !Net_WLAN_Tools::isInterface (ifaddrs_2->ifa_name))
-      continue;
-
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
-                        0, ACE_TEXT_ALWAYS_CHAR (ifaddrs_2->ifa_name),
-                        -1);
-  } // end FOR
-
-  // clean up
-  ::freeifaddrs (ifaddrs_p);
-
-  result = true;
-#else
-  ACE_ASSERT (false);
-  ACE_NOTSUP_RETURN (false);
-  ACE_NOTREACHED (return false;)
-#endif /* ACE_HAS_GETIFADDRS */
 #endif
 
   return result;
@@ -909,7 +844,7 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
     (*iterator_2).second.second.targetFileName =
-        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
 
     result_2 = iinitialize_p->initialize ((*iterator_4).second);
@@ -935,7 +870,7 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
     (*iterator_2).second.second.targetFileName =
-        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
 
     streams_iterator =
@@ -968,7 +903,7 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (iterator_2 != (*iterator_4).second.end ());
     logfile_name_string = (*iterator_2).second.second.targetFileName;
     (*iterator_2).second.second.targetFileName =
-        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+        Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
 
     streams_iterator =
@@ -2309,7 +2244,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                !cb_data_p->configuration->signalHandlerConfiguration.useReactor);
+                                (cb_data_p->configuration->signalHandlerConfiguration.dispatch == COMMON_EVENT_DISPATCH_PROACTOR));
   check_button_p =
     GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
@@ -4537,18 +4472,18 @@ continue_:
   thread_manager_p = ACE_Thread_Manager::instance ();
   ACE_ASSERT (thread_manager_p);
   result =
-      thread_manager_p->spawn (::stream_processing_function,     // function
-                               thread_data_p,                    // argument
+      thread_manager_p->spawn (::stream_processing_function,       // function
+                               thread_data_p,                      // argument
                                (THR_NEW_LWP      |
                                 THR_JOINABLE     |
-                                THR_INHERIT_SCHED),              // flags
-                               &thread_id,                       // id
-                               &thread_handle,                   // handle
-                               ACE_DEFAULT_THREAD_PRIORITY,      // priority
-                               COMMON_EVENT_THREAD_GROUP_ID + 2, // *TODO*: group id
-                               NULL,                             // stack
-                               0,                                // stack size
-                               &thread_name_p);                  // name
+                                THR_INHERIT_SCHED),                // flags
+                               &thread_id,                         // id
+                               &thread_handle,                     // handle
+                               ACE_DEFAULT_THREAD_PRIORITY,        // priority
+                               COMMON_APPLICATION_THREAD_GROUP_ID, // group id
+                               NULL,                               // stack
+                               0,                                  // stack size
+                               &thread_name_p);                    // name
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -7309,7 +7244,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
 #else
   struct ether_addr ap_mac_address;
   ACE_OS::memset (&ap_mac_address, 0, sizeof (struct ether_addr));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   if (ACE_OS::strcmp (WLAN_monitor_p->SSID ().c_str (),
                       cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()) &&
@@ -7325,7 +7260,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
                                     ap_mac_address,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                     cb_data_p->configuration->WLANMonitorConfiguration.SSID))
     {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -7339,7 +7274,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier.c_str ()),
                   ACE_TEXT (Net_Common_Tools::LinkLayerAddressToString (reinterpret_cast<unsigned char*> (&ap_mac_address)).c_str ()),
                   ACE_TEXT (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ())));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
     } // end IF
 
     return;

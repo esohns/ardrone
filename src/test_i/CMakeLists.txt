@@ -1,18 +1,33 @@
 ﻿include (CMakeDependentOption)
+include (FeatureSummary)
 
 if (UNIX)
-# CMAKE_DEPENDENT_OPTION (WEXT_SUPPORT "enable wext support" OFF
-#                         "NOT NL80211_SUPPORT; NOT DBUS_SUPPORT" OFF)
-# CMAKE_DEPENDENT_OPTION (NL80211_SUPPORT "enable nl80211 support" ON
-#                         "NOT WEXT_SUPPORT; NOT DBUS_SUPPORT" OFF)
-# # *WARNING*; DBus support is out of order ATM (see: "debug" statement below)
-# # *NOTE*: implies DHCLIENT_SUPPORT off
-# CMAKE_DEPENDENT_OPTION (DBUS_SUPPORT "enable DBus support" OFF
-#                         "NOT WEXT_SUPPORT; NOT NL80211_SUPPORT; NOT DHCLIENT_SUPPORT" OFF)
-# option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
+ option (NETLINK_SUPPORT "enable netlink support" ON)
+
+ option (WEXT_SUPPORT "compile wireless extensions support" OFF)
+ #option (NL80211_SUPPORT "compile nl80211 support" ON)
+ CMAKE_DEPENDENT_OPTION (NL80211_SUPPORT "compile nl80211 support" ON
+                         "NETLINK_SUPPORT" OFF)
+# *WARNING*; DBus support is out of order ATM (see: "debug" statement below)
+# *TODO*: currently (!) implies DHCLIENT_SUPPORT off
+ option (DBUS_SUPPORT "compile DBus/NetworkManager support" OFF)
+
+ option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
+
+ add_feature_info (Wext WEXT_SUPPORT "support wireless extensions")
+ add_feature_info (nl80211 NL80211_SUPPORT "support nl80211")
+ add_feature_info (DBus/NetworkManager DBUS_SUPPORT "support DBus/NetworkManager")
+
+ add_feature_info (ISC dhclient DHCLIENT_SUPPORT "support ISC dhclient")
 elseif (WIN32)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
+
+ option (WLANAPI_SUPPORT "compile wlanapi support" ON)
+
+ add_feature_info (debug_heap DEBUG_HEAP_SUPPORT "support debug heap")
+ add_feature_info (wlanapi WLANAPI_SUPPORT "support wlanapi")
 endif ()
+include (${CMAKE_CURRENT_SOURCE_DIR}/SetMonitorImplementation.cmake)
 
 option (GTK_SUPPORT "enable GTK support" ON)
 # option (GTK3_SUPPORT "enable Gtk3 support" ON)
@@ -49,7 +64,7 @@ if (UNIX)
  endif ()
  if (NL80211_SUPPORT)
   pkg_check_modules (PKG_NL80211 REQUIRED libnl-3.0 libnl-genl-3.0)
-  add_definitions (-DNL80211_SUPPORT)
+  #add_definitions (-DNL80211_SUPPORT)
  endif ()
  if (DBUS_SUPPORT)
   pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
@@ -139,7 +154,7 @@ if (UNIX)
 # add_library (dhcpctl STATIC IMPORTED)
 # set_property (TARGET dhcpctl PROPERTY IMPORTED_LOCATION /usr/lib/libdhcpctl.a)
 
-  add_definitions (-DDHCLIENT_SUPPORT)
+#  add_definitions (-DDHCLIENT_SUPPORT)
  endif ()
 endif ()
 
@@ -614,8 +629,8 @@ if (UNIX)
  if (DHCLIENT_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${DNS_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${IRS_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${DNS_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
@@ -674,6 +689,11 @@ endif ()
 target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
 
 target_link_libraries (${EXECUTABLE} Common)
+if (UNIX)
+ if (DBUS_SUPPORT)
+  target_link_libraries (${EXECUTABLE} CommonDBus)
+ endif (DBUS_SUPPORT)
+endif ()
 target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonOpenGL)
 target_link_libraries (${EXECUTABLE} CommonTimer)
@@ -695,13 +715,9 @@ target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
+#target_link_libraries (${EXECUTABLE} ACENetwork)
 target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
 target_link_libraries (${EXECUTABLE} ACENetwork)
-if (UNIX)
- target_link_libraries (${EXECUTABLE} CommonDBus)
- target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
-# target_link_libraries (${EXECUTABLE} dhcpctl)
-endif ()
 
 # add PCH
 set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")

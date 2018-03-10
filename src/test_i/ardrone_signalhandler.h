@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *   Copyright (C) 2009 by Erik Sohns   *
  *   erik.sohns@web.de   *
  *                                                                         *
@@ -50,6 +50,7 @@ class ARDrone_SignalHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
 
   ARDrone_IConnector_t* connector_;
+  ACE_SYNCH_MUTEX       lock_;
 };
 
 #endif
