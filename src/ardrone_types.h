@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
 *   Copyright (C) 2009 by Erik Sohns   *
 *   erik.sohns@web.de   *
 *                                                                         *
@@ -35,7 +35,7 @@
 #define PAVE_INT32BE_SIGNATURE (0x50615645)
 #define PAVE_CHECK(x) ( (*((uint32_t*)(x)))==PAVE_INT32LE_SIGNATURE )
 #else
-#include "video_encapsulation.h"
+#include "Soft/Common/video_encapsulation.h"
 #endif
 #undef FFMPEG_SUPPORT
 #include "VLIB/video_codec.h"
