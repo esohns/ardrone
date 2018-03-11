@@ -31,9 +31,9 @@
 #include <cstdint>
 #endif
 
-#include "navdata_common.h"
-
 #include "mavlink/v2.0/common/mavlink.h"
+
+#include "Soft/Common/navdata_common.h"
 
 #include "ace/OS.h"
 

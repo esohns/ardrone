@@ -68,7 +68,6 @@ BUILD_DIR="${PROJECT_DIR}/cmake"
 [ ! -d "${BUILD_DIR}" ] && echo "ERROR: invalid build dir (was: \"${BUILD_DIR}\"), aborting" && exit 1
 
 SRC_DIR="src"
-TEST_I_DIR="test_i"
 #SUB_DIRS="ardrone"
 #declare -a LIBS=("libACE.so")
 BINS="ardrone"
@@ -76,7 +75,7 @@ i=0
 #for DIR in $SUB_DIRS
 #do
 # LIB="${MODULES_DIR}/${DIR}/${LIB_DIR}/${LIBS[$i]}"
- BIN="${BUILD_DIR}/${SRC_DIR}/${TEST_I_DIR}/${BINS}"
+ BIN="${BUILD_DIR}/${SRC_DIR}/${BINS}"
  [ ! -r "${BIN}" ] && echo "ERROR: invalid binary file (was: \"${BIN}\"), aborting" && exit 1
 
 # cp -f ${BIN} ${TMP_DIR}
