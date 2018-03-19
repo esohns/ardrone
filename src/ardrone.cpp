@@ -2619,9 +2619,9 @@ continue_2:
   connection_manager_p->stop ();
   connection_manager_p->abort (true); // wait for completion ?
 #endif
-  Common_Tools::finalizeEventDispatch (useReactor_in,
-                                       !useReactor_in,
-                                       group_id);
+  Common_Tools::finalizeEventDispatch (dispatch_state_s.reactorGroupId,
+                                       dispatch_state_s.proactorGroupId,
+                                       true);
 
   return;
 
@@ -2629,9 +2629,9 @@ clean:
   if (WLAN_monitor_p)
     WLAN_monitor_p->stop (true,  // wait for completion ?
                           true); // locked access ?
-  Common_Tools::finalizeEventDispatch (useReactor_in,
-                                       !useReactor_in,
-                                       group_id);
+  Common_Tools::finalizeEventDispatch (dispatch_state_s.reactorGroupId,
+                                       dispatch_state_s.proactorGroupId,
+                                       true);
   if (timer_manager_p)
     timer_manager_p->stop ();
   if (!UIInterfaceDefinitionFile_in.empty ())

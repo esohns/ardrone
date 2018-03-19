@@ -34,8 +34,8 @@ command -v dirname >/dev/null 2>&1 || { echo "dirname is not installed, aborting
 command -v readlink >/dev/null 2>&1 || { echo "readlink is not installed, aborting" >&2; exit 1; }
 command -v echo >/dev/null 2>&1 || { echo "echo is not supported, aborting" >&2; exit 1; }
 command -v cd >/dev/null 2>&1 || { echo "cd is not supported, aborting" >&2; exit 1; }
-command -v popd >/dev/null 2>&1 || { echo "popd is not supported, aborting" >&2; exit 1; }
-command -v pushd >/dev/null 2>&1 || { echo "pushd is not supported, aborting" >&2; exit 1; }
+#command -v popd >/dev/null 2>&1 || { echo "popd is not supported, aborting" >&2; exit 1; }
+#command -v pushd >/dev/null 2>&1 || { echo "pushd is not supported, aborting" >&2; exit 1; }
 
 # sanity checks
 DEFAULT_GDB_CMD=/usr/bin/gdb
