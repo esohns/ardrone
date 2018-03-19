@@ -294,4 +294,4 @@ if (WIN32)
                      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/scripts"
                      COMMENT "making installer..."
                      VERBATIM)
-endif ()
+endif (WIN32)

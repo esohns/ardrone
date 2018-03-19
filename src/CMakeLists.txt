@@ -1,33 +1,48 @@
 ﻿include (CMakeDependentOption)
 include (FeatureSummary)
 
+include (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src/wlan/scripts/SetMonitorImplementation.cmake)
 if (UNIX)
- option (NETLINK_SUPPORT "enable netlink support" ON)
-
- option (WEXT_SUPPORT "compile wireless extensions support" OFF)
- #option (NL80211_SUPPORT "compile nl80211 support" ON)
- CMAKE_DEPENDENT_OPTION (NL80211_SUPPORT "compile nl80211 support" ON
-                         "NETLINK_SUPPORT" OFF)
-# *WARNING*; DBus support is out of order ATM (see: "debug" statement below)
-# *TODO*: currently (!) implies DHCLIENT_SUPPORT off
- option (DBUS_SUPPORT "compile DBus/NetworkManager support" OFF)
-
- option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
-
- add_feature_info (Wext WEXT_SUPPORT "support wireless extensions")
- add_feature_info (nl80211 NL80211_SUPPORT "support nl80211")
- add_feature_info (DBus/NetworkManager DBUS_SUPPORT "support DBus/NetworkManager")
-
- add_feature_info (ISC dhclient DHCLIENT_SUPPORT "support ISC dhclient")
+ if (WEXT_USE)
+  add_definitions (-DWEXT_SUPPORT -DWEXT_USE)
+ elseif (NL80211_USE)
+  add_definitions (-DNL80211_SUPPORT -DNL80211_USE)
+ elseif (DBUS_USE)
+  add_definitions (-DDBUS_SUPPORT -DDBUS_USE)
+ else ()
+  message (FATAL_ERROR "select a WLAN monitor implementation")
+ endif ()
 elseif (WIN32)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
-
- option (WLANAPI_SUPPORT "compile wlanapi support" ON)
-
  add_feature_info (debug_heap DEBUG_HEAP_SUPPORT "support debug heap")
- add_feature_info (wlanapi WLANAPI_SUPPORT "support wlanapi")
+
+ if (WLANAPI_USE)
+  add_definitions (-DWLANAPI_SUPPORT -DWLANAPI_USE)
+ else ()
+  message (FATAL_ERROR "select a WLAN monitor implementation")
+ endif ()
 endif ()
-include (${CMAKE_CURRENT_SOURCE_DIR}/SetMonitorImplementation.cmake)
+
+if (UNIX)
+ include (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src/wlan/scripts/SetDHCPClientImplementation.cmake)
+ if (UNIX)
+  if (DHCLIENT_USE)
+   add_definitions (-DDHCLIENT_SUPPORT -DDHCLIENT_USE)
+  elseif (DHCPD_USE)
+   add_definitions (-DDHCPD_SUPPORT -DDHCPD_USE)
+  elseif (FRAMEWORK_USE)
+   add_definitions (-DFRAMEWORK_USE)
+  else ()
+   message (FATAL_ERROR "select a DHCP client implementation")
+  endif ()
+# elseif (WIN32)
+#  if (WLANAPI_USE)
+#   add_definitions (-DWLANAPI_SUPPORT -DWLANAPI_USE)
+#  else ()
+#   message (FATAL_ERROR "select a WLAN monitor implementation")
+#  endif ()
+ endif ()
+endif (UNIX)
 
 option (GTK_SUPPORT "enable GTK support" ON)
 # option (GTK3_SUPPORT "enable Gtk3 support" ON)
@@ -56,24 +71,25 @@ include (FindPkgConfig)
 if (UNIX)
  # *NOTE*: libCommon requires libcap
  pkg_check_modules (PKG_CAP REQUIRED libcap)
- pkg_check_modules (PKG_GETTEXT REQUIRED tinygettext)
-# pkg_check_modules (PKG_OPENSSL REQUIRED openssl)
- if (WEXT_SUPPORT)
-  check_library_exists (iwlib iw_sockets_open "" HAVE_LIB_IW)
-  add_definitions (-DWEXT_SUPPORT)
- endif ()
- if (NL80211_SUPPORT)
+# pkg_check_modules (PKG_GETTEXT REQUIRED tinygettext)
+# pkg_check_modules (PKG_GETTEXT REQUIRED gettext)
+ pkg_check_modules (PKG_OPENSSL REQUIRED openssl)
+ if (WEXT_USE)
+  check_library_exists (iw iw_sockets_open /usr/lib/x86_64-linux-gnu HAVE_LIBIW)
+  if (NOT HAVE_LIBIW)
+   message (FATAL_ERROR "libiw not found, aborting")
+  endif ()
+ elseif (NL80211_USE)
   pkg_check_modules (PKG_NL80211 REQUIRED libnl-3.0 libnl-genl-3.0)
   pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
   pkg_check_modules (PKG_LIBSYSTEMD REQUIRED libsystemd)
   add_definitions (-DSD_BUS_SUPPORT)
- endif ()
- if (DBUS_SUPPORT)
+ elseif (DBUS_USE)
   pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
   pkg_check_modules (PKG_NETWORKMANAGER REQUIRED NetworkManager)
-  add_definitions (-DDBUS_SUPPORT)
  endif ()
- if (DHCLIENT_SUPPORT)
+
+ if (DHCLIENT_USE)
   set (JSON_LIB_FILE libjson-c.so.3)
   find_library (JSON_LIBRARY ${JSON_LIB_FILE}
                 HINTS /usr/lib
@@ -107,6 +123,51 @@ if (UNIX)
   else ()
    message (STATUS "Found isccfg library \"${ISC_CFG_LIBRARY}\"")
   endif ()
+
+  set (GEOIP_LIB_FILE libGeoIP.so.1)
+  find_library (GEOIP_LIBRARY ${GEOIP_LIB_FILE}
+                HINTS /usr/lib
+                PATH_SUFFIXES x86_64-linux-gnu
+                DOC "searching for ${GEOIP_LIB_FILE} (system paths)")
+  if (NOT GEOIP_LIBRARY)
+   message (FATAL_ERROR "could not find ${GEOIP_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found GeoIP library \"${GEOIP_LIBRARY}\"")
+  endif ()
+
+  set (KRB5_LIB_FILE libkrb5.so.3)
+  find_library (KRB5_LIBRARY ${KRB5_LIB_FILE}
+                HINTS /usr/lib
+                PATH_SUFFIXES x86_64-linux-gnu
+                DOC "searching for ${KRB5_LIB_FILE} (system paths)")
+  if (NOT KRB5_LIBRARY)
+   message (FATAL_ERROR "could not find ${KRB5_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found MIT kerberos library \"${KRB5_LIBRARY}\"")
+  endif ()
+
+  set (GSS_KRB5_LIB_FILE libgssapi_krb5.so.2)
+  find_library (GSS_KRB5_LIBRARY ${GSS_KRB5_LIB_FILE}
+                HINTS /usr/lib
+                PATH_SUFFIXES x86_64-linux-gnu
+                DOC "searching for ${GSS_KRB5_LIB_FILE} (system paths)")
+  if (NOT GSS_KRB5_LIBRARY)
+   message (FATAL_ERROR "could not find ${GSS_KRB5_LIB_FILE}, aborting")
+  else ()
+   message (STATUS "Found MIT kerberos library \"${GSS_KRB5_LIBRARY}\"")
+  endif ()
+
+  # set (GSS_LIB_FILE libgss.so.3)
+#    set (GSS_LIB_FILE libgssglue.so)
+#    find_library (GSS_LIBRARY ${GSS_LIB_FILE}
+#                  HINTS /usr/lib64 /usr/lib
+#                  PATH_SUFFIXES x86_64-linux-gnu
+#                  DOC "searching for ${GSS_LIB_FILE} (system paths)")
+#    if (NOT GSS_LIBRARY)
+#     message (FATAL_ERROR "could not find ${GSS_LIB_FILE}, aborting")
+#    else ()
+#     message (STATUS "Found generic security services library \"${GSS_LIBRARY}\"")
+#    endif ()
 
   set (IRS_LIB_FILE libirs.a)
   find_library (IRS_LIBRARY ${IRS_LIB_FILE}
@@ -155,20 +216,21 @@ if (UNIX)
   endif ()
 # add_library (dhcpctl STATIC IMPORTED)
 # set_property (TARGET dhcpctl PROPERTY IMPORTED_LOCATION /usr/lib/libdhcpctl.a)
-
-#  add_definitions (-DDHCLIENT_SUPPORT)
- endif ()
-endif ()
+ endif (DHCLIENT_USE)
+endif (UNIX)
 
 set (ACE_LIB_FILE libACE.so)
 if (UNIX)
  if (DEFINED ENV{ACE_ROOT})
   find_library (ACE_LIBRARY ${ACE_LIB_FILE}
                 PATHS ENV ACE_ROOT
-                PATH_SUFFIXES ace build/linux/ace
+                PATH_SUFFIXES lib build/linux/lib
                 DOC "searching for ${ACE_LIB_FILE}")
  else ()
   find_library (ACE_LIBRARY ${ACE_LIB_FILE}
+                HINTS ${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACE
+#                PATHS ENV ACE_ROOT
+                PATH_SUFFIXES lib
                 DOC "searching for ${ACE_LIB_FILE} (system paths)")
  endif ()
 elseif (WIN32)
@@ -313,7 +375,7 @@ if (GTKGL_SUPPORT)
   set (GLUT_LIB_FILE ${GLUT_LIB_FILE}${LIB_FILE_SUFFIX}.lib)
  # message (STATUS "${GLUT_LIB_FILE} search path: \"${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}\"")
   find_library (GLUT_LIBRARY ${GLUT_LIB_FILE}
-                PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}
+                PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../FreeGLUT/freeglut/freeglut/cmake/lib/${CMAKE_BUILD_TYPE}
                 DOC "searching for ${GLUT_LIB_FILE}")
  endif ()
  #if (NOT EXISTS GLUT_LIBRARY)
@@ -325,13 +387,13 @@ if (GTKGL_SUPPORT)
  add_definitions (-DGTKGL_SUPPORT)
 endif (GTKGL_SUPPORT)
 
-get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/../.. REALPATH DIRECTORY)
+get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/.. REALPATH DIRECTORY)
 get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
 #find_package (Common 0.0.1 EXACT
 find_package (Common
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
               PATH_SUFFIXES libCommon/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${Common_DIR})
@@ -346,7 +408,7 @@ endif ()
 find_package (ACEStream
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
               PATH_SUFFIXES libACEStream/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACEStream_DIR})
@@ -359,7 +421,7 @@ add_definitions (-DSTREAM_DEC_HAS_DLL)
 find_package (ACENetwork
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
               PATH_SUFFIXES libACENetwork/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACENetwork_DIR})
@@ -380,16 +442,16 @@ endif ()
 if (UNIX)
  include_directories (${PKG_CAP_INCLUDE_DIRS})
  include_directories (${PKG_GETTEXT_INCLUDE_DIRS})
- if (NL80211_SUPPORT)
+ if (NL80211_USE)
   include_directories (${PKG_NL80211_INCLUDE_DIRS})
- endif (NL80211_SUPPORT)
- if (DBUS_SUPPORT)
+ elseif (DBUS_USE)
   include_directories (${PKG_DBUS_INCLUDE_DIRS})
- endif (DBUS_SUPPORT)
- if (DHCLIENT_SUPPORT)
+ endif ()
+
+ if (DHCLIENT_USE)
   include_directories (/usr/include/bind-export)
   include_directories (/usr/include/dhcp)
- endif (DHCLIENT_SUPPORT)
+ endif (DHCLIENT_USE)
 
 # include_directories (/usr/share/gettext)
  include_directories (${PKG_FFMPEG_INCLUDE_DIRS})
@@ -625,21 +687,21 @@ target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 if (UNIX)
  target_link_libraries (${EXECUTABLE} rt)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
- if (WEXT_SUPPORT)
-  target_link_libraries (${EXECUTABLE} iw)
- endif (WEXT_SUPPORT)
- if (NL80211_SUPPORT)
+ target_link_libraries (${EXECUTABLE} iw)
+ if (NL80211_USE)
   target_link_libraries (${EXECUTABLE} ${PKG_NL80211_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_LIBSYSTEMD_LIBRARIES})
- endif (NL80211_SUPPORT)
- if (DBUS_SUPPORT)
+ elseif (DBUS_USE)
   target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
 # link_directories (/usr/local/lib/dbus-1.0)
 # target_link_libraries (${EXECUTABLE} /usr/local/lib/dbus-1.0/libdbus-1.so)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/../../../../dbus/dbus/.libs/libdbus-1.so.3)
- endif (DBUS_SUPPORT)
- if (DHCLIENT_SUPPORT)
+ endif ()
+
+ if (DHCLIENT_USE)
+  target_link_libraries (${EXECUTABLE} ${PKG_OPENSSL_LIBRARIES})
+  target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${IRS_LIBRARY})
@@ -647,8 +709,8 @@ if (UNIX)
   target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
- endif (DHCLIENT_SUPPORT)
- target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
+ endif (DHCLIENT_USE)
+
  if (GTK_SUPPORT)
   target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
@@ -707,9 +769,9 @@ endif ()
 
 target_link_libraries (${EXECUTABLE} Common)
 if (UNIX)
- if (DBUS_SUPPORT OR NL80211_SUPPORT)
+ if (DBUS_USE OR NL80211_USE)
   target_link_libraries (${EXECUTABLE} CommonDBus)
- endif (DBUS_SUPPORT OR NL80211_SUPPORT)
+ endif (DBUS_USE OR NL80211_USE)
 endif (UNIX)
 target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonOpenGL)
@@ -738,8 +800,17 @@ target_link_libraries (${EXECUTABLE} ACENetwork)
 
 if (UNIX)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
- target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
  target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
+
+ if (DBUS_USE OR NL80211_USE)
+  target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
+ endif (DBUS_USE OR NL80211_USE)
+
+ if (DHCLIENT_USE)
+  target_link_libraries (${EXECUTABLE} ${GEOIP_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${GSS_KRB5_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${KRB5_LIBRARY})
+ endif (DHCLIENT_USE)
 endif (UNIX)
 
 # add PCH

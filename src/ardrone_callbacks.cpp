@@ -4679,7 +4679,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
                                 Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
                                                                 NULL,
-                                                                WLAN_monitor_p->get ()).c_str ()) &&
+                                                                WLAN_monitor_p->get_3 ()).c_str ()) &&
                 cb_data_p->configuration->WLANMonitorConfiguration.autoAssociate))
 #elif defined (DBUS_USE)
   if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
