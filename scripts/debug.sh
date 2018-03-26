@@ -31,6 +31,7 @@ command -v gdb >/dev/null 2>&1 || { echo "gdb is not installed, aborting" >&2; e
 
 # sanity checks
 command -v dirname >/dev/null 2>&1 || { echo "dirname is not installed, aborting" >&2; exit 1; }
+command -v export >/dev/null 2>&1 || { echo "export is not installed, aborting" >&2; exit 1; }
 command -v readlink >/dev/null 2>&1 || { echo "readlink is not installed, aborting" >&2; exit 1; }
 command -v echo >/dev/null 2>&1 || { echo "echo is not supported, aborting" >&2; exit 1; }
 command -v cd >/dev/null 2>&1 || { echo "cd is not supported, aborting" >&2; exit 1; }
@@ -56,13 +57,13 @@ SCRIPTS_DIR=${DEFAULT_SCRIPTS_DIR}
 [ ! -d ${SCRIPTS_DIR} ] && echo "ERROR: invalid scripts directory (was: \"${SCRIPTS_DIR}\"), aborting" && exit 1
 CAPABILITIES_SCRIPT="${SCRIPTS_DIR}/set_capabilities.sh"
 [ ! -x ${CAPABILITIES_SCRIPT} ] && echo "ERROR: invalid capabilities script (was: \"${CAPABILITIES_SCRIPT}\"), aborting" && exit 1
-CAPABILITY_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_i/capabilities/capability_wrapper"
-[ ! -x ${CAPABILITY_WRAPPER} ] && echo "ERROR: invalid capability wrapper (was: \"${CAPABILITY_WRAPPER}\"), aborting" && exit 1
+#CAPABILITY_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_i/capabilities/capability_wrapper"
+#[ ! -x ${CAPABILITY_WRAPPER} ] && echo "ERROR: invalid capability wrapper (was: \"${CAPABILITY_WRAPPER}\"), aborting" && exit 1
 SHELL_WRAPPER="${SCRIPTS_DIR}/../../libCommon/scripts/shell_wrapper.sh"
 [ ! -x ${SHELL_WRAPPER} ] && echo "ERROR: invalid shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting" && exit 1
 DEBUGEE="${SCRIPTS_DIR}/../cmake/src/ardrone"
 [ ! -x ${DEBUGEE} ] && echo "ERROR: invalid debugee (was: \"${DEBUGEE}\"), aborting" && exit 1
-ARGUMENTS="-l -t"	
+ARGUMENTS="-l -t -y"	
 WORKING_DIRECTORY="${SCRIPTS_DIR}/../src"
 [ ! -d ${WORKING_DIRECTORY} ] && echo "ERROR: invalid working directory (was: \"${WORKING_DIRECTORY}\"), aborting" && exit 1
 
@@ -74,7 +75,7 @@ WORKING_DIRECTORY="${SCRIPTS_DIR}/../src"
 #[ ! -x ${GDB_CMD} ] && echo "ERROR: invalid debugger executable (was: \"${GDB_CMD}\"), aborting" && exit 1
 #echo "using debugger \"${GDB_CMD}\" with arguments: \"$@\""
 
-${CAPABILITIES_SCRIPT} >/dev/null 2>&1
+${CAPABILITIES_SCRIPT} # >/dev/null 2>&1
 [ $? -ne 0 ] && echo "ERROR: failed to run ${CAPABILITIES_SCRIPT}: $?, aborting" && exit 1
 echo "set debugee capabilities"
 
@@ -83,10 +84,19 @@ pushd . >/dev/null 2>&1
 
 cd $WORKING_DIRECTORY
 [ $? -ne 0 ] && echo "ERROR: failed to cd (wd was: \"${WORKING_DIRECTORY}\"): $?, aborting" && exit 1
+echo "set debugee working directory"
 
-${CAPABILITY_WRAPPER} 12 ${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
-[ $? -ne 0 ] && echo "ERROR: failed to run ${CAPABILITY_WRAPPER}: $?, aborting" && exit 1
+export GDK_BACKEND=x11
+[ $? -ne 0 ] && echo "ERROR: failed to set environment variable (was: \"${GDK_BACKEND}\"): $?, aborting" && exit 1
+echo "set environment variable \"GDK_BACKEND\""
+
+#${CAPABILITY_WRAPPER} 12 ${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
+#[ $? -ne 0 ] && echo "ERROR: failed to run ${CAPABILITY_WRAPPER}: $?, aborting" && exit 1
+${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
+[ $? -ne 0 ] && echo "ERROR: failed to run ${SHELL_WRAPPER}: $?, aborting" && exit 1
 
 #$(${GDB_CMD}) $@
 #[ $? -ne 0 ] && echo "ERROR: failed to debugger ${GDB_CMD}: $?, aborting" && exit 1
+
+popd >/dev/null 2>&1
 

@@ -1,6 +1,16 @@
 ﻿include (CMakeDependentOption)
 include (FeatureSummary)
 
+if (UNIX)
+ option (WEXT_SUPPORT "enable wireless extensions (aka wext) support" ON)
+ option (NL80211_SUPPORT "enable nl80211 support" ON)
+ option (DBUS_SUPPORT "enable DBus/NetworkManager support" ON)
+
+ option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
+elseif (WIN32)
+ option (WLANAPI_SUPPORT "enable wlanapi support" ON)
+endif ()
+
 include (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src/wlan/scripts/SetMonitorImplementation.cmake)
 if (UNIX)
  if (WEXT_USE)
@@ -779,7 +789,7 @@ target_link_libraries (${EXECUTABLE} CommonTimer)
 if (WIN32)
  # *WARNING*: linking CommonUI requires "/FORCE:MULTIPLE""
  set_target_properties (${EXECUTABLE} PROPERTIES LINK_FLAGS "/FORCE:MULTIPLE /SAFESEH:NO")
-endif ()
+endif (WIN32)
 target_link_libraries (${EXECUTABLE} CommonUI)
 target_link_libraries (${EXECUTABLE} CommonUI_GTK)
 
@@ -787,16 +797,15 @@ target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
 if (WIN32)
  target_link_libraries (${EXECUTABLE} ACEStream_Device)
-endif ()
+endif (WIN32)
 target_link_libraries (${EXECUTABLE} ACEStream_File)
 target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
 target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
-#target_link_libraries (${EXECUTABLE} ACENetwork)
-target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
 target_link_libraries (${EXECUTABLE} ACENetwork)
+target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
 
 if (UNIX)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
@@ -811,6 +820,10 @@ if (UNIX)
   target_link_libraries (${EXECUTABLE} ${GSS_KRB5_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${KRB5_LIBRARY})
  endif (DHCLIENT_USE)
+
+ target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
+ target_link_libraries (${EXECUTABLE} ACENetwork)
+ target_link_libraries (${EXECUTABLE} Common)
 endif (UNIX)
 
 # add PCH
@@ -823,7 +836,7 @@ if (UNIX)
 #                     COMMAND ./set_capabilities.sh
 #                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts
 #                     COMMENT "adding file capabilites to \"${EXECUTABLE}\"..." VERBATIM)
-endif ()
+endif (UNIX)
 
 #########################################
 

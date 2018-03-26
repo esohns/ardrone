@@ -78,6 +78,8 @@ i=0
  BIN="${BUILD_DIR}/${SRC_DIR}/${BINS}"
  [ ! -r "${BIN}" ] && echo "ERROR: invalid binary file (was: \"${BIN}\"), aborting" && exit 1
 
+# echo "processing \"$BIN\"..."
+
 # cp -f ${BIN} ${TMP_DIR}
 # [ $? -ne 0 ] && echo "ERROR: failed to cp ${BIN}: \"$?\", aborting" && exit 1
 # echo "copied \"$BIN\"..."
@@ -103,10 +105,11 @@ i=0
 # [ $? -ne 0 ] && echo "ERROR: failed to chmod u+s ${BIN}: \"$?\", aborting" && exit 1
 # echo "modified \"$BINS\": uid gid suid sgid"
 
- setcap 'cap_net_admin+eip' ${BIN}
+ setcap 'cap_dac_override,cap_net_admin+eip' ${BIN}
  [ $? -ne 0 ] && echo "ERROR: failed to setcap ${BIN}: \"$?\", aborting" && exit 1
 
  CMD_OUTPUT=$(getcap ${BIN})
+# echo "CMD_OUTPUT \"$CMD_OUTPUT\""
  j=0
  for k in $(echo $CMD_OUTPUT | tr " " "\n")
  do
