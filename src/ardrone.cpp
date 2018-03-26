@@ -136,6 +136,86 @@ extern "C"
 //----------------------------------------
 
 void
+do_setup (bool install_in,
+          const std::string& interfaceIdentifier_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::do_setup"));
+
+#if defined (ACE_LINUX)
+  bool restart_networkmanager_b = false;
+  bool restart_wpasupplicant_b = false;
+#endif // ACE_LINUX
+
+  if (!install_in)
+    goto uninstall;
+
+#if defined (ACE_LINUX)
+  // step1: configure 'NetworkManager' (if any):
+  //        - ignore the given interface
+  if (unlikely (interfaceIdentifier_in.empty ()                                               ||
+                !Common_DBus_Tools::isUnitRunning (NULL,
+                                                   COMMON_SYSTEMD_UNIT_NETWORKMANAGER)        ||
+                !Net_Common_Tools::isNetworkManagerManagingInterface (interfaceIdentifier_in)))
+    goto continue_;
+
+  Common_DBus_Tools::toggleUnit (NULL,
+                                 COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
+                                 true); // wait for completion ?
+  restart_networkmanager_b = true;
+
+  if (unlikely (!Net_Common_Tools::networkManagerHandleInterface (interfaceIdentifier_in,
+                                                                  false)))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::networkManagerHandleInterface(\"%s\",false), aborting\n"),
+                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+    goto clean;
+  } // end IF
+  ACE_ASSERT (!Net_Common_Tools::isNetworkManagerManagingInterface (interfaceIdentifier_in));
+
+  // step2: configure 'wpa_supplicant' (if any):
+  //        - ignore the given interface
+  if (unlikely (interfaceIdentifier_in.empty ()                                              ||
+                !Common_DBus_Tools::isUnitRunning (NULL,
+                                                   COMMON_SYSTEMD_UNIT_WPASUPPLICANT)        ||
+                !Net_WLAN_Tools::isWPASupplicantManagingInterface (NULL,
+                                                                   interfaceIdentifier_in)))
+    goto continue_;
+
+  Common_DBus_Tools::toggleUnit (NULL,
+                                 COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
+                                 true); // wait for completion ?
+  restart_wpasupplicant_b = true;
+
+  if (unlikely (!Net_WLAN_Tools::WPASupplicantHandleInterface (NULL,
+                                                               interfaceIdentifier_in,
+                                                               false)))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLAN_Tools::WPASupplicantHandleInterface(\"%s\",false), aborting\n"),
+                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+    goto clean;
+  } // end IF
+  ACE_ASSERT (!Net_WLAN_Tools::isWPASupplicantManagingInterface (NULL, interfaceIdentifier_in));
+
+clean:
+  if (likely (restart_wpasupplicant_b))
+    Common_DBus_Tools::toggleUnit (NULL,
+                                   COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
+                                   true); // wait for completion ?
+  if (likely (restart_networkmanager_b))
+    Common_DBus_Tools::toggleUnit (NULL,
+                                   COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
+                                   true); // wait for completion ?
+#endif // ACE_LINUX
+continue_:
+  return;
+
+uninstall:
+  ;
+}
+
+void
 do_printVersion (const std::string& programName_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_printVersion"));
@@ -266,6 +346,14 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-x          : de-installation mode [")
+            << false
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-y          : installation mode [")
+            << false
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
 #if defined (NL80211_SUPPORT)
 #if defined (_DEBUG)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-z          : debug nl80211 [")
@@ -301,7 +389,7 @@ do_processArguments (int argc_in,
                      std::string& SSID_out,
                      bool& traceInformation_out,
                      std::string& interfaceDefinitionFile_out,
-                     bool& printVersionAndExit_out
+                     enum Common_ApplicationModeType& mode_out
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
@@ -313,7 +401,6 @@ do_processArguments (int argc_in,
                      )
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_processArguments"));
-
 
   int result = -1;
   std::string configuration_path = Common_File_Tools::getWorkingDirectory ();
@@ -361,7 +448,7 @@ do_processArguments (int argc_in,
   interfaceDefinitionFile_out += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   interfaceDefinitionFile_out +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
-  printVersionAndExit_out     = false;
+  mode_out                    = COMMON_APPLICATION_MODE_RUN;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
@@ -378,12 +465,12 @@ do_processArguments (int argc_in,
 #else
 #if defined (NL80211_SUPPORT)
 #if defined (_DEBUG)
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vz"),
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxyz"),
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::v"),
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxy"),
 #endif // _DEBUG
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::v"),
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxy"),
 #endif // NL80211_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
                                1,                          // skip command name
@@ -497,11 +584,21 @@ do_processArguments (int argc_in,
       }
       case 'v':
       {
-        printVersionAndExit_out = true;
+        mode_out = COMMON_APPLICATION_MODE_PRINT;
         break;
       }
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
+      case 'x':
+      {
+        mode_out = COMMON_APPLICATION_MODE_UNINSTALL;
+        break;
+      }
+      case 'y':
+      {
+        mode_out = COMMON_APPLICATION_MODE_INSTALL;
+        break;
+      }
 #if defined (NL80211_SUPPORT)
 #if defined (_DEBUG)
       case 'z':
@@ -2666,7 +2763,7 @@ ACE_TMAIN (int argc_in,
   bool use_reactor;
   std::string SSID_string;
   bool trace_information;
-  bool print_version_and_exit;
+  enum Common_ApplicationModeType mode_e;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
@@ -2773,7 +2870,7 @@ ACE_TMAIN (int argc_in,
       (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   SSID_string            = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   trace_information      = false;
-  print_version_and_exit = false;
+  mode_e                 = COMMON_APPLICATION_MODE_RUN;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
@@ -2839,7 +2936,7 @@ ACE_TMAIN (int argc_in,
                             SSID_string,
                             trace_information,
                             interface_definition_file,
-                            print_version_and_exit
+                            mode_e
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
@@ -2873,12 +2970,39 @@ ACE_TMAIN (int argc_in,
   } // end IF
 
   // step3: run program ?
-  if (print_version_and_exit)
+  switch (mode_e)
   {
-    do_printVersion (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
-                                                          ACE_DIRECTORY_SEPARATOR_CHAR)));
-    goto done;
-  } // end IF
+    case COMMON_APPLICATION_MODE_INSTALL:
+    case COMMON_APPLICATION_MODE_UNINSTALL:
+    {
+      do_setup (mode_e == COMMON_APPLICATION_MODE_INSTALL,
+                interface_identifier);
+      goto done;
+    }
+    case COMMON_APPLICATION_MODE_DEBUG:
+    case COMMON_APPLICATION_MODE_RUN:
+    case COMMON_APPLICATION_MODE_TEST:
+      break;
+
+    case COMMON_APPLICATION_MODE_PRINT:
+    {
+      do_printVersion (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
+                                                            ACE_DIRECTORY_SEPARATOR_CHAR)));
+      goto done;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown mode (was: %d), aborting\n"),
+                  mode_e));
+
+      // help the user, print usage instructions
+      do_printUsage (ACE::basename (argv_in[0],
+                                    ACE_DIRECTORY_SEPARATOR_CHAR));
+
+      goto error;
+    }
+  } // end SWITCH
 
   // step4: initialize logging and/or tracing
   if (log_to_file)
@@ -2886,7 +3010,8 @@ ACE_TMAIN (int argc_in,
       Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                          ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
                                                                               ACE_DIRECTORY_SEPARATOR_CHAR)));
-  if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0]),                      // program name
+  if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0],
+                                                       ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
                                         log_file_name,                                   // log file name
                                         false,                                           // log to syslog ?
                                         false,                                           // trace messages ?
@@ -3034,7 +3159,8 @@ ACE_TMAIN (int argc_in,
                                                              &gtk_cb_data,
                                                              &ui_definition);
 
-  // step8: media framework, if any
+  // step8: (media) frameworks
+  Common_Tools::initialize (false);
   Stream_Module_Decoder_Tools::initialize ();
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_Module_Device_Tools::initialize ();
@@ -3053,7 +3179,6 @@ ACE_TMAIN (int argc_in,
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       do_initialize_mediafoundation (true);
-
       break;
     }
     default:

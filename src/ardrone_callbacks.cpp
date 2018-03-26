@@ -5300,7 +5300,8 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   ACE_ASSERT (window_p);
 
   GError* error_p = NULL;
-  // *TODO*: this currently fails on Wayland (Gnome 3.22.24)
+  // *TODO*: this currently fails on Wayland (Gnome >= 3.22.24; Intel Ironlake
+  //         HD Graphics (ThinkPad T410))
   // *WORKAROUND*: set GDK_BACKEND=x11 environment to force XWayland
   result_p = gdk_window_create_gl_context (window_p,
                                            &error_p);
