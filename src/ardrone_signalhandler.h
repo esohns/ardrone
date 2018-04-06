@@ -35,7 +35,7 @@ class ARDrone_SignalHandler
 
  public:
   ARDrone_SignalHandler (enum Common_SignalDispatchType, // dispatch mode
-                         ACE_SYNCH_MUTEX*);               // lock handle
+                         ACE_SYNCH_RECURSIVE_MUTEX*);    // lock handle
   inline virtual ~ARDrone_SignalHandler () {}
 
   // override Common_IInitialize_T
@@ -50,7 +50,6 @@ class ARDrone_SignalHandler
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
 
   ARDrone_IConnector_t* connector_;
-  ACE_SYNCH_MUTEX       lock_;
 };
 
 #endif

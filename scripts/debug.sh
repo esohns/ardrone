@@ -63,7 +63,7 @@ SHELL_WRAPPER="${SCRIPTS_DIR}/../../libCommon/scripts/shell_wrapper.sh"
 [ ! -x ${SHELL_WRAPPER} ] && echo "ERROR: invalid shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting" && exit 1
 DEBUGEE="${SCRIPTS_DIR}/../cmake/src/ardrone"
 [ ! -x ${DEBUGEE} ] && echo "ERROR: invalid debugee (was: \"${DEBUGEE}\"), aborting" && exit 1
-ARGUMENTS="-l -t -y"	
+ARGUMENTS="-l -t"
 WORKING_DIRECTORY="${SCRIPTS_DIR}/../src"
 [ ! -d ${WORKING_DIRECTORY} ] && echo "ERROR: invalid working directory (was: \"${WORKING_DIRECTORY}\"), aborting" && exit 1
 
