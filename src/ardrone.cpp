@@ -135,70 +135,176 @@ extern "C"
 
 //----------------------------------------
 
-void
+bool
 do_setup (bool install_in,
           const std::string& interfaceIdentifier_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_setup"));
 
+  bool result = false;
+
 #if defined (ACE_LINUX)
   bool restart_networkmanager_b = false;
   bool restart_wpasupplicant_b = false;
+//  bool restart_ifplugd_b = false;
+#if defined (DHCLIENT_USE)
+  bool restart_dhclient_b = false;
+  pid_t pid_i = 0;
+  int result_2 = -1;
+#endif // DHCLIENT_USE
 #endif // ACE_LINUX
 
   if (!install_in)
     goto uninstall;
 
 #if defined (ACE_LINUX)
+  enum Common_OperatingSystemDistributionType distribution_e;
+  if (unlikely (!Common_Tools::isLinux (distribution_e)))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::isLinux(), aborting\n")));
+    return false;
+  } // end IF
+
   // step1: configure 'NetworkManager' (if any):
   //        - ignore the given interface
   if (unlikely (interfaceIdentifier_in.empty ()                                               ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
-                                                   COMMON_SYSTEMD_UNIT_NETWORKMANAGER)        ||
-                !Net_Common_Tools::isNetworkManagerManagingInterface (interfaceIdentifier_in)))
+                                                   COMMON_SYSTEMD_UNIT_NETWORKMANAGER)))
     goto continue_;
 
-  Common_DBus_Tools::toggleUnit (NULL,
-                                 COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
-                                 true); // wait for completion ?
-  restart_networkmanager_b = true;
+  restart_networkmanager_b =
+      Common_DBus_Tools::toggleUnit (NULL,
+                                     COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
+                                     true); // wait for completion ?
 
-  if (unlikely (!Net_Common_Tools::networkManagerHandleInterface (interfaceIdentifier_in,
+  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
                                                                   false)))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::networkManagerHandleInterface(\"%s\",false), aborting\n"),
+                ACE_TEXT ("failed to Net_Common_Tools::networkManagerManageInterface(\"%s\",false), aborting\n"),
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
-  ACE_ASSERT (!Net_Common_Tools::isNetworkManagerManagingInterface (interfaceIdentifier_in));
 
+continue_:
   // step2: configure 'wpa_supplicant' (if any):
   //        - ignore the given interface
-  if (unlikely (interfaceIdentifier_in.empty ()                                              ||
+  // *NOTE*: (regular) users on (vanilla) Ubuntu Linux (>= artful) need to be
+  //         members of the 'netdev' group to talk to the wpa_supplicant via
+  //         DBus (see also: /etc/dbus-1/system.d/wpa_supplicant.conf)
+  switch (distribution_e)
+  {
+    case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
+    {
+      gid_t group_id =
+          Common_Tools::stringToGroupId (ACE_TEXT_ALWAYS_CHAR ("netdev"));
+      ACE_ASSERT (group_id);
+      if (!Common_Tools::isGroupMember (static_cast<uid_t> (-1),
+                                        group_id))
+        if (unlikely (!Common_Tools::addGroupMember (static_cast<uid_t> (-1),
+                                                     group_id,
+                                                     true))) // persist ?
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("failed to Common_Tools::addGroupMember(-1,%u,true), aborting\n"),
+                      group_id));
+          goto clean;
+        } // end IF
+
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown Linux distribution (was: %d), aborting\n"),
+                  distribution_e));
+      goto clean;
+    }
+  } // end SWITCH
+
+  if (unlikely (interfaceIdentifier_in.empty ()                                            ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
-                                                   COMMON_SYSTEMD_UNIT_WPASUPPLICANT)        ||
-                !Net_WLAN_Tools::isWPASupplicantManagingInterface (NULL,
-                                                                   interfaceIdentifier_in)))
-    goto continue_;
+                                                   COMMON_SYSTEMD_UNIT_WPASUPPLICANT)))
+    goto continue_2;
 
-  Common_DBus_Tools::toggleUnit (NULL,
-                                 COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
-                                 true); // wait for completion ?
-  restart_wpasupplicant_b = true;
+//  restart_wpasupplicant_b =
+//      Common_DBus_Tools::toggleUnit (NULL,
+//                                     COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
+//                                     true); // wait for completion ?
 
-  if (unlikely (!Net_WLAN_Tools::WPASupplicantHandleInterface (NULL,
+  if (unlikely (!Net_WLAN_Tools::WPASupplicantManageInterface (NULL,
                                                                interfaceIdentifier_in,
                                                                false)))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_WLAN_Tools::WPASupplicantHandleInterface(\"%s\",false), aborting\n"),
+                ACE_TEXT ("failed to Net_WLAN_Tools::WPASupplicantManageInterface(\"%s\",false), aborting\n"),
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
-  ACE_ASSERT (!Net_WLAN_Tools::isWPASupplicantManagingInterface (NULL, interfaceIdentifier_in));
+
+continue_2:
+  // *NOTE*: apparently, reconfiguring the current NetworkManager interface
+  //         disables it --> re-enable it manually
+  if (!Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in))
+    Net_Common_Tools::toggleInterface (interfaceIdentifier_in);
+  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
+
+  // dhclient
+#if defined (DHCLIENT_USE)
+  pid_i =
+      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
+  if (!Net_Common_Tools::DHClientOmapiSupport (true))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::DHClientOmapiSupport(true), aborting\n")));
+    goto clean;
+  } // end IF
+
+  if (likely (pid_i))
+  {
+    result_2 = ACE_OS::kill (pid_i, SIGKILL);
+    if (unlikely (result_2 == -1))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::kill(%u,%d): \"%m\", aborting\n"),
+                  pid_i,
+                  SIGKILL));
+      goto clean;
+    } // end IF
+  } // end IF
+  restart_dhclient_b = true;
+#endif // DHCLIENT_USE
+
+  result = true;
 
 clean:
+#if defined (DHCLIENT_USE)
+  if (likely (restart_dhclient_b))
+  {
+    std::string command_line_string =
+        ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING);
+    command_line_string += ACE_TEXT_ALWAYS_CHAR (" -d &");
+    std::string stdout_content_string;
+    if (unlikely (!Common_Tools::command (command_line_string,
+                                          stdout_content_string)))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_Tools::command(\"%s\"), aborting\n"),
+                  ACE_TEXT (command_line_string.c_str ())));
+      goto clean;
+    } // end IF
+#if defined (_DEBUG)
+    pid_i =
+        Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
+    ACE_ASSERT (pid_i);
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("started \"%s\" (PID: %u)...\n"),
+                ACE_TEXT (NET_EXE_DHCLIENT_STRING),
+                pid_i));
+#endif // _DEBUG
+  } // end IF
+#endif // DHCLIENT_USE
   if (likely (restart_wpasupplicant_b))
     Common_DBus_Tools::toggleUnit (NULL,
                                    COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
@@ -208,11 +314,14 @@ clean:
                                    COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
                                    true); // wait for completion ?
 #endif // ACE_LINUX
-continue_:
-  return;
+
+  goto done;
 
 uninstall:
   ;
+
+done:
+  return result;
 }
 
 void
@@ -2791,6 +2900,7 @@ ACE_TMAIN (int argc_in,
   ACE_Sig_Set ignored_signal_set (0);
   Common_SignalActions_t previous_signal_actions;
   sigset_t previous_signal_mask;
+  struct ARDrone_Configuration configuration;
   struct ARDrone_GtkCBData gtk_cb_data;
   //Common_Logger_t logger (&gtk_cb_data.logStack,
   //                        &gtk_cb_data.lock);
@@ -2800,8 +2910,7 @@ ACE_TMAIN (int argc_in,
   struct ARDrone_GtkProgressData gtk_progress_data;
   ARDrone_SignalHandler signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
                                                                                                       : COMMON_SIGNAL_DISPATCH_REACTOR),
-                                        &gtk_cb_data.lock);
-  struct ARDrone_Configuration configuration;
+                                        NULL);
   struct ARDrone_UserData user_data;
   ACE_High_Res_Timer timer;
   std::string working_time_string;
@@ -2958,16 +3067,20 @@ ACE_TMAIN (int argc_in,
 
   // step2: validate configuration
   if ((!interface_definition_file.empty () &&
-       !Common_File_Tools::isReadable (interface_definition_file)))
+       !Common_File_Tools::canRead (interface_definition_file, -1)))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("invalid configuration, aborting\n")));
+                ACE_TEXT ("invalid configuration (was: \"%s\"), aborting\n"),
+                ACE_TEXT (Common_Tools::commandLineToString (argc_in, argv_in).c_str ())));
 
     // help the user, print usage instructions
     do_printUsage (ACE::basename (argv_in[0]));
 
     goto error;
   } // end IF
+
+  // step3: initialize framework (a)
+  Common_Tools::initialize (false);
 
   // step3: run program ?
   switch (mode_e)
@@ -3160,7 +3273,6 @@ ACE_TMAIN (int argc_in,
                                                              &ui_definition);
 
   // step8: (media) frameworks
-  Common_Tools::initialize (false);
   Stream_Module_Decoder_Tools::initialize ();
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_Module_Device_Tools::initialize ();

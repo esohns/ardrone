@@ -33,13 +33,11 @@
 #include "ardrone_network.h"
 
 ARDrone_SignalHandler::ARDrone_SignalHandler (enum Common_SignalDispatchType dispatchMode_in,
-                                              ACE_SYNCH_MUTEX* lock_in)
+                                              ACE_SYNCH_RECURSIVE_MUTEX* lock_in)
  : inherited (dispatchMode_in,
-//              lock_in,
-              &lock_,
+              lock_in,
               this)
  , connector_ (NULL)
- , lock_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler::ARDrone_SignalHandler"));
 

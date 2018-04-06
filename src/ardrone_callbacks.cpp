@@ -259,15 +259,20 @@ load_wlan_interfaces (GtkListStore* listStore_in)
   gtk_list_store_clear (listStore_in);
 
   bool result = false;
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
   Net_InterfaceIdentifiers_t interface_identifiers_a =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if defined (WLANAPI_USE)
       Net_WLAN_Tools::getInterfaces (INVALID_HANDLE);
-#else
+#endif // WLANAPI_USE
+#elif defined (ACE_LINUX)
       Net_WLAN_Tools::getInterfaces (
 #if defined (WEXT_USE)
 #elif defined (NL80211_USE)
-                                     NULL,
-                                     0,
+                                     const_cast<struct nl_sock*> (WLAN_monitor_p->getP ()),
+                                     WLAN_monitor_p->get_3 (),
 #elif defined (DBUS_USE)
 #endif // WEXT_USE
                                      AF_UNSPEC,
@@ -356,93 +361,35 @@ load_display_devices (GtkListStore* listStore_in)
 
   //g_slist_free (list_p);
 #else
-  int result = -1;
-  // *TODO*: this should work on most Xorg systems, but is really a bad idea:
-  //         - relies on local 'xrandr' tool
+  // *TODO*: this should work on most systems running Xorg X (and compatible
+  //         derivates), but is in fact really a bad idea due to these
+  //         dependencies:
+  //         - 'xrandr' tool
   //         - temporary files
   //         - system(3) call
-  //         --> extremely inefficient; remove ASAP
-  std::string filename_string =
-      Common_File_Tools::getTempFilename (ACE_TEXT_ALWAYS_CHAR (""));
-  std::string command_line_string = ACE_TEXT_ALWAYS_CHAR ("xrandr >> ");
-  command_line_string += filename_string;
+  //         --> very inefficient; replace ASAP
 
-//  ACE_Process_Options process_options (false);/*,                                             // inherit environment ?
-//                                       ACE_Process_Options::DEFAULT_COMMAND_LINE_BUF_LEN, // command line buffer length
-//                                       ACE_Process_Options::ENVIRONMENT_BUFFER,           // environment buffer
-//                                       ACE_Process_Options::MAX_ENVIRONMENT_ARGS,         // #environment variables
-//                                       ACE_Process_Options::MAX_COMMAND_LINE_OPTIONS);    // #command line options*/
-//  result =
-//      process_options.command_line (ACE_TEXT (command_line_string.c_str ()));
-//  if (result == -1)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to ACE_Process_Options::command_line(\"%s\"): \"%m\", aborting\n"),
-//                ACE_TEXT (command_line_string.c_str ())));
-//    goto error;
-//  } // end IF
-//  ACE_Process_Manager* process_manager_p = ACE_Process_Manager::instance ();
-//  ACE_ASSERT (process_manager_p);
-//  pid_t process_pid = process_manager_p->spawn (process_options,
-//                                                NULL);
-//  if (process_pid == ACE_INVALID_PID)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to ACE_Process_Manager::spawn(\"%s\"): \"%m\", aborting\n"),
-//                ACE_TEXT (command_line_string.c_str ())));
-//    goto error;
-//  } // end IF
-//  ACE_exitcode exit_status = -1;
-//  if (process_manager_p->wait (process_pid, &exit_status) == ACE_INVALID_PID)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to ACE_Process_Manager::wait(): \"%m\", aborting\n")));
-//    goto error;
-//  } // end IF
-
+  int result = -1;
   std::string display_records_string;
-  bool delete_temporary_file = false;
-  unsigned char* data_p = NULL;
   std::istringstream converter;
-  char buffer [BUFSIZ];
+  char buffer_a [BUFSIZ];
   std::string regex_string =
       ACE_TEXT_ALWAYS_CHAR ("^(.+) (?:connected)(?: primary)? (.+) \\((?:(.+)\\w*)+\\) ([[:digit:]]+)mm x ([[:digit:]]+)mm$");
   std::regex regex (regex_string);
   std::smatch match_results;
   std::string buffer_string;
   GtkTreeIter iterator;
-
+  std::string command_line_string = ACE_TEXT_ALWAYS_CHAR ("xrandr");
   // *NOTE*: (qtcreator) gdb fails to debug this (hangs) unless you disable the
   //         "Debug all children" option
-  result = ACE_OS::system (ACE_TEXT (command_line_string.c_str ()));
-  //  result = execl ("/bin/sh", "sh", "-c", command, (char *) 0);
-  if ((result == -1)      ||
-      !WIFEXITED (result) ||
-      WEXITSTATUS (result))
+  if (unlikely (!Common_Tools::command (command_line_string.c_str (),
+                                        display_records_string)))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_OS::system(\"%s\"): \"%m\" (result was: %d), aborting\n"),
-                ACE_TEXT (command_line_string.c_str ()),
-                WEXITSTATUS (result)));
-    goto error;
+                ACE_TEXT ("failed to Common_Tools::command(\"%s\"), aborting\n"),
+                ACE_TEXT (command_line_string.c_str ())));
+    return false;
   } // end IF
-  delete_temporary_file = true;
-  if (!Common_File_Tools::load (filename_string,
-                                data_p))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_File_Tools::load(\"%s\"): \"%m\", aborting\n"),
-                ACE_TEXT (filename_string.c_str ())));
-    goto error;
-  } // end IF
-  ACE_ASSERT (data_p);
-  if (!Common_File_Tools::deleteFile (filename_string))
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
-                ACE_TEXT (filename_string.c_str ())));
-  delete_temporary_file = false;
-  display_records_string = reinterpret_cast<char*> (data_p);
-  delete [] data_p; data_p = NULL;
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("xrandr data: \"%s\"\n"),
 //              ACE_TEXT (display_record_string.c_str ())));
@@ -450,8 +397,8 @@ load_display_devices (GtkListStore* listStore_in)
   converter.str (display_records_string);
   do
   {
-    converter.getline (buffer, sizeof (buffer));
-    buffer_string = buffer;
+    converter.getline (buffer_a, sizeof (char[BUFSIZ]));
+    buffer_string = buffer_a;
     if (!std::regex_match (buffer_string,
                            match_results,
                            regex,
@@ -460,31 +407,18 @@ load_display_devices (GtkListStore* listStore_in)
     ACE_ASSERT (match_results.ready () && !match_results.empty ());
     ACE_ASSERT (match_results[1].matched && !match_results[1].str ().empty ());
 
+#if defined (_DEBUG)
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("found display device \"%s\"...\n"),
                 ACE_TEXT (match_results[1].str ().c_str ())));
+#endif // _DEBUG
 
     gtk_list_store_append (listStore_in, &iterator);
     gtk_list_store_set (listStore_in, &iterator,
                         0, ACE_TEXT (match_results[1].str ().c_str ()),
                         -1);
   } while (!converter.fail ());
-
-  goto continue_;
-
-error:
-  if (delete_temporary_file)
-    if (!Common_File_Tools::deleteFile (filename_string))
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Common_File_Tools::deleteFile(\"%s\"), continuing\n"),
-                  ACE_TEXT (filename_string.c_str ())));
-  if (data_p)
-    delete [] data_p;
-
-  return false;
-
-continue_:
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   return true;
 }
