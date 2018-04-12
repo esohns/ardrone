@@ -251,17 +251,22 @@ monitor_clip_cb (HMONITOR monitor_in,
 #endif
 
 bool
-load_wlan_interfaces (GtkListStore* listStore_in)
+load_wlan_interfaces (GtkListStore* listStore_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("::load_wlan_interfaces"));
 
   // initialize result
-  gtk_list_store_clear (listStore_in);
+  gtk_list_store_clear (listStore_inout);
 
-  bool result = false;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#elif defined (ACE_LINUX)
+#if defined (NL80211_USE)
   ARDrone_WLANMonitor_t* WLAN_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
+#endif // NL80211_USE
+#endif // ACE_WIN32 || ACE_WIN64
+
   Net_InterfaceIdentifiers_t interface_identifiers_a =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if defined (WLANAPI_USE)
@@ -269,22 +274,23 @@ load_wlan_interfaces (GtkListStore* listStore_in)
 #endif // WLANAPI_USE
 #elif defined (ACE_LINUX)
       Net_WLAN_Tools::getInterfaces (
-#if defined (WEXT_USE)
-#elif defined (NL80211_USE)
-                                     const_cast<struct nl_sock*> (WLAN_monitor_p->getP ()),
-                                     WLAN_monitor_p->get_3 (),
-#elif defined (DBUS_USE)
-#endif // WEXT_USE
+#if defined (NL80211_USE)
+                                     static_cast<struct nl_sock*> (NULL),
+//                                     const_cast<struct nl_sock*> (WLAN_monitor_p->getP ()),
+                                     WLAN_monitor_p->get_3 ());
+#elif defined (WEXT_USE) || defined (DBUS_USE)
                                      AF_UNSPEC,
                                      0);
+#endif // NL80211_USE
+#endif // ACE_WIN32 || ACE_WIN64
 
   GtkTreeIter iterator;
   for (Net_InterfacesIdentifiersIterator_t iterator_2 = interface_identifiers_a.begin ();
        iterator_2 != interface_identifiers_a.end ();
        ++iterator_2)
   {
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
+    gtk_list_store_append (listStore_inout, &iterator);
+    gtk_list_store_set (listStore_inout, &iterator,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                         0, ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceIdentifierToString (*iterator_2).c_str ()),
                         1, ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (*iterator_2).c_str ()),
@@ -294,25 +300,22 @@ load_wlan_interfaces (GtkListStore* listStore_in)
                         -1);
   } // end FOR
 
-  result = true;
-#endif
-
-  return result;
+  return true;
 }
 
 bool
-load_display_devices (GtkListStore* listStore_in)
+load_display_devices (GtkListStore* listStore_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("::load_display_devices"));
 
   // initialize result
-  gtk_list_store_clear (listStore_in);
+  gtk_list_store_clear (listStore_inout);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (!EnumDisplayMonitors (NULL,                                     // hdc
                             NULL,                                     // lprcClip
                             monitor_enum_cb,
-                            reinterpret_cast<LPARAM> (listStore_in)))
+                            reinterpret_cast<LPARAM> (listStore_inout)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to EnumDisplayMonitors(): \"%s\", aborting\n"),
@@ -382,7 +385,9 @@ load_display_devices (GtkListStore* listStore_in)
   std::string command_line_string = ACE_TEXT_ALWAYS_CHAR ("xrandr");
   // *NOTE*: (qtcreator) gdb fails to debug this (hangs) unless you disable the
   //         "Debug all children" option
+  int exit_status_i = 0;
   if (unlikely (!Common_Tools::command (command_line_string.c_str (),
+                                        exit_status_i,
                                         display_records_string)))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -413,8 +418,8 @@ load_display_devices (GtkListStore* listStore_in)
                 ACE_TEXT (match_results[1].str ().c_str ())));
 #endif // _DEBUG
 
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
+    gtk_list_store_append (listStore_inout, &iterator);
+    gtk_list_store_set (listStore_inout, &iterator,
                         0, ACE_TEXT (match_results[1].str ().c_str ()),
                         -1);
   } while (!converter.fail ());
@@ -424,25 +429,25 @@ load_display_devices (GtkListStore* listStore_in)
 }
 
 bool
-load_display_formats (GtkListStore* listStore_in)
+load_display_formats (GtkListStore* listStore_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("::load_display_formats"));
 
   // initialize result
-  gtk_list_store_clear (listStore_in);
+  gtk_list_store_clear (listStore_inout);
 
   GtkTreeIter iterator;
   do
   { // *TODO*: this needs more work; support the device capabilities exposed
-    //         through the API, instead of static values
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
+    //         through the API instead of static values
+    gtk_list_store_append (listStore_inout, &iterator);
+    gtk_list_store_set (listStore_inout, &iterator,
                         0, ACE_TEXT (ARDroneVideoModeToString (ARDRONE_VIDEOMODE_360P).c_str ()),
                         1, ARDRONE_VIDEOMODE_360P,
                         -1);
 
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
+    gtk_list_store_append (listStore_inout, &iterator);
+    gtk_list_store_set (listStore_inout, &iterator,
                         0, ACE_TEXT (ARDroneVideoModeToString (ARDRONE_VIDEOMODE_720P).c_str ()),
                         1, ARDRONE_VIDEOMODE_720P,
                         -1);
@@ -454,21 +459,21 @@ load_display_formats (GtkListStore* listStore_in)
 }
 
 bool
-load_save_formats (GtkListStore* listStore_in)
+load_save_formats (GtkListStore* listStore_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("::load_save_formats"));
 
   // initialize result
-  gtk_list_store_clear (listStore_in);
+  gtk_list_store_clear (listStore_inout);
 
   GtkTreeIter iterator;
   do
   { // *TODO*: this needs more work; support the device capabilities exposed
-    //         through the API, instead of static values
+    //         through the API instead of static values
     // *TODO*: define/activate a 'save-to-file' subpipeline (use a multiplexer)
     //         and forward(/encapsulate) the byte-stream as default format
-    gtk_list_store_append (listStore_in, &iterator);
-    gtk_list_store_set (listStore_in, &iterator,
+    gtk_list_store_append (listStore_inout, &iterator);
+    gtk_list_store_set (listStore_inout, &iterator,
                         0, ACE_TEXT ("RGB AVI"),
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                         1, ACE_TEXT (Common_Tools::GUIDToString (MEDIASUBTYPE_RGB24).c_str ()),
@@ -3280,7 +3285,7 @@ idle_update_progress_cb (gpointer userData_in)
 
 /////////////////////////////////////////
 
-#ifdef __cplusplus
+#if defined (__cplusplus)
 extern "C"
 {
 #endif /* __cplusplus */
@@ -4603,7 +4608,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 
   ACE_NOTREACHED (return;)
 #endif // WLANAPI_USE
-#else
+#elif defined (ACE_LINUX)
 #if defined (WEXT_USE)
   if (unlikely (ACE_OS::strcmp (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str (),
                                 Net_WLAN_Tools::associatedSSID (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
@@ -7981,6 +7986,6 @@ button_quit_clicked_cb (GtkWidget* widget_in,
 
   return TRUE; // done (do not propagate further)
 }
-#ifdef __cplusplus
+#if defined (__cplusplus)
 }
 #endif /* __cplusplus */
