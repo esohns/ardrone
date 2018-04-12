@@ -147,15 +147,13 @@ do_setup (bool install_in,
   bool restart_networkmanager_b = false;
   bool restart_wpasupplicant_b = false;
 //  bool restart_ifplugd_b = false;
+  bool result_2 = false;
 #if defined (DHCLIENT_USE)
   bool restart_dhclient_b = false;
   pid_t pid_i = 0;
-  int result_2 = -1;
+  int result_3 = -1;
 #endif // DHCLIENT_USE
 #endif // ACE_LINUX
-
-  if (!install_in)
-    goto uninstall;
 
 #if defined (ACE_LINUX)
   enum Common_OperatingSystemDistributionType distribution_e;
@@ -165,10 +163,15 @@ do_setup (bool install_in,
                 ACE_TEXT ("failed to Common_Tools::isLinux(), aborting\n")));
     return false;
   } // end IF
+#endif // ACE_LINUX
 
+  if (!install_in)
+    goto uninstall;
+
+#if defined (ACE_LINUX)
   // step1: configure 'NetworkManager' (if any):
   //        - ignore the given interface
-  if (unlikely (interfaceIdentifier_in.empty ()                                               ||
+  if (unlikely (interfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_NETWORKMANAGER)))
     goto continue_;
@@ -177,6 +180,13 @@ do_setup (bool install_in,
       Common_DBus_Tools::toggleUnit (NULL,
                                      COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
                                      true); // wait for completion ?
+  if (unlikely (!restart_networkmanager_b))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_DBus_Tools::toggleUnit(\"%s\",true), aborting\n"),
+                ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
+    goto clean;
+  } // end IF
 
   if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
                                                                   false)))
@@ -232,6 +242,13 @@ continue_:
 //      Common_DBus_Tools::toggleUnit (NULL,
 //                                     COMMON_SYSTEMD_UNIT_WPASUPPLICANT,
 //                                     true); // wait for completion ?
+//  if (unlikely (!restart_wpasupplicant_b))
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Common_DBus_Tools::toggleUnit(\"%s\",true), aborting\n"),
+//                ACE_TEXT (COMMON_SYSTEMD_UNIT_WPASUPPLICANT)));
+//    goto clean;
+//  } // end IF
 
   if (unlikely (!Net_WLAN_Tools::WPASupplicantManageInterface (NULL,
                                                                interfaceIdentifier_in,
@@ -247,8 +264,19 @@ continue_2:
   // *NOTE*: apparently, reconfiguring the current NetworkManager interface
   //         disables it --> re-enable it manually
   if (!Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in))
-    Net_Common_Tools::toggleInterface (interfaceIdentifier_in);
-  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
+  {
+    if (!Net_Common_Tools::toggleInterface (interfaceIdentifier_in))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Net_Common_Tools::toggleInterface(\"%s\"), aborting\n"),
+                  ACE_TEXT (interfaceIdentifier_in.c_str ())));
+      goto clean;
+    } // end IF
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("reenabled WLAN interface (was: \"%s\")\n"),
+                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+  } // end IF
+//  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
 
   // dhclient
 #if defined (DHCLIENT_USE)
@@ -263,8 +291,8 @@ continue_2:
 
   if (likely (pid_i))
   {
-    result_2 = ACE_OS::kill (pid_i, SIGKILL);
-    if (unlikely (result_2 == -1))
+    result_3 = ACE_OS::kill (pid_i, SIGKILL);
+    if (unlikely (result_3 == -1))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_OS::kill(%u,%d): \"%m\", aborting\n"),
@@ -275,10 +303,12 @@ continue_2:
   } // end IF
   restart_dhclient_b = true;
 #endif // DHCLIENT_USE
+#endif // ACE_LINUX
 
   result = true;
 
 clean:
+#if defined (ACE_LINUX)
 #if defined (DHCLIENT_USE)
   if (likely (restart_dhclient_b))
   {
@@ -286,22 +316,31 @@ clean:
         ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING);
     command_line_string += ACE_TEXT_ALWAYS_CHAR (" -d &");
     std::string stdout_content_string;
+    int exit_status_i = 0;
     if (unlikely (!Common_Tools::command (command_line_string,
+                                          exit_status_i,
                                           stdout_content_string)))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Common_Tools::command(\"%s\"), aborting\n"),
                   ACE_TEXT (command_line_string.c_str ())));
-      goto clean;
+      result = false;
     } // end IF
 #if defined (_DEBUG)
     pid_i =
         Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
-    ACE_ASSERT (pid_i);
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("started \"%s\" (PID: %u)...\n"),
-                ACE_TEXT (NET_EXE_DHCLIENT_STRING),
-                pid_i));
+    if (likely (pid_i))
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("started \"%s\" (PID: %u)...\n"),
+                  ACE_TEXT (NET_EXE_DHCLIENT_STRING),
+                  pid_i));
+    else
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to (re)start \"%s\", aborting\n"),
+                  ACE_TEXT (NET_EXE_DHCLIENT_STRING)));
+      result = false;
+    } // end ELSE
 #endif // _DEBUG
   } // end IF
 #endif // DHCLIENT_USE
@@ -318,7 +357,78 @@ clean:
   goto done;
 
 uninstall:
-  ;
+#if defined (ACE_LINUX)
+  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
+
+  // step1: dhclient
+#if defined (DHCLIENT_USE)
+  pid_i =
+      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
+//  if (!Net_Common_Tools::DHClientOmapiSupport (true))
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::DHClientOmapiSupport(true), aborting\n")));
+//    goto clean;
+//  } // end IF
+
+  if (likely (pid_i))
+  {
+    result_2 = ACE_OS::kill (pid_i, SIGKILL);
+    if (unlikely (result_2 == -1))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE_OS::kill(%u,%d): \"%m\", aborting\n"),
+                  pid_i,
+                  SIGKILL));
+      return false;
+    } // end IF
+  } // end IF
+#endif // DHCLIENT_USE
+
+  // step2: configure 'NetworkManager':
+  //        - manage the given interface
+  ACE_ASSERT (!interfaceIdentifier_in.empty ());
+  restart_networkmanager_b =
+      Common_DBus_Tools::isUnitRunning (NULL,
+                                        COMMON_SYSTEMD_UNIT_NETWORKMANAGER);
+
+  if (restart_networkmanager_b)
+  {
+    result_2 =
+        Common_DBus_Tools::toggleUnit (NULL,
+                                       COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
+                                       true); // wait for completion ?
+    if (unlikely (!result_2))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_DBus_Tools::toggleUnit(\"%s\",true), aborting\n"),
+                  ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
+      return false;
+    } // end IF
+  } // end IF
+  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
+                                                                  true)))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::networkManagerManageInterface(\"%s\",true), aborting\n"),
+                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+    return false;
+  } // end IF
+
+  result_2 =
+      Common_DBus_Tools::toggleUnit (NULL,
+                                     COMMON_SYSTEMD_UNIT_NETWORKMANAGER,
+                                     true); // wait for completion ?
+  if (unlikely (!result_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_DBus_Tools::toggleUnit(\"%s\",true), aborting\n"),
+                ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
+    return false;
+  } // end IF
+#endif // ACE_LINUX
+
+  result = true;
 
 done:
   return result;
@@ -2859,14 +2969,14 @@ ACE_TMAIN (int argc_in,
   unsigned int buffer_size;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool show_console;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   bool debug_scanner;
   bool fullscreen;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct _GUID interface_identifier;
 #else
   std::string interface_identifier;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   bool log_to_file;
   unsigned short port_number;
   bool use_reactor;
@@ -2874,7 +2984,7 @@ ACE_TMAIN (int argc_in,
   bool trace_information;
   enum Common_ApplicationModeType mode_e;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
+#elif defined (ACE_LINUX)
 #if defined (NL80211_SUPPORT)
 #if defined (_DEBUG)
   bool debug_nl80211;
@@ -2895,7 +3005,7 @@ ACE_TMAIN (int argc_in,
 #else
   struct ARDrone_ModuleHandlerConfiguration video_modulehandler_configuration;
   ARDrone_StreamConfiguration_t stream_configuration_2;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   ACE_Sig_Set signal_set (0);
   ACE_Sig_Set ignored_signal_set (0);
   Common_SignalActions_t previous_signal_actions;
@@ -2913,22 +3023,19 @@ ACE_TMAIN (int argc_in,
                                         NULL);
   struct ARDrone_UserData user_data;
   ACE_High_Res_Timer timer;
-  std::string working_time_string;
   ACE_Time_Value working_time;
   ACE_Time_Value user_time;
   ACE_Time_Value system_time;
-  std::string user_time_string;
-  std::string system_time_string;
 
   // step-2: initialize NLS
-#ifdef ENABLE_NLS
-#ifdef HAVE_LOCALE_H
+#if defined (ENABLE_NLS)
+#if defined (HAVE_LOCALE_H)
   setlocale (LC_ALL, "");
-#endif
+#endif // HAVE_LOCALE_H
   bindtextdomain (PACKAGE, LOCALEDIR);
   bind_textdomain_codeset (PACKAGE, "UTF-8");
   textdomain (PACKAGE);
-#endif
+#endif // ENABLE_NLS
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // step-1: initialize ACE ?
@@ -2939,13 +3046,13 @@ ACE_TMAIN (int argc_in,
                 ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
     return EXIT_FAILURE;
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
   if (RUNNING_ON_VALGRIND)
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("running on valgrind...\n")));
-#endif
+#endif // ARDRONE_ENABLE_VALGRIND_SUPPORT
 
   result = -1;
   // set default values
@@ -2968,7 +3075,7 @@ ACE_TMAIN (int argc_in,
   buffer_size = ARDRONE_MESSAGE_BUFFER_SIZE;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   show_console           = false;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   debug_scanner          = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   log_to_file            = false;
@@ -3004,7 +3111,7 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool use_mediafoundation   =
     (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION);
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   result =
     address.set (static_cast<u_short> (ARDRONE_PORT_TCP_VIDEO),                // (TCP) port number
                  static_cast<ACE_UINT32> (192 << 24 | 168 << 16 | 1 << 8 | 1), // IPv4 address
@@ -3032,14 +3139,14 @@ ACE_TMAIN (int argc_in,
                             buffer_size,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             show_console,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                             debug_scanner,
                             fullscreen,
                             interface_identifier,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             use_mediafoundation,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                             port_number,
                             use_reactor,
                             SSID_string,
@@ -3234,13 +3341,13 @@ ACE_TMAIN (int argc_in,
                                      stream_configuration);
   configuration.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
                                                              stream_configuration_2));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   configuration.WLANMonitorConfiguration.interfaceIdentifier =
       interface_identifier;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   // step7: initialize user interface, if any
   gtk_cb_data.argc = argc_in;
@@ -3251,7 +3358,7 @@ ACE_TMAIN (int argc_in,
   //                sizeof (gtk_cb_data.clientSensorBias));
 #if defined (GTKGL_SUPPORT)
 //  gtk_cb_data.openGLDoubleBuffered = ARDRONE_OPENGL_DOUBLE_BUFFERED;
-#endif
+#endif // GTKGL_SUPPORT
   //ACE_OS::memset (gtk_cb_data.temperature,
   //                0,
   //                sizeof (gtk_cb_data.temperature));
@@ -3325,7 +3432,7 @@ ACE_TMAIN (int argc_in,
 
     goto error;
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   // step9: run program
   timer.start ();
@@ -3353,17 +3460,15 @@ ACE_TMAIN (int argc_in,
            previous_signal_actions,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
            show_console,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
            signal_handler);
   timer.stop ();
 
   // debug info
   timer.elapsed_time (working_time);
-  Common_Timer_Tools::periodToString (working_time,
-                                      working_time_string);
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("total working time (h:m:s.us): \"%s\"...\n"),
-              ACE_TEXT (working_time_string.c_str ())));
+              ACE_TEXT (Common_Timer_Tools::periodToString (working_time).c_str ())));
 
 done:
   process_profile.stop ();
@@ -3401,26 +3506,22 @@ done:
   process_profile.elapsed_rusage (elapsed_rusage);
   user_time.set (elapsed_rusage.ru_utime);
   system_time.set (elapsed_rusage.ru_stime);
-  Common_Timer_Tools::periodToString (user_time,
-                                      user_time_string);
-  Common_Timer_Tools::periodToString (system_time,
-                                      system_time_string);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT (" --> Process Profile <--\nreal time = %A seconds\nuser time = %A seconds\nsystem time = %A seconds\n --> Resource Usage <--\nuser time used: %s\nsystem time used: %s\n"),
               elapsed_time.real_time,
               elapsed_time.user_time,
               elapsed_time.system_time,
-              ACE_TEXT (user_time_string.c_str ()),
-              ACE_TEXT (system_time_string.c_str ())));
+              ACE_TEXT (Common_Timer_Tools::periodToString (user_time).c_str ()),
+              ACE_TEXT (Common_Timer_Tools::periodToString (system_time).c_str ())));
 #else
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT (" --> Process Profile <--\nreal time = %A seconds\nuser time = %A seconds\nsystem time = %A seconds\n --> Resource Usage <--\nuser time used: %s\nsystem time used: %s\nmaximum resident set size = %d\nintegral shared memory size = %d\nintegral unshared data size = %d\nintegral unshared stack size = %d\npage reclaims = %d\npage faults = %d\nswaps = %d\nblock input operations = %d\nblock output operations = %d\nmessages sent = %d\nmessages received = %d\nsignals received = %d\nvoluntary context switches = %d\ninvoluntary context switches = %d\n"),
               elapsed_time.real_time,
               elapsed_time.user_time,
               elapsed_time.system_time,
-              user_time_string.c_str (),
-              system_time_string.c_str (),
+              ACE_TEXT (Common_Timer_Tools::periodToString (user_time).c_str ()),
+              ACE_TEXT (Common_Timer_Tools::periodToString (system_time).c_str ()),
               elapsed_rusage.ru_maxrss,
               elapsed_rusage.ru_ixrss,
               elapsed_rusage.ru_idrss,
