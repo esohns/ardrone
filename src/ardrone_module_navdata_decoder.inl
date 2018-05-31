@@ -404,7 +404,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                     0,
                     sizeof (struct _navdata_t));
     ACE_NEW_NORETURN (message_data_container_p,
-                      typename DataMessageType::DATA_T (message_data_p));
+                      DataMessageType::DATA_T (message_data_p));
     if (!message_data_container_p)
     {
       ACE_DEBUG ((LM_CRITICAL,

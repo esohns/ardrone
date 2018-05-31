@@ -31,7 +31,7 @@
 #include <gl/GL.h>
 #else
 #include <GL/gl.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #endif /* GTKGL_SUPPORT */
 
 #include "gtk/gtk.h"
@@ -74,13 +74,13 @@ struct ARDrone_DirectShow_FilterConfiguration
    : Stream_MediaFramework_DirectShow_FilterConfiguration ()
    , module (NULL)
    , pinConfiguration (NULL)
-  {};
+  {}
 
   // *TODO*: specify this as part of the network protocol header/handshake
   Stream_Module_t*                                                module; // handle
   struct Stream_MediaFramework_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
 };
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 struct ARDrone_SocketHandlerConfiguration;
 typedef Net_IConnector_T<ACE_INET_Addr,
@@ -92,14 +92,12 @@ struct ARDrone_SignalHandlerConfiguration
    : Common_SignalHandlerConfiguration ()
    , actionTimerId (-1)
    , connector (NULL)
-   , eventDispatchState (NULL)
    , peerAddress ()
   {}
 
-  long                              actionTimerId;
-  ARDrone_IConnector_t*             connector;
-  struct Common_EventDispatchState* eventDispatchState;
-  ACE_INET_Addr                     peerAddress;
+  long                  actionTimerId;
+  ARDrone_IConnector_t* connector;
+  ACE_INET_Addr         peerAddress;
 };
 
 struct ARDrone_WLANMonitorConfiguration
@@ -112,7 +110,7 @@ struct ARDrone_WLANMonitorConfiguration
     autoAssociate = ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   }
 
   struct ARDrone_UserData* userData;
@@ -139,12 +137,12 @@ typedef ARDrone_StreamConnectionConfigurations_t::iterator ARDrone_StreamConnect
 typedef std::map<std::string, // stream name
                  ARDrone_StreamConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
 typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 struct ARDrone_Configuration
 {
   ARDrone_Configuration ()
    : allocatorConfiguration ()
-   , eventDispatchConfiguration ()
+   , dispatchConfiguration ()
    , signalHandlerConfiguration ()
    , WLANMonitorConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -152,18 +150,18 @@ struct ARDrone_Configuration
    , mediaFoundationConnectionConfigurations ()
 #else
    , connectionConfigurations ()
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
    , parserConfiguration ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowFilterConfiguration ()
    , directShowPinConfiguration ()
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , directShowStreamConfigurations ()
    , mediaFoundationStreamConfigurations ()
 #else
    , streamConfigurations ()
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
    , streamSubscribers ()
    , streamSubscribersLock ()
    , userData (NULL)
@@ -171,11 +169,11 @@ struct ARDrone_Configuration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     directShowFilterConfiguration.pinConfiguration =
       &directShowPinConfiguration;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   }
 
   struct ARDrone_AllocatorConfiguration                          allocatorConfiguration;
-  struct Common_EventDispatchConfiguration                       eventDispatchConfiguration;
+  struct Common_EventDispatchConfiguration                       dispatchConfiguration;
 
   struct ARDrone_SignalHandlerConfiguration                      signalHandlerConfiguration;
 
@@ -185,18 +183,18 @@ struct ARDrone_Configuration
   ARDrone_MediaFoundation_ConnectionConfigurations_t             mediaFoundationConnectionConfigurations;
 #else
   ARDrone_ConnectionConfigurations_t                             connectionConfigurations;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   struct Common_ParserConfiguration                              parserConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_FilterConfiguration                  directShowFilterConfiguration;
   struct Stream_MediaFramework_DirectShow_FilterPinConfiguration directShowPinConfiguration;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_StreamConfigurations_t                      directShowStreamConfigurations;
   ARDrone_MediaFoundation_StreamConfigurations_t                 mediaFoundationStreamConfigurations;
 #else
   ARDrone_StreamConfigurations_t                                 streamConfigurations;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   ARDrone_Subscribers_t                                          streamSubscribers;
   ACE_SYNCH_RECURSIVE_MUTEX                                      streamSubscribersLock;
 
@@ -227,14 +225,14 @@ struct ARDrone_GtkCBData
   : Common_UI_GTK_GLState
 #else
   : Common_UI_GTK_State
-#endif
+#endif // GTKGL_SUPPORT
 {
   ARDrone_GtkCBData ()
 #if defined (GTKGL_SUPPORT)
    : Common_UI_GTK_GLState ()
 #else
    : Common_UI_GTK_State ()
-#endif
+#endif // GTKGL_SUPPORT
    , configuration (NULL)
    , controller (NULL)
    , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
@@ -243,18 +241,18 @@ struct ARDrone_GtkCBData
    , localSAP ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
    , messages ()
    , messageAllocator (NULL)
 #if defined (GTKGL_SUPPORT)
    , openGLModelListId (0)
    , openGLRefreshId (0)
    , openGLScene ()
-#endif
+#endif // GTKGL_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
    , pixelBuffer (NULL)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
    , progressData (NULL)
    , stateEventId (0)
    , streams ()
@@ -263,7 +261,7 @@ struct ARDrone_GtkCBData
   {
 #if defined (GTKGL_SUPPORT)
 //    resetCamera ();
-#endif
+#endif // GTKGL_SUPPORT
   }
 
 #if defined (GTKGL_SUPPORT)
@@ -272,7 +270,7 @@ struct ARDrone_GtkCBData
 //    ACE_OS::memset (&openGLScene, 0, sizeof (openGLScene));
 //    openGLScene.camera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
 //  };
-#endif
+#endif // GTKGL_SUPPORT
 
   struct ARDrone_Configuration*                configuration;
   ARDrone_IController*                         controller;
@@ -285,18 +283,18 @@ struct ARDrone_GtkCBData
   ACE_INET_Addr                                localSAP;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   enum Stream_MediaFramework_Type              mediaFramework;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   ARDrone_Messages_t                           messages;
   ARDrone_MessageAllocator_t*                  messageAllocator;
 #if defined (GTKGL_SUPPORT)
   GLuint                                       openGLModelListId;
   guint                                        openGLRefreshId;
   struct Common_GL_Scene                       openGLScene;
-#endif
+#endif // GTKGL_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   GdkPixbuf*                                   pixelBuffer;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_GtkProgressData*              progressData;
   guint                                        stateEventId;
   ARDrone_Streams_t                            streams;
@@ -318,13 +316,14 @@ struct ARDrone_ThreadData
   guint                           eventSourceId;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   enum Stream_MediaFramework_Type mediaFramework;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 };
 
 typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_GtkCBData> ARDrone_GtkBuilderDefinition_t;
 
-typedef Common_UI_GTK_Manager_T<struct ARDrone_GtkCBData> ARDrone_GTK_Manager_t;
+typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+                                struct ARDrone_GtkCBData> ARDrone_GTK_Manager_t;
 typedef ACE_Singleton<ARDrone_GTK_Manager_t,
-                      typename ACE_MT_SYNCH::RECURSIVE_MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
+                      typename ACE_MT_SYNCH::MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
 
 #endif // #ifndef ARDRONE_CONFIGURATION_H

@@ -332,15 +332,15 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
 
       if (session_data_p->inputFormat)
-        Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
+        Stream_MediaFramework_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
 
       ACE_ASSERT (!session_data_p->inputFormat);
-      //if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
-      if (!Stream_Module_Device_DirectShow_Tools::copyMediaType (*(configuration_p->inputFormat),
-                                                                 session_data_p->inputFormat))
+      //if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
+      if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->inputFormat),
+                                                                  session_data_p->inputFormat))
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to Stream_Module_Device_DirectShow_Tools::copyMediaType(), aborting\n")));
+                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copyMediaType(), aborting\n")));
         goto error;
       } // end IF
       ACE_ASSERT (session_data_p->inputFormat);
@@ -425,7 +425,7 @@ error:
   //  session_data_p->direct3DDevice = NULL;
   //} // end IF
   if (session_data_p->inputFormat)
-    Stream_Module_Device_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
+    Stream_MediaFramework_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
   //session_data_p->resetToken = 0;
   //if (session_data_p->session)
   //{
@@ -486,7 +486,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_TCPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -516,7 +516,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_TCPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -864,7 +864,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_Controller_Module (this,
                                                                      ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
@@ -904,7 +904,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_UDPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -920,7 +920,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_Controller_Module (this,
                                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
@@ -960,7 +960,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_UDPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -1443,17 +1443,17 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
           try {
-            if (!ioutbound_data_notify->initialize (directshow_connection_p->notification (),
-                                                    module_name_string))
+            if (!ioutbound_data_notify->initialize_2 (directshow_connection_p->notification (),
+                                                      module_name_string))
               ACE_DEBUG ((LM_ERROR,
-                          ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                          ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                           ACE_TEXT (navdata_stream_name_string_),
                           directshow_connection_p->notification (),
                           ACE_TEXT (module_name_string.c_str ())));
             return;
           } catch (...) {
             ACE_DEBUG ((LM_ERROR,
-                        ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                        ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                         ACE_TEXT (navdata_stream_name_string_),
                         directshow_connection_p->notification (),
                         ACE_TEXT (module_name_string.c_str ())));
@@ -1464,17 +1464,17 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
         {
           try {
-            if (!ioutbound_data_notify->initialize (mediafoundation_connection_p->notification (),
-                                                    module_name_string))
+            if (!ioutbound_data_notify->initialize_2 (mediafoundation_connection_p->notification (),
+                                                      module_name_string))
               ACE_DEBUG ((LM_ERROR,
-                          ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                          ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                           ACE_TEXT (navdata_stream_name_string_),
                           mediafoundation_connection_p->notification (),
                           ACE_TEXT (module_name_string.c_str ())));
             return;
           } catch (...) {
             ACE_DEBUG ((LM_ERROR,
-                        ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                        ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                         ACE_TEXT (navdata_stream_name_string_),
                         mediafoundation_connection_p->notification (),
                         ACE_TEXT (module_name_string.c_str ())));
@@ -1495,14 +1495,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         if (!ioutbound_data_notify->initialize (connection_p->notification (),
                                                 module_name_string))
           ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                      ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                       ACE_TEXT (navdata_stream_name_string_),
                       connection_p->notification (),
                       ACE_TEXT (module_name_string.c_str ())));
         return;
       } catch (...) {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize(0x%@,\"%s\"), returning\n"),
+                    ACE_TEXT ("%s: caught exception in Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                     ACE_TEXT (navdata_stream_name_string_),
                     connection_p->notification (),
                     ACE_TEXT (module_name_string.c_str ())));
@@ -2282,7 +2282,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_UDPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -2326,7 +2326,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
-      if (inherited::configuration_->configuration_.useReactor)
+      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_UDPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
