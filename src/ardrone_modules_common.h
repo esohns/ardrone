@@ -462,7 +462,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_DirectShow_StreamConnectionConfigurationIterator_t,
                                     ARDrone_DirectShow_ConnectionManager_t,
-                                    ARDrone_DirectShow_UDPConnector_t> ARDrone_Module_DirectShow_Controller;
+                                    ARDrone_DirectShow_UDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_DirectShow_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_DirectShow_ModuleHandlerConfiguration,
@@ -473,7 +474,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_DirectShow_StreamConnectionConfigurationIterator_t,
                                     ARDrone_DirectShow_ConnectionManager_t,
-                                    ARDrone_DirectShow_AsynchUDPConnector_t> ARDrone_Module_DirectShow_AsynchController;
+                                    ARDrone_DirectShow_AsynchUDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_DirectShow_AsynchController;
 
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
@@ -485,7 +487,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t,
                                     ARDrone_MediaFoundation_ConnectionManager_t,
-                                    ARDrone_MediaFoundation_UDPConnector_t> ARDrone_Module_MediaFoundation_Controller;
+                                    ARDrone_MediaFoundation_UDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_MediaFoundation_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
@@ -496,7 +499,8 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_WLANMonitor_t,
                                     ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t,
                                     ARDrone_MediaFoundation_ConnectionManager_t,
-                                    ARDrone_MediaFoundation_AsynchUDPConnector_t> ARDrone_Module_MediaFoundation_AsynchController;
+                                    ARDrone_MediaFoundation_AsynchUDPConnector_t,
+                                    struct ARDrone_GtkCBData> ARDrone_Module_MediaFoundation_AsynchController;
 #else
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
@@ -624,11 +628,17 @@ typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    struct ARDrone_SessionData> ARDrone_Module_FileWriter;
 #endif
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Decoder_AVIEncoder_ReaderTask_T<ACE_MT_SYNCH,
                                                Common_TimePolicy_t,
+                                               struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                                               ARDrone_ControlMessage_t,
+                                               ARDrone_Message,
+                                               ARDrone_SessionMessage,
                                                ARDrone_SessionData_t,
-                                               struct ARDrone_SessionData> ARDrone_Module_AVIEncoder_ReaderTask_t;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                                               struct ARDrone_SessionData,
+                                               enum AVCodecID,
+                                               struct ARDrone_UserData> ARDrone_Module_DirectShow_AVIEncoder_ReaderTask_t;
 typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                Common_TimePolicy_t,
                                                struct ARDrone_DirectShow_ModuleHandlerConfiguration,
@@ -640,6 +650,16 @@ typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                enum AVCodecID,
                                                struct ARDrone_UserData> ARDrone_Module_DirectShow_AVIEncoder_WriterTask_t;
 
+typedef Stream_Decoder_AVIEncoder_ReaderTask_T<ACE_MT_SYNCH,
+                                               Common_TimePolicy_t,
+                                               struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                                               ARDrone_ControlMessage_t,
+                                               ARDrone_Message,
+                                               ARDrone_SessionMessage,
+                                               ARDrone_SessionData_t,
+                                               struct ARDrone_SessionData,
+                                               enum AVCodecID,
+                                               struct ARDrone_UserData> ARDrone_Module_MediaFoundation_AVIEncoder_ReaderTask_t;
 typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                Common_TimePolicy_t,
                                                struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
@@ -651,6 +671,16 @@ typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                enum AVCodecID,
                                                struct ARDrone_UserData> ARDrone_Module_MediaFoundation_AVIEncoder_WriterTask_t;
 #else
+typedef Stream_Decoder_AVIEncoder_ReaderTask_T<ACE_MT_SYNCH,
+                                               Common_TimePolicy_t,
+                                               struct ARDrone_ModuleHandlerConfiguration,
+                                               ARDrone_ControlMessage_t,
+                                               ARDrone_Message,
+                                               ARDrone_SessionMessage,
+                                               ARDrone_SessionData_t,
+                                               struct ARDrone_SessionData,
+                                               enum AVCodecID,
+                                               struct ARDrone_UserData> ARDrone_Module_AVIEncoder_ReaderTask_t;
 typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                Common_TimePolicy_t,
                                                struct ARDrone_ModuleHandlerConfiguration,
@@ -772,7 +802,7 @@ DATASTREAM_MODULE_DUPLEX (struct ARDrone_SessionData,                        // 
                           struct ARDrone_DirectShow_ModuleHandlerConfiguration, // module handler configuration type
                           libacestream_default_dec_avi_encoder_module_name_string,
                           Stream_INotify_t,                                  // stream notification interface type
-                          ARDrone_Module_AVIEncoder_ReaderTask_t,            // reader type
+                          ARDrone_Module_DirectShow_AVIEncoder_ReaderTask_t, // reader type
                           ARDrone_Module_DirectShow_AVIEncoder_WriterTask_t, // writer type
                           ARDrone_Module_DirectShow_AVIEncoder);             // name
 
@@ -882,7 +912,7 @@ DATASTREAM_MODULE_DUPLEX (struct ARDrone_SessionData,                           
                           struct ARDrone_DirectShow_ModuleHandlerConfiguration,   // module handler configuration type
                           libacestream_default_dec_avi_encoder_module_name_string,
                           Stream_INotify_t,                                       // stream notification interface type
-                          ARDrone_Module_AVIEncoder_ReaderTask_t,                 // reader type
+                          ARDrone_Module_MediaFoundation_AVIEncoder_ReaderTask_t, // reader type
                           ARDrone_Module_MediaFoundation_AVIEncoder_WriterTask_t, // writer type
                           ARDrone_Module_MediaFoundation_AVIEncoder);             // name
 #else

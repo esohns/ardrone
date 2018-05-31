@@ -63,7 +63,12 @@ class ARDrone_Module_EventHandler_T
                                           struct ARDrone_UserData> inherited;
 
  public:
+  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_Module_EventHandler_T (ISTREAM_T*); // stream handle
+#else
   ARDrone_Module_EventHandler_T (typename inherited::ISTREAM_T*); // stream handle
+#endif // ACE_WIN32 || ACE_WIN64
   inline virtual ~ARDrone_Module_EventHandler_T () {}
 
   // override (part of) Stream_ITaskBase_T

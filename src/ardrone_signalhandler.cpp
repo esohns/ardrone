@@ -139,7 +139,7 @@ ARDrone_SignalHandler::handle (const struct Common_Signal& signal_in)
 
   // ...shutdown ?
   if (stop_event_dispatching)
-  { ACE_ASSERT (inherited::configuration_->eventDispatchState);
+  { ACE_ASSERT (inherited::configuration_->dispatchState);
     // stop everything, i.e.
     // - leave reactor event loop handling signals, sockets, (maintenance) timers
     // --> (try to) terminate in a well-behaved manner
@@ -169,8 +169,8 @@ ARDrone_SignalHandler::handle (const struct Common_Signal& signal_in)
                                                            false); // N/A
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (inherited::configuration_->eventDispatchState->proactorGroupId,
-                                         inherited::configuration_->eventDispatchState->reactorGroupId,
-                                         false);                                                         // don't block
+    Common_Tools::finalizeEventDispatch (inherited::configuration_->dispatchState->proactorGroupId,
+                                         inherited::configuration_->dispatchState->reactorGroupId,
+                                         false);                                                    // don't block
   } // end IF
 }

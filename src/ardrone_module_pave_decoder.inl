@@ -259,7 +259,7 @@ next:
     for (ACE_Message_Block* message_block_3 = buffer_;
          missing_bytes;
          message_block_3 = message_block_3->cont ())
-    {
+    { ACE_ASSERT (message_block_3);
       length = message_block_3->length ();
       length = (missing_bytes <= length ? missing_bytes : length);
       if (missing_bytes <= length)

@@ -78,8 +78,10 @@
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_FULLSCREEN             "drawingarea_fullscreen"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL                 "drawingarea_opengl"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO                  "drawingarea_video"
-#define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS                      "entry_address"
-#define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                         "entry_SSID"
+//#define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS                      "entry_address"
+//#define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                         "entry_SSID"
+#define ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS                "entrybuffer_address"
+#define ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_SSID                   "entrybuffer_SSID"
 #define ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE             "filechooserbutton_save"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION                "frame_configuration"
 #define ARDRONE_UI_WIDGET_NAME_FRAME_DISPLAY                      "frame_display"
@@ -126,7 +128,14 @@
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION                  "information"
 
 // *** network-related ***
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#elif defined (ACE_LINUX)
+#if defined (NL80211_SUPPORT)
+#define ARDRONE_DEFAULT_WLAN_AUTHENTICATION                NL80211_AUTHTYPE_OPEN_SYSTEM
+#endif // NL80211_SUPPORT
+#endif // ACE_LINUX
 #define ARDRONE_DEFAULT_WLAN_SSID                          "ardrone2_291480"
+#define ARDRONE_DEFAULT_WLAN_FREQUENCY                     2437 // MHz
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #define ARDRONE_DEFAULT_WLAN_SSID_BYTE_ARRAY               { 'a', 'r', 'd', 'r', 'o', 'n', 'e', '2', '_', '2', '9', '1', '4', '8', '0' }

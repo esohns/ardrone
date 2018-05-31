@@ -11,18 +11,20 @@ elseif (WIN32)
  option (WLANAPI_SUPPORT "enable wlanapi support" ON)
 endif ()
 
-include (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src/wlan/scripts/SetMonitorImplementation.cmake)
 if (UNIX)
+ include (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src/wlan/scripts/SetMonitorImplementation.cmake)
  if (WEXT_USE)
   add_definitions (-DWEXT_SUPPORT -DWEXT_USE)
  elseif (NL80211_USE)
   add_definitions (-DNL80211_SUPPORT -DNL80211_USE)
  elseif (DBUS_USE)
   add_definitions (-DDBUS_SUPPORT -DDBUS_USE)
+  add_definitions (-DSD_BUS_SUPPORT)
  else ()
   message (FATAL_ERROR "select a WLAN monitor implementation")
  endif ()
 elseif (WIN32)
+ include (${CMAKE_CURRENT_SOURCE_DIR}/../../libACENetwork/src/wlan/scripts/SetMonitorImplementation.cmake)
  option (DEBUG_HEAP_SUPPORT "enable CRT debug heap" OFF)
  add_feature_info (debug_heap DEBUG_HEAP_SUPPORT "support debug heap")
 
@@ -476,7 +478,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/generated/include)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib)
- # *NOTE*: headers in Soft/Common include each other relatively :-(
+ # *NOTE*: headers in Soft/Common include each other 'relatively' :-(
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common)
  # *NOTE*: headers in Soft/Common include headers in Soft/Lib :-(
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib)
@@ -537,8 +539,6 @@ elseif (WIN32)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg)
-
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../FreeGLUT/freeglut/freeglut/include)
 
@@ -550,12 +550,16 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/generated/include)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/cmake/include/common)
 
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Common)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/Soft/Lib)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ardronelib/ARDroneLib/VP_SDK/VP_Os/win32)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib)
+ # *NOTE*: headers in Soft/Common include each other 'relatively' :-(
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common)
+ # *NOTE*: headers in Soft/Common include headers in Soft/Lib :-(
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/win32)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/Examples/Win32/VCProjects/ARDrone)
+
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ATCD/ACE)
 
@@ -739,39 +743,42 @@ if (UNIX)
 # target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
 elseif (WIN32)
  target_link_libraries (${EXECUTABLE} ntdll.lib)
- target_link_libraries (${EXECUTABLE} evr.lib)
  link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE})
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbasd.lib)
  else ()
   target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE}/strmbase.lib)
  endif ()
+ target_link_libraries (${EXECUTABLE} evr.lib)
 
  target_link_libraries (${EXECUTABLE} ${ACE_XML_LIBRARY})
  target_link_libraries (${EXECUTABLE} ${ACE_XML_PARSER_LIBRARY})
 
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libswscale/swscale.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/avcodec.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/avformat.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/swscale.lib)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
 # *TODO*: repair WIN32 pkgconfig support
  if (GTK3_SUPPORT)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gio-2.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/glib-2.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gobject-2.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gthread-2.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gdk-3.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/gtk-3.0.lib)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk/gtk/Win32/debug/lib/pango-1.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/gio-2.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/glib-2.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/gobject-2.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/gthread-2.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/gdk-3.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/gtk-3.0.lib)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk/gtk/Win32/debug/lib/pango-1.0.lib)
  else ()
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libgio-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libglib-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libgobject-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libgthread-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libgdk-win32-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libgtk-win32-2.0.dll.a)
-  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtk2/lib/libpango-1.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgio-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libglib-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgobject-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgthread-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgdk-win32-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgtk-win32-2.0.dll.a)
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libpango-1.0.dll.a)
  endif ()
+
+ target_link_libraries (${EXECUTABLE} ${OPENGL_LIBRARIES})
+
  # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gtk/.libs/libgtkglext-win32-1.0.dll.a)
  # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk/.libs/libgdkglext-win32-1.0.dll.a)
  target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
@@ -799,6 +806,9 @@ if (WIN32)
  target_link_libraries (${EXECUTABLE} ACEStream_Device)
 endif (WIN32)
 target_link_libraries (${EXECUTABLE} ACEStream_File)
+if (WIN32)
+ target_link_libraries (${EXECUTABLE} ACEStream_MediaFramework)
+endif (WIN32)
 target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
 target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
@@ -881,7 +891,7 @@ if (UNIX)
                                               ${PROJECT_SOURCE_DIR}/cmake/src/Debug
                                               ${PROJECT_SOURCE_DIR}/cmake/src/modules/dev/Debug
                                               /usr/local/lib
-                         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
+                         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
                          ENVIRONMENT foo=bar)
 elseif (WIN32)
  set (ENVIRONMENT "")
@@ -921,7 +931,7 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
 #                                              ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
-                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
+                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
                           ENVIRONMENT ${ENVIRONMENT})
  else ()
   create_target_launcher (${EXECUTABLE}
@@ -951,7 +961,7 @@ elseif (WIN32)
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
                                                ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
                                                ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
-                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src/test_i
+                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
                           ENVIRONMENT ${ENVIRONMENT})
  endif ()
 endif ()

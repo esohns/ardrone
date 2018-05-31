@@ -156,7 +156,7 @@ struct ARDrone_UserData
 {
   ARDrone_UserData ()
    : Net_UserData ()
-  {};
+  {}
 };
 
 #if defined (__llvm__)
@@ -190,7 +190,7 @@ struct ARDrone_Statistic
                                             Stream_Statistic ()));
     streamStatistic.insert (std::make_pair (ARDRONE_STREAM_VIDEO,
                                             Stream_Statistic ()));
-  };
+  }
 
   struct ARDrone_Statistic operator+ ()
   {
@@ -211,7 +211,7 @@ struct ARDrone_Statistic
     } // end FOR
 
     return *this;
-  };
+  }
 
   ARDroneStreamStatistic_t streamStatistic;
 };

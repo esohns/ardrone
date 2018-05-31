@@ -87,13 +87,15 @@ extern "C"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_dev_directshow_tools.h"
 #include "stream_dev_tools.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #include "stream_vis_common.h"
 
-#ifdef HAVE_CONFIG_H
+#include "net_common_tools.h"
+
+#if defined (HAVE_CONFIG_H)
 #include "ardrone_config.h"
-#endif
+#endif // HAVE_CONFIG_H
 
 #include "ardrone_common.h"
 #include "ardrone_configuration.h"
@@ -166,7 +168,7 @@ monitor_enum_cb (HMONITOR monitor_in,
                       1, ACE_TEXT_ALWAYS_CHAR (ACE_TEXT_WCHAR_TO_TCHAR (monitor_info.szDevice)),
 #else
                       1, monitor_info.szDevice,
-#endif
+#endif // UNICODE
                       -1);
 
   return TRUE;
@@ -216,7 +218,7 @@ monitor_clip_cb (HMONITOR monitor_in,
         (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_2 != (*iterator).second.end ());
       if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                          (*iterator_2).second.second.deviceName.c_str ()))
+                          (*iterator_2).second.second.deviceIdentifier.c_str ()))
         return TRUE;
       if ((*iterator_2).second.second.fullScreen)
         (*iterator_2).second.second.area = *clippingArea_in;
@@ -231,7 +233,7 @@ monitor_clip_cb (HMONITOR monitor_in,
         (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_2 != (*iterator).second.end ());
       if (ACE_OS::strcmp (monitor_info_ex_s.szDevice,
-                          (*iterator_2).second.second.deviceName.c_str ()))
+                          (*iterator_2).second.second.deviceIdentifier.c_str ()))
         return TRUE;
       if ((*iterator_2).second.second.fullScreen)
         (*iterator_2).second.second.area = *clippingArea_in;
@@ -270,7 +272,7 @@ load_wlan_interfaces (GtkListStore* listStore_inout)
   Net_InterfaceIdentifiers_t interface_identifiers_a =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if defined (WLANAPI_USE)
-      Net_WLAN_Tools::getInterfaces (INVALID_HANDLE);
+      Net_WLAN_Tools::getInterfaces (ACE_INVALID_HANDLE);
 #endif // WLANAPI_USE
 #elif defined (ACE_LINUX)
       Net_WLAN_Tools::getInterfaces (
@@ -292,7 +294,7 @@ load_wlan_interfaces (GtkListStore* listStore_inout)
     gtk_list_store_append (listStore_inout, &iterator);
     gtk_list_store_set (listStore_inout, &iterator,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                        0, ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceIdentifierToString (*iterator_2).c_str ()),
+                        0, ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (*iterator_2).c_str ()),
                         1, ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (*iterator_2).c_str ()),
 #else
                         0, ACE_TEXT_ALWAYS_CHAR ((*iterator_2).c_str ()),
@@ -549,10 +551,11 @@ stream_processing_function (void* arg_in)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_4;
   ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_4;
+  typename ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
 #else
   ARDrone_StreamConfigurationsIterator_t iterator_4;
-#endif
   typename ARDrone_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
+#endif // ACE_WIN32 || ACE_WIN64
   //    Stream_ISession* session_p = NULL;
   ACE_Time_Value session_start_timeout =
       COMMON_TIME_NOW + ACE_Time_Value (3, 0);
@@ -579,7 +582,11 @@ stream_processing_function (void* arg_in)
           data_p->CBData->streams.find (control_stream_name_string_);
     ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
     iinitialize_p =
-        dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      dynamic_cast<typename ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#else
+      dynamic_cast<typename ARDrone_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#endif // ACE_WIN32 || ACE_WIN64
     ACE_ASSERT (iinitialize_p);
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
@@ -596,7 +603,7 @@ stream_processing_function (void* arg_in)
         ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator_4).second.end ());
         logfile_name_string = (*directshow_iterator_2).second.second.targetFileName;
         (*directshow_iterator_2).second.second.targetFileName =
-          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
 
         result_2 = iinitialize_p->initialize ((*directshow_iterator_4).second);
@@ -624,14 +631,18 @@ stream_processing_function (void* arg_in)
         logfile_name_string =
             (*directshow_iterator_2).second.second.targetFileName;
         (*directshow_iterator_2).second.second.targetFileName =
-          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_LOG_FILE_PREFIX));
 
         streams_iterator =
               data_p->CBData->streams.find (mavlink_stream_name_string_);
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
-            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          dynamic_cast<typename ARDrone_DirectShow_MAVLinkStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#else
+          dynamic_cast<typename ARDrone_MAVLinkStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (iinitialize_p);
         istream_base_p =
             dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
@@ -664,14 +675,18 @@ stream_processing_function (void* arg_in)
         //    ACE_ASSERT (configuration_p);
         //    configuration_p->targetFileName =
         (*directshow_iterator_2).second.second.targetFileName =
-          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_LOG_FILE_PREFIX));
 
         streams_iterator =
               data_p->CBData->streams.find (navdata_stream_name_string_);
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
-            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          dynamic_cast<typename ARDrone_DirectShow_NavDataStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#else
+          dynamic_cast<typename ARDrone_NavDataStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (iinitialize_p);
         istream_base_p =
             dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
@@ -709,7 +724,11 @@ stream_processing_function (void* arg_in)
               data_p->CBData->streams.find (video_stream_name_string_);
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
-            dynamic_cast<typename ARDrone_VideoStream_t::IINITIALZE_T*> ((*streams_iterator).second);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          dynamic_cast<typename ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#else
+          dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (iinitialize_p);
         istream_base_p =
             dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
@@ -723,8 +742,11 @@ stream_processing_function (void* arg_in)
           goto done;
         } // end IF
 
-        session_data_container_p =
-            &data_p->CBData->directShowVideoStream->getR ();
+        iget_p =
+          dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+        ACE_ASSERT (iget_p);
+
+        session_data_container_p = &iget_p->getR ();
         ACE_ASSERT (session_data_container_p);
         session_data_p =
           &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
@@ -763,7 +785,7 @@ stream_processing_function (void* arg_in)
         ACE_ASSERT (mediafoundation_iterator_2 != (*mediafoundation_iterator_4).second.end ());
         logfile_name_string = (*mediafoundation_iterator_2).second.second.targetFileName;
         (*mediafoundation_iterator_2).second.second.targetFileName =
-          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE),
+          Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
         break;
       }
@@ -1002,7 +1024,8 @@ idle_associated_SSID_cb (gpointer userData_in)
   ARDrone_WLANMonitor_t* WLAN_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
-  if (ACE_OS::strcmp (WLAN_monitor_p->SSID ().c_str (),
+  std::string SSID_string = WLAN_monitor_p->SSID ();
+  if (ACE_OS::strcmp (SSID_string.c_str (),
                       cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()))
     return G_SOURCE_REMOVE; // nothing to do
 
@@ -1135,22 +1158,24 @@ idle_initialize_ui_cb (gpointer userData_in)
                                   "text", 0,
                                   NULL);
 
-  GtkEntry* entry_p =
-    GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
-                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_SSID)));
-  ACE_ASSERT (entry_p);
-  gtk_entry_set_text (entry_p,
-                      cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ());
+  GtkEntryBuffer* entrybuffer_p =
+    GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_SSID)));
+  ACE_ASSERT (entrybuffer_p);
+  gtk_entry_buffer_set_text (entrybuffer_p,
+                             ACE_TEXT_ALWAYS_CHAR (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()),
+                             cb_data_p->configuration->WLANMonitorConfiguration.SSID.size ());
 
-  entry_p =
-    GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
-                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
-  ACE_ASSERT (entry_p);
+  entrybuffer_p =
+    GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
+                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
+  ACE_ASSERT (entrybuffer_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_iterator_2;
   ARDrone_DirectShow_StreamConnectionConfigurationIterator_t directshow_iterator_2_2;
   ARDrone_MediaFoundation_ConnectionConfigurationIterator_t mediafoundation_iterator_2;
   ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t mediafoundation_iterator_2_2;
+  std::string IP_address_string;
   switch (cb_data_p->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -1161,9 +1186,12 @@ idle_initialize_ui_cb (gpointer userData_in)
       directshow_iterator_2_2 =
         (*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_iterator_2_2 != (*directshow_iterator_2).second.end ());
-      gtk_entry_set_text (entry_p,
-                          Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
-                                                               true).c_str ());
+      IP_address_string =
+        Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
+                                             true);
+      gtk_entry_buffer_set_text (entrybuffer_p,
+                                 IP_address_string.c_str (),
+                                 IP_address_string.size ());
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -1174,9 +1202,12 @@ idle_initialize_ui_cb (gpointer userData_in)
       mediafoundation_iterator_2_2 =
         (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (mediafoundation_iterator_2_2 != (*mediafoundation_iterator_2).second.end ());
-      gtk_entry_set_text (entry_p,
-                          Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
-                                                               true).c_str ());
+      IP_address_string =
+        Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
+                                             true);
+      gtk_entry_buffer_set_text (entrybuffer_p,
+                                 IP_address_string.c_str (),
+                                 IP_address_string.size ());
       break;
     }
     default:
@@ -1197,7 +1228,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   gtk_entry_set_text (entry_p,
                       Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
                                                            true).c_str ());
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   GtkSpinButton* spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -1243,7 +1274,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->streamConfigurations.end ());
   gtk_spin_button_set_value (spin_button_p,
     (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -1444,7 +1475,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (iterator_4 != (*iterator_3).second.end ());
   target_filename_string = (*iterator_4).second.second.targetFileName;
   is_fullscreen = (*iterator_4).second.second.fullScreen;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   if (!target_filename_string.empty ())
   {
     // *NOTE*: gtk does not complain if the file doesn't exist, but the button
@@ -1565,7 +1596,7 @@ idle_initialize_ui_cb (gpointer userData_in)
 //    gl_area_p;
 #else
 //  (*iterator_4).second.second.OpenGLWindow = gl_area_p;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #else
   /* Attribute list for gtkglarea widget. Specifies a
      list of Boolean attributes and enum/integer
@@ -2183,7 +2214,7 @@ idle_initialize_ui_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASYNCH)));
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
-                                (cb_data_p->configuration->signalHandlerConfiguration.dispatch == COMMON_EVENT_DISPATCH_PROACTOR));
+                                (cb_data_p->configuration->dispatchConfiguration.numberOfProactorThreads > 0));
   check_button_p =
     GTK_CHECK_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_CHECKBUTTON_ASSOCIATE)));
@@ -3425,10 +3456,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   // update configuration
 
   // retrieve address
-  GtkEntry* entry_p =
-      GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
-                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
-  ACE_ASSERT (entry_p);
+  GtkEntryBuffer* entrybuffer_p =
+      GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
+  ACE_ASSERT (entrybuffer_p);
   GtkSpinButton* spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
@@ -3483,7 +3514,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
 #endif
   std::string address_string =
-    ACE_TEXT_ALWAYS_CHAR (gtk_entry_get_text (entry_p));
+    ACE_TEXT_ALWAYS_CHAR (gtk_entry_buffer_get_text (entrybuffer_p));
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
   std::ostringstream converter;
   converter <<
@@ -3775,13 +3806,13 @@ continue_:
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      (*directshow_iterator_5).second.second.deviceName =
+      (*directshow_iterator_5).second.second.deviceIdentifier =
         g_value_get_string (&value);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      (*mediafoundation_iterator_5).second.second.deviceName =
+      (*mediafoundation_iterator_5).second.second.deviceIdentifier =
         g_value_get_string (&value);
       break;
     }
@@ -4040,7 +4071,7 @@ continue_:
           DIBSIZE (video_info_header_2->bmiHeader);
 
         unsigned int source_buffer_size =
-          av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaTypeSubTypeToAVPixelFormat ((*directshow_iterator_5).second.second.inputFormat->subtype),
+          av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaSubTypeToAVPixelFormat ((*directshow_iterator_5).second.second.inputFormat->subtype),
                                     video_info_header_p->bmiHeader.biWidth,
                                     ::abs (video_info_header_p->bmiHeader.biHeight),
                                     1); // *TODO*: linesize alignment
@@ -4130,7 +4161,7 @@ continue_:
 
         window_h = (*directshow_iterator_5).second.second.window;
         device_name_string =
-          (*directshow_iterator_5).second.second.deviceName;
+          (*directshow_iterator_5).second.second.deviceIdentifier;
         break;
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4138,7 +4169,7 @@ continue_:
         ACE_ASSERT (false); // *TODO*
         window_h = (*mediafoundation_iterator_5).second.second.window;
         device_name_string =
-          (*mediafoundation_iterator_5).second.second.deviceName;
+          (*mediafoundation_iterator_5).second.second.deviceIdentifier;
         break;
       }
       default:
@@ -4276,7 +4307,7 @@ continue_:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-                  ACE_TEXT ((*directshow_iterator_5).second.second.deviceName.c_str ()),
+                  ACE_TEXT ((*directshow_iterator_5).second.second.deviceIdentifier.c_str ()),
                   (*directshow_iterator_5).second.second.area.left,
                   (*directshow_iterator_5).second.second.area.right,
                   (*directshow_iterator_5).second.second.area.top,
@@ -4292,7 +4323,7 @@ continue_:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-                  ACE_TEXT ((*mediafoundation_iterator_5).second.second.deviceName.c_str ()),
+                  ACE_TEXT ((*mediafoundation_iterator_5).second.second.deviceIdentifier.c_str ()),
                   (*mediafoundation_iterator_5).second.second.area.left,
                   (*mediafoundation_iterator_5).second.second.area.right,
                   (*mediafoundation_iterator_5).second.second.area.top,
@@ -4643,10 +4674,10 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   } // end IF
   else
   {
-    GtkEntry* entry_p =
-      GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
-                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
-    ACE_ASSERT (entry_p);
+    GtkEntryBuffer* entrybuffer_p =
+      GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
+                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
+    ACE_ASSERT (entrybuffer_p);
     ACE_INET_Addr interface_address, gateway_address;
     if (!Net_Common_Tools::interfaceToIPAddress (cb_data_p->configuration->WLANMonitorConfiguration.interfaceIdentifier,
                                                  interface_address,
@@ -4676,9 +4707,12 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif // ACE_WIN32 || ACE_WIN64
       return;
     } // end IF
-    gtk_entry_set_text (entry_p,
-                        Net_Common_Tools::IPAddressToString (gateway_address,
-                                                             true).c_str ());
+    std::string IP_address_string =
+      Net_Common_Tools::IPAddressToString (gateway_address,
+                                           true);
+    gtk_entry_buffer_set_text (entrybuffer_p,
+                               IP_address_string.c_str (),
+                               IP_address_string.size ());
 
     GtkToggleAction* toggle_action_p =
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
@@ -7099,12 +7133,12 @@ toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName =
+      (*mediafoundation_stream_configuration_iterator).second.second.targetFileName =
           directory_p;
-      ACE_ASSERT (Common_File_Tools::isDirectory ((*mediafoundation_stream_configurations_iterator).second.second.targetFileName));
-      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName +=
+      ACE_ASSERT (Common_File_Tools::isDirectory ((*mediafoundation_stream_configuration_iterator).second.second.targetFileName));
+      (*mediafoundation_stream_configuration_iterator).second.second.targetFileName +=
           ACE_DIRECTORY_SEPARATOR_STR;
-      (*mediafoundation_stream_configurations_iterator).second.second.targetFileName +=
+      (*mediafoundation_stream_configuration_iterator).second.second.targetFileName +=
         ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_FILE_NAME);
       break;
     }

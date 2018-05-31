@@ -97,7 +97,7 @@ struct ARDrone_SocketHandlerConfiguration
    , userData (NULL)
   {
     socketConfiguration = &socketConfiguration_2;
-  };
+  }
 
   struct Net_TCPSocketConfiguration                       socketConfiguration_2;
   struct Net_UDPSocketConfiguration                       socketConfiguration_3;
@@ -157,7 +157,7 @@ struct ARDrone_DirectShow_ConnectionConfiguration
    , userData (NULL)
   {
     PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  };
+  }
 
   ARDrone_DirectShow_IConnectionManager_t*  connectionManager;
   struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
@@ -185,7 +185,7 @@ struct ARDrone_MediaFoundation_ConnectionConfiguration
    , userData (NULL)
   {
     PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  };
+  }
 
   ARDrone_MediaFoundation_IConnectionManager_t* connectionManager;
   struct ARDrone_SocketHandlerConfiguration     socketHandlerConfiguration;
@@ -226,7 +226,7 @@ struct ARDrone_ConnectionConfiguration
    , userData (NULL)
   {
     PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  };
+  }
 
   ARDrone_IConnectionManager_t*             connectionManager;
   struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
@@ -250,7 +250,7 @@ struct ARDrone_ConnectionState
    , configuration (NULL)
    , statistic ()
    , userData (NULL)
-  {};
+  {}
 
   // *TODO*: consider making this a separate entity (i.e. a pointer)
   struct ARDrone_Configuration* configuration;

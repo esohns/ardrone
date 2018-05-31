@@ -24,8 +24,12 @@
 #include "ardrone_macros.h"
 
 template <typename ConfigurationType>
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_Module_EventHandler_T<ConfigurationType>::ARDrone_Module_EventHandler_T (ISTREAM_T* stream_in)
+#else
 ARDrone_Module_EventHandler_T<ConfigurationType>::ARDrone_Module_EventHandler_T (typename inherited::ISTREAM_T* stream_in)
- : inherited (stream_in)
+#endif // ACE_WIN32 || ACE_WIN64
+: inherited (stream_in)
  //, streams_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler_T::ARDrone_Module_EventHandler_T"));
