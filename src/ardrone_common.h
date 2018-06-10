@@ -31,6 +31,13 @@
 #include <cstdint>
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#include "libavcodec/avcodec.h"
+}
+#endif /* __cplusplus */
+
 #include "mavlink/v2.0/common/mavlink.h"
 
 #include "Soft/Common/navdata_common.h"
@@ -38,7 +45,9 @@
 #include "ace/OS.h"
 
 #include "common.h"
+#include "common_statistic_handler.h"
 
+#include "stream_configuration.h"
 #include "stream_data_base.h"
 #include "stream_iparser.h"
 
@@ -46,6 +55,14 @@
 
 #include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
+
+struct ARDrone_UserData
+ : Net_UserData
+{
+  ARDrone_UserData ()
+   : Net_UserData ()
+  {}
+};
 
 struct ARDrone_NavData
 {
@@ -55,7 +72,7 @@ struct ARDrone_NavData
   {
     ACE_OS::memset (&NavData, 0, sizeof (struct _navdata_t));
     NavDataOptionOffsets.reserve (10);
-  };
+  }
 
   // *IMPORTANT NOTE*: the options are not parsed; use the offsets
   struct _navdata_t              NavData;
@@ -69,7 +86,7 @@ struct ARDrone_VideoFrame
    : sample (NULL)
    , sampleTime (0.0)
 #endif
-  {};
+  {}
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IMediaSample* sample;
@@ -83,7 +100,7 @@ struct ARDrone_MessageData
 {
   ARDrone_MessageData ()
    : messageType (ARDRONE_MESSAGE_INVALID)
-  {};
+  {}
   ARDrone_MessageData (const ARDrone_MessageData& data_in)
   {
     messageType = data_in.messageType;
@@ -109,7 +126,7 @@ struct ARDrone_MessageData
         break;
       }
     } // end SWITCH
-  };
+  }
   virtual ~ARDrone_MessageData ()
   {
     switch (messageType)
@@ -133,9 +150,8 @@ struct ARDrone_MessageData
         break;
     } // end SWITCH
     messageType = ARDRONE_MESSAGE_INVALID;
-  };
-  inline void operator+= (struct ARDrone_MessageData rhs_in)
-  { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
+  }
+  inline void operator+= (struct ARDrone_MessageData rhs_in) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
 
   enum ARDrone_MessageType      messageType;
 
@@ -216,6 +232,32 @@ class ARDrone_IController
 
   // *NOTE*: calibrate accelerometer (only when not (!) airborne)
   virtual void trim () = 0;
+};
+
+typedef Common_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
+
+// *TODO*: move this into ardrone_configuration.h ASAP
+struct ARDrone_AllocatorConfiguration
+ : Stream_AllocatorConfiguration
+{
+  ARDrone_AllocatorConfiguration ()
+   : Stream_AllocatorConfiguration ()
+  {
+    defaultBufferSize = ARDRONE_MESSAGE_BUFFER_SIZE;
+
+    // *NOTE*: facilitate (message block) data buffers to be scanned with
+    //         (f)lexs' yy_scan_buffer() method, and (!) support 'padding' in
+    //         ffmpeg
+    paddingBytes =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      AV_INPUT_BUFFER_PADDING_SIZE;
+#else
+      FF_INPUT_BUFFER_PADDING_SIZE;
+#endif
+    paddingBytes =
+      std::max (static_cast<unsigned int> (COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE),
+                paddingBytes);
+  }
 };
 
 //////////////////////////////////////////

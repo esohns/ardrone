@@ -46,6 +46,7 @@
 #include "common_ui_gtk_manager.h"
 
 #include "stream_common.h"
+#include "stream_configuration.h"
 
 #include "stream_dec_defines.h"
 
@@ -57,8 +58,8 @@
 #include "net_wlan_configuration.h"
 
 #include "ardrone_defines.h"
-#include "ardrone_network.h"
-#include "ardrone_stream.h"
+#include "ardrone_network_common.h"
+//#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 

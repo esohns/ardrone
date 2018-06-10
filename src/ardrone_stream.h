@@ -38,8 +38,6 @@
 #include "stream_statemachine_control.h"
 
 #include "ardrone_message.h"
-#include "ardrone_modules_common.h"
-#include "ardrone_sessionmessage.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
@@ -64,7 +62,7 @@ class ARDrone_VideoStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
@@ -82,7 +80,7 @@ class ARDrone_VideoStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
@@ -112,22 +110,6 @@ class ARDrone_VideoStream_T
 #endif
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
-                              ARDrone_Module_DirectShow_AsynchTCPSource_Module> ARDrone_DirectShow_AsynchVideoStream_t;
-typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
-                              ARDrone_Module_DirectShow_TCPSource_Module> ARDrone_DirectShow_VideoStream_t;
-typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
-                              ARDrone_Module_MediaFoundation_AsynchTCPSource_Module> ARDrone_MediaFoundation_AsynchVideoStream_t;
-typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
-                              ARDrone_Module_MediaFoundation_TCPSource_Module> ARDrone_MediaFoundation_VideoStream_t;
-#else
-typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
-                              ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
-typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
-                              ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
-#endif
-
 //////////////////////////////////////////
 
 template <typename ModuleConfigurationType>
@@ -145,7 +127,7 @@ class ARDrone_ControlStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
@@ -169,7 +151,7 @@ class ARDrone_ControlStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
@@ -219,17 +201,11 @@ class ARDrone_ControlStream_T
   ARDrone_IDeviceConfiguration* configuration_;
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef ARDrone_ControlStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_ControlStream_t;
-typedef ARDrone_ControlStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_ControlStream_t;
-#else
-typedef ARDrone_ControlStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_ControlStream_t;
-#endif
-
 //////////////////////////////////////////
 
 template <typename ModuleConfigurationType,
-          typename ConnectionConfigurationIteratorType>
+          typename ConnectionConfigurationIteratorType,
+          typename WLANMonitorSingletonType> // inherits ACE_Singleton
 class ARDrone_NavDataStream_T
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -244,7 +220,7 @@ class ARDrone_NavDataStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
@@ -270,7 +246,7 @@ class ARDrone_NavDataStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
@@ -310,6 +286,7 @@ class ARDrone_NavDataStream_T
   ACE_UNIMPLEMENTED_FUNC (ARDrone_NavDataStream_T& operator= (const ARDrone_NavDataStream_T&))
 
   // convenient types
+  typedef Common_ISubscribe_T<Net_WLAN_IMonitorCB> IWLAN_SUBSCRIBE_T;
   struct SUBSCRIBERS_IS_EQUAL_P
   {
     inline bool operator() (typename inherited2::INOTIFY_T* first, typename inherited2::INOTIFY_T* second) { return (first == second); }
@@ -383,16 +360,6 @@ class ARDrone_NavDataStream_T
   bool isFirst_;
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef ARDrone_NavDataStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
-                                ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t> ARDrone_DirectShow_NavDataStream_t;
-typedef ARDrone_NavDataStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
-                                ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t> ARDrone_MediaFoundation_NavDataStream_t;
-#else
-typedef ARDrone_NavDataStream_T<struct ARDrone_ModuleHandlerConfiguration,
-                                ARDrone_Stream_ConnectionConfigurationIterator_t> ARDrone_NavDataStream_t;
-#endif
-
 //////////////////////////////////////////
 
 template <typename ModuleConfigurationType>
@@ -410,7 +377,7 @@ class ARDrone_MAVLinkStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage>
@@ -434,7 +401,7 @@ class ARDrone_MAVLinkStream_T
                         struct Stream_ModuleConfiguration,
                         ModuleConfigurationType,
                         struct ARDrone_SessionData,
-                        ARDrone_StreamSessionData_t,
+                        ARDrone_SessionData_t,
                         ARDrone_ControlMessage_t,
                         ARDrone_Message,
                         ARDrone_SessionMessage> inherited;
@@ -482,13 +449,6 @@ class ARDrone_MAVLinkStream_T
                        const enum Stream_SessionMessageType&);
   virtual void end (Stream_SessionId_t);
 };
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef ARDrone_MAVLinkStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_MAVLinkStream_t;
-typedef ARDrone_MAVLinkStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_MAVLinkStream_t;
-#else
-typedef ARDrone_MAVLinkStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_MAVLinkStream_t;
-#endif
 
 //////////////////////////////////////////
 
