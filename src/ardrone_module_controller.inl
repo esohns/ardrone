@@ -369,7 +369,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       //const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
       //  inherited::sessionData_->getR ();
       ConnectionConfigurationIteratorType iterator, iterator_2;
-      struct Net_UDPSocketConfiguration* socket_configuration_p, *socket_configuration_2 =
+      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL, *socket_configuration_2 =
           NULL;
       ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

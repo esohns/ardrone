@@ -35,7 +35,7 @@
 #include "ardrone_types.h"
 
 // forward declarations
-struct ARDrone_GtkCBData;
+struct ARDrone_GtkCBData_Base;
 struct ARDrone_SessionData;
 
 class ARDrone_EventHandler
@@ -45,8 +45,8 @@ class ARDrone_EventHandler
  , public Common_IInitializeP_T<ARDrone_INavDataNotify>
 {
  public:
-  ARDrone_EventHandler (struct ARDrone_GtkCBData*, // Gtk state
-                        bool = false);             // console mode ?
+  ARDrone_EventHandler (struct ARDrone_GtkCBData_Base*, // ui state
+                        bool = false);                  // console mode ?
   inline virtual ~ARDrone_EventHandler () {}
 
   // implement Stream_ISessionDataNotify_T
@@ -81,12 +81,12 @@ class ARDrone_EventHandler
     inline bool operator() (const SESSIONID_TO_STREAM_PAIR_T& entry_in, enum ARDrone_StreamType value_in) const { return entry_in.second == value_in; }
   };
 
-  bool                      consoleMode_;
-  struct ARDrone_GtkCBData* CBData_;
-  ARDrone_IControlNotify*   ControlNotify_;
-  ARDrone_IMAVLinkNotify*   MAVLinkNotify_;
-  ARDrone_INavDataNotify*   NavDataNotify_;
-  SESSIONID_TO_STREAM_MAP_T streams_;
+  bool                           consoleMode_;
+  struct ARDrone_GtkCBData_Base* CBData_;
+  ARDrone_IControlNotify*        ControlNotify_;
+  ARDrone_IMAVLinkNotify*        MAVLinkNotify_;
+  ARDrone_INavDataNotify*        NavDataNotify_;
+  SESSIONID_TO_STREAM_MAP_T      streams_;
 };
 
 #endif

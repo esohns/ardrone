@@ -22,8 +22,8 @@
 #define ARDRONE_STREAM_COMMON_H
 
 #include <list>
-#include <map>
 #include <string>
+#include <unordered_map>
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -87,8 +87,9 @@ void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
 class ARDrone_Message;
 class ARDrone_SessionMessage;
 
-struct ARDrone_UserData;
+struct ARDrone_GtkCBData_Base;
 struct ARDrone_SessionData;
+struct ARDrone_UserData;
 struct ARDrone_StreamState
  : Stream_State
 {
@@ -113,11 +114,11 @@ struct ARDrone_StreamState
     return *this;
   }
 
-  struct ARDrone_GtkCBData*   CBData;
-  struct ARDrone_SessionData* sessionData;
-  enum ARDrone_StreamType     type;
+  struct ARDrone_GtkCBData_Base* CBData;
+  struct ARDrone_SessionData*    sessionData;
+  enum ARDrone_StreamType        type;
 
-  struct ARDrone_UserData*    userData;
+  struct ARDrone_UserData*       userData;
 };
 
 struct ARDrone_ConnectionState;
@@ -284,7 +285,7 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
-struct ARDrone_GtkCBData;
+struct ARDrone_GtkCBData_Base;
 struct ARDrone_ModuleHandlerConfigurationBase
  : Stream_ModuleHandlerConfiguration
 {
@@ -306,16 +307,16 @@ struct ARDrone_ModuleHandlerConfigurationBase
     passive = false;
   }
 
-  bool                      block;                 // H264 decoder module
-  struct ARDrone_GtkCBData* CBData;                // controller module
-  enum AVCodecID            codecId;               // H264 decoder module
-  bool                      fullScreen;            // display module
-  std::string               outboundStreamName;    // event handler module
-  bool                      printProgressDot;      // file writer module
-  bool                      pushStatisticMessages; // statistic module
-  ARDrone_Notification_t*   subscriber;            // event handler module
-  ARDrone_Subscribers_t*    subscribers;           // event handler module
-  std::string               targetFileName;        // file sink module
+  bool                           block;                 // H264 decoder module
+  struct ARDrone_GtkCBData_Base* CBData;                // controller module
+  enum AVCodecID                 codecId;               // H264 decoder module
+  bool                           fullScreen;            // display module
+  std::string                    outboundStreamName;    // event handler module
+  bool                           printProgressDot;      // file writer module
+  bool                           pushStatisticMessages; // statistic module
+  ARDrone_Notification_t*        subscriber;            // event handler module
+  ARDrone_Subscribers_t*         subscribers;           // event handler module
+  std::string                    targetFileName;        // file sink module
 };
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_FilterConfiguration;
@@ -343,25 +344,25 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
     push = true;
   }
 
-  struct tagRECT                                       area;                     // display module
-  IGraphBuilder*                                       builder;                  // display module
-  ARDrone_DirectShow_IConnection_t*                    connection;               // net source/IO module
-  ARDrone_DirectShow_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_DirectShow_IConnectionManager_t*             connectionManager;        // IO module
+  struct tagRECT                                        area;                     // display module
+  IGraphBuilder*                                        builder;                  // display module
+  ARDrone_DirectShow_IConnection_t*                     connection;               // net source/IO module
+  ARDrone_DirectShow_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
+  ARDrone_DirectShow_IConnectionManager_t*              connectionManager;        // IO module
 #if defined (UNICODE)
-  std::wstring                                         deviceIdentifier;
+  std::wstring                                          deviceIdentifier;
 #else
-  std::string                                          deviceIdentifier;
-#endif
-  IDirect3DDevice9Ex*                                  direct3DDevice;           // display module
-  struct _GUID                                         filterCLSID;              // display module
-  struct ARDrone_DirectShow_FilterConfiguration*       filterConfiguration;      // display module
-  struct _AMMediaType*                                 inputFormat;              // H264 decoder/display module
-  struct _AMMediaType*                                 outputFormat;             // H264 decoder/display module
-  bool                                                 push;                     // display module
-  HWND                                                 window;                   // display module
-  IVideoWindow*                                        windowController;         // display module
-  IMFVideoDisplayControl*                              windowController2;        // display module (EVR)
+  std::string                                           deviceIdentifier;
+#endif // UNICODE
+  IDirect3DDevice9Ex*                                   direct3DDevice;           // display module
+  struct _GUID                                          filterCLSID;              // display module
+  struct ARDrone_DirectShow_FilterConfiguration*        filterConfiguration;      // display module
+  struct _AMMediaType*                                  inputFormat;              // H264 decoder/display module
+  struct _AMMediaType*                                  outputFormat;             // H264 decoder/display module
+  bool                                                  push;                     // display module
+  HWND                                                  window;                   // display module
+  IVideoWindow*                                         windowController;         // display module
+  IMFVideoDisplayControl*                               windowController2;        // display module (EVR)
 };
 
 struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
@@ -383,22 +384,22 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
    , windowController (NULL)
   {}
 
-  struct tagRECT                                            area;                     // display module
-  ARDrone_MediaFoundation_IConnection_t*                    connection;               // net source/IO module
-  ARDrone_MediaFoundation_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_MediaFoundation_IConnectionManager_t*             connectionManager;        // IO module
+  struct tagRECT                                             area;                     // display module
+  ARDrone_MediaFoundation_IConnection_t*                     connection;               // net source/IO module
+  ARDrone_MediaFoundation_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
+  ARDrone_MediaFoundation_IConnectionManager_t*              connectionManager;        // IO module
 #if defined (UNICODE)
-  std::wstring                                              deviceIdentifier; // 'FriendlyName' (display-)
+  std::wstring                                               deviceIdentifier;         // device path (display-)
 #else
-  std::string                                               deviceIdentifier; // 'FriendlyName' (display-)
-#endif
-  IDirect3DDevice9Ex*                                       direct3DDevice;           // display module
-  struct _AMMediaType*                                      inputFormat;              // H264 decoder/display module
-  struct _AMMediaType*                                      outputFormat;             // H264 decoder/display module
-  TOPOID                                                    rendererNodeId;
-  IMFMediaSession*                                          session;
-  HWND                                                      window;                   // display module
-  IMFVideoDisplayControl*                                   windowController;
+  std::string                                                deviceIdentifier;         // device path (display-)
+#endif // UNICODE
+  IDirect3DDevice9Ex*                                        direct3DDevice;           // display module
+  struct _AMMediaType*                                       inputFormat;              // H264 decoder/display module
+  struct _AMMediaType*                                       outputFormat;             // H264 decoder/display module
+  TOPOID                                                     rendererNodeId;
+  IMFMediaSession*                                           session;
+  HWND                                                       window;                   // display module
+  IMFVideoDisplayControl*                                    windowController;
 };
 #else
 struct ARDrone_ModuleHandlerConfiguration
@@ -424,19 +425,19 @@ struct ARDrone_ModuleHandlerConfiguration
     ACE_OS::memset (&sourceFormat, 0, sizeof (struct _cairo_rectangle_int));
   }
 
-  GdkRectangle                              area;                     // display module
-  ARDrone_IConnection_t*                    connection;               // net source/IO module
-  ARDrone_StreamConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*             connectionManager;        // IO module
-  std::string                               displayDeviceIdentifier;
-  enum AVPixelFormat                        format;                   // H264 decoder/display module
-  struct AVRational                         frameRate;                // AVI encoder module
-  enum AVPixelFormat                        inputFormat;              // display module
-  enum AVPixelFormat                        outputFormat;             // H264 decoder module
-  GdkPixbuf*                                pixelBuffer;              // display module
-  ACE_SYNCH_MUTEX*                          pixelBufferLock;          // display module
-  struct _cairo_rectangle_int               sourceFormat;             // H264 decoder module
-  GdkWindow*                                window;                   // display module
+  GdkRectangle                               area;                     // display module
+  ARDrone_IConnection_t*                     connection;               // net source/IO module
+  ARDrone_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
+  ARDrone_IConnectionManager_t*              connectionManager;        // IO module
+  std::string                                displayDeviceIdentifier;
+  enum AVPixelFormat                         format;                   // H264 decoder/display module
+  struct AVRational                          frameRate;                // AVI encoder module
+  enum AVPixelFormat                         inputFormat;              // display module
+  enum AVPixelFormat                         outputFormat;             // H264 decoder module
+  GdkPixbuf*                                 pixelBuffer;              // display module
+  ACE_SYNCH_MUTEX*                           pixelBufferLock;          // display module
+  struct _cairo_rectangle_int                sourceFormat;             // H264 decoder module
+  GdkWindow*                                 window;                   // display module
 };
 #endif // ACE_WIN32 || ACE_WIN64
 typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;
@@ -456,13 +457,13 @@ struct ARDrone_StreamConfiguration
    , userData (NULL)
   {}
 
-  struct ARDrone_GtkCBData*     CBData;
-  enum Common_EventDispatchType dispatch;
-  ARDrone_IControlInitialize_t* initializeControl;
-  ARDrone_IMAVLinkInitialize_t* initializeMAVLink;
-  ARDrone_INavDataInitialize_t* initializeNavData;
+  struct ARDrone_GtkCBData_Base* CBData;
+  enum Common_EventDispatchType  dispatch;
+  ARDrone_IControlInitialize_t*  initializeControl;
+  ARDrone_IMAVLinkInitialize_t*  initializeMAVLink;
+  ARDrone_INavDataInitialize_t*  initializeNavData;
 
-  struct ARDrone_UserData*      userData;
+  struct ARDrone_UserData*       userData;
 };
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -473,8 +474,8 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct Stream_ModuleConfiguration,
                                struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_StreamConfiguration_t;
 typedef ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T ARDrone_DirectShow_StreamConfigurationIterator_t;
-typedef std::map<std::string,
-                 ARDrone_DirectShow_StreamConfiguration_t> ARDrone_DirectShow_StreamConfigurations_t;
+typedef std::unordered_map<std::string,
+                           ARDrone_DirectShow_StreamConfiguration_t> ARDrone_DirectShow_StreamConfigurations_t;
 typedef ARDrone_DirectShow_StreamConfigurations_t::iterator ARDrone_DirectShow_StreamConfigurationsIterator_t;
 
 typedef Stream_Configuration_T<//stream_name_string_,
@@ -483,8 +484,8 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct Stream_ModuleConfiguration,
                                struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_StreamConfiguration_t;
 typedef ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T ARDrone_MediaFoundation_StreamConfigurationIterator_t;
-typedef std::map<std::string,
-                 ARDrone_MediaFoundation_StreamConfiguration_t> ARDrone_MediaFoundation_StreamConfigurations_t;
+typedef std::unordered_map<std::string,
+                           ARDrone_MediaFoundation_StreamConfiguration_t> ARDrone_MediaFoundation_StreamConfigurations_t;
 typedef ARDrone_MediaFoundation_StreamConfigurations_t::iterator ARDrone_MediaFoundation_StreamConfigurationsIterator_t;
 #else
 //extern const char stream_name_string_[];
@@ -493,8 +494,8 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_StreamConfiguration,
                                struct Stream_ModuleConfiguration,
                                struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
-typedef std::map<std::string,
-                 ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
+typedef std::unordered_map<std::string,
+                           ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
 #endif
 

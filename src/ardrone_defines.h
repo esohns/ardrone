@@ -79,7 +79,7 @@
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL                 "drawingarea_opengl"
 #define ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO                  "drawingarea_video"
 //#define ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS                      "entry_address"
-//#define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                         "entry_SSID"
+#define ARDRONE_UI_WIDGET_NAME_ENTRY_SSID                         "entry_SSID"
 #define ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS                "entrybuffer_address"
 #define ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_SSID                   "entrybuffer_SSID"
 #define ARDRONE_UI_WIDGET_NAME_FILECHOOSERBUTTON_SAVE             "filechooserbutton_save"

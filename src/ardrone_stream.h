@@ -385,12 +385,12 @@ class ARDrone_NavDataStream_T
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef ARDrone_NavDataStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
-                                ARDrone_DirectShow_StreamConnectionConfigurationIterator_t> ARDrone_DirectShow_NavDataStream_t;
+                                ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t> ARDrone_DirectShow_NavDataStream_t;
 typedef ARDrone_NavDataStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
-                                ARDrone_MediaFoundation_StreamConnectionConfigurationIterator_t> ARDrone_MediaFoundation_NavDataStream_t;
+                                ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t> ARDrone_MediaFoundation_NavDataStream_t;
 #else
 typedef ARDrone_NavDataStream_T<struct ARDrone_ModuleHandlerConfiguration,
-                                ARDrone_StreamConnectionConfigurationIterator_t> ARDrone_NavDataStream_t;
+                                ARDrone_Stream_ConnectionConfigurationIterator_t> ARDrone_NavDataStream_t;
 #endif
 
 //////////////////////////////////////////
