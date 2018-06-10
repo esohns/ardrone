@@ -20,7 +20,7 @@
 #include "stdafx.h"
 
 #include "ace/Synch.h"
-#include "ardrone_configuration.h"
+//#include "ardrone_configuration.h"
 #include "ardrone_module_controller.h"
 
 //#include "ardrone_defines.h"

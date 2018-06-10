@@ -67,12 +67,12 @@ extern "C"
 #include "stream_lib_directshow_tools.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
+#include "net_configuration.h"
 #include "net_defines.h"
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
 #include "ardrone_common.h"
-#include "ardrone_network.h"
 #include "ardrone_types.h"
 
 // *IMPORTANT NOTE*: these are defined in ardrone_stream.cpp
@@ -135,8 +135,8 @@ struct ARDrone_SessionData
    , session (NULL)
    , windowController (NULL)
 #else
-   , format (AV_PIX_FMT_RGBA)
    , height (0)
+   , inputFormat (AV_PIX_FMT_RGBA)
    , width (0)
 #endif // ACE_WIN32 || ACE_WIN64
    , state (NULL)
@@ -206,7 +206,9 @@ struct ARDrone_SessionData
       windowController = rhs_in.windowController;
     } // end IF
 #else
-    format = ((format != AV_PIX_FMT_NONE) ? format : rhs_in.format);
+    inputFormat =
+        ((inputFormat != AV_PIX_FMT_NONE) ? inputFormat
+                                          : rhs_in.inputFormat);
     height = (height ? height : rhs_in.height);
     width = (width ? width : rhs_in.width);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -229,8 +231,8 @@ struct ARDrone_SessionData
   IMFMediaSession*                session;
   IVideoWindow*                   windowController;
 #else
-  enum AVPixelFormat              format;
   unsigned int                    height;
+  enum AVPixelFormat              inputFormat;
   unsigned int                    width;
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -242,29 +244,7 @@ struct ARDrone_SessionData
 };
 typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_SessionData_t;
 
-struct ARDrone_AllocatorConfiguration
- : Stream_AllocatorConfiguration
-{
-  ARDrone_AllocatorConfiguration ()
-   : Stream_AllocatorConfiguration ()
-  {
-    defaultBufferSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-
-    // *NOTE*: facilitate (message block) data buffers to be scanned with
-    //         (f)lexs' yy_scan_buffer() method, and (!) support 'padding' in
-    //         ffmpeg
-    paddingBytes =
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      AV_INPUT_BUFFER_PADDING_SIZE;
-#else
-      FF_INPUT_BUFFER_PADDING_SIZE;
-#endif
-    paddingBytes =
-      std::max (static_cast<unsigned int> (COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE),
-                paddingBytes);
-  }
-};
-
+struct ARDrone_AllocatorConfiguration;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
@@ -274,8 +254,6 @@ typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                           ARDrone_ControlMessage_t,
                                           ARDrone_Message,
                                           ARDrone_SessionMessage> ARDrone_MessageAllocator_t;
-
-//typedef Stream_INotify_T<enum Stream_SessionMessageType> ARDrone_IStreamNotify_t;
 
 typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     struct ARDrone_SessionData,
@@ -402,6 +380,30 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
   IMFVideoDisplayControl*                                    windowController;
 };
 #else
+struct ARDrone_ConnectionConfiguration;
+struct ARDrone_AllocatorConfiguration;
+struct ARDrone_StreamConfiguration;
+struct ARDrone_ModuleHandlerConfiguration;
+typedef Stream_Configuration_T<//stream_name_string_,
+                               struct ARDrone_AllocatorConfiguration,
+                               struct ARDrone_StreamConfiguration,
+                               struct Stream_ModuleConfiguration,
+                               struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct ARDrone_ConnectionConfiguration,
+                                      struct ARDrone_AllocatorConfiguration,
+                                      ARDrone_StreamConfiguration_t> ARDrone_ConnectionConfiguration_t;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          ARDrone_ConnectionConfiguration_t,
+                          struct ARDrone_ConnectionState,
+                          struct ARDrone_Statistic> ARDrone_IConnection_t;
+typedef std::unordered_map<std::string, // module name
+                           ARDrone_ConnectionConfiguration_t> ARDrone_Stream_ConnectionConfigurations_t;
+typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+                                 ACE_INET_Addr,
+                                 ARDrone_ConnectionConfiguration_t,
+                                 struct ARDrone_ConnectionState,
+                                 struct ARDrone_Statistic,
+                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
 struct ARDrone_ModuleHandlerConfiguration
  : ARDrone_ModuleHandlerConfigurationBase
 {
@@ -466,8 +468,8 @@ struct ARDrone_StreamConfiguration
   struct ARDrone_UserData*       userData;
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //extern const char stream_name_string_[];
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
@@ -488,7 +490,7 @@ typedef std::unordered_map<std::string,
                            ARDrone_MediaFoundation_StreamConfiguration_t> ARDrone_MediaFoundation_StreamConfigurations_t;
 typedef ARDrone_MediaFoundation_StreamConfigurations_t::iterator ARDrone_MediaFoundation_StreamConfigurationsIterator_t;
 #else
-//extern const char stream_name_string_[];
+struct ARDrone_AllocatorConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
@@ -498,7 +500,5 @@ typedef std::unordered_map<std::string,
                            ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
 #endif
-
-typedef Common_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H

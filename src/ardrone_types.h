@@ -151,14 +151,6 @@ struct parrot_video_encapsulation_t
 __pragma (pack (pop))
 #endif
 
-struct ARDrone_UserData
- : Net_UserData
-{
-  ARDrone_UserData ()
-   : Net_UserData ()
-  {}
-};
-
 #if defined (__llvm__)
 enum ARDrone_VideoMode
 #else

@@ -632,6 +632,7 @@ set (source_files
      ardrone_navdata_scanner.cpp
      ardrone_navdata_scanner.h
      ardrone_network.h
+     ardrone_network_common.h
      ardrone_opengl.cpp
      ardrone_opengl.h
      ardrone_sessionmessage.cpp

@@ -225,7 +225,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
-      const ARDrone_StreamSessionData_t& session_data_container_r =
+      const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
@@ -309,7 +309,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       event_e = ARDRONE_EVENT_RESIZE;
 
       // update configuration (reused by gtk callback(s))
-      const ARDrone_StreamSessionData_t& session_data_container_r =
+      const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
@@ -472,7 +472,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
-      const ARDrone_StreamSessionData_t& session_data_container_r =
+      const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
