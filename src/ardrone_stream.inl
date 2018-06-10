@@ -1260,7 +1260,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
       // reset event dispatch notification for outbound data
       struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
-      typename inherited::CONFIGURATION_T::ITERATOR_T stream_configuration_iterator;
+      typename inherited::CONFIGURATION_T::ITERATOR_T configuration_iterator;
       ConnectionConfigurationIteratorType connection_iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       ARDrone_DirectShow_IConnectionManager_t* directshow_iconnection_manager_p =
@@ -1312,13 +1312,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
-          stream_configuration_iterator =
+          configuration_iterator =
             inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (stream_configuration_iterator != inherited::configuration_->end ());
-          ACE_ASSERT ((*stream_configuration_iterator).second.second.connectionConfigurations);
+          ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
+          ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
           connection_iterator =
-            (*stream_configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (connection_iterator != (*stream_configuration_iterator).second.second.connectionConfigurations->end ());
+            (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
           ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
           socket_configuration_p =
             dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
@@ -1331,13 +1331,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
         {
-          stream_configuration_iterator =
+          configuration_iterator =
             inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (stream_configuration_iterator != inherited::configuration_->end ());
-          ACE_ASSERT ((*stream_configuration_iterator).second.second.connectionConfigurations);
+          ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
+          ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
           connection_iterator =
-            (*stream_configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (connection_iterator != (*stream_configuration_iterator).second.second.connectionConfigurations->end ());
+            (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
           ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
           socket_configuration_p =
             dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
@@ -1357,13 +1357,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         }
       } // end SWITCH
 #else
-      stream_configuration_iterator =
+      configuration_iterator =
           inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (stream_configuration_iterator != inherited::configuration_->end ());
-      ACE_ASSERT ((*stream_configuration_iterator).second.second.connectionConfigurations);
+      ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
+      ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
       connection_iterator =
-          (*stream_configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (connection_iterator != (*stream_configuration_iterator).second.second.connectionConfigurations->end ());
+          (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+      ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
       ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
           dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
@@ -1492,8 +1492,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       } // end SWITCH
 #else
       try {
-        if (!ioutbound_data_notify->initialize (connection_p->notification (),
-                                                module_name_string))
+        if (!ioutbound_data_notify->initialize_2 (connection_p->notification (),
+                                                  module_name_string))
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to Stream_IOutboundDataNotify::initialize_2(0x%@,\"%s\"), returning\n"),
                       ACE_TEXT (navdata_stream_name_string_),

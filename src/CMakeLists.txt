@@ -638,6 +638,7 @@ set (source_files
      ardrone_sessionmessage.h
      ardrone_signalhandler.cpp
      ardrone_signalhandler.h
+     ardrone_signalhandler.inl
      ardrone_statemachine_navdata.cpp
      ardrone_statemachine_navdata.h
      ardrone_stream.cpp

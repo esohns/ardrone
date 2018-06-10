@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef ARDrone_SIGNALHANDLER_H
-#define ARDrone_SIGNALHANDLER_H
+#ifndef ARDRONE_SIGNALHANDLER_H
+#define ARDRONE_SIGNALHANDLER_H
 
 #include "ace/Global_Macros.h"
 
@@ -28,28 +28,45 @@
 #include "ardrone_network.h"
 #include "ardrone_types.h"
 
-class ARDrone_SignalHandler
- : public Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration>
+template <typename ConfigurationType,
+          typename ConnectorType> // inherits Net_IConnector_T
+class ARDrone_SignalHandler_T
+ : public Common_SignalHandler_T<ConfigurationType>
 {
-  typedef Common_SignalHandler_T<struct ARDrone_SignalHandlerConfiguration> inherited;
+  typedef Common_SignalHandler_T<ConfigurationType> inherited;
 
  public:
-  ARDrone_SignalHandler (enum Common_SignalDispatchType, // dispatch mode
-                         ACE_SYNCH_RECURSIVE_MUTEX*);    // lock handle
-  inline virtual ~ARDrone_SignalHandler () {}
+  ARDrone_SignalHandler_T (enum Common_SignalDispatchType, // dispatch mode
+                           ACE_SYNCH_RECURSIVE_MUTEX*);    // lock handle
+  inline virtual ~ARDrone_SignalHandler_T () {}
 
   // override Common_IInitialize_T
-  virtual bool initialize (const struct ARDrone_SignalHandlerConfiguration&);
+  virtual bool initialize (const ConfigurationType&);
 
   // implement Common_ISignal
   virtual void handle (const struct Common_Signal&);
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler ());
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler (const ARDrone_SignalHandler&));
-  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler& operator= (const ARDrone_SignalHandler&));
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T ());
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T (const ARDrone_SignalHandler_T&));
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T& operator= (const ARDrone_SignalHandler_T&));
 
-  ARDrone_IConnector_t* connector_;
+  ConnectorType* connector_;
 };
+
+// include template definition
+#include "ardrone_signalhandler.inl"
+
+//////////////////////////////////////////
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_SignalHandler_T<struct ARDrone_DirectShow_SignalConfiguration,
+                                ARDrone_DirectShow_IConnector_t> ARDrone_DirectShow_SignalHandler_t;
+typedef ARDrone_SignalHandler_T<struct ARDrone_MediaFoundation_SignalConfiguration,
+                                ARDrone_MediaFoundation_IConnector_t> ARDrone_MediaFoundation_SignalHandler_t;
+#else
+typedef ARDrone_SignalHandler_T<struct ARDrone_SignalConfiguration,
+                                ARDrone_IConnector_t> ARDrone_SignalHandler_t;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #endif
