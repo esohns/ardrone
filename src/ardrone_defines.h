@@ -135,7 +135,7 @@
 #endif // NL80211_SUPPORT
 #endif // ACE_LINUX
 #define ARDRONE_DEFAULT_WLAN_SSID                          "ardrone2_291480"
-#define ARDRONE_DEFAULT_WLAN_FREQUENCY                     2437 // MHz
+#define ARDRONE_DEFAULT_WLAN_FREQUENCY                     2412 // MHz
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #define ARDRONE_DEFAULT_WLAN_SSID_BYTE_ARRAY               { 'a', 'r', 'd', 'r', 'o', 'n', 'e', '2', '_', '2', '9', '1', '4', '8', '0' }

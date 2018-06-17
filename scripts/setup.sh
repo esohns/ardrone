@@ -46,7 +46,9 @@ command -v setcap >/dev/null 2>&1 || { echo "setcap is not installed, aborting" 
 command -v getcap >/dev/null 2>&1 || { echo "getcap is not installed, aborting" >&2; exit 1; }
 
 MODE=""
-if [ $# -ge 1 ]; then
+if [ $# -lt 1 ]; then
+ echo "USAGE: $0 install|uninstall" && exit 1
+else
  case $1 in
   install | uninstall)
    MODE=$1
