@@ -57,10 +57,12 @@ SCRIPTS_DIR=${DEFAULT_SCRIPTS_DIR}
 [ ! -d ${SCRIPTS_DIR} ] && echo "ERROR: invalid scripts directory (was: \"${SCRIPTS_DIR}\"), aborting" && exit 1
 CAPABILITIES_SCRIPT="${SCRIPTS_DIR}/set_capabilities.sh"
 [ ! -x ${CAPABILITIES_SCRIPT} ] && echo "ERROR: invalid capabilities script (was: \"${CAPABILITIES_SCRIPT}\"), aborting" && exit 1
-#CAPABILITY_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_i/capabilities/capability_wrapper"
-#[ ! -x ${CAPABILITY_WRAPPER} ] && echo "ERROR: invalid capability wrapper (was: \"${CAPABILITY_WRAPPER}\"), aborting" && exit 1
-SHELL_WRAPPER="${SCRIPTS_DIR}/../../libCommon/scripts/shell_wrapper.sh"
-[ ! -x ${SHELL_WRAPPER} ] && echo "ERROR: invalid shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting" && exit 1
+CAPABILITY_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_i/capabilities/capability_wrapper"
+[ ! -x ${CAPABILITY_WRAPPER} ] && echo "ERROR: invalid capability wrapper (was: \"${CAPABILITY_WRAPPER}\"), aborting" && exit 1
+#SHELL_WRAPPER="${SCRIPTS_DIR}/../../libCommon/scripts/shell_wrapper.sh"
+#[ ! -x ${SHELL_WRAPPER} ] && echo "ERROR: invalid shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting" && exit 1
+DEBUG_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_u/debug/debug_wrapper"
+[ ! -x ${DEBUG_WRAPPER} ] && echo "ERROR: invalid debug wrapper (was: \"${DEBUG_WRAPPER}\"), aborting" && exit 1
 DEBUGEE="${SCRIPTS_DIR}/../cmake/src/ardrone"
 [ ! -x ${DEBUGEE} ] && echo "ERROR: invalid debugee (was: \"${DEBUGEE}\"), aborting" && exit 1
 ARGUMENTS="-l -t"
@@ -89,14 +91,21 @@ echo "set debugee working directory"
 export GDK_BACKEND=x11
 [ $? -ne 0 ] && echo "ERROR: failed to set environment variable (was: \"${GDK_BACKEND}\"): $?, aborting" && exit 1
 echo "set environment variable \"GDK_BACKEND\""
+#export NLDBG=5
+#[ $? -ne 0 ] && echo "ERROR: failed to set environment variable (was: \"${NLDBG}\"): $?, aborting" && exit 1
+#echo "set environment variable \"NLDBG\""
 
-#${CAPABILITY_WRAPPER} 12 ${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
-#[ $? -ne 0 ] && echo "ERROR: failed to run ${CAPABILITY_WRAPPER}: $?, aborting" && exit 1
-${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
-[ $? -ne 0 ] && echo "ERROR: failed to run ${SHELL_WRAPPER}: $?, aborting" && exit 1
+# *NOTE*: - CAP_DAC_OVERRIDE: 1
+#         - CAP_FOWNER:       3
+#         - CAP_NET_ADMIN:   12
+#         see also: <linux/capability.h>
+#${CAPABILITY_WRAPPER} 1 3 12 ${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
+${CAPABILITY_WRAPPER} 1 3 12 ${DEBUG_WRAPPER} -f ${DEBUGEE} ${ARGUMENTS}
+[ $? -ne 0 ] && echo "ERROR: failed to run ${CAPABILITY_WRAPPER}: $?, aborting" && exit 1
+#${SHELL_WRAPPER} ${DEBUGEE} ${ARGUMENTS}
+#[ $? -ne 0 ] && echo "ERROR: failed to run ${SHELL_WRAPPER}: $?, aborting" && exit 1
 
 #$(${GDB_CMD}) $@
 #[ $? -ne 0 ] && echo "ERROR: failed to debugger ${GDB_CMD}: $?, aborting" && exit 1
 
 popd >/dev/null 2>&1
-

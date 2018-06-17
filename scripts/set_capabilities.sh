@@ -105,6 +105,8 @@ i=0
 # [ $? -ne 0 ] && echo "ERROR: failed to chmod u+s ${BIN}: \"$?\", aborting" && exit 1
 # echo "modified \"$BINS\": uid gid suid sgid"
 
+# *WARNING*: do NOT set the 'permitted' (i.e. 'p') capability flags; this would
+#            prevent it being run by unprivileged users
  setcap 'cap_dac_override,cap_fowner,cap_net_admin+eip' ${BIN}
  [ $? -ne 0 ] && echo "ERROR: failed to setcap ${BIN}: \"$?\", aborting" && exit 1
 

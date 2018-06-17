@@ -233,7 +233,7 @@ continue_:
     }
   } // end SWITCH
 
-  if (unlikely (interfaceIdentifier_in.empty ()                                            ||
+  if (unlikely (interfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_WPASUPPLICANT)))
     goto continue_2;
@@ -376,8 +376,8 @@ uninstall:
 
   if (likely (pid_i))
   {
-    result_2 = ACE_OS::kill (pid_i, SIGKILL);
-    if (unlikely (result_2 == -1))
+    result_3 = ACE_OS::kill (pid_i, SIGKILL);
+    if (unlikely (result_3 == -1))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_OS::kill(%u,%d): \"%m\", aborting\n"),
@@ -1476,7 +1476,7 @@ do_work (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
   Common_Timer_Manager_t* timer_manager_p = NULL;
   struct Common_TimerConfiguration timer_configuration;
-  int group_id = -1;
+//  int group_id = -1;
   struct Common_EventDispatchState dispatch_state_s;
   struct ARDrone_StreamConfiguration stream_configuration;
   ARDrone_IGTK_Manager_t* igtk_manager_p = NULL;
@@ -3158,7 +3158,7 @@ clean:
                                        true);
   if (timer_manager_p)
     timer_manager_p->stop ();
-  if (!UIInterfaceDefinitionFile_in.empty ())
+  if (igtk_manager_p && !UIInterfaceDefinitionFile_in.empty ())
     igtk_manager_p->stop ();
 }
 
