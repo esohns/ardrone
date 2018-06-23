@@ -2045,9 +2045,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // debug info
   ACE_INET_Addr local_SAP, peer_SAP;
-  ARDrone_WLANMonitor_t* wlan_monitor_p =
-    ARDRONE_WLANMONITOR_SINGLETON::instance ();
-  ACE_ASSERT (wlan_monitor_p);
+//  ARDrone_WLANMonitor_t* wlan_monitor_p =
+//    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+//  ACE_ASSERT (wlan_monitor_p);
   if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
                                                local_SAP,
                                                peer_SAP))
