@@ -144,6 +144,7 @@ do_setup (bool install_in,
   bool result = false;
 
 #if defined (ACE_LINUX)
+  bool enable_resolved_b = false;
   bool restart_networkmanager_b = false;
   bool restart_wpasupplicant_b = false;
 //  bool restart_ifplugd_b = false;
@@ -156,11 +157,13 @@ do_setup (bool install_in,
 #endif // ACE_LINUX
 
 #if defined (ACE_LINUX)
-  enum Common_OperatingSystemDistributionType distribution_e;
-  if (unlikely (!Common_Tools::isLinux (distribution_e)))
+  unsigned int major_i = 0, minor_i = 0, micro_i = 0;
+  enum Common_OperatingSystemDistributionType linux_distribution_e =
+      Common_Tools::getDistribution (major_i, minor_i, micro_i);
+  if (unlikely (linux_distribution_e == COMMON_OPERATINGSYSTEM_DISTRIBUTION_INVALID))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::isLinux(), aborting\n")));
+                ACE_TEXT ("failed to Common_Tools::getDistribution(), aborting\n")));
     return false;
   } // end IF
 #endif // ACE_LINUX
@@ -169,12 +172,61 @@ do_setup (bool install_in,
     goto uninstall;
 
 #if defined (ACE_LINUX)
-  // step1: configure 'NetworkManager' (if any):
+  // step1: configure DNS
+  switch (linux_distribution_e)
+  {
+    case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
+    {
+      COMMON_IF_LINUX_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
+      else
+        goto continue_2;
+
+      if (unlikely (!Common_DBus_Tools::isUnitActive (NULL,
+                                                      COMMON_SYSTEMD_UNIT_RESOLVED)))
+        goto continue_;
+
+      enable_resolved_b =
+          Common_DBus_Tools::toggleUnitActive (NULL,
+                                               COMMON_SYSTEMD_UNIT_RESOLVED,
+                                               false); // runtime ?
+      ACE_UNUSED_ARG (enable_resolved_b);
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("disabled systemd service unit (was: %s)...\n"),
+                  ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
+
+continue_:
+      if (unlikely (interfaceIdentifier_in.empty ()                                 ||
+                    !Common_DBus_Tools::isUnitRunning (NULL,
+                                                       COMMON_SYSTEMD_UNIT_RESOLVED)))
+        goto continue_2;
+
+      result_2 =
+          Common_DBus_Tools::toggleUnit (NULL,
+                                         COMMON_SYSTEMD_UNIT_RESOLVED,
+                                         true); // wait for completion ?
+      ACE_UNUSED_ARG (result_2);
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("stopped systemd service unit (was: %s)...\n"),
+                  ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
+
+continue_2:
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown (GNU-) Linux distribution (was: %d), aborting\n"),
+                  linux_distribution_e));
+      goto clean;
+    }
+  } // end SWITCH
+
+  // step2: configure 'NetworkManager' (if any):
   //        - ignore the given interface
   if (unlikely (interfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_NETWORKMANAGER)))
-    goto continue_;
+    goto continue_3;
 
   restart_networkmanager_b =
       Common_DBus_Tools::toggleUnit (NULL,
@@ -187,6 +239,9 @@ do_setup (bool install_in,
                 ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
     goto clean;
   } // end IF
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("stopped systemd service unit (was: %s)...\n"),
+//              ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
 
   if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
                                                                   false)))
@@ -196,14 +251,17 @@ do_setup (bool install_in,
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("reconfigured systemd service unit (was: %s)...\n"),
+              ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
 
-continue_:
-  // step2: configure 'wpa_supplicant' (if any):
+continue_3:
+  // step3: configure 'wpa_supplicant' (if any):
   //        - ignore the given interface
   // *NOTE*: (regular) users on (vanilla) Ubuntu Linux (>= artful) need to be
   //         members of the 'netdev' group to talk to the wpa_supplicant via
   //         DBus (see also: /etc/dbus-1/system.d/wpa_supplicant.conf)
-  switch (distribution_e)
+  switch (linux_distribution_e)
   {
     case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
     {
@@ -227,8 +285,8 @@ continue_:
     default:
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown Linux distribution (was: %d), aborting\n"),
-                  distribution_e));
+                  ACE_TEXT ("invalid/unknown (GNU-) Linux distribution (was: %d), aborting\n"),
+                  linux_distribution_e));
       goto clean;
     }
   } // end SWITCH
@@ -236,7 +294,7 @@ continue_:
   if (unlikely (interfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_WPASUPPLICANT)))
-    goto continue_2;
+    goto continue_4;
 
 //  restart_wpasupplicant_b =
 //      Common_DBus_Tools::toggleUnit (NULL,
@@ -259,8 +317,11 @@ continue_:
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("reconfigured systemd service unit (was: %s)...\n"),
+              ACE_TEXT (COMMON_SYSTEMD_UNIT_WPASUPPLICANT)));
 
-continue_2:
+continue_4:
   // *NOTE*: apparently, reconfiguring the current NetworkManager interface
   //         disables it --> re-enable it manually
   if (!Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in))
@@ -273,7 +334,7 @@ continue_2:
       goto clean;
     } // end IF
     ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("reenabled WLAN interface (was: \"%s\")\n"),
+                ACE_TEXT ("reenabled WLAN interface (was: \"%s\")...\n"),
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
   } // end IF
 //  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
@@ -314,10 +375,11 @@ clean:
   {
     std::string command_line_string =
         ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING);
-    command_line_string += ACE_TEXT_ALWAYS_CHAR (" -d ");
+    COMMON_COMMAND_ADD_SWITCH (command_line_string,NET_EXE_DHCLIENT_SWITCH_RUN_IN_FOREGROUND_STRING)
+    command_line_string += ACE_TEXT_ALWAYS_CHAR (" ");
     command_line_string +=
         ACE_TEXT_ALWAYS_CHAR (interfaceIdentifier_in.c_str ());
-    command_line_string +=  (" &");
+    COMMON_COMMAND_START_IN_BACKGROUND (command_line_string);
     std::string stdout_content_string;
     int exit_status_i = 0;
     if (unlikely (!Common_Tools::command (command_line_string,
@@ -429,6 +491,55 @@ uninstall:
                 ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
     return false;
   } // end IF
+
+  // step3: configure DNS
+  switch (linux_distribution_e)
+  {
+    case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
+    {
+      COMMON_IF_LINUX_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
+      else
+        goto continue__;
+
+      if (unlikely (Common_DBus_Tools::isUnitActive (NULL,
+                                                     COMMON_SYSTEMD_UNIT_RESOLVED)))
+        goto continue__;
+
+      enable_resolved_b =
+          Common_DBus_Tools::toggleUnitActive (NULL,
+                                               COMMON_SYSTEMD_UNIT_RESOLVED,
+                                               false); // runtime ?
+      ACE_UNUSED_ARG (enable_resolved_b);
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("enabled systemd service unit (was: %s)...\n"),
+                  ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
+
+continue__:
+      if (unlikely (interfaceIdentifier_in.empty ()                                 ||
+                    !Common_DBus_Tools::isUnitRunning (NULL,
+                                                       COMMON_SYSTEMD_UNIT_RESOLVED)))
+        goto continue__2;
+
+      result_2 =
+          Common_DBus_Tools::toggleUnit (NULL,
+                                         COMMON_SYSTEMD_UNIT_RESOLVED,
+                                         true); // wait for completion ?
+      ACE_UNUSED_ARG (result_2);
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("started systemd service unit (was: %s)...\n"),
+                  ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
+
+continue__2:
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown (GNU-) Linux distribution (was: %d), aborting\n"),
+                  linux_distribution_e));
+      return false;
+    }
+  } // end SWITCH
 #endif // ACE_LINUX
 
   result = true;
@@ -511,7 +622,7 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
 #endif // ACE_WIN32 || ACE_WIN64
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug parser(s) [")
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug parser(s)/ffmpeg [")
             << COMMON_PARSER_DEFAULT_LEX_TRACE
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
@@ -566,6 +677,10 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-w          : do not monitor WLAN [")
+            << false
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-x          : de-installation mode [")
@@ -595,7 +710,10 @@ do_processArguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      bool& showConsole_out,
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (_DEBUG)
+                     bool& debugFfmpeg_out,
                      bool& debugScanner_out,
+#endif // _DEBUG
                      bool& fullScreen_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                      struct _GUID& interfaceIdentifier_out,
@@ -611,14 +729,15 @@ do_processArguments (int argc_in,
                      std::string& SSID_out,
                      bool& traceInformation_out,
                      std::string& interfaceDefinitionFile_out,
+                     bool& monitorWLAN_out,
                      enum Common_ApplicationModeType& mode_out
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
                      ,bool& debugNl80211_out
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
                      )
 {
@@ -648,6 +767,7 @@ do_processArguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out             = false;
 #endif
+  debugFfmpeg_out             = false;
   debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   interfaceIdentifier_out     =
@@ -669,12 +789,13 @@ do_processArguments (int argc_in,
   interfaceDefinitionFile_out += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   interfaceDefinitionFile_out +=
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
+  monitorWLAN_out             = true;
   mode_out                    = COMMON_APPLICATION_MODE_RUN;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_SUPPORT)
 #if defined (_DEBUG)
-  debugNl80211_out = false;
+  debugNl80211_out            = false;
 #endif // _DEBUG
 #endif // NL80211_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
@@ -684,15 +805,15 @@ do_processArguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                                ACE_TEXT ("a:b:cdfi:lmp:rs:tu::v"),
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxyz"),
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxyz"),
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxy"),
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxy"),
 #endif // _DEBUG
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vxy"),
-#endif // NL80211_SUPPORT
+                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxy"),
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
                                1,                          // skip command name
                                1,                          // report parsing errors
@@ -739,11 +860,14 @@ do_processArguments (int argc_in,
         break;
       }
 #endif
+#if defined (_DEBUG)
       case 'd':
       {
+        debugFfmpeg_out = true;
         debugScanner_out = true;
         break;
       }
+#endif // _DEBUG
       case 'f':
       {
         fullScreen_out = true;
@@ -808,6 +932,11 @@ do_processArguments (int argc_in,
         mode_out = COMMON_APPLICATION_MODE_PRINT;
         break;
       }
+      case 'w':
+      {
+        monitorWLAN_out = false;
+        break;
+      }
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
       case 'x':
@@ -820,7 +949,7 @@ do_processArguments (int argc_in,
         mode_out = COMMON_APPLICATION_MODE_INSTALL;
         break;
       }
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
       case 'z':
       {
@@ -828,7 +957,7 @@ do_processArguments (int argc_in,
         break;
       }
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
       // error handling
       case ':':
@@ -1289,7 +1418,10 @@ do_work (int argc_in,
          ACE_TCHAR** argv_in,
          const ACE_INET_Addr& address_in,
          unsigned int bufferSize_in,
+#if defined (_DEBUG)
+         bool debugFfmpeg_in,
          bool debugScanner_in,
+#endif // _DEBUG
          bool fullScreen_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
          REFGUID interfaceIdentifier_in,
@@ -1299,13 +1431,14 @@ do_work (int argc_in,
          bool useReactor_in,
          const std::string& SSID_in,
          const std::string& UIInterfaceDefinitionFile_in,
+         bool monitorWLAN_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
          bool debugNl80211_in,
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
          struct ARDrone_GtkCBData_Base* CBData_in,
          const ACE_Sig_Set& signalSet_in,
@@ -1327,6 +1460,11 @@ do_work (int argc_in,
   struct ARDrone_AllocatorConfiguration* allocator_configuration_p = NULL;
   struct ARDrone_WLANMonitorConfiguration* wlan_monitor_configuration_p = NULL;
   struct Common_EventDispatchConfiguration* dispatch_configuration_p = NULL;
+
+  // initialize common settings
+#if defined (_DEBUG)
+  Common_Tools::enableCoreDump (true);
+#endif // _DEBUG
 
   // sanity check(s)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1511,14 +1649,18 @@ do_work (int argc_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
+#if defined (_DEBUG)
       directshow_configuration_p->parserConfiguration.debugScanner =
         debugScanner_in;
+#endif // _DEBUG
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
+#if defined (_DEBUG)
       mediafoundation_configuration_p->parserConfiguration.debugScanner =
         debugScanner_in;
+#endif // _DEBUG
       break;
     }
     default:
@@ -1530,7 +1672,9 @@ do_work (int argc_in,
     }
   } // end SWITCH
 #else
+#if defined (_DEBUG)
   configuration_p->parserConfiguration.debugScanner = debugScanner_in;
+#endif // _DEBUG
 #endif // ACE_WIN32 || ACE_WIN64
 
   stream_configuration.CBData = CBData_in;
@@ -1605,6 +1749,9 @@ do_work (int argc_in,
         directshow_connection_manager_p;
       //directshow_modulehandler_configuration.consoleMode =
       //  UIInterfaceDefinitionFile_in.empty ();
+#if defined (_DEBUG)
+      directshow_modulehandler_configuration.debug = debugFfmpeg_in;
+#endif // _DEBUG
       directshow_modulehandler_configuration.demultiplex = true;
       directshow_modulehandler_configuration.finishOnDisconnect = true;
       directshow_modulehandler_configuration.fullScreen = fullScreen_in;
@@ -1707,6 +1854,9 @@ do_work (int argc_in,
         mediafoundation_connection_manager_p;
       //mediafoundation_modulehandler_configuration.consoleMode =
       //  UIInterfaceDefinitionFile_in.empty ();
+#if defined (_DEBUG)
+      mediafoundation_modulehandler_configuration.debug = debugFfmpeg_in;
+#endif // _DEBUG
       mediafoundation_modulehandler_configuration.demultiplex = true;
       mediafoundation_modulehandler_configuration.finishOnDisconnect = true;
       mediafoundation_modulehandler_configuration.fullScreen = fullScreen_in;
@@ -1810,10 +1960,10 @@ do_work (int argc_in,
     }
   } // end SWITCH
 #else
- ARDrone_Module_EventHandler_Module event_handler_module (NULL,
-                                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_HANDLER_NAME_STRING));
+  ARDrone_Module_EventHandler_Module event_handler_module (NULL,
+                                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_HANDLER_NAME_STRING));
 
- struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
+  struct ARDrone_ModuleHandlerConfiguration modulehandler_configuration;
   ARDrone_StreamConfiguration_t stream_configuration_2;
   ARDrone_StreamConfigurationsIterator_t control_streamconfiguration_iterator,
     mavlink_streamconfiguration_iterator,
@@ -1823,9 +1973,9 @@ do_work (int argc_in,
 
   modulehandler_configuration.CBData = CBData_in;
   modulehandler_configuration.connectionManager = connection_manager_p;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  modulehandler_configuration.consoleMode = UIInterfaceDefinitionFile_in.empty ();
-#endif
+#if defined (_DEBUG)
+  modulehandler_configuration.debug = debugFfmpeg_in;
+#endif // _DEBUG
   modulehandler_configuration.demultiplex = true;
   modulehandler_configuration.finishOnDisconnect = true;
   modulehandler_configuration.fullScreen = fullScreen_in;
@@ -1838,9 +1988,9 @@ do_work (int argc_in,
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
   modulehandler_configuration.subscriber = &event_handler;
   modulehandler_configuration.subscribers =
-      &cb_data_p->configuration->streamSubscribers;
+    &cb_data_p->configuration->streamSubscribers;
   modulehandler_configuration.subscribersLock =
-      &cb_data_p->configuration->streamSubscribersLock;
+    &cb_data_p->configuration->streamSubscribersLock;
   //modulehandler_configuration.useYYScanBuffer = false;
 
   stream_configuration.module = &event_handler_module;
@@ -1922,19 +2072,20 @@ do_work (int argc_in,
       false;
   (*video_streamconfiguration_iterator).second.configuration_.userData =
       cb_data_p->configuration->userData;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   // ******************* socket configuration data ****************************
+  wlan_monitor_configuration_p->autoAssociate = monitorWLAN_in;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #elif defined (ACE_LINUX)
 #if defined (NL80211_SUPPORT)
-  cb_data_p->configuration->WLANMonitorConfiguration.authenticationType =
+  wlan_monitor_configuration_p->authenticationType =
       ARDRONE_DEFAULT_WLAN_AUTHENTICATION;
 #if defined (_DEBUG)
-  cb_data_p->configuration->WLANMonitorConfiguration.debug = debugNl80211_in;
+  wlan_monitor_configuration_p->debug = debugNl80211_in;
 #endif // _DEBUG
 #endif // NL80211_SUPPORT
-  cb_data_p->configuration->WLANMonitorConfiguration.frequency =
+  wlan_monitor_configuration_p->frequency =
       ARDRONE_DEFAULT_WLAN_FREQUENCY;
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -3179,7 +3330,10 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool show_console;
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (_DEBUG)
+  bool debug_ffmpeg;
   bool debug_scanner;
+#endif // _DEBUG
   bool fullscreen;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct _GUID interface_identifier;
@@ -3191,14 +3345,15 @@ ACE_TMAIN (int argc_in,
   bool use_reactor;
   std::string SSID_string;
   bool trace_information;
+  bool monitor_WLAN;
   enum Common_ApplicationModeType mode_e;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #elif defined (ACE_LINUX)
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
   bool debug_nl80211;
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
   ACE_Profile_Timer process_profile;
   struct Stream_ModuleConfiguration module_configuration;
@@ -3302,7 +3457,10 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   show_console           = false;
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (_DEBUG)
+  debug_ffmpeg           = false;
   debug_scanner          = COMMON_PARSER_DEFAULT_LEX_TRACE;
+#endif // _DEBUG
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   log_to_file            = false;
   interface_identifier   =
@@ -3312,14 +3470,15 @@ ACE_TMAIN (int argc_in,
       (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   SSID_string            = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_WLAN_SSID);
   trace_information      = false;
+  monitor_WLAN           = true;
   mode_e                 = COMMON_APPLICATION_MODE_RUN;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
   debug_nl80211          = false;
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step0: process profile
@@ -3366,7 +3525,10 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             show_console,
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (_DEBUG)
+                            debug_ffmpeg,
                             debug_scanner,
+#endif // _DEBUG
                             fullscreen,
                             interface_identifier,
                             log_to_file,
@@ -3378,14 +3540,15 @@ ACE_TMAIN (int argc_in,
                             SSID_string,
                             trace_information,
                             interface_definition_file,
+                            monitor_WLAN,
                             mode_e
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
                             ,debug_nl80211
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
                             ))
   {
@@ -3762,19 +3925,23 @@ ACE_TMAIN (int argc_in,
            argv_in,
            address,
            buffer_size,
+#if defined (_DEBUG)
+           debug_ffmpeg,
            debug_scanner,
+#endif // _DEBUG
            fullscreen,
            interface_identifier,
            use_reactor,
            SSID_string,
            interface_definition_file,
+           monitor_WLAN,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if defined (NL80211_SUPPORT)
+#if defined (NL80211_USE)
 #if defined (_DEBUG)
            debug_nl80211,
 #endif // _DEBUG
-#endif // NL80211_SUPPORT
+#endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
            cb_data_base_p,
            signal_set,

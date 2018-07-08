@@ -65,7 +65,7 @@ DEBUG_WRAPPER="${SCRIPTS_DIR}/../../libCommon/cmake/test_u/debug/debug_wrapper"
 [ ! -x ${DEBUG_WRAPPER} ] && echo "ERROR: invalid debug wrapper (was: \"${DEBUG_WRAPPER}\"), aborting" && exit 1
 DEBUGEE="${SCRIPTS_DIR}/../cmake/src/ardrone"
 [ ! -x ${DEBUGEE} ] && echo "ERROR: invalid debugee (was: \"${DEBUGEE}\"), aborting" && exit 1
-ARGUMENTS="-l -t"
+ARGUMENTS="-l -t -w"
 WORKING_DIRECTORY="${SCRIPTS_DIR}/../src"
 [ ! -d ${WORKING_DIRECTORY} ] && echo "ERROR: invalid working directory (was: \"${WORKING_DIRECTORY}\"), aborting" && exit 1
 

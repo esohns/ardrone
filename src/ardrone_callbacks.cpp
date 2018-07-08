@@ -1143,20 +1143,18 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_SSID)));
   ACE_ASSERT (entry_p);
-  // *TODO*: crash
-  //gtk_entry_set_text (entry_p,
-  //                    ACE_TEXT_ALWAYS_CHAR (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()));
+  gtk_entry_set_text (entry_p,
+                      ACE_TEXT_ALWAYS_CHAR (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()));
 
-  GtkEntryBuffer* entrybuffer_p =
-    GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
-                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
-  ACE_ASSERT (entrybuffer_p);
+  entry_p =
+    GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
+  ACE_ASSERT (entry_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_iterator_2;
   ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t directshow_iterator_2_2;
   ARDrone_MediaFoundation_ConnectionConfigurationIterator_t mediafoundation_iterator_2;
   ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t mediafoundation_iterator_2_2;
-  std::string IP_address_string;
   switch (cb_data_base_p->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -1171,13 +1169,8 @@ idle_initialize_ui_cb (gpointer userData_in)
       //(*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
       //                                      directshow_iterator_2_2);
       ACE_ASSERT (directshow_iterator_2_2 != (*directshow_iterator_2).second.end ());
-      IP_address_string =
-        Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
-        //Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).item ().socketHandlerConfiguration.socketConfiguration_2.address,
-                                             true);
-      gtk_entry_buffer_set_text (entrybuffer_p,
-                                 IP_address_string.c_str (),
-                                 IP_address_string.size ());
+      gtk_entry_set_text (entry_p,
+                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -1188,12 +1181,8 @@ idle_initialize_ui_cb (gpointer userData_in)
       mediafoundation_iterator_2_2 =
         (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (mediafoundation_iterator_2_2 != (*mediafoundation_iterator_2).second.end ());
-      IP_address_string =
-        Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
-                                             true);
-      gtk_entry_buffer_set_text (entrybuffer_p,
-                                 IP_address_string.c_str (),
-                                 IP_address_string.size ());
+      gtk_entry_set_text (entry_p,
+                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
       break;
     }
     default:
@@ -1212,8 +1201,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (iterator_2_2 != (*iterator_2).second.end ());
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address,
-                                                           true).c_str ());
+                      Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
 #endif // ACE_WIN32 || ACE_WIN64
 
   GtkSpinButton* spin_button_p =
@@ -2043,11 +2031,6 @@ idle_initialize_ui_cb (gpointer userData_in)
 //              (*iterator_4).second.window));
 
   // step9: activate some widgets
-  GtkToggleAction* toggle_action_p =
-      GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
-                                                  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
-  ACE_ASSERT (toggle_action_p);
-
   gint n_rows = 0;
   list_store_p =
     GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
@@ -2172,7 +2155,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (check_button_p);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (check_button_p),
                                 cb_data_base_p->enableVideo);
-  toggle_action_p =
+  GtkToggleAction* toggle_action_p =
     GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_FULLSCREEN)));
   ACE_ASSERT (toggle_action_p);
@@ -2239,7 +2222,7 @@ idle_initialize_ui_cb (gpointer userData_in)
       return G_SOURCE_REMOVE;
     } // end ELSE
   } // end lock scope
-#endif
+#endif // GTKGL_SUPPORT
 
   return G_SOURCE_REMOVE;
 }
@@ -3499,10 +3482,10 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   // update configuration
 
   // retrieve address
-  GtkEntryBuffer* entrybuffer_p =
-      GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
-                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
-  ACE_ASSERT (entrybuffer_p);
+  GtkEntry* entry_p =
+      GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
+  ACE_ASSERT (entry_p);
   GtkSpinButton* spin_button_p =
       GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_SPINBUTTON_PORT)));
@@ -3561,7 +3544,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
 #endif
   std::string address_string =
-    ACE_TEXT_ALWAYS_CHAR (gtk_entry_buffer_get_text (entrybuffer_p));
+    ACE_TEXT_ALWAYS_CHAR (gtk_entry_get_text (entry_p));
   address_string += ACE_TEXT_ALWAYS_CHAR (':');
   std::ostringstream converter;
   converter <<
@@ -4720,13 +4703,13 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   ARDrone_WLANMonitor_t* WLAN_monitor_p =
     ARDRONE_WLANMONITOR_SINGLETON::instance ();
   ACE_ASSERT (WLAN_monitor_p);
+  std::string SSID_string =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if defined (WLANAPI_USE)
-  if (unlikely (ACE_OS::strcmp (wlan_monitor_configuration_p->SSID.c_str (),
-                                Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get (),
-                                                                wlan_monitor_configuration_p->interfaceIdentifier).c_str ()) &&
-                wlan_monitor_configuration_p->autoAssociate))
+    Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get (),
+                                    wlan_monitor_configuration_p->interfaceIdentifier);
 #else
+    ACE_TEXT_ALWAYS_CHAR ("");
   ACE_ASSERT (false);
   ACE_NOTSUP;
 
@@ -4734,28 +4717,27 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif // WLANAPI_USE
 #elif defined (ACE_LINUX)
 #if defined (WEXT_USE)
-  if (unlikely (ACE_OS::strcmp (wlan_monitor_configuration_p->SSID.c_str (),
-                                Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
-                                                                ACE_INVALID_HANDLE).c_str ()) &&
-                wlan_monitor_configuration_p->autoAssociate))
+    Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
+                                    ACE_INVALID_HANDLE);
 #elif defined (NL80211_USE)
-  if (unlikely (ACE_OS::strcmp (wlan_monitor_configuration_p->SSID.c_str (),
-                                Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
-                                                                NULL,
-                                                                WLAN_monitor_p->get_3 ()).c_str ()) &&
-                wlan_monitor_configuration_p->autoAssociate))
+    Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
+                                    NULL,
+                                    WLAN_monitor_p->get_3 ());
 #elif defined (DBUS_USE)
-  if (unlikely (ACE_OS::strcmp (wlan_monitor_configuration_p->SSID.c_str (),
-                                Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->getP (),
-                                                                wlan_monitor_configuration_p->interfaceIdentifier).c_str ()) &&
-                wlan_monitor_configuration_p->autoAssociate))
+    Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->getP (),
+                                    wlan_monitor_configuration_p->interfaceIdentifier);
 #else
+    ACE_TEXT_ALWAYS_CHAR ("");
   ACE_ASSERT (false);
   ACE_NOTSUP;
 
-  ACE_NOTREACHED (if (0))
+  ACE_NOTREACHED (return;)
 #endif // WEXT_USE
 #endif // ACE_WIN32 || ACE_WIN64
+  if ((!wlan_monitor_configuration_p->SSID.empty () &&
+       ACE_OS::strcmp (wlan_monitor_configuration_p->SSID.c_str (),
+                       SSID_string.c_str ())) &&
+      wlan_monitor_configuration_p->autoAssociate)
   {
     GtkSpinner* spinner_p =
       GTK_SPINNER (gtk_builder_get_object ((*iterator).second.second,
@@ -4767,10 +4749,10 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   } // end IF
   else
   {
-    GtkEntryBuffer* entrybuffer_p =
-      GTK_ENTRY_BUFFER (gtk_builder_get_object ((*iterator).second.second,
-                                                ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRYBUFFER_ADDRESS)));
-    ACE_ASSERT (entrybuffer_p);
+    GtkEntry* entry_p =
+      GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
+                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
+    ACE_ASSERT (entry_p);
     ACE_INET_Addr interface_address, gateway_address;
     if (!Net_Common_Tools::interfaceToIPAddress (wlan_monitor_configuration_p->interfaceIdentifier,
                                                  interface_address,
@@ -4800,12 +4782,8 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif // ACE_WIN32 || ACE_WIN64
       return;
     } // end IF
-    std::string IP_address_string =
-      Net_Common_Tools::IPAddressToString (gateway_address,
-                                           true);
-    gtk_entry_buffer_set_text (entrybuffer_p,
-                               IP_address_string.c_str (),
-                               IP_address_string.size ());
+    gtk_entry_set_text (entry_p,
+                        ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString (gateway_address, true).c_str ()));
 
     GtkToggleAction* toggle_action_p =
       GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
