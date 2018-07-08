@@ -2699,7 +2699,8 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::messageCB (const struct __mavl
       break;
     }
     case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
-    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
+    { //ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
+      ACE_ASSERT ((record_in.len == MAVLINK_MSG_ID_GPS_RAW_INT_MIN_LEN) || (record_in.len == MAVLINK_MSG_ID_GPS_RAW_INT_LEN));
       struct __mavlink_gps_raw_int_t* message_p =
           reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
       ACE_UNUSED_ARG (message_p);
