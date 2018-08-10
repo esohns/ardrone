@@ -2023,12 +2023,16 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onConnect (REFGUID interfaceIdentifier_in,
+#else
+                        WLANMonitorSingletonType>::onConnect (const std::string& interfaceIdentifier_in,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onConnect (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                               const std::string& SSID_in,
                                                               bool success_in)
 {
@@ -2048,19 +2052,23 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 //  ARDrone_WLANMonitor_t* wlan_monitor_p =
 //    ARDRONE_WLANMONITOR_SINGLETON::instance ();
 //  ACE_ASSERT (wlan_monitor_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  if (!Net_Common_Tools::interfaceToIPAddress_2 (interfaceIdentifier_in,
+#else
   if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
+#endif // ACE_WIN32 || ACE_WIN64
                                                local_SAP,
                                                peer_SAP))
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress_2(\"%s\"), returning\n"),
                 ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ())));
 #else
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
                 ACE_TEXT (interfaceIdentifier_in.c_str ())));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
     return;
   } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2077,7 +2085,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
               ACE_TEXT (SSID_in.c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   // update GUI ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2094,7 +2102,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       return;
     } // end IF
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 }
 
 template <typename ModuleConfigurationType,
@@ -2104,12 +2112,16 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onDisconnect (REFGUID interfaceIdentifier_in,
+#else
+                        WLANMonitorSingletonType>::onDisconnect (const std::string& interfaceIdentifier_in,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onDisconnect (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                                  const std::string& SSID_in,
                                                                  bool success_in)
 {
@@ -2171,7 +2183,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       return;
     } // end IF
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 }
 
 template <typename ModuleConfigurationType,
@@ -2181,12 +2193,16 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onHotPlug (REFGUID interfaceIdentifier_in,
+#else
+                        WLANMonitorSingletonType>::onHotPlug (const std::string& interfaceIdentifier_in,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onHotPlug (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                               bool enabled_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::onHotPlug"));
@@ -2211,12 +2227,16 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onRemove (REFGUID interfaceIdentifier_in,
+#else
+                        WLANMonitorSingletonType>::onRemove (const std::string& interfaceIdentifier_in,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onRemove (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                              bool enabled_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::onRemove"));
@@ -2241,12 +2261,16 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onScanComplete (REFGUID interfaceIdentifier_in)
+#else
+                        WLANMonitorSingletonType>::onScanComplete (const std::string& interfaceIdentifier_in)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onScanComplete (const std::string& interfaceIdentifier_in)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::onScanComplete"));
 

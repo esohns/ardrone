@@ -68,18 +68,24 @@ G_MODULE_EXPORT void combobox_display_format_changed_cb (GtkComboBox*, gpointer)
 G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            GMountOperation*,
                                            gpointer);
-#endif
+#endif // GTK3_SUPPORT
 //------------------------------------------------------------------------------
 #if defined (GTKGL_SUPPORT)
 G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 G_MODULE_EXPORT GdkGLContext* glarea_create_context_cb (GtkGLArea*, gpointer);
 G_MODULE_EXPORT gboolean glarea_render_cb (GtkGLArea*, GdkGLContext*, gpointer);
 G_MODULE_EXPORT void glarea_resize_cb (GtkGLArea*, gint, gint, gpointer);
 #else
+#if defined (GTKGLAREA_SUPPORT)
+G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
+G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
+G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
+#else
 G_MODULE_EXPORT void glarea_size_allocate_event_cb (GtkWidget*, GdkRectangle*, gpointer);
 G_MODULE_EXPORT gboolean glarea_draw_cb (GtkWidget*, cairo_t*, gpointer);
+#endif /* GTKGLAREA_SUPPORT */
 #endif /* GTK_CHECK_VERSION (3,16,0) */
 #else
 #if defined (GTKGLAREA_SUPPORT)
@@ -87,7 +93,8 @@ G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer)
 G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
 G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
 #else
-G_MODULE_EXPORT gboolean drawingarea_3d_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
+G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
+G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
 #endif /* GTKGLAREA_SUPPORT */
 #endif /* GTK_CHECK_VERSION (3,0,0) */
 #endif /* GTKGL_SUPPORT */
@@ -98,11 +105,11 @@ G_MODULE_EXPORT void toggleaction_save_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void action_cut_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void toggleaction_associate_toggled_cb (GtkToggleAction*, gpointer);
 //------------------------------------------------------------------------------
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
 G_MODULE_EXPORT void drawingarea_video_size_allocate_cb (GtkWidget*, GdkRectangle*, gpointer);
 #else
 G_MODULE_EXPORT gboolean drawingarea_video_configure_cb (GtkWidget*, GdkEvent*, gpointer);
-#endif
+#endif // GTK_CHECK_VERSION(3,0,0)
 G_MODULE_EXPORT gboolean drawingarea_video_draw_cb (GtkWidget*, cairo_t*, gpointer);
 G_MODULE_EXPORT void drawingarea_video_realize_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gboolean drawingarea_video_key_press_event_cb (GtkWidget*, GdkEventKey*, gpointer);

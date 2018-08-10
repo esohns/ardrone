@@ -1044,9 +1044,11 @@ typedef ARDrone_ControlStream_T<struct ARDrone_DirectShow_ModuleHandlerConfigura
 typedef ARDrone_ControlStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_ControlStream_t;
 
 typedef ARDrone_NavDataStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
-                                ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t> ARDrone_DirectShow_NavDataStream_t;
+                                ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t,
+                                ARDRONE_WLANMONITOR_SINGLETON> ARDrone_DirectShow_NavDataStream_t;
 typedef ARDrone_NavDataStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
-                                ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t> ARDrone_MediaFoundation_NavDataStream_t;
+                                ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
+                                ARDRONE_WLANMONITOR_SINGLETON> ARDrone_MediaFoundation_NavDataStream_t;
 
 typedef ARDrone_MAVLinkStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_MAVLinkStream_t;
 typedef ARDrone_MAVLinkStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_MAVLinkStream_t;

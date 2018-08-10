@@ -557,7 +557,7 @@ do_printVersion (const std::string& programName_in)
   //   std::cout << programName_in << ACE_TEXT(" : ") << VERSION << std::endl;
   std::cout << programName_in
             << ACE_TEXT_ALWAYS_CHAR (": ")
-#ifdef HAVE_CONFIG_H
+#if defined (HAVE_CONFIG_H)
             << ARDRONE_VERSION_MAJOR
             << ACE_TEXT_ALWAYS_CHAR (".")
             << ARDRONE_VERSION_MINOR
@@ -565,7 +565,7 @@ do_printVersion (const std::string& programName_in)
             << ARDRONE_VERSION_MICRO
 #else
             << ACE_TEXT_ALWAYS_CHAR ("N/A")
-#endif
+#endif // HAVE_CONFIG_H
             << std::endl;
 
   std::ostringstream version_number;
@@ -631,13 +631,23 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+  struct _GUID interface_identifier =
+    Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [GUID]   : network interface [\"")
-            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11)).c_str ())
+            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())
+            << ACE_TEXT_ALWAYS_CHAR ("\": ")
+            << ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (interface_identifier).c_str ())
 #else
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [STRING] : network interface [\"")
             << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11).c_str ())
-#endif // ACE_WIN32 || ACE_WIN64
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#else
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [STRING] : network interface [\"")
+            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11).c_str ())
+            << ACE_TEXT_ALWAYS_CHAR ("\"]")
+#endif // ACE_WIN32 || ACE_WIN64
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-l          : log to a file [")
             << false
@@ -716,7 +726,11 @@ do_processArguments (int argc_in,
 #endif // _DEBUG
                      bool& fullScreen_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                      struct _GUID& interfaceIdentifier_out,
+#else
+                     std::string& interfaceIdentifier_out,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
                      std::string& interfaceIdentifier_out,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -771,7 +785,15 @@ do_processArguments (int argc_in,
   debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   interfaceIdentifier_out     =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+    Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
+#else
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#else
+    Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+#endif
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   mediaFramework_out          = MODULE_LIB_DEFAULT_MEDIAFRAMEWORK;
@@ -877,7 +899,11 @@ do_processArguments (int argc_in,
       {
         interfaceIdentifier_out =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
           Common_Tools::StringToGUID (ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ()));
+#else
+          ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
+#endif
 #else
           ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
 #endif
@@ -1424,7 +1450,11 @@ do_work (int argc_in,
 #endif // _DEBUG
          bool fullScreen_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
          REFGUID interfaceIdentifier_in,
+#else
+         const std::string& interfaceIdentifier_in,
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
          const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -3336,7 +3366,11 @@ ACE_TMAIN (int argc_in,
 #endif // _DEBUG
   bool fullscreen;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
   struct _GUID interface_identifier;
+#else
+  std::string interface_identifier;
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
   std::string interface_identifier;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -3464,7 +3498,15 @@ ACE_TMAIN (int argc_in,
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   log_to_file            = false;
   interface_identifier   =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+    Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
+#else
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#else
+    Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+#endif // ACE_WIN32 || ACE_WIN64
   port_number            = ARDRONE_PORT_TCP_VIDEO;
   use_reactor            =
       (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
@@ -3554,10 +3596,7 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
-
-    // help the user, print usage instructions
     do_printUsage (ACE::basename (argv_in[0]));
-
     goto error;
   } // end IF
 
@@ -3572,10 +3611,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid configuration (was: \"%s\"), aborting\n"),
                 ACE_TEXT (Common_Tools::commandLineToString (argc_in, argv_in).c_str ())));
-
-    // help the user, print usage instructions
     do_printUsage (ACE::basename (argv_in[0]));
-
     goto error;
   } // end IF
 
@@ -3611,11 +3647,8 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown mode (was: %d), aborting\n"),
                   mode_e));
-
-      // help the user, print usage instructions
       do_printUsage (ACE::basename (argv_in[0],
                                     ACE_DIRECTORY_SEPARATOR_CHAR));
-
       goto error;
     }
   } // end SWITCH
@@ -3651,10 +3684,7 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
-
-    // clean up
     Common_Tools::finalizeLogging ();
-
     goto error;
   } // end IF
   if (!Common_Signal_Tools::preInitialize (signal_set,
@@ -3664,10 +3694,7 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
-
-    // clean up
     Common_Tools::finalizeLogging ();
-
     goto error;
   } // end IF
 
@@ -3690,15 +3717,12 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
-
-      // clean up
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
       Common_Tools::finalizeLogging ();
-
       goto error;
     }
   } // end SWITCH
@@ -3749,15 +3773,12 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
-
-      // clean up
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
       Common_Tools::finalizeLogging ();
-
       goto error;
     }
   } // end SWITCH
@@ -3829,15 +3850,12 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
-
-      // clean up
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
       Common_Tools::finalizeLogging ();
-
       goto error;
     }
   } // end SWITCH
@@ -3853,15 +3871,12 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize gtk manager, returning\n")));
-
-    // clean up
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                 : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                     signal_set,
                                     previous_signal_actions,
                                     previous_signal_mask);
     Common_Tools::finalizeLogging ();
-
     goto error;
   } // end IF
 
@@ -3890,15 +3905,12 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
-
-      // clean up
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
       Common_Tools::finalizeLogging ();
-
       goto error;
     }
   } // end SWITCH
@@ -3906,15 +3918,12 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize media framework, returning\n")));
-
-    // clean up
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                 : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                    signal_set,
                                    previous_signal_actions,
                                    previous_signal_mask);
     Common_Tools::finalizeLogging ();
-
     goto error;
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
@@ -3975,8 +3984,6 @@ done:
   {
     ACE_DEBUG ((LM_ERROR,
                ACE_TEXT ("failed to ACE_Profile_Timer::elapsed_time: \"%m\", aborting\n")));
-
-    // clean up
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     switch (media_framework_e)
     {
@@ -4006,7 +4013,6 @@ done:
                                    previous_signal_actions,
                                    previous_signal_mask);
     Common_Tools::finalizeLogging ();
-
     goto error;
   } // end IF
   ACE_Profile_Timer::Rusage elapsed_rusage;
