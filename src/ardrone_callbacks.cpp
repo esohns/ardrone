@@ -26,7 +26,7 @@
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #include <ifaddrs.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <gl/GL.h>
@@ -34,7 +34,7 @@
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 //#include <GL/glut.h>
 #include "glm/glm.hpp"
 
@@ -44,7 +44,7 @@
 #include <mfapi.h>
 #include <mfidl.h>
 #include <wlanapi.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
 extern "C"
@@ -65,7 +65,7 @@ extern "C"
 #include "gdk/gdkwin32.h"
 #else
 #include "gdk/gdk.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #include "gdk/gdkkeysyms.h"
 #include "gtk/gtk.h"
 //#include "gtk/gtkgl.h"
@@ -103,6 +103,7 @@ extern "C"
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
 #include "ardrone_message.h"
+#include "ardrone_sessionmessage.h"
 #include "ardrone_stream.h"
 #include "ardrone_opengl.h"
 
@@ -359,7 +360,7 @@ stream_processing_function (void* arg_in)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_4;
   ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_4;
-  typename ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
+  ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
 #else
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   typename ARDrone_VideoStream_t::IINITIALIZE_T* iinitialize_p = NULL;
@@ -391,7 +392,7 @@ stream_processing_function (void* arg_in)
     ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
     iinitialize_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      dynamic_cast<typename ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+      dynamic_cast<ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #else
       dynamic_cast<typename ARDrone_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -447,7 +448,7 @@ stream_processing_function (void* arg_in)
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          dynamic_cast<typename ARDrone_DirectShow_MAVLinkStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+          dynamic_cast<ARDrone_DirectShow_MAVLinkStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #else
           dynamic_cast<typename ARDrone_MAVLinkStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -491,7 +492,7 @@ stream_processing_function (void* arg_in)
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          dynamic_cast<typename ARDrone_DirectShow_NavDataStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+          dynamic_cast<ARDrone_DirectShow_NavDataStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #else
           dynamic_cast<typename ARDrone_NavDataStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -533,7 +534,7 @@ stream_processing_function (void* arg_in)
         ACE_ASSERT (streams_iterator != data_p->CBData->streams.end ());
         iinitialize_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          dynamic_cast<typename ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+          dynamic_cast<ARDrone_DirectShow_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #else
           dynamic_cast<typename ARDrone_VideoStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -1143,9 +1144,33 @@ idle_initialize_ui_cb (gpointer userData_in)
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_SSID)));
   ACE_ASSERT (entry_p);
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      gtk_entry_set_text (entry_p,
+                          ACE_TEXT_ALWAYS_CHAR (directshow_cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()));
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      gtk_entry_set_text (entry_p,
+                          ACE_TEXT_ALWAYS_CHAR (mediafoundation_cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()));
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_base_p->mediaFramework));
+      break;
+    }
+  } // end SWITCH
+#else
   gtk_entry_set_text (entry_p,
                       ACE_TEXT_ALWAYS_CHAR (cb_data_p->configuration->WLANMonitorConfiguration.SSID.c_str ()));
-
+#endif // ACE_WIN32 || ACE_WIN64
   entry_p =
     GTK_ENTRY (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
@@ -1170,7 +1195,7 @@ idle_initialize_ui_cb (gpointer userData_in)
       //                                      directshow_iterator_2_2);
       ACE_ASSERT (directshow_iterator_2_2 != (*directshow_iterator_2).second.end ());
       gtk_entry_set_text (entry_p,
-                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
+                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*directshow_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ()));
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -1182,7 +1207,7 @@ idle_initialize_ui_cb (gpointer userData_in)
         (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (mediafoundation_iterator_2_2 != (*mediafoundation_iterator_2).second.end ());
       gtk_entry_set_text (entry_p,
-                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
+                          ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::IPAddressToString ((*mediafoundation_iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ()));
       break;
     }
     default:
@@ -1854,8 +1879,8 @@ idle_initialize_ui_cb (gpointer userData_in)
                       G_CALLBACK (glarea_realize_cb),
                       userData_in);
   ACE_ASSERT (result);
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
   result =
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("create-context"),
@@ -1874,26 +1899,6 @@ idle_initialize_ui_cb (gpointer userData_in)
                       G_CALLBACK (glarea_resize_cb),
                       userData_in);
 #else
-  result =
-    g_signal_connect (G_OBJECT (gl_area_p),
-                      ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
-                      G_CALLBACK (glarea_size_allocate_event_cb),
-                      userData_in);
-  ACE_ASSERT (result);
-  result =
-    g_signal_connect (G_OBJECT (gl_area_p),
-                      ACE_TEXT_ALWAYS_CHAR ("draw"),
-                      G_CALLBACK (glarea_draw_cb),
-                      userData_in);
-  ACE_ASSERT (result);
-#endif
-#else
-  result =
-    g_signal_connect (G_OBJECT (drawing_area_p),
-                      ACE_TEXT_ALWAYS_CHAR ("expose-event"),
-                      G_CALLBACK (drawingarea_2d_expose_event_cb),
-                      userData_in);
-  ACE_ASSERT (result);
 #if defined (GTKGLAREA_SUPPORT)
   result =
     g_signal_connect (G_OBJECT (gl_area_p),
@@ -1909,6 +1914,41 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (result);
 #else
   result =
+    g_signal_connect (G_OBJECT (gl_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
+                      G_CALLBACK (glarea_size_allocate_event_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+  result =
+    g_signal_connect (G_OBJECT (gl_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("draw"),
+                      G_CALLBACK (glarea_draw_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  result =
+    g_signal_connect (G_OBJECT (gl_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("configure-event"),
+                      G_CALLBACK (glarea_configure_event_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+  result =
+    g_signal_connect (G_OBJECT (gl_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("expose-event"),
+                      G_CALLBACK (glarea_expose_event_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+  result =
+    g_signal_connect (G_OBJECT (drawing_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("realize-event"),
+                      G_CALLBACK (glarea_realize_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+#else
+  result =
     g_signal_connect (G_OBJECT (drawing_area_2),
                       ACE_TEXT_ALWAYS_CHAR ("configure-event"),
                       G_CALLBACK (drawingarea_configure_event_cb),
@@ -1917,11 +1957,11 @@ idle_initialize_ui_cb (gpointer userData_in)
   result =
     g_signal_connect (G_OBJECT (drawing_area_2),
                       ACE_TEXT_ALWAYS_CHAR ("expose-event"),
-                      G_CALLBACK (drawingarea_3d_expose_event_cb),
+                      G_CALLBACK (glarea_expose_event_cb),
                       userData_in);
-#endif
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
+#endif // GTKGL_SUPPORT
   ACE_ASSERT (result);
 
 //  // step5: use correct screen
@@ -2202,9 +2242,11 @@ idle_initialize_ui_cb (gpointer userData_in)
 #if defined (GTKGL_SUPPORT)
   window_p = gtk_widget_get_window (GTK_WIDGET (gl_area_p));
   ACE_ASSERT (window_p);
+#if GTK_CHECK_VERSION(3,8,0)
   GdkFrameClock* frame_clock_p = gdk_window_get_frame_clock (window_p);
   ACE_ASSERT (frame_clock_p);
   gdk_frame_clock_end_updating (frame_clock_p);
+#endif // GTK_CHECK_VERSION(3,8,0)
 
   ACE_ASSERT (!cb_data_base_p->openGLRefreshId);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard,  cb_data_base_p->lock, G_SOURCE_REMOVE);
@@ -2987,15 +3029,37 @@ idle_update_orientation_display_cb (gpointer userData_in)
     gtk_label_set_text (label_p,
                         ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
   } // end .lock scope
+#if defined (GTKGL_SUPPORT)
+#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION (3,16,0)
   GtkGLArea* gl_area_p =
     GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
                                          ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
   ACE_ASSERT (gl_area_p);
-
   gtk_gl_area_queue_render (gl_area_p);
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  ACE_ASSERT (false);
+  ACE_NOTSUP_RETURN (G_SOURCE_CONTINUE);
+  ACE_NOTREACHED (return G_SOURCE_CONTINUE;)
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  GtkGLArea* gl_area_p =
+    GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
+                                         ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
+  ACE_ASSERT (gl_area_p);
+#else
+  ACE_ASSERT (false);
+  ACE_NOTSUP_RETURN (G_SOURCE_CONTINUE);
+  ACE_NOTREACHED (return G_SOURCE_CONTINUE;)
 //  gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (gl_area_p)),
 //                              NULL,
 //                              false);
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+#endif /* GTKGL_SUPPORT */
 
   return G_SOURCE_CONTINUE;
 }
@@ -4340,9 +4404,9 @@ continue_:
                   (*directshow_iterator_5).second.second.area.top,
                   (*directshow_iterator_5).second.second.area.bottom,
                   ((*directshow_iterator_5).second.second.area.right -
-                  (*directshow_iterator_5).second.second.area.left),
-                   ((*directshow_iterator_5).second.second.area.bottom -
-                  (*directshow_iterator_5).second.second.area.top)));
+                   (*directshow_iterator_5).second.second.area.left),
+                  ((*directshow_iterator_5).second.second.area.bottom -
+                   (*directshow_iterator_5).second.second.area.top)));
       ACE_ASSERT ((*directshow_iterator_5).second.second.window);
       break;
     }
@@ -4356,9 +4420,9 @@ continue_:
                   (*mediafoundation_iterator_5).second.second.area.top,
                   (*mediafoundation_iterator_5).second.second.area.bottom,
                   ((*mediafoundation_iterator_5).second.second.area.right -
-                  (*mediafoundation_iterator_5).second.second.area.left),
-                   ((*mediafoundation_iterator_5).second.second.area.bottom -
-                  (*mediafoundation_iterator_5).second.second.area.top)));
+                   (*mediafoundation_iterator_5).second.second.area.left),
+                  ((*mediafoundation_iterator_5).second.second.area.bottom -
+                   (*mediafoundation_iterator_5).second.second.area.top)));
       ACE_ASSERT ((*mediafoundation_iterator_5).second.second.window);
       break;
     }
@@ -4389,7 +4453,7 @@ continue_:
   // *NOTE*: the surface / pixel buffer haven't been created yet, as the window
   //         wasn't 'viewable' during the first 'configure' event
   //         --> create it now
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
   g_signal_emit_by_name (G_OBJECT (drawing_area_p),
                          ACE_TEXT_ALWAYS_CHAR ("size-allocate"),
                          &rectangle_s,
@@ -4398,7 +4462,29 @@ continue_:
 #else
   GdkEventConfigure event_s;
   event_s.type = GDK_CONFIGURE;
-  event_s.window = (*iterator_5).second.window;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      event_s.window =
+        (GdkWindow*)gdk_win32_handle_table_lookup ((*directshow_iterator_5).second.second.window);
+      break;
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      event_s.window =
+        (GdkWindow*)gdk_win32_handle_table_lookup ((*mediafoundation_iterator_5).second.second.window);
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  event_s.window = (*iterator_5).second.second.window;
+#endif // ACE_WIN32 || ACE_WIN64
+  ACE_ASSERT (event_s.window);
   event_s.send_event = TRUE;
   event_s.x = rectangle_s.x; event_s.y = rectangle_s.y;
   event_s.width = rectangle_s.width; event_s.height = rectangle_s.height;
@@ -4407,7 +4493,7 @@ continue_:
                          &event_s,
                          userData_in,
                          &result);
-#endif
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   // update widgets
   gtk_action_set_stock_id (GTK_ACTION (toggleAction_in),
@@ -4754,7 +4840,11 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
                                          ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ENTRY_ADDRESS)));
     ACE_ASSERT (entry_p);
     ACE_INET_Addr interface_address, gateway_address;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    if (!Net_Common_Tools::interfaceToIPAddress_2 (wlan_monitor_configuration_p->interfaceIdentifier,
+#else
     if (!Net_Common_Tools::interfaceToIPAddress (wlan_monitor_configuration_p->interfaceIdentifier,
+#endif // ACE_WIN32 || ACE_WIN64
                                                  interface_address,
                                                  gateway_address))
     {
@@ -5125,10 +5215,15 @@ glarea_realize_cb (GtkWidget* widget_in,
   ACE_ASSERT (widget_in);
   ACE_ASSERT (userData_in);
 
-  struct ARDrone_GtkCBData_Base* data_p = NULL;
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
+    static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
+  ACE_ASSERT (cb_data_base_p);
   GLuint* model_list_id_p = NULL;
+  struct Common_GL_Scene* gl_scene_p = NULL;
   GtkAllocation allocation;
 
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
   GtkGLArea* gl_area_p = GTK_GL_AREA (widget_in);
   ACE_ASSERT (gl_area_p);
   // NOTE*: the OpenGL context has been created at this point
@@ -5140,127 +5235,187 @@ glarea_realize_cb (GtkWidget* widget_in,
                 gl_area_p));
     goto error;
   } // end IF
-  data_p = static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
+    NULL;
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_data_p =
+        static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (directshow_data_p);
+      ACE_ASSERT (directshow_data_p->configuration);
+
+      directshow_streams_iterator =
+        directshow_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_streams_iterator != directshow_data_p->configuration->streamConfigurations.end ());
+      directshow_modulehandler_configuration_iterator =
+        (*directshow_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_modulehandler_configuration_iterator != (*directshow_streams_iterator).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_data_p =
+        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (mediafoundation_data_p);
+      ACE_ASSERT (mediafoundation_data_p->configuration);
+
+      mediafoundation_streams_iterator =
+        mediafoundation_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_streams_iterator != mediafoundation_data_p->configuration->streamConfigurations.end ());
+      mediafoundation_modulehandler_configuration_iterator =
+        //mediafoundation_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
+        (*mediafoundation_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      //ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->directShowStreamConfigurations.end ());
+      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != (*mediafoundation_streams_iterator).second.end ());
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  struct ARDrone_GtkCBData* data_p =
+    static_cast<struct ARDrone_GtkCBData*> (userData_in);
+  // sanity check(s)
   ACE_ASSERT (data_p);
-  //ACE_ASSERT (data_p->configuration);
+  ACE_ASSERT (data_p->configuration);
 
-  // load the texture
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  //struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
-//  //struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
-//  //  NULL;
-//  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
-//  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
-//  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
-//  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
-//  switch (data_p->mediaFramework)
-//  {
-//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-//    {
-//      //directshow_data_p =
-//      //  static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
-//      //// sanity check(s)
-//      //ACE_ASSERT (directshow_data_p);
-//      //ACE_ASSERT (directshow_data_p->configuration);
-//
-//      directshow_streams_iterator =
-//        data_p->configuration->directShowStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-//      ACE_ASSERT (directshow_streams_iterator != data_p->configuration->directShowStreamConfigurations.end ());
-//      directshow_modulehandler_configuration_iterator =
-//        //directshow_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
-//        (*directshow_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-//        //ACE_ASSERT (directshow_modulehandler_configuration_iterator != directshow_data_p->configuration->directShowStreamConfigurations.end ());
-//        ACE_ASSERT (directshow_modulehandler_configuration_iterator != (*directshow_streams_iterator).second.end ());
-//      break;
-//    }
-//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-//    {
-//      //mediafoundation_data_p =
-//      //  static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
-//      //// sanity check(s)
-//      //ACE_ASSERT (mediafoundation_data_p);
-//      //ACE_ASSERT (mediafoundation_data_p->configuration);
-//
-//      mediafoundation_streams_iterator =
-//        data_p->configuration->mediaFoundationStreamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-//      ACE_ASSERT (mediafoundation_streams_iterator != data_p->configuration->mediaFoundationStreamConfigurations.end ());
-//      mediafoundation_modulehandler_configuration_iterator =
-//        //mediafoundation_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
-//        (*mediafoundation_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-//      //ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->directShowStreamConfigurations.end ());
-//      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != (*mediafoundation_streams_iterator).second.end ());
-//      break;
-//    }
-//    default:
-//    {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-//                  data_p->mediaFramework));
-//      goto error;
-//    }
-//  } // end SWITCH
-//#else
-//  ARDrone_StreamConfigurationsIterator_t streams_iterator =
-//      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-//  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-//  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
-//    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-//  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
-//#endif
+  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
+#endif // ACE_WIN32 || ACE_WIN64
 
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
   gtk_gl_area_attach_buffers (gl_area_p);
   gdk_gl_context_make_current (context_p);
-
-//#if GTK_CHECK_VERSION (3,0,0)
-//#if GTK_CHECK_VERSION (3,16,0)
-//  gtk_gl_area_make_current (gl_area_p);
-//#else
-//  ggla_area_make_current (gl_area_p);
-//#endif
-//#else
-//#if defined (GTKGLAREA_SUPPORT)
-//  gtk_gl_area_make_current (GTK_GL_AREA (gl_area_p));
-//#else
-//  gdk_gl_drawable_make_current (drawable_p,
-//                                context_p);
-//#endif
-//#endif
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+    return;
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
+    return;
+#else
+  GdkGLDrawable* drawable_p =
+    (*modulehandler_configuration_iterator).second.GdkWindow3D;
+  GdkGLContext* context_p =
+    (*modulehandler_configuration_iterator).second.OpenGLContext;
 
   // sanity check(s)
+  ACE_ASSERT (drawable_p);
+  ACE_ASSERT (context_p);
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+  if (!gtk_gl_area_make_current (gl_area_p))
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+#else
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
+#else
+  bool result = gdk_gl_drawable_make_current (drawable_p,
+                                              context_p);
+  if (!result)
+    return;
+  result = gdk_gl_drawable_gl_begin (drawable_p,
+                                     context_p);
+  if (!result)
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
+    return;
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+  // sanity check(s)
   ACE_ASSERT (gtk_gl_area_get_has_depth_buffer (gl_area_p));
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
 
   // load model mesh
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  switch (data_p->mediaFramework)
-//  {
-//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-//      //model_list_id_p = &directshow_data_p->openGLModelListId;
-//      break;
-//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-//      //model_list_id_p = &mediafoundation_data_p->openGLModelListId;
-//      break;
-//    default:
-//    {
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-//                  data_p->mediaFramework));
-//      goto error;
-//    }
-//  } // end SWITCH
-//#else
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      model_list_id_p = &directshow_data_p->openGLModelListId;
+      gl_scene_p = &directshow_data_p->openGLScene;
+      break;
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      model_list_id_p = &mediafoundation_data_p->openGLModelListId;
+      gl_scene_p = &mediafoundation_data_p->openGLScene;
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
   model_list_id_p = &data_p->openGLModelListId;
-//#endif
+  gl_scene_p = &data_p->openGLScene;
+#endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (model_list_id_p);
   if (*model_list_id_p > 0)
   {
     glDeleteLists (*model_list_id_p, 1);
 //    glDeleteTextures (1, model_list_id_p);
-    COMMON_GL_ASSERT;
+    COMMON_GL_ASSERT
     *model_list_id_p = 0;
   } // end IF
 
   if (!*model_list_id_p)
-  {
+  { ACE_ASSERT (gl_scene_p);
     std::string filename = Common_File_Tools::getWorkingDirectory ();
     filename += ACE_DIRECTORY_SEPARATOR_CHAR;
     filename += ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONFIGURATION_DIRECTORY);
@@ -5270,8 +5425,8 @@ glarea_realize_cb (GtkWidget* widget_in,
 //        ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE);
     *model_list_id_p =
         Common_GL_Tools::loadModel (filename,
-                                    data_p->openGLScene.boundingBox,
-                                    data_p->openGLScene.center);
+                                    gl_scene_p->boundingBox,
+                                    gl_scene_p->center);
 //        Common_GL_Tools::loadTexture (filename);
     if (!*model_list_id_p)
     {
@@ -5281,9 +5436,9 @@ glarea_realize_cb (GtkWidget* widget_in,
       goto error;
     } // end IF
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    COMMON_GL_ASSERT;
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    COMMON_GL_ASSERT;
+//    COMMON_GL_ASSERT
 
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("OpenGL model list id: %u\n"),
@@ -5295,32 +5450,95 @@ glarea_realize_cb (GtkWidget* widget_in,
                              &allocation);
 
   glMatrixMode (GL_PROJECTION);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   // reset the projection matrix
   glLoadIdentity ();
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
                   static_cast<GLdouble> (allocation.width) / static_cast<GLdouble> (allocation.height),
                   ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
                   ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   glViewport (0, 0,
               static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
+
+//  GLdouble fW, fH;
+//  fH =
+//   ::tan (60.0 / 360.0 * M_PI) *
+//   -1.0;
+//  fW = fH * (allocation.width / allocation.height);
+//  glFrustum (-fW, fW,
+//             -fH, fH,
+//             -1.0,
+//             100.0);
+//  gluLookAt (-10.0, 0.0, 0.0, // eye position (*NOTE*: relative to standard
+//             //                       "right-hand" coordinate
+//             //                       system [RHCS])
+//             0.0, 0.0, 0.0,   // looking-at position (RHCS notation)
+//             0.0, 0.0, -1.0); // up direction (RHCS notation, relative to eye
 
   glMatrixMode (GL_MODELVIEW);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
+
+  /* light */
+//  GLfloat light_positions[2][4]   = { 50.0, 50.0, 0.0, 0.0,
+//                                     -50.0, 50.0, 0.0, 0.0 };
+//  GLfloat light_colors[2][4] = { .6, .6,  .6, 1.0,   /* white light */
+//                                 .4, .4, 1.0, 1.0 }; /* cold blue light */
+//  glLightfv (GL_LIGHT0, GL_POSITION, light_positions[0]);
+//  glLightfv (GL_LIGHT0, GL_DIFFUSE,  light_colors[0]);
+//  glLightfv (GL_LIGHT1, GL_POSITION, light_positions[1]);
+//  glLightfv (GL_LIGHT1, GL_DIFFUSE,  light_colors[1]);
+//  glEnable (GL_LIGHT0);
+//  glEnable (GL_LIGHT1);
+//  glEnable (GL_LIGHTING);
+
+  // set up light colors (ambient, diffuse, specular)
+  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
+  glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+  COMMON_GL_ASSERT
+  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
+  glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+  COMMON_GL_ASSERT
+  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
+  glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
+  COMMON_GL_ASSERT
+  // position the light in eye space
+  GLfloat light0_position[] = {0.0F,
+                               5.0F * 2,
+                               5.0F * 2,
+                               0.0F}; // --> directional light
+  glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
+  COMMON_GL_ASSERT
+  glEnable (GL_LIGHT0);
+  COMMON_GL_ASSERT
 
   // reset the projection matrix
   glLoadIdentity ();
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
+
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+  gdk_gl_drawable_gl_end (drawable_p);
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   return;
 
 error:
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+  gdk_gl_drawable_gl_end (drawable_p);
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
   return;
 } // glarea_realize_cb
 #if GTK_CHECK_VERSION (3,0,0)
@@ -5366,7 +5584,7 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
 #if defined (_DEBUG)
   gdk_gl_context_set_debug_enabled (result_p,
                                     TRUE);
-#endif
+#endif // _DEBUG
   //gdk_gl_context_set_forward_compatible (result_p,
   //                                       FALSE);
   gdk_gl_context_set_use_es (result_p,
@@ -5378,10 +5596,8 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to realize OpenGL context: \"%s\", continuing\n"),
                 ACE_TEXT (error_p->message)));
-
     gtk_gl_area_set_error (GLArea_in, error_p);
-    g_error_free (error_p);
-
+    g_error_free (error_p); error_p = NULL;
     return NULL;
   } // end IF
 
@@ -5390,52 +5606,52 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   // initialize options
   glClearColor (0.0f, 0.0f, 0.0f, 1.0f);              // Black Background
 //  glClearColor (0.1f, 0.1f, 0.1f, 1.0f);              // Black Background
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   //glClearDepth (1.0);                                 // Depth Buffer Setup
-  //COMMON_GL_ASSERT;
+  //COMMON_GL_ASSERT
   /* speedups */
   //  glDisable (GL_CULL_FACE);
   //  glEnable (GL_DITHER);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 //  glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
   glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_COLOR_MATERIAL);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_LIGHTING);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glDepthFunc (GL_LESS);                              // The Type Of Depth Testing To Do
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glDepthMask (GL_TRUE);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 //  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 //  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 //  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
   glShadeModel (GL_SMOOTH);                           // Enable Smooth Shading
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 //  // XXX docs say all polygons are emitted CCW, but tests show that some aren't
 //  glFrontFace (GL_CW);
   //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
   glHint (GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_BLEND);                                // Enable Semi-Transparency
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   glEnable (GL_NORMALIZE);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   return result_p;
 }
@@ -5452,12 +5668,12 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   ACE_ASSERT (GLArea_in);
   ACE_ASSERT (userData_in);
 
-  struct ARDrone_GtkCBData_Base* data_p =
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 //  struct Stream_Module_Visualization_OpenGLInstruction* instruction_p = NULL;
 
   // sanity check(s)
-  ACE_ASSERT (data_p);
+  ACE_ASSERT (cb_data_base_p);
 
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
 //  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
@@ -5525,13 +5741,13 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   ACE_ASSERT (*model_list_id_p);
 
 //  glBindTexture (GL_TEXTURE_2D, *model_list_id_p);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   glLoadIdentity ();
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
   // left
   //  gluLookAt (0.0f,0.0f,3.0f,  // eye xyz
 //             0.0f,0.0f,0.0f,  // center xyz
@@ -5544,16 +5760,16 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   gluLookAt (3.0f,0.0f,0.0f,  // eye xyz
              0.0f,0.0f,0.0f,  // center xyz
              0.0f,1.0f,0.0f); // up xyz
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
 //  glTranslatef (0.0f, 0.0f, ARDRONE_OPENGL_CAMERA_DEFAULT_Z);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 
   // rotate it around the all axes
   static GLfloat rotation_angle = 0.0f;
   glRotatef (rotation_angle, 0.0f, 1.0f, 0.0f);
 //  glRotatef (rotation_angle, 1.0f, 1.0f, 1.0f);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   // scale the whole asset to fit into the view frustum
   static GLfloat scale_factor = 0.0f;
@@ -5565,19 +5781,19 @@ glarea_render_cb (GtkGLArea* GLArea_in,
       COMMON_GL_ASSIMP_MAX (data_p->openGLScene.boundingBox.second.z - data_p->openGLScene.boundingBox.first.z, scale_factor);
   scale_factor = (1.0f / scale_factor) * 2.0f;
   glScalef (scale_factor, scale_factor, scale_factor);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   // center the model
   glTranslatef (-data_p->openGLScene.center.x,
                 -data_p->openGLScene.center.y,
                 -data_p->openGLScene.center.z);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   glCallList (data_p->openGLModelListId);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
 //  Common_GL_Tools::drawCube (true);
-//  COMMON_GL_ASSERT;
+//  COMMON_GL_ASSERT
 
 //  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, FALSE);
 //    if (data_p->OpenGLInstructions.empty ())
@@ -5688,19 +5904,19 @@ glarea_resize_cb (GtkGLArea* GLArea_in,
   COMMON_GL_PRINT_ERROR;
 
   glMatrixMode (GL_PROJECTION);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   glLoadIdentity ();
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
                   static_cast<GLdouble> (width_in) / static_cast<GLdouble> (height_in),
                   ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
                   ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 
   glMatrixMode (GL_MODELVIEW);
-  COMMON_GL_ASSERT;
+  COMMON_GL_ASSERT
 }
 #else
 void
@@ -5710,50 +5926,70 @@ glarea_size_allocate_event_cb (GtkWidget* widget_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::glarea_size_allocate_event_cb"));
 
-  struct ARDrone_GtkCBData_Base* data_p =
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (data_p);
+  ACE_ASSERT (cb_data_base_p);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
+  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
     NULL;
-  if (data_p->useMediaFoundation)
+  switch (cb_data_base_p->mediaFramework)
   {
-    mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-  } // end ELSE
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_data_p =
+        static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (directshow_data_p);
+      ACE_ASSERT (directshow_data_p->configuration);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_data_p =
+        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (mediafoundation_data_p);
+      ACE_ASSERT (mediafoundation_data_p->configuration);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
 #else
-  struct Test_U_AudioEffect_GTK_CBData* data_p =
-    static_cast<struct Test_U_AudioEffect_GTK_CBData*> (userData_in);
+  ACE_ASSERT (cb_data_base_p->configuration);
+
+  struct ARDrone_GTK_CBData* data_p =
+    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->configuration);
+#endif
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
 #else
   // sanity check(s)
   ACE_ASSERT (widget_in);
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   // sanity check(s)
   ACE_ASSERT (widget_in);
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
 #else
   GdkGLDrawable* drawable_p =
     (*modulehandler_configuration_iterator).second.GdkWindow3D;
@@ -5763,42 +5999,30 @@ glarea_size_allocate_event_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (drawable_p);
   ACE_ASSERT (context_p);
-#endif
-#endif
-#endif
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
-#else
-  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
-#endif
-#else
-#if defined (GTKGLAREA_SUPPORT)
-  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
-#else
   if (!gdk_gl_drawable_make_current (drawable_p,
                                      context_p))
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
     return;
 
   glViewport (0, 0,
               allocation_in->width, allocation_in->height);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   glMatrixMode (GL_PROJECTION);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glLoadIdentity (); // Reset The Projection Matrix
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   gluPerspective (45.0,
                   allocation_in->width / (GLdouble)allocation_in->height,
                   0.1,
                   100.0); // Calculate The Aspect Ratio Of The Window
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   glMatrixMode (GL_MODELVIEW);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 }
 gboolean
 glarea_draw_cb (GtkWidget* widget_in,
@@ -5813,60 +6037,105 @@ glarea_draw_cb (GtkWidget* widget_in,
   ACE_ASSERT (widget_in);
   ACE_ASSERT (userData_in);
 
-  struct Test_U_AudioEffect_GTK_CBData* data_p =
-    static_cast<struct Test_U_AudioEffect_GTK_CBData*> (userData_in);
+  struct ARDrone_GTK_CBData* data_p =
+    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (data_p);
 
   GLuint* texture_id_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p = NULL;
-  if (data_p->useMediaFoundation)
+  struct ARDrone_DirectShow_GTK_CBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_GTK_CBData* mediafoundation_data_p = NULL;
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+  switch (cb_data_base_p->mediaFramework)
   {
-    mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_data_p =
+        static_cast<struct ARDrone_DirectShow_GTK_CBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (directshow_data_p);
+      ACE_ASSERT (directshow_data_p->configuration);
 
-    texture_id_p =
-      &(*mediafoundation_modulehandler_configuration_iterator).second.OpenGLTextureId;
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
+      directshow_streams_iterator =
+        directshow_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_streams_iterator != directshow_data_p->configuration->streamConfigurations.end ());
+      directshow_modulehandler_configuration_iterator =
+        (*directshow_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_modulehandler_configuration_iterator != (*directshow_streams_iterator).second.end ());
 
-    texture_id_p =
-      &(*directshow_modulehandler_configuration_iterator).second.OpenGLTextureId;
-  } // end ELSE
+      texture_id_p =
+        &(*directshow_modulehandler_configuration_iterator).second.OpenGLTextureId;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_data_p =
+        static_cast<struct ARDrone_MediaFoundation_GTK_CBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (mediafoundation_data_p);
+      ACE_ASSERT (mediafoundation_data_p->configuration);
+
+      mediafoundation_streams_iterator =
+        mediafoundation_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_streams_iterator != mediafoundation_data_p->configuration->streamConfigurations.end ());
+      mediafoundation_modulehandler_configuration_iterator =
+        (*mediafoundation_streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != (*mediafoundation_streams_iterator).second.end ());
+
+      texture_id_p =
+        &(*mediafoundation_modulehandler_configuration_iterator).second.OpenGLTextureId;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_base_p->mediaFramework));
+      return FALSE;
+    }
+  } // end SWITCH
 #else
-  struct Test_U_AudioEffect_GTK_CBData* data_p =
-    static_cast<struct Test_U_AudioEffect_GTK_CBData*> (userData_in);
+  struct ARDrone_GTK_CBData* data_p =
+    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
 
   // sanity check(s)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->configuration);
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
-#else
-  // sanity check(s)
-  ACE_ASSERT (widget_in);
+  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+    data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+    (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
 
-  Test_U_AudioEffect_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
-    data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (modulehandler_configuration_iterator != data_p->configuration->streamConfiguration.end ());
-#endif
+  texture_id_p =
+    &(*modulehandler_configuration_iterator).second.OpenGLTextureId;
+#endif // ACE_WIN32 || ACE_WIN64
+  ACE_ASSERT (texture_id_p);
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   // sanity check(s)
   ACE_ASSERT (widget_in);
+
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+#else
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
 #else
   GdkGLDrawable* drawable_p =
     (*modulehandler_configuration_iterator).second.GdkWindow3D;
@@ -5876,50 +6145,27 @@ glarea_draw_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (drawable_p);
   ACE_ASSERT (context_p);
-#endif
-#endif
 
-  texture_id_p =
-    &(*modulehandler_configuration_iterator).second.OpenGLTextureId;
-#endif
-  ACE_ASSERT (texture_id_p);
-
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
-#else
-  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
-#endif
-#else
-#if defined (GTKGLAREA_SUPPORT)
-  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
-#else
   bool result = gdk_gl_drawable_make_current (drawable_p,
                                               context_p);
   if (!result)
-#endif
-#endif
     return FALSE;
-
-#if GTK_CHECK_VERSION (3,0,0)
-#else
-#if defined (GTKGLAREA_SUPPORT)
-#else
   result = gdk_gl_drawable_gl_begin (drawable_p,
                                      context_p);
   if (!result)
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
     return FALSE;
-#endif
-#endif
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glLoadIdentity (); // Reset the transformation matrix.
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glTranslatef (0.0F, 0.0F, -5.0F); // Move back into the screen 5 units
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   glBindTexture (GL_TEXTURE_2D, *texture_id_p);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
 //  static GLfloat rot_x = 0.0f;
 //  static GLfloat rot_y = 0.0f;
@@ -5929,7 +6175,7 @@ glarea_draw_cb (GtkWidget* widget_in,
 //  glRotatef (rot_z, 0.0f, 0.0f, 1.0f); // Rotate On The Z Axis
   static GLfloat rotation = 0.0F;
   glRotatef (rotation, 1.0F, 1.0F, 1.0F); // Rotate On The X,Y,Z Axis
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
 //  glBegin (GL_QUADS);
 
@@ -5953,11 +6199,11 @@ glarea_draw_cb (GtkWidget* widget_in,
     8,9,10,11, 12,13,14,15};
 
   glTexCoordPointer (2, GL_FLOAT, 0, texture_coordinates);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glVertexPointer (3, GL_FLOAT, 0, vertices);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glDrawElements (GL_QUADS, 24, GL_UNSIGNED_BYTE, cube_indices);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
 //  rot_x += 0.3f;
 //  rot_y += 0.20f;
@@ -5993,19 +6239,22 @@ glarea_draw_cb (GtkWidget* widget_in,
   //glViewport (0, 0,
   //            data_p->area3D.width, data_p->area3D.height);
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
+#if defined (GTKGLAREA_SUPPORT)
   ggla_area_swap_buffers (GGLA_AREA (widget_in));
-#endif
+#else
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   gtk_gl_area_swap_buffers (GTK_GL_AREA (widget_in));
 #else
   gdk_gl_drawable_gl_end (drawable_p);
   gdk_gl_drawable_swap_buffers (drawable_p);
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   return TRUE;
 }
@@ -6026,13 +6275,13 @@ glarea_draw_cb (GtkWidget* widget_in,
 //  ACE_ASSERT (data_p);
 //
 //#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-//  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
+//  struct ARDrone_DirectShow_GTK_CBData* directshow_data_p = NULL;
+//  struct ARDrone_MediaFoundation_GTK_CBData* mediafoundation_data_p =
 //    NULL;
 //  if (data_p->useMediaFoundation)
 //  {
 //    mediafoundation_data_p =
-//      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
+//      static_cast<struct ARDrone_MediaFoundation_GTK_CBData*> (userData_in);
 //    // sanity check(s)
 //    ACE_ASSERT (mediafoundation_data_p);
 //    ACE_ASSERT (mediafoundation_data_p->configuration);
@@ -6040,14 +6289,14 @@ glarea_draw_cb (GtkWidget* widget_in,
 //  else
 //  {
 //    directshow_data_p =
-//      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
+//      static_cast<struct ARDrone_DirectShow_GTK_CBData*> (userData_in);
 //    // sanity check(s)
 //    ACE_ASSERT (directshow_data_p);
 //    ACE_ASSERT (directshow_data_p->configuration);
 //  } // end ELSE
 //#else
-//  struct Test_U_AudioEffect_GTK_CBData* data_p =
-//    static_cast<struct Test_U_AudioEffect_GTK_CBData*> (userData_in);
+//  struct ARDrone_GTK_CBData* data_p =
+//    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
 //
 //  // sanity check(s)
 //  ACE_ASSERT (data_p);
@@ -6059,7 +6308,7 @@ glarea_draw_cb (GtkWidget* widget_in,
 //  // sanity check(s)
 //  ACE_ASSERT (widget_in);
 //
-//  Test_U_AudioEffect_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+//  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
 //    data_p->configuration->streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
 //  ACE_ASSERT (modulehandler_configuration_iterator != data_p->configuration->streamConfiguration.end ());
 //#endif
@@ -6151,37 +6400,37 @@ glarea_draw_cb (GtkWidget* widget_in,
 //                ACE_TEXT (filename.c_str ())));
 //
 //    glGenTextures (1, texture_id_p);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glBindTexture (GL_TEXTURE_2D, *texture_id_p);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glEnableClientState (GL_VERTEX_ARRAY);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    // select modulate to mix texture with color for shading
 ////    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-////    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+////    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
 //                  width, height,
 //                  0, (has_alpha ? GL_RGBA : GL_RGB),
 //                  GL_UNSIGNED_BYTE, image_p);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//    COMMON_GL_ASSERT
 //
 //    ACE_DEBUG ((LM_DEBUG,
 //                ACE_TEXT ("OpenGL texture ID: %u...\n"),
@@ -6193,21 +6442,21 @@ glarea_draw_cb (GtkWidget* widget_in,
 //
 //  glViewport (0, 0,
 //              allocation.width, allocation.height);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //
 //  glMatrixMode (GL_PROJECTION);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //////  glOrtho (0.0, allocation.width,
 //////           0.0, allocation.height,
 //////           -1.0, 1.0);
 //////  glMatrixMode (GL_MODELVIEW);
 //  glLoadIdentity ();
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //  gluPerspective (45.0,
 //                  (allocation.width / (GLdouble)allocation.height),
 //                  0.1,
 //                  100.0); // setup a perspective projection
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 ////  GLdouble fW, fH;
 ////  fH =
 ////   ::tan (60.0 / 360.0 * M_PI) *
@@ -6224,7 +6473,7 @@ glarea_draw_cb (GtkWidget* widget_in,
 ////             0.0, 0.0, -1.0); // up direction (RHCS notation, relative to eye
 //  // position and looking-at direction)
 //  glMatrixMode (GL_MODELVIEW);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //
 //  /* light */
 ////  GLfloat light_positions[2][4]   = { 50.0, 50.0, 0.0, 0.0,
@@ -6242,22 +6491,22 @@ glarea_draw_cb (GtkWidget* widget_in,
 //  // set up light colors (ambient, diffuse, specular)
 //  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
 //  glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
 //  glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
 //  glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //  // position the light in eye space
 //  GLfloat light0_position[] = {0.0F,
 //                               5.0F * 2,
 //                               5.0F * 2,
 //                               0.0F}; // --> directional light
 //  glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //  glEnable (GL_LIGHT0);
-//  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+//  COMMON_GL_ASSERT
 //
 //#if GTK_CHECK_VERSION (3,0,0)
 //#else
@@ -6267,7 +6516,7 @@ glarea_draw_cb (GtkWidget* widget_in,
 //#endif
 //#endif
 //} // glarea_realize_cb
-#endif
+#endif // GTK_CHECK_VERSION (3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
 void
@@ -6277,42 +6526,64 @@ glarea_configure_event_cb (GtkWidget* widget_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::glarea_configure_event_cb"));
 
-  struct ARDrone_GtkCBData_Base* data_p =
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (data_p);
+  ACE_ASSERT (cb_data_base_p);
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
-    NULL;
-  if (data_p->useMediaFoundation)
-  {
-    mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-  } // end ELSE
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  struct ARDrone_DirectShow_GTK_CBData* directshow_data_p = NULL;
+//  struct ARDrone_MediaFoundation_GTK_CBData* mediafoundation_data_p =
+//    NULL;
+//  switch (cb_data_base_p->mediaFramework)
+//  {
+//    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+//    {
+//      directshow_data_p =
+//        static_cast<struct ARDrone_DirectShow_GTK_CBData*> (userData_in);
+//      // sanity check(s)
+//      ACE_ASSERT (directshow_data_p);
+//      ACE_ASSERT (directshow_data_p->configuration);
+//      break;
+//    }
+//    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+//    {
+//      mediafoundation_data_p =
+//        static_cast<struct ARDrone_MediaFoundation_GTK_CBData*> (userData_in);
+//      // sanity check(s)
+//      ACE_ASSERT (mediafoundation_data_p);
+//      ACE_ASSERT (mediafoundation_data_p->configuration);
+//      break;
+//    }
+//    default:
+//    {
+//      ACE_DEBUG ((LM_ERROR,
+//                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+//                  cb_data_base_p->mediaFramework));
+//      return;
+//    }
+//  } // end SWITCH
+//#else
+//  struct ARDrone_GTK_CBData* data_p =
+//    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
+//
+//  // sanity check(s)
+//  ACE_ASSERT (data_p);
+//  ACE_ASSERT (data_p->configuration);
+//#endif // ACE_WIN32 || ACE_WIN64
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
+#if defined (GTKGLAREA_SUPPORT)
   // sanity check(s)
-  ACE_ASSERT (data_p->configuration);
-
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+  ACE_ASSERT (widget_in);
 #else
   // sanity check(s)
   ACE_ASSERT (widget_in);
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   // sanity check(s)
@@ -6326,42 +6597,43 @@ glarea_configure_event_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (drawable_p);
   ACE_ASSERT (context_p);
-#endif
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
+#if defined (GTKGLAREA_SUPPORT)
   if (!ggla_area_make_current (GGLA_AREA (widget_in)))
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
 #else
   if (!gdk_gl_drawable_make_current (drawable_p,
                                      context_p))
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
     return;
 
   glViewport (0, 0,
               event_in->configure.width, event_in->configure.height);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   glMatrixMode (GL_PROJECTION);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glLoadIdentity (); // Reset The Projection Matrix
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   gluPerspective (45.0,
                   event_in->configure.width / (GLdouble)event_in->configure.height,
                   0.1,
                   100.0); // Calculate The Aspect Ratio Of The Window
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
   glMatrixMode (GL_MODELVIEW);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 }
 gboolean
 glarea_expose_event_cb (GtkWidget* widget_in,
@@ -6376,49 +6648,69 @@ glarea_expose_event_cb (GtkWidget* widget_in,
   ACE_ASSERT (widget_in);
   ACE_ASSERT (userData_in);
 
-  struct ARDrone_GtkCBData_Base* data_p =
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (data_p);
+  ACE_ASSERT (cb_data_base_p);
 
-  GLuint* texture_id_p = NULL;
+  GLuint* model_list_id_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
+  struct ARDrone_DirectShow_GtkCBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_data_p =
     NULL;
-  if (data_p->useMediaFoundation)
+  //ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
+  //ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
+  //ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
+  //ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+  switch (cb_data_base_p->mediaFramework)
   {
-    mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-
-    texture_id_p =
-      &(*mediafoundation_modulehandler_configuration_iterator).second.OpenGLTextureId;
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-
-    texture_id_p =
-      &(*directshow_modulehandler_configuration_iterator).second.OpenGLTextureId;
-  } // end ELSE
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_data_p =
+        static_cast<struct ARDrone_DirectShow_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (directshow_data_p);
+      model_list_id_p = &directshow_data_p->openGLModelListId;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_data_p =
+        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (mediafoundation_data_p);
+      model_list_id_p = &mediafoundation_data_p->openGLModelListId;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), aborting\n"),
+                  cb_data_base_p->mediaFramework));
+      return FALSE;
+    }
+  } // end SWITCH
 #else
+  struct ARDrone_GTK_CBData* data_p =
+    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
   // sanity check(s)
-  ACE_ASSERT (data_p->configuration);
+  ACE_ASSERT (data_p);
+  model_list_id_p = &data_p->openGLModelListId;
+#endif // ACE_WIN32 || ACE_WIN64
+  ACE_ASSERT (model_list_id_p);
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
 #else
   // sanity check(s)
   ACE_ASSERT (widget_in);
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION (3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   // sanity check(s)
@@ -6432,19 +6724,17 @@ glarea_expose_event_cb (GtkWidget* widget_in,
   // sanity check(s)
   ACE_ASSERT (drawable_p);
   ACE_ASSERT (context_p);
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
-  texture_id_p =
-    &((*modulehandler_configuration_iterator).second.OpenGLTextureId);
-#endif
-  ACE_ASSERT (texture_id_p);
-
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
+#if defined (GTKGLAREA_SUPPORT)
   if (!ggla_area_make_current (GGLA_AREA (widget_in)))
-#endif
+#else
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
@@ -6452,11 +6742,11 @@ glarea_expose_event_cb (GtkWidget* widget_in,
   bool result = gdk_gl_drawable_make_current (drawable_p,
                                               context_p);
   if (!result)
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
     return FALSE;
 
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
 #else
@@ -6464,18 +6754,19 @@ glarea_expose_event_cb (GtkWidget* widget_in,
                                      context_p);
   if (!result)
     return FALSE;
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glLoadIdentity (); // Reset the transformation matrix.
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glTranslatef (0.0F, 0.0F, -5.0F); // Move back into the screen 5 units
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
-  glBindTexture (GL_TEXTURE_2D, *texture_id_p);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  // draw the display list
+  glCallList (*model_list_id_p);
+  COMMON_GL_ASSERT
 
 //  static GLfloat rot_x = 0.0f;
 //  static GLfloat rot_y = 0.0f;
@@ -6485,7 +6776,7 @@ glarea_expose_event_cb (GtkWidget* widget_in,
 //  glRotatef (rot_z, 0.0f, 0.0f, 1.0f); // Rotate On The Z Axis
   static GLfloat rotation = 0.0F;
   glRotatef (rotation, 1.0F, 1.0F, 1.0F); // Rotate On The X,Y,Z Axis
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
 //  glBegin (GL_QUADS);
 
@@ -6509,11 +6800,11 @@ glarea_expose_event_cb (GtkWidget* widget_in,
     8,9,10,11, 12,13,14,15};
 
   glTexCoordPointer (2, GL_FLOAT, 0, texture_coordinates);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glVertexPointer (3, GL_FLOAT, 0, vertices);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
   glDrawElements (GL_QUADS, 24, GL_UNSIGNED_BYTE, cube_indices);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
+  COMMON_GL_ASSERT
 
 //  rot_x += 0.3f;
 //  rot_y += 0.20f;
@@ -6549,284 +6840,22 @@ glarea_expose_event_cb (GtkWidget* widget_in,
   //glViewport (0, 0,
   //            data_p->area3D.width, data_p->area3D.height);
 
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
 #else
   ggla_area_swap_buffers (GGLA_AREA (widget_in));
-#endif
+#endif // GTK_CHECK_VERSION(3,16,0)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   gtk_gl_area_swap_buffers (GTK_GL_AREA (widget_in));
 #else
   gdk_gl_drawable_gl_end (drawable_p);
   gdk_gl_drawable_swap_buffers (drawable_p);
-#endif
-#endif
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   return TRUE;
 }
-void
-glarea_realize_cb (GtkWidget* widget_in,
-                   gpointer userData_in)
-{
-  ARDRONE_TRACE (ACE_TEXT ("::glarea_realize_cb"));
-
-  // sanity check(s)
-  ACE_ASSERT (widget_in);
-  ACE_ASSERT (userData_in);
-
-  struct ARDrone_GtkCBData_Base* data_p =
-    static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
-
-  // sanity check(s)
-  ACE_ASSERT (data_p);
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
-    NULL;
-  if (data_p->useMediaFoundation)
-  {
-    mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (mediafoundation_data_p);
-    ACE_ASSERT (mediafoundation_data_p->configuration);
-  } // end IF
-  else
-  {
-    directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
-    // sanity check(s)
-    ACE_ASSERT (directshow_data_p);
-    ACE_ASSERT (directshow_data_p->configuration);
-  } // end ELSE
-#else
-  // sanity check(s)
-  ACE_ASSERT (data_p->configuration);
-
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
-#else
-  // sanity check(s)
-  ACE_ASSERT (widget_in);
-#endif
-#else
-#if defined (GTKGLAREA_SUPPORT)
-  // sanity check(s)
-  ACE_ASSERT (widget_in);
-#else
-  GdkGLDrawable* drawable_p =
-    (*modulehandler_configuration_iterator).second.GdkWindow3D;
-  GdkGLContext* context_p =
-    (*modulehandler_configuration_iterator).second.OpenGLContext;
-
-  // sanity check(s)
-  ACE_ASSERT (drawable_p);
-  ACE_ASSERT (context_p);
-#endif
-#endif
-#endif
-
-#if GTK_CHECK_VERSION (3,0,0)
-#if GTK_CHECK_VERSION (3,16,0)
-#else
-  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
-#endif
-#else
-#if defined (GTKGLAREA_SUPPORT)
-  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
-#else
-  bool result = gdk_gl_drawable_make_current (drawable_p,
-                                              context_p);
-  if (!result)
-#endif
-#endif
-    return;
-
-#if GTK_CHECK_VERSION (3,0,0)
-#else
-#if defined (GTKGLAREA_SUPPORT)
-#else
-  result = gdk_gl_drawable_gl_begin (drawable_p,
-                                     context_p);
-  if (!result)
-    return;
-#endif
-#endif
-
-  GtkAllocation allocation;
-  gtk_widget_get_allocation (widget_in, &allocation);
-
-  GLuint* texture_id_p = NULL;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (data_p->useMediaFoundation)
-    texture_id_p =
-      &(*mediafoundation_modulehandler_configuration_iterator).second.OpenGLTextureId;
-  else
-    texture_id_p =
-      &(*directshow_modulehandler_configuration_iterator).second.OpenGLTextureId;
-#else
-  texture_id_p =
-    &(*modulehandler_configuration_iterator).second.OpenGLTextureId;
-#endif
-  ACE_ASSERT (texture_id_p);
-
-  static GLubyte* image_p = NULL;
-  if (!image_p)
-  {
-    std::string filename = Common_File_Tools::getWorkingDirectory ();
-    filename += ACE_DIRECTORY_SEPARATOR_CHAR;
-    filename += ACE_TEXT_ALWAYS_CHAR (TEST_U_STREAM_CONFIGURATION_DIRECTORY);
-    filename += ACE_DIRECTORY_SEPARATOR_CHAR;
-    filename +=
-      ACE_TEXT_ALWAYS_CHAR (TEST_U_STREAM_AUDIOEFFECT_DEFAULT_IMAGE_FILE);
-    unsigned int width, height;
-    bool has_alpha = false;
-    if (!Common_Image_Tools::loadPNG2OpenGL (filename,
-                                             width, height,
-                                             has_alpha,
-                                             image_p))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Common_Image_Tools::loadPNG2OpenGL(\"%s\"): \"%m\", returning\n"),
-                  ACE_TEXT (filename.c_str ())));
-      return;
-    } // end IF
-    ACE_ASSERT (image_p);
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("loaded \"%s\"...\n"),
-                ACE_TEXT (filename.c_str ())));
-
-    glGenTextures (1, texture_id_p);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glBindTexture (GL_TEXTURE_2D, *texture_id_p);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glEnableClientState (GL_VERTEX_ARRAY);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    // select modulate to mix texture with color for shading
-//    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-//    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-
-#if defined (GL_VERSION_1_1)
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); // GL_CLAMP_TO_EDGE
-#else
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#endif
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-#if defined (GL_VERSION_1_1)
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP); // GL_CLAMP_TO_EDGE
-#else
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#endif
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
-                  width, height,
-                  0, (has_alpha ? GL_RGBA : GL_RGB),
-                  GL_UNSIGNED_BYTE, image_p);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-#if defined (GL_VERSION_1_4)
-    glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
-    ACE_ASSERT (glGetError () == GL_NO_ERROR);
-#endif
-
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("\"%s\" --> OpenGL texture ID: %u...\n"),
-                ACE::basename (ACE_TEXT (filename.c_str ()), ACE_DIRECTORY_SEPARATOR_CHAR),
-                *texture_id_p));
-
-    // clean up (do NOT reset the pointer)
-    free (image_p);
-  } // end IF
-
-  glViewport (0, 0,
-              allocation.width, allocation.height);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-
-  glMatrixMode (GL_PROJECTION);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-////  glOrtho (0.0, allocation.width,
-////           0.0, allocation.height,
-////           -1.0, 1.0);
-////  glMatrixMode (GL_MODELVIEW);
-  glLoadIdentity ();
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-  gluPerspective (45.0,
-                  (allocation.width / (GLdouble)allocation.height),
-                  0.1,
-                  100.0); // setup a perspective projection
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-//  GLdouble fW, fH;
-//  fH =
-//   ::tan (60.0 / 360.0 * M_PI) *
-//   -1.0;
-//  fW = fH * (allocation.width / allocation.height);
-//  glFrustum (-fW, fW,
-//             -fH, fH,
-//             -1.0,
-//             100.0);
-//  gluLookAt (-10.0, 0.0, 0.0, // eye position (*NOTE*: relative to standard
-//             //                       "right-hand" coordinate
-//             //                       system [RHCS])
-//             0.0, 0.0, 0.0,   // looking-at position (RHCS notation)
-//             0.0, 0.0, -1.0); // up direction (RHCS notation, relative to eye
-  // position and looking-at direction)
-  glMatrixMode (GL_MODELVIEW);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-
-  /* light */
-//  GLfloat light_positions[2][4]   = { 50.0, 50.0, 0.0, 0.0,
-//                                     -50.0, 50.0, 0.0, 0.0 };
-//  GLfloat light_colors[2][4] = { .6, .6,  .6, 1.0,   /* white light */
-//                                 .4, .4, 1.0, 1.0 }; /* cold blue light */
-//  glLightfv (GL_LIGHT0, GL_POSITION, light_positions[0]);
-//  glLightfv (GL_LIGHT0, GL_DIFFUSE,  light_colors[0]);
-//  glLightfv (GL_LIGHT1, GL_POSITION, light_positions[1]);
-//  glLightfv (GL_LIGHT1, GL_DIFFUSE,  light_colors[1]);
-//  glEnable (GL_LIGHT0);
-//  glEnable (GL_LIGHT1);
-//  glEnable (GL_LIGHTING);
-
-  // set up light colors (ambient, diffuse, specular)
-  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
-  glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
-  glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
-  glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-  // position the light in eye space
-  GLfloat light0_position[] = {0.0F,
-                               5.0F * 2,
-                               5.0F * 2,
-                               0.0F}; // --> directional light
-  glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-  glEnable (GL_LIGHT0);
-  ACE_ASSERT (glGetError () == GL_NO_ERROR);
-
-#if GTK_CHECK_VERSION (3,0,0)
-#else
-#if defined (GTKGLAREA_SUPPORT)
-#else
-  gdk_gl_drawable_gl_end (drawable_p);
-#endif
-#endif
-} // glarea_realize_cb
 #else
 gboolean
 drawingarea_3d_expose_event_cb (GtkWidget* widget_in,
@@ -6845,20 +6874,20 @@ drawingarea_3d_expose_event_cb (GtkWidget* widget_in,
   struct ARDrone_GtkCBData_Base* data_p =
     static_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Test_U_AudioEffect_DirectShow_GTK_CBData* directshow_data_p = NULL;
-  struct Test_U_AudioEffect_MediaFoundation_GTK_CBData* mediafoundation_data_p =
+  struct ARDrone_DirectShow_GTK_CBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_GTK_CBData* mediafoundation_data_p =
     NULL;
   if (data_p->useMediaFoundation)
   {
     mediafoundation_data_p =
-      static_cast<struct Test_U_AudioEffect_MediaFoundation_GTK_CBData*> (userData_in);
+      static_cast<struct ARDrone_MediaFoundation_GTK_CBData*> (userData_in);
     // sanity check(s)
     ACE_ASSERT (mediafoundation_data_p);
   } // end IF
   else
   {
     directshow_data_p =
-      static_cast<struct Test_U_AudioEffect_DirectShow_GTK_CBData*> (userData_in);
+      static_cast<struct ARDrone_DirectShow_GTK_CBData*> (userData_in);
     // sanity check(s)
     ACE_ASSERT (directshow_data_p);
   } // end ELSE
@@ -6927,7 +6956,7 @@ drawingarea_3d_expose_event_cb (GtkWidget* widget_in,
 
   return TRUE;
 } // drawingarea_3d_draw_cb
-#endif
+#endif // GTKGLAREA_SUPPORT
 #endif
 #endif
 // ---------------------------------------
@@ -7695,7 +7724,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   ACE_ASSERT (event_in);
   ACE_ASSERT (userData_in);
 
-  struct ARDrone_GtkCBData_Base* cb_data_p =
+  struct ARDrone_GtkCBData_Base* cb_data_base_p =
       reinterpret_cast<struct ARDrone_GtkCBData_Base*> (userData_in);
 
   // sanity check(s)
@@ -7704,16 +7733,74 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
 #else
   if (event_in->type != GDK_CONFIGURE)
     return FALSE;
-#endif
-  ACE_ASSERT (cb_data_p);
-  ACE_ASSERT (cb_data_p->configuration);
+#endif // GTK3_SUPPORT
+  ACE_ASSERT (cb_data_base_p);
 
-  ARDrone_StreamConfigurationsIterator_t iterator =
-      cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (iterator != cb_data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2 =
-    (*iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_2 != (*iterator).second.end ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_GtkCBData* directshow_cb_data_p =
+    NULL;
+  struct ARDrone_DirectShow_Configuration* directshow_configuration_p =
+    NULL;
+  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_cb_data_p =
+    NULL;
+  struct ARDrone_MediaFoundation_Configuration* mediafoundation_configuration_p =
+    NULL;
+  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator_2;
+  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_3;
+  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator_2;
+  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_cb_data_p =
+        static_cast<struct ARDrone_DirectShow_GtkCBData*> (cb_data_base_p);
+      directshow_configuration_p = directshow_cb_data_p->configuration;
+      ACE_ASSERT (directshow_configuration_p);
+      directshow_iterator_2 =
+        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator_2 != directshow_configuration_p->streamConfigurations.end ());
+      directshow_iterator_3 =
+        (*directshow_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (directshow_iterator_3 != (*directshow_iterator_2).second.end ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_cb_data_p =
+        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (cb_data_base_p);
+      mediafoundation_configuration_p =
+        mediafoundation_cb_data_p->configuration;
+      ACE_ASSERT (mediafoundation_configuration_p);
+      mediafoundation_iterator_2 =
+        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_iterator_2 != mediafoundation_configuration_p->streamConfigurations.end ());
+      mediafoundation_iterator_3 =
+        (*mediafoundation_iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_iterator_2).second.end ());
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      return TRUE;
+    }
+  } // end SWITCH
+#else
+  struct ARDrone_GtkCBData* cb_data_p =
+    static_cast<struct ARDrone_GtkCBData*> (cb_data_base_p);
+  struct ARDrone_Configuration* configuration_p = cb_data_p->configuration;
+  ACE_ASSERT (configuration_p);
+//  wlan_monitor_configuration_p = &configuration_p->WLANMonitorConfiguration;
+  ARDrone_StreamConfigurationsIterator_t iterator_2 =
+      configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (iterator_2 != configuration_p->streamConfigurations.end ());
+  ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
+    (*iterator_2).second.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator_3 != (*iterator_2).second.end ());
+#endif // ACE_WIN32 || ACE_WIN64
 
   GdkWindow* window_p = gtk_widget_get_window (widget_in);
   if (!window_p)
@@ -7739,46 +7826,69 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   //                                    &(*iterator_2).second.area.x,
   //                                    &(*iterator_2).second.area.y);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  (*iterator_2).second.area.left = event_in->configure.x;
-  (*iterator_2).second.area.right =
-    event_in->configure.x + event_in->configure.width;
-  (*iterator_2).second.area.top = event_in->configure.y;
-  (*iterator_2).second.area.bottom =
-    event_in->configure.y + event_in->configure.height;
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      (*directshow_iterator_3).second.second.area.left = event_in->configure.x;
+      (*directshow_iterator_3).second.second.area.right =
+        event_in->configure.x + event_in->configure.width;
+      (*directshow_iterator_3).second.second.area.top = event_in->configure.y;
+      (*directshow_iterator_3).second.second.area.bottom =
+        event_in->configure.y + event_in->configure.height;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      (*mediafoundation_iterator_3).second.second.area.left = event_in->configure.x;
+      (*mediafoundation_iterator_3).second.second.area.right =
+        event_in->configure.x + event_in->configure.width;
+      (*mediafoundation_iterator_3).second.second.area.top = event_in->configure.y;
+      (*mediafoundation_iterator_3).second.second.area.bottom =
+        event_in->configure.y + event_in->configure.height;
+      break;
+    } // end ELSE
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      return TRUE;
+    }
+  } // end SWITCH
 #else
-  (*iterator_2).second.area.x = event_in->configure.x;
-  (*iterator_2).second.area.y = event_in->configure.y;
-  (*iterator_2).second.area.height = event_in->configure.height;
-  (*iterator_2).second.area.width = event_in->configure.width;
-#endif
+  (*iterator_3).second.second.area.x = event_in->configure.x;
+  (*iterator_3).second.second.area.y = event_in->configure.y;
+  (*iterator_3).second.second.area.height = event_in->configure.height;
+  (*iterator_3).second.second.area.width = event_in->configure.width;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
 #else
   GdkPixbuf* pixbuf_p =
       gdk_pixbuf_new (GDK_COLORSPACE_RGB,
                       TRUE,
                       8,
-                      (*iterator_2).second.area.width, (*iterator_2).second.area.height);
+                      (*iterator_2).second.second.area.width, (*iterator_2).second.second.area.height);
   if (!pixbuf_p)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_pixbuf_new(), aborting\n")));
     return TRUE;
   } // end IF
-#endif
+#endif // GTK_CHECK_VERSION(3,0,0)
 
   { ACE_ASSERT (&cb_data_p->lock == (*iterator_2).second.pixelBufferLock);
     ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, TRUE);
     if (cb_data_p->pixelBuffer)
     {
-      g_object_unref (cb_data_p->pixelBuffer);
-      cb_data_p->pixelBuffer = NULL;
+      g_object_unref (cb_data_p->pixelBuffer); cb_data_p->pixelBuffer = NULL;
     } // end IF
 //    (*iterator_2).second.pixelBuffer = NULL;
     cb_data_p->pixelBuffer =
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
         gdk_pixbuf_get_from_window (window_p,
                                     0, 0,
                                     event_in->configure.width, event_in->configure.height);
@@ -7788,10 +7898,10 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
                                       NULL,
                                       0, 0,
                                       0, 0, event_in->configure.width, event_in->configure.height);
-#endif
+#endif // GTK_CHECK_VERSION(3,0,0)
     if (!cb_data_p->pixelBuffer)
     {
-#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to gdk_pixbuf_get_from_window(%@), aborting\n"),
                   window_p));
@@ -7801,7 +7911,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
                   GDK_DRAWABLE (window_p)));
 
       gdk_pixbuf_unref (pixbuf_p);
-#endif
+#endif // GTK_CHECK_VERSION(3,0,0)
       return TRUE;
     } // end IF
     (*iterator_2).second.pixelBuffer = cb_data_p->pixelBuffer;
@@ -7819,7 +7929,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
 //                  static_cast<gchar*> (key),
 //                  static_cast<gchar*> (value)));
   } // end lock scope
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   return TRUE;
 }

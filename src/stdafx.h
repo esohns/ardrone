@@ -12,6 +12,7 @@
 
 // Windows Header Files
 #include <windows.h>
+#include <intrin.h>
 #endif // _MSC_VER
 
 // C RunTime Header Files

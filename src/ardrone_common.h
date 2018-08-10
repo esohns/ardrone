@@ -29,7 +29,7 @@
 #include <strmif.h>
 #else
 #include <cstdint>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
 extern "C"
@@ -85,7 +85,7 @@ struct ARDrone_VideoFrame
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    : sample (NULL)
    , sampleTime (0.0)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   {}
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -93,7 +93,7 @@ struct ARDrone_VideoFrame
   double        sampleTime;
   //IMFSample*    sample;
   //LONGLONG      sampleTime;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 };
 
 struct ARDrone_MessageData
@@ -143,7 +143,7 @@ struct ARDrone_MessageData
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         if (videoFrame.sample)
           videoFrame.sample->Release ();
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
         break;
       }
       default:
@@ -253,7 +253,7 @@ struct ARDrone_AllocatorConfiguration
       AV_INPUT_BUFFER_PADDING_SIZE;
 #else
       FF_INPUT_BUFFER_PADDING_SIZE;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
     paddingBytes =
       std::max (static_cast<unsigned int> (COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE),
                 paddingBytes);

@@ -22,10 +22,10 @@
 #define ARDRONE_STREAM_H
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <minwindef.h>
+//#include <minwindef.h>
 #include <mfidl.h>
 #include <strmif.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Global_Macros.h"
 #include "ace/Synch_Traits.h"
@@ -37,9 +37,13 @@
 #include "stream_session_base.h"
 #include "stream_statemachine_control.h"
 
-#include "ardrone_message.h"
+//#include "ardrone_message.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
+
+// forward declarations
+class ARDrone_Message;
+class ARDrone_SessionMessage;
 
 extern const char video_stream_name_string_[];
 extern const char control_stream_name_string_[];

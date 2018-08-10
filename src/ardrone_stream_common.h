@@ -27,13 +27,13 @@
 
 #include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <combaseapi.h>
+//#include <combaseapi.h>
 #include <control.h>
 #include <d3d9.h>
 #include <evr.h>
 #include <strmif.h>
 #include <mfidl.h>
-#include <minwindef.h>
+//#include <minwindef.h>
 #else
 #include "linux/videodev2.h"
 #endif // ACE_WIN32 || ACE_WIN64
@@ -297,6 +297,26 @@ struct ARDrone_ModuleHandlerConfigurationBase
   std::string                    targetFileName;        // file sink module
 };
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef Stream_Configuration_T<//stream_name_string_,
+                               struct ARDrone_AllocatorConfiguration,
+                               struct ARDrone_StreamConfiguration,
+                               struct Stream_ModuleConfiguration,
+                               struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_StreamConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct ARDrone_DirectShow_ConnectionConfiguration,
+                                      struct ARDrone_AllocatorConfiguration,
+                                      ARDrone_DirectShow_StreamConfiguration_t> ARDrone_DirectShow_ConnectionConfiguration_t;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          ARDrone_DirectShow_ConnectionConfiguration_t,
+                          struct ARDrone_ConnectionState,
+                          struct ARDrone_Statistic> ARDrone_DirectShow_IConnection_t;
+typedef std::unordered_map<std::string, // module name
+                           ARDrone_DirectShow_ConnectionConfiguration_t> ARDrone_DirectShow_Stream_ConnectionConfigurations_t;
+typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+                                 ACE_INET_Addr,
+                                 ARDrone_DirectShow_ConnectionConfiguration_t,
+                                 struct ARDrone_ConnectionState,
+                                 struct ARDrone_Statistic,
+                                 struct ARDrone_UserData> ARDrone_DirectShow_IConnectionManager_t;
 struct ARDrone_DirectShow_FilterConfiguration;
 struct ARDrone_DirectShow_ModuleHandlerConfiguration
  : ARDrone_ModuleHandlerConfigurationBase
@@ -343,6 +363,26 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
   IMFVideoDisplayControl*                               windowController2;        // display module (EVR)
 };
 
+typedef Stream_Configuration_T<//stream_name_string_,
+                               struct ARDrone_AllocatorConfiguration,
+                               struct ARDrone_StreamConfiguration,
+                               struct Stream_ModuleConfiguration,
+                               struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_StreamConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct ARDrone_MediaFoundation_ConnectionConfiguration,
+                                      struct ARDrone_AllocatorConfiguration,
+                                      ARDrone_MediaFoundation_StreamConfiguration_t> ARDrone_MediaFoundation_ConnectionConfiguration_t;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          ARDrone_MediaFoundation_ConnectionConfiguration_t,
+                          struct ARDrone_ConnectionState,
+                          struct ARDrone_Statistic> ARDrone_MediaFoundation_IConnection_t;
+typedef std::unordered_map<std::string, // module name
+                           ARDrone_MediaFoundation_ConnectionConfiguration_t> ARDrone_MediaFoundation_Stream_ConnectionConfigurations_t;
+typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+                                 ACE_INET_Addr,
+                                 ARDrone_MediaFoundation_ConnectionConfiguration_t,
+                                 struct ARDrone_ConnectionState,
+                                 struct ARDrone_Statistic,
+                                 struct ARDrone_UserData> ARDrone_MediaFoundation_IConnectionManager_t;
 struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
  : ARDrone_ModuleHandlerConfigurationBase
 {
