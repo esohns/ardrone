@@ -772,6 +772,8 @@ if (UNIX)
  endif (GTK_SUPPORT)
 # target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
 elseif (WIN32)
+ set (CMAKE_EXE_LINKER_FLAGS /NODEFAULTLIB:\"libcmt.lib\")
+
 # target_link_libraries (${EXECUTABLE} ntdll.lib)
  link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE})
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
