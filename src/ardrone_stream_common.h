@@ -173,8 +173,7 @@ struct ARDrone_SessionData
     {
       if (direct3DDevice)
       {
-        direct3DDevice->Release ();
-        direct3DDevice = NULL;
+        direct3DDevice->Release (); direct3DDevice = NULL;
       } // end IF
       reference_count = rhs_in.direct3DDevice->AddRef ();
       direct3DDevice = rhs_in.direct3DDevice;
@@ -189,8 +188,7 @@ struct ARDrone_SessionData
     {
       if (builder)
       {
-        builder->Release ();
-        builder = NULL;
+        builder->Release (); builder = NULL;
       } // end IF
       reference_count = rhs_in.builder->AddRef ();
       builder = rhs_in.builder;
@@ -199,8 +197,7 @@ struct ARDrone_SessionData
     {
       if (windowController)
       {
-        windowController->Release ();
-        windowController = NULL;
+        windowController->Release (); windowController = NULL;
       } // end IF
       reference_count = rhs_in.windowController->AddRef ();
       windowController = rhs_in.windowController;
@@ -224,7 +221,11 @@ struct ARDrone_SessionData
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IGraphBuilder*                  builder;
   // *TODO*: mediafoundation only, remove ASAP
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
   IDirect3DDevice9Ex*             direct3DDevice;
+#else
+  IDirect3DDevice9*               direct3DDevice;
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
   // *TODO*: mediafoundation only, remove ASAP
   UINT                            direct3DManagerResetToken; // direct 3D manager 'id'
   struct _AMMediaType*            inputFormat;
@@ -352,7 +353,11 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
 #else
   std::string                                           deviceIdentifier;
 #endif // UNICODE
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
   IDirect3DDevice9Ex*                                   direct3DDevice;           // display module
+#else
+  IDirect3DDevice9*                                     direct3DDevice;           // display module
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
   struct _GUID                                          filterCLSID;              // display module
   struct ARDrone_DirectShow_FilterConfiguration*        filterConfiguration;      // display module
   struct _AMMediaType*                                  inputFormat;              // H264 decoder/display module
@@ -411,7 +416,11 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
 #else
   std::string                                                deviceIdentifier;         // device path (display-)
 #endif // UNICODE
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
   IDirect3DDevice9Ex*                                        direct3DDevice;           // display module
+#else
+  IDirect3DDevice9*                                          direct3DDevice;           // display module
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
   struct _AMMediaType*                                       inputFormat;              // H264 decoder/display module
   struct _AMMediaType*                                       outputFormat;             // H264 decoder/display module
   TOPOID                                                     rendererNodeId;
