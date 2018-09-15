@@ -548,6 +548,6 @@ typedef Stream_Configuration_T<//stream_name_string_,
 typedef std::unordered_map<std::string,
                            ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #endif // #ifndef ARDRONE_STREAM_COMMON_H

@@ -143,21 +143,21 @@ struct ARDrone_SignalConfiguration
 };
 #endif // ACE_WIN32 || ACE_WIN64
 
-struct ARDrone_WLANMonitorConfiguration
- : Net_WLAN_MonitorConfiguration
-{
-  ARDrone_WLANMonitorConfiguration ()
-   : Net_WLAN_MonitorConfiguration ()
-   , userData (NULL)
-  {
-    autoAssociate = ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-#endif // ACE_WIN32 || ACE_WIN64
-  }
-
-  struct ARDrone_UserData* userData;
-};
+//struct ARDrone_WLANMonitorConfiguration
+// : Net_WLAN_MonitorConfiguration
+//{
+//  ARDrone_WLANMonitorConfiguration ()
+//   : Net_WLAN_MonitorConfiguration ()
+//   , userData (NULL)
+//  {
+//    autoAssociate = ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    enableMediaStreamingMode = ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+//#endif // ACE_WIN32 || ACE_WIN64
+//  }
+//
+//  struct ARDrone_UserData* userData;
+//};
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 struct ARDrone_DirectShow_Configuration
@@ -184,7 +184,7 @@ struct ARDrone_DirectShow_Configuration
 
   struct ARDrone_DirectShow_SignalConfiguration                  signalConfiguration;
 
-  struct ARDrone_WLANMonitorConfiguration                        WLANMonitorConfiguration;
+  struct Net_WLAN_MonitorConfiguration                           WLANMonitorConfiguration;
   ARDrone_DirectShow_ConnectionConfigurations_t                  connectionConfigurations;
   struct Common_ParserConfiguration                              parserConfiguration;
   struct ARDrone_DirectShow_FilterConfiguration                  filterConfiguration;
@@ -216,7 +216,7 @@ struct ARDrone_MediaFoundation_Configuration
 
   struct ARDrone_MediaFoundation_SignalConfiguration signalConfiguration;
 
-  struct ARDrone_WLANMonitorConfiguration            WLANMonitorConfiguration;
+  struct Net_WLAN_MonitorConfiguration               WLANMonitorConfiguration;
   ARDrone_MediaFoundation_ConnectionConfigurations_t connectionConfigurations;
   struct Common_ParserConfiguration                  parserConfiguration;
   ARDrone_MediaFoundation_StreamConfigurations_t     streamConfigurations;
@@ -246,7 +246,7 @@ struct ARDrone_Configuration
 
   struct ARDrone_SignalConfiguration       signalConfiguration;
 
-  struct ARDrone_WLANMonitorConfiguration  WLANMonitorConfiguration;
+  struct Net_WLAN_MonitorConfiguration     WLANMonitorConfiguration;
   ARDrone_ConnectionConfigurations_t       connectionConfigurations;
   struct Common_ParserConfiguration        parserConfiguration;
   ARDrone_StreamConfigurations_t           streamConfigurations;
@@ -439,8 +439,5 @@ typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
 typedef ACE_Singleton<ARDrone_GTK_Manager_t,
                       typename ACE_MT_SYNCH::MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
 #endif // ACE_WIN32 || ACE_WIN64
-typedef Common_TaskBase_T<ACE_MT_SYNCH,
-                          Common_TimePolicy_t,
-                          Common_ILock_T<ACE_MT_SYNCH> > ARDrone_IGTK_Manager_t;
 
 #endif // #ifndef ARDRONE_CONFIGURATION_H

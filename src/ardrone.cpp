@@ -780,7 +780,7 @@ do_processArguments (int argc_in,
   bufferSize_out              = ARDRONE_MESSAGE_BUFFER_SIZE;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out             = false;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   debugFfmpeg_out             = false;
   debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
@@ -793,11 +793,11 @@ do_processArguments (int argc_in,
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   mediaFramework_out          = MODULE_LIB_DEFAULT_MEDIAFRAMEWORK;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   portNumber_out              = ARDRONE_PORT_TCP_VIDEO;
   useReactor_out              =
       (NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
@@ -1134,44 +1134,29 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_initialize_directshow"));
 
-  HRESULT result = E_FAIL;
+  BOOL result = E_FAIL;
   std::list<std::wstring> filter_pipeline;
-  BOOL result_2 = FALSE;
 
   // sanity check(s)
   ACE_ASSERT (!IGraphBuilder_out);
   if (mediaType_out)
     Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_out);
 
-  if (!coInitialize_in)
-    goto continue_;
-
-  result = CoInitializeEx (NULL,
-                           (COINIT_MULTITHREADED    |
-                            COINIT_DISABLE_OLE1DDE  |
-                            COINIT_SPEED_OVER_MEMORY));
-  if (FAILED (result))
-  { // *NOTE*: most probable reason: RPC_E_CHANGED_MODE
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to CoInitializeEx(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
-  } // end IF
-
-continue_:
+  Stream_MediaFramework_DirectShow_Tools::initialize (coInitialize_in);
 #if defined (_DEBUG)
   DWORD dwFlags = GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
   HMODULE module_h = NULL;
-  result_2 = GetModuleHandleEx (dwFlags,
-                                NULL,
-                                &module_h);
-  if (!result_2)
+  result = GetModuleHandleEx (dwFlags,
+                              NULL,
+                              &module_h);
+  if (!result)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to GetModuleHandleEx(): \"%s\", aborting\n"),
                 ACE_TEXT (Common_Tools::errorToString (::GetLastError ()).c_str ())));
     return false;
   } // end IF
-
+  ACE_ASSERT (module_h);
   DbgInitialise (module_h);
 
   DWORD debug_log_type = (LOG_ERROR   |
@@ -1191,7 +1176,7 @@ continue_:
   //DWORD debug_log_level = CONNECT_TRACE_LEVEL;
   DbgSetModuleLevel (debug_log_type,
                      debug_log_level);
-#endif
+#endif // _DEBUG
 
   // sanity check(s)
   ACE_ASSERT (!mediaType_out);
@@ -1304,10 +1289,10 @@ continue_:
     GdkDisplay* display_p =
       gdk_display_manager_get_default_display (gdk_display_manager_get ());
     ACE_ASSERT (display_p);
-#if GTK_CHECK_VERSION (3,0,0)
+    GdkRectangle rectangle_s;
+#if GTK_CHECK_VERSION(3,22,0)
     GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
     ACE_ASSERT (monitor_p);
-    struct _cairo_rectangle_int rectangle_s;
     gdk_monitor_get_geometry (monitor_p,
                               &rectangle_s);
 #else
@@ -1317,11 +1302,10 @@ continue_:
       gdk_display_get_default_screen (display_p);
     ACE_ASSERT (screen_p);
     gint monitor_i = gdk_screen_get_primary_monitor (screen_p);
-    struct _GdkRectangle rectangle_s;
     gdk_screen_get_monitor_geometry (screen_p,
                                      monitor_i,
                                      &rectangle_s);
-#endif
+#endif // GTK_CHECK_VERSION(3,22,0)
     video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
     video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
   } // end IF
@@ -1344,33 +1328,32 @@ continue_:
 error:
   if (mediaType_out)
     Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_out);
-  IGraphBuilder_out->Release ();
-  IGraphBuilder_out = NULL;
-
-  if (coInitialize_in)
-    CoUninitialize ();
+  if (IGraphBuilder_out)
+  {
+    IGraphBuilder_out->Release (); IGraphBuilder_out = NULL;
+  } // end IF
 
   return false;
 }
 void
 do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
-                        struct _AMMediaType*& mediaType_inout)
+                        struct _AMMediaType*& mediaType_inout,
+                        bool coInitialize_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_finalize_directshow"));
 
   if (IGraphBuilder_inout)
   {
-    IGraphBuilder_inout->Release ();
-    IGraphBuilder_inout = NULL;
+    IGraphBuilder_inout->Release (); IGraphBuilder_inout = NULL;
   } // end IF
   if (mediaType_inout)
     Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_inout);
 
 #if defined (_DEBUG)
   DbgTerminate ();
-#endif
+#endif // _DEBUG
 
-  CoUninitialize ();
+  Stream_MediaFramework_DirectShow_Tools::finalize (coInitialize_in);
 }
 
 bool
@@ -1488,7 +1471,7 @@ do_work (int argc_in,
   bool result_2 = false;
   std::string stream_name_string;
   struct ARDrone_AllocatorConfiguration* allocator_configuration_p = NULL;
-  struct ARDrone_WLANMonitorConfiguration* wlan_monitor_configuration_p = NULL;
+  struct Net_WLAN_MonitorConfiguration* wlan_monitor_configuration_p = NULL;
   struct Common_EventDispatchConfiguration* dispatch_configuration_p = NULL;
 
   // initialize common settings
@@ -1644,10 +1627,9 @@ do_work (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
   Common_Timer_Manager_t* timer_manager_p = NULL;
   struct Common_TimerConfiguration timer_configuration;
-//  int group_id = -1;
   struct Common_EventDispatchState dispatch_state_s;
   struct ARDrone_StreamConfiguration stream_configuration;
-  ARDrone_IGTK_Manager_t* igtk_manager_p = NULL;
+  Common_UI_IGTK_SynchManager_t* igtk_manager_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ConnectionConfiguration_t directshow_connection_configuration;
   ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_connection_iterator;
@@ -1665,6 +1647,9 @@ do_work (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
   struct Stream_ModuleConfiguration module_configuration;
 
+  timer_configuration.dispatch =
+    (useReactor_in ? COMMON_TIMER_DISPATCH_REACTOR 
+                   : COMMON_TIMER_DISPATCH_PROACTOR);
   timer_manager_p = COMMON_TIMERMANAGER_SINGLETON::instance ();
   ACE_ASSERT (timer_manager_p);
   if (!timer_manager_p->initialize (timer_configuration))
@@ -2115,8 +2100,7 @@ do_work (int argc_in,
   wlan_monitor_configuration_p->debug = debugNl80211_in;
 #endif // _DEBUG
 #endif // NL80211_SUPPORT
-  wlan_monitor_configuration_p->frequency =
-      ARDRONE_DEFAULT_WLAN_FREQUENCY;
+  wlan_monitor_configuration_p->frequency = ARDRONE_DEFAULT_WLAN_FREQUENCY;
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   if (useReactor_in)
@@ -2141,12 +2125,24 @@ do_work (int argc_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
+      wlan_monitor_configuration_p->autoAssociate =
+        ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      wlan_monitor_configuration_p->enableMediaStreamingMode =
+        ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+#endif // ACE_WIN32 || ACE_WIN64
       wlan_monitor_configuration_p->userData =
         directshow_configuration_p->userData;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
+      wlan_monitor_configuration_p->autoAssociate =
+        ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      wlan_monitor_configuration_p->enableMediaStreamingMode =
+        ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+#endif // ACE_WIN32 || ACE_WIN64
       wlan_monitor_configuration_p->userData =
         mediafoundation_configuration_p->userData;
       break;
@@ -2160,6 +2156,12 @@ do_work (int argc_in,
     }
   } // end SWITCH
 #else
+  wlan_monitor_configuration_p->autoAssociate =
+    ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  wlan_monitor_configuration_p->enableMediaStreamingMode =
+    ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+#endif // ACE_WIN32 || ACE_WIN64
   wlan_monitor_configuration_p->userData =
     configuration_p->userData;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -2210,7 +2212,8 @@ do_work (int argc_in,
       directshow_connection_iterator =
         directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
       ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
-      directshow_stream_connection_iterator = (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      directshow_stream_connection_iterator =
+        (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
       (*directshow_stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
         &((*directshow_stream_connection_iterator).second);
@@ -2240,7 +2243,8 @@ do_work (int argc_in,
       directshow_connection_iterator =
         directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
       ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
-      directshow_stream_connection_iterator = (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+      directshow_stream_connection_iterator =
+        (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
       (*directshow_stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
         &((*directshow_stream_connection_iterator).second);
@@ -2253,7 +2257,7 @@ do_work (int argc_in,
       directshow_connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress =
         address_in;
       directshow_connection_configuration.socketHandlerConfiguration.socketConfiguration_3.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
-                                                                                                             1);
+                                                                                                                        1);
       directshow_connection_configuration.socketHandlerConfiguration.socketConfiguration_3.connect =
         !useReactor_in;
       directshow_connection_configuration.socketHandlerConfiguration.socketConfiguration_3.writeOnly =
@@ -2358,7 +2362,8 @@ do_work (int argc_in,
       //connection_configuration.streamConfiguration =
       //  connection_configuration.mediaFoundationStreamConfiguration;
       ACE_ASSERT (false); // *TODO*
-      break;
+      ACE_NOTSUP;
+      ACE_NOTREACHED (return;)
     }
     default:
     {
@@ -2398,7 +2403,8 @@ do_work (int argc_in,
   connection_iterator =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
-  stream_connection_iterator = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  stream_connection_iterator =
+    (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
   (*stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
     &((*stream_connection_iterator).second);
@@ -2428,7 +2434,8 @@ do_work (int argc_in,
   connection_iterator =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
-  stream_connection_iterator = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  stream_connection_iterator =
+    (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
   (*stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
     &((*stream_connection_iterator).second);
@@ -2490,16 +2497,16 @@ do_work (int argc_in,
 
   // video
   //  // *TODO*: verify the given address
-  //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
-  //                                              interface_identifier_string))
+  //  if (!Net_Common_Tools::IPAddressToInterface (address_in,
+  //                                               interface_identifier_string))
   //  {
   //    ACE_DEBUG ((LM_ERROR,
   //                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
   //                ACE_TEXT (Net_Common_Tools::IPAddressToString (address_in).c_str ())));
   //    goto error;
   //  } // end IF
-  //  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
-  //                                              CBData_in.localSAP))
+  //  if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
+  //                                               CBData_in.localSAP))
   //  {
   //    ACE_DEBUG ((LM_ERROR,
   //                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
@@ -2521,7 +2528,8 @@ do_work (int argc_in,
   connection_iterator =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
-  stream_connection_iterator = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  stream_connection_iterator 
+    = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
   (*stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
     &((*stream_connection_iterator).second);
@@ -2536,7 +2544,7 @@ do_work (int argc_in,
   connection_iterator =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (CBData_in->mediaFramework)
@@ -2719,7 +2727,8 @@ do_work (int argc_in,
   connection_iterator =
     configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != configuration_p->connectionConfigurations.end ());
-  modulehandler_configuration.connectionConfigurations = &(*connection_iterator).second;
+  modulehandler_configuration.connectionConfigurations =
+    &(*connection_iterator).second;
   (*navdata_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                          std::make_pair (module_configuration,
                                                                                          modulehandler_configuration)));
@@ -2731,7 +2740,8 @@ do_work (int argc_in,
   connection_iterator =
     configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (connection_iterator != configuration_p->connectionConfigurations.end ());
-  modulehandler_configuration.connectionConfigurations = &(*connection_iterator).second;
+  modulehandler_configuration.connectionConfigurations =
+    &(*connection_iterator).second;
   (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
@@ -2940,7 +2950,6 @@ do_work (int argc_in,
 //					 iterator++)
 //				g_source_remove (*iterator);
 //		} // end lock scope
-
     goto clean;
   } // end IF
 
@@ -3084,7 +3093,7 @@ do_work (int argc_in,
     result_2 =
       video_stream.initialize ((*video_streamconfiguration_iterator).second);
 continue_:
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -3195,7 +3204,7 @@ continue_:
     istream_control_p->start ();
     result_2 = istream_control_p->isRunning ();
 continue_2:
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -3277,13 +3286,10 @@ continue_2:
     istream_control_p->wait (true,
                              false,
                              false);
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   } // end IF
   else
     igtk_manager_p->wait ();
-
-  //Common_Tools::dispatchEvents (useReactor_in,
-  //                              group_id);
 
   // step9: clean up
 //  result = event_handler_module.close ();
@@ -3881,9 +3887,9 @@ ACE_TMAIN (int argc_in,
   } // end IF
 
   // step8: (media) frameworks
-  Stream_Module_Decoder_Tools::initialize ();
+  //Stream_Module_Decoder_Tools::initialize ();
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Stream_Module_Device_Tools::initialize ();
+  //Stream_Module_Device_Tools::initialize (true); // initialize media frameworks ?
   switch (media_framework_e)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -3891,7 +3897,7 @@ ACE_TMAIN (int argc_in,
       result_2 =
         do_initialize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
                                   directshow_configuration.pinConfiguration.format,
-                                  true,
+                                  true, // initialize COM ?
                                   directshow_video_modulehandler_configuration.fullScreen);
       break;
     }
@@ -3930,39 +3936,42 @@ ACE_TMAIN (int argc_in,
 
   // step9: run program
   timer.start ();
-  do_work (argc_in,
-           argv_in,
-           address,
-           buffer_size,
+  COMMON_TRY {
+    do_work (argc_in,
+             argv_in,
+             address,
+             buffer_size,
 #if defined (_DEBUG)
-           debug_ffmpeg,
-           debug_scanner,
+             debug_ffmpeg,
+             debug_scanner,
 #endif // _DEBUG
-           fullscreen,
-           interface_identifier,
-           use_reactor,
-           SSID_string,
-           interface_definition_file,
-           monitor_WLAN,
+             fullscreen,
+             interface_identifier,
+             use_reactor,
+             SSID_string,
+             interface_definition_file,
+             monitor_WLAN,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #if defined (NL80211_USE)
 #if defined (_DEBUG)
-           debug_nl80211,
+             debug_nl80211,
 #endif // _DEBUG
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
-           cb_data_base_p,
-           signal_set,
-           ignored_signal_set,
-           previous_signal_actions,
+             cb_data_base_p,
+             signal_set,
+             ignored_signal_set,
+             previous_signal_actions,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-           show_console,
-           directshow_signal_handler,
-           mediafoundation_signal_handler);
+             show_console,
+             directshow_signal_handler,
+             mediafoundation_signal_handler);
 #else
-           signal_handler);
+             signal_handler);
 #endif // ACE_WIN32 || ACE_WIN64
+  } COMMON_CATCH (...) {
+  }
   timer.stop ();
 
   // debug info
@@ -3990,7 +3999,8 @@ done:
       case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
       {
         do_finalize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
-                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat);
+                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat,
+                                true); // finalize COM ?
         break;
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4059,7 +4069,8 @@ done:
       case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
       {
         do_finalize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
-                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat);
+                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat,
+                                true); // finalize COM ?
         break;
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
