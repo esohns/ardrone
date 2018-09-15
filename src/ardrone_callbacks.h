@@ -81,7 +81,6 @@ G_MODULE_EXPORT void glarea_resize_cb (GtkGLArea*, gint, gint, gpointer);
 #if defined (GTKGLAREA_SUPPORT)
 G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
 G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
-G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
 #else
 G_MODULE_EXPORT void glarea_size_allocate_event_cb (GtkWidget*, GdkRectangle*, gpointer);
 G_MODULE_EXPORT gboolean glarea_draw_cb (GtkWidget*, cairo_t*, gpointer);
@@ -91,7 +90,6 @@ G_MODULE_EXPORT gboolean glarea_draw_cb (GtkWidget*, cairo_t*, gpointer);
 #if defined (GTKGLAREA_SUPPORT)
 G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
 G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);
-G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
 #else
 G_MODULE_EXPORT void glarea_configure_event_cb (GtkWidget*, GdkEvent*, gpointer);
 G_MODULE_EXPORT gboolean glarea_expose_event_cb (GtkWidget*, cairo_t*, gpointer);

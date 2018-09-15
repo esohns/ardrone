@@ -532,37 +532,6 @@ elseif (WIN32)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../openssl/include)
 
- # *TODO*: repair pkgconfig support
-# gtk
- if (GTK_SUPPORT)
-  if (GTK3_SUPPORT)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/atk-1.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/gdk-pixbuf-2.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/cairo)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/pango-1.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/glib-2.0/include)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/glib-2.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/include/gtk-3.0)
-  else ()
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/atk-1.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/gdk-pixbuf-2.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/cairo)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/pango-1.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/glib-2.0/include)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/glib-2.0)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/gtk-2.0/include)
-   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/include/gtk-2.0)
-  endif ()
-  if (GTKGL_SUPPORT)
-   if (GTKGLAREA_SUPPORT)
-    include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglarea)
-   else ()
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk)
-   endif (GTKGLAREA_SUPPORT)
-  endif (GTKGL_SUPPORT)
- endif (GTK_SUPPORT)
-
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../freeglut/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../FreeGLUT/freeglut/freeglut/include)
 
@@ -687,7 +656,13 @@ add_executable (${EXECUTABLE}
                 stdafx.h
                 ${source_files}
                 ${script_files}
-                etc/ardrone.glade
+                etc/ardrone.3ds
+                etc/ardrone.gtk2
+                etc/ardrone.gtk3
+                etc/ardrone.jpg
+                etc/ardrone.png
+                etc/ardrone_small.ico
+                etc/ardrone_small.png
                 etc/settings.ini)
 
 if (WIN32)
@@ -696,6 +671,10 @@ if (WIN32)
  # *NOTE*: DirectShow uses 'DEBUG'
   add_definitions (-DDEBUG)
  endif ()
+
+ if (MSVC)
+  add_definitions (-DSTRSAFE_NO_DEPRECATE)
+ endif (MSVC)
 endif (WIN32)
 
 add_definitions (-DFFMPEG_SUPPORT)
@@ -796,35 +775,13 @@ elseif (WIN32)
 
  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimpd.lib)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
-# *TODO*: repair WIN32 pkgconfig support
- if (GTK_SUPPORT)
-  if (GTK3_SUPPORT)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/gio-2.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/glib-2.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/gobject-2.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/gthread-2.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/gdk-3.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/gtk-3.0.lib)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk3/lib/pango-1.0.lib)
-  else ()
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgio-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libglib-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgobject-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgthread-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgdk-win32-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libgtk-win32-2.0.dll.a)
-   target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../gtk2/lib/libpango-1.0.dll.a)
-  endif ()
-  if (GTKGL_SUPPORT)
-   target_link_libraries (${EXECUTABLE} ${OPENGL_LIBRARIES})
-#   target_link_libraries (${EXECUTABLE} OpenGL32.lib)
-   target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
-  endif (GTKGL_SUPPORT)
- endif (GTK_SUPPORT)
 
- # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gtk/.libs/libgtkglext-win32-1.0.dll.a)
- # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglext/gdk/.libs/libgdkglext-win32-1.0.dll.a)
- target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
+ if (GTKGL_SUPPORT)
+  target_link_libraries (${EXECUTABLE} OpenGL32.lib)
+  target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
+  target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../libepoxy/cmake/${CMAKE_BUILD_TYPE}/epoxy1_static.lib)
+  target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
+ endif (GTKGL_SUPPORT)
 endif ()
 
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
@@ -911,7 +868,13 @@ elseif (WIN32)
           COMPONENT bin)
 endif ()
 install (FILES
-         etc/ardrone.glade
+         etc/ardrone.3ds
+         etc/ardrone.gtk2
+         etc/ardrone.gtk3
+         etc/ardrone.jpg
+         etc/ardrone.png
+         etc/ardrone_small.ico
+         etc/ardrone_small.png
          DESTINATION etc COMPONENT config)
 install (FILES
          etc/settings.ini
@@ -924,92 +887,65 @@ install (FILES
 
 ##########################################
 
+#cmake_policy (SET CMP0053 OLD)
+set (ENVIRONMENT "")
+if (UNIX)
+ file (TO_NATIVE_PATH ${PROJECT_BINARY_DIR}/../src WORKING_DIRECTORY)
+ if (GTK3_SUPPORT)
+  set (ARGS "-l -t -u./etc/ardrone.gtk3")
+ else ()
+  set (ARGS "-l -t -u./etc/ardrone.gtk2")
+ endif (GTK3_SUPPORT)
+ set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
+                           ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
+ set (ENVIRONMENT "GDK_BACKEND=x11")
+elseif (WIN32)
+ string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src) 
+ if (GTK3_SUPPORT)
+  set (ARGS "-c -l -t -u.\\\\etc\\\\ardrone.gtk3")
+ else ()
+  set (ARGS "-c -l -t -u.\\\\etc\\\\ardrone.gtk2")
+ endif (GTK3_SUPPORT)
+ set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
+                           ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
+                           ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
+                           ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
+#                           G:/software/Development/dll
+#                           ${PROJECT_SOURCE_DIR}/../openssl/bin
+                           ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
+ if (GTK_SUPPORT)
+  if (GTK3_SUPPORT)
+   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                             ${PROJECT_SOURCE_DIR}/../gtk3/bin)
+  elseif (GTK2_SUPPORT)
+   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                             ${PROJECT_SOURCE_DIR}/../gtk2/bin)
+  endif (GTK3_SUPPORT)
+ endif (GTK_SUPPORT)
+endif ()
+
 if (UNIX)
  set (SHELL_WRAPPER "${PROJECT_SOURCE_DIR}/../libCommon/scripts/shell_wrapper.sh")
  if (NOT EXISTS ${SHELL_WRAPPER})
   message (FATAL_ERROR "could not find shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting")
  endif ()
- create_target_launcher (${EXECUTABLE}
-                         ARGS "-l -t"
-#                         FORWARD_ARGS
-                         RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib
-                                              ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin
-                                              ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/Debug
-                                              ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/Debug
-                                              ${PROJECT_SOURCE_DIR}/cmake/src/Debug
-                                              ${PROJECT_SOURCE_DIR}/cmake/src/modules/dev/Debug
-                                              /usr/local/lib
-                         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
-                         ENVIRONMENT foo=bar)
 elseif (WIN32)
- set (ENVIRONMENT "")
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   if (DEBUG_HEAP_SUPPORT)
   else ()
    set (ENVIRONMENT "${ENVIRONMENT} _NO_DEBUG_HEAP=1 foo=bar")
   endif ()
  endif ()
-
- if (GTK3_SUPPORT)
-  create_target_launcher (${EXECUTABLE}
-                          ARGS "-c -l -t"
-#                        FORWARD_ARGS
-                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
-#                                              ${PROJECT_SOURCE_DIR}/../openssl/bin
-                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavformat
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
-                                               ${PROJECT_SOURCE_DIR}/../gtk/gtk/Win32/debug/bin
-                                               ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
-                                               G:/software/Development/dll
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/${CMAKE_BUILD_TYPE}
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/${CMAKE_BUILD_TYPE}
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
-#                                              ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
-                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
-                          ENVIRONMENT ${ENVIRONMENT})
- else ()
-  create_target_launcher (${EXECUTABLE}
-                          ARGS "-c -l -t"
-#                        FORWARD_ARGS
-                          RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib
-#                                              ${PROJECT_SOURCE_DIR}/../openssl/bin
-                                               ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavformat
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
-                                               ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
-                                               ${PROJECT_SOURCE_DIR}/../gtk2/bin
-                                               G:/software/Development/dll
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/err/${CMAKE_BUILD_TYPE}
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/image/${CMAKE_BUILD_TYPE}
-#                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/math/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libCommon/cmake/src/ui/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dec/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/dev/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/file/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/misc/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/net/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/stat/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/../libACEStream/cmake/src/modules/vis/${CMAKE_BUILD_TYPE}
-                                               ${PROJECT_SOURCE_DIR}/cmake/src/${CMAKE_BUILD_TYPE}
-                          WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src
-                          ENVIRONMENT ${ENVIRONMENT})
- endif ()
 endif ()
+create_target_launcher (${EXECUTABLE}
+                        ARGS ${ARGS}
+#                         FORWARD_ARGS
+                        RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                        WORKING_DIRECTORY ${WORKING_DIRECTORY}
+                        ENVIRONMENT ${ENVIRONMENT})

@@ -180,9 +180,6 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkEntryBuffer" id="entrybuffer_address">
-    <property name="text" translatable="yes">192.168.1.1</property>
-  </object>
   <object class="GtkAboutDialog" id="dialog_about">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -226,6 +223,10 @@
   </object>
   <object class="GtkEntryBuffer" id="entrybuffer_SSID">
     <property name="text" translatable="yes">ardrone2_291480</property>
+    <property name="max_length">32</property>
+  </object>
+  <object class="GtkEntryBuffer" id="entrybuffer_address">
+    <property name="text" translatable="yes">192.168.1.1</property>
   </object>
   <object class="GtkDialog" id="dialog_main">
     <property name="can_focus">False</property>
@@ -239,24 +240,17 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkBox" id="hbox_main">
+          <object class="GtkHBox" id="hbox_main">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
             <child>
-              <object class="GtkBox" id="vbox_controls">
+              <object class="GtkVBox" id="vbox_controls">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">start</property>
-                <property name="valign">start</property>
-                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkBox" id="hbox_actions_information">
+                  <object class="GtkHBox" id="hbox_actions_information">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">start</property>
                     <child>
                       <object class="GtkFrame" id="frame_actions">
                         <property name="visible">True</property>
@@ -392,10 +386,9 @@
                             <property name="xalign">0</property>
                             <property name="yalign">0</property>
                             <child>
-                              <object class="GtkBox" id="vbox_configuration">
+                              <object class="GtkVBox" id="vbox_configuration">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="orientation">vertical</property>
                                 <child>
                                   <object class="GtkFrame" id="frame_source">
                                     <property name="visible">True</property>
@@ -408,10 +401,9 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <child>
-                                          <object class="GtkBox" id="vbox_source">
+                                          <object class="GtkVBox" id="vbox_source">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="orientation">vertical</property>
                                             <child>
                                               <object class="GtkComboBox" id="combobox_wlan_interface">
                                                 <property name="visible">True</property>
@@ -592,10 +584,9 @@
                                         <property name="xalign">0</property>
                                         <property name="yalign">0</property>
                                         <child>
-                                          <object class="GtkBox" id="vbox_display">
+                                          <object class="GtkVBox" id="vbox_display">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="orientation">vertical</property>
                                             <child>
                                               <object class="GtkComboBox" id="combobox_display_device">
                                                 <property name="visible">True</property>
@@ -661,10 +652,9 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <child>
-                                          <object class="GtkBox" id="vbox_save_options">
+                                          <object class="GtkVBox" id="vbox_save_options">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="orientation">vertical</property>
                                             <child>
                                               <object class="GtkComboBox" id="combobox_save_format">
                                                 <property name="visible">True</property>
@@ -700,7 +690,7 @@
                                                 <property name="title" translatable="yes">choose a directory...</property>
                                               </object>
                                               <packing>
-                                                <property name="expand">False</property>
+                                                <property name="expand">True</property>
                                                 <property name="fill">True</property>
                                                 <property name="position">1</property>
                                               </packing>
@@ -734,35 +724,44 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="box_orientation">
+                      <object class="GtkVBox" id="vbox_orientation">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
-                        <property name="orientation">vertical</property>
                         <child>
                           <placeholder/>
                         </child>
                         <child>
-                          <object class="GtkGrid" id="grid_orientation">
-                            <property name="width_request">100</property>
+                          <object class="GtkTable" id="table_orientation">
                             <property name="visible">True</property>
-                            <property name="sensitive">False</property>
                             <property name="can_focus">False</property>
-                            <property name="column_homogeneous">True</property>
+                            <property name="n_rows">3</property>
+                            <property name="n_columns">2</property>
+                            <property name="homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label_roll">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">roll</property>
                                 <property name="label" translatable="yes">roll</property>
                                 <property name="justify">center</property>
                                 <property name="track_visited_links">False</property>
                               </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label_roll_value">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">roll</property>
+                                <property name="label" translatable="yes">0</property>
+                                <property name="justify">center</property>
+                                <property name="track_visited_links">False</property>
+                              </object>
                               <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -770,47 +769,14 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">pitch</property>
                                 <property name="label" translatable="yes">pitch</property>
                                 <property name="justify">center</property>
                                 <property name="track_visited_links">False</property>
                               </object>
                               <packing>
-                                <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label_yaw">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">yaw</property>
-                                <property name="justify">center</property>
-                                <property name="track_visited_links">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">2</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label_roll_value">
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">0</property>
-                                <property name="justify">center</property>
-                                <property name="track_visited_links">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
+                                <property name="bottom_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -818,15 +784,31 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">pitch</property>
                                 <property name="label" translatable="yes">0</property>
                                 <property name="justify">center</property>
                                 <property name="track_visited_links">False</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
+                                <property name="bottom_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label_yaw">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">yaw</property>
+                                <property name="label" translatable="yes">yaw</property>
+                                <property name="justify">center</property>
+                                <property name="track_visited_links">False</property>
+                              </object>
+                              <packing>
+                                <property name="top_attach">2</property>
+                                <property name="bottom_attach">3</property>
                               </packing>
                             </child>
                             <child>
@@ -834,22 +816,23 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">yaw</property>
                                 <property name="label" translatable="yes">0</property>
                                 <property name="justify">center</property>
                                 <property name="track_visited_links">False</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
                                 <property name="top_attach">2</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
+                                <property name="bottom_attach">3</property>
                               </packing>
                             </child>
                           </object>
                           <packing>
                             <property name="expand">True</property>
                             <property name="fill">False</property>
-                            <property name="position">1</property>
+                            <property name="position">2</property>
                           </packing>
                         </child>
                       </object>
@@ -870,8 +853,6 @@
                   <object class="GtkFrame" id="frame_options">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">start</property>
                     <property name="label_xalign">0</property>
                     <property name="label_yalign">0</property>
                     <child>
@@ -881,10 +862,9 @@
                         <property name="xalign">0</property>
                         <property name="yalign">0</property>
                         <child>
-                          <object class="GtkBox" id="vbox_options">
+                          <object class="GtkVBox" id="vbox_options">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkFrame" id="frame_protocol_options">
                                 <property name="visible">True</property>
@@ -899,7 +879,7 @@
                                     <property name="xalign">0</property>
                                     <property name="yalign">0</property>
                                     <child>
-                                      <object class="GtkBox" id="hbox_protocol_options">
+                                      <object class="GtkHBox" id="hbox_protocol_options">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <child>
@@ -913,13 +893,12 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
                                                 <child>
-                                                  <object class="GtkBox" id="vbox_options_display">
+                                                  <object class="GtkVBox" id="vbox_options_display">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="orientation">vertical</property>
                                                     <property name="homogeneous">True</property>
                                                     <child>
-                                                      <object class="GtkBox" id="box_display">
+                                                      <object class="GtkHBox" id="hbox_display">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
                                                         <child>
@@ -932,7 +911,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
                                                             <child>
-                                                            <object class="GtkBox" id="box_display_video">
+                                                            <object class="GtkHBox" id="hbox_display_video">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
                                                             <property name="homogeneous">True</property>
@@ -1089,10 +1068,9 @@
                                                 <property name="xalign">0</property>
                                                 <property name="yalign">0</property>
                                                 <child>
-                                                  <object class="GtkBox" id="vbox_options_other">
+                                                  <object class="GtkVBox" id="vbox_options_other">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="orientation">vertical</property>
                                                     <property name="homogeneous">True</property>
                                                     <child>
                                                       <object class="GtkCheckButton" id="checkbutton_asynch">
@@ -1115,10 +1093,9 @@
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkBox" id="box_associate">
+                                                      <object class="GtkVBox" id="vbox_associate">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="orientation">vertical</property>
                                                         <child>
                                                           <object class="GtkCheckButton" id="checkbutton_associate">
                                                             <property name="related_action">toggleaction_associate</property>
@@ -1214,11 +1191,10 @@
                         <property name="xalign">0</property>
                         <property name="yalign">0</property>
                         <child>
-                          <object class="GtkBox" id="vbox_statistic">
+                          <object class="GtkVBox" id="vbox_statistic">
                             <property name="visible">True</property>
                             <property name="sensitive">False</property>
                             <property name="can_focus">False</property>
-                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkTable" id="table_statistic">
                                 <property name="visible">True</property>
@@ -1267,7 +1243,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_session_messages_mavlink</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1304,7 +1279,6 @@
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_session_messages_navdata</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1346,7 +1320,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_session_messages_control</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1372,7 +1345,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_data_messages_control</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1408,7 +1380,6 @@
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_data_messages_navdata</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1448,7 +1419,6 @@
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_data_messages_mavlink</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1492,7 +1462,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_session_messages_video</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1516,7 +1485,6 @@
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_data_messages_video</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1560,7 +1528,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
                                     <property name="secondary_icon_sensitive">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_connections</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1584,7 +1551,6 @@
                                     <property name="invisible_char">●</property>
                                     <property name="xalign">1</property>
                                     <property name="caps_lock_warning">False</property>
-                                    <property name="input_purpose">number</property>
                                     <property name="adjustment">adjustment_data</property>
                                     <property name="numeric">True</property>
                                     <property name="wrap">True</property>
@@ -1646,8 +1612,6 @@
               <object class="GtkFrame" id="frame_video">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
                 <property name="label_xalign">0</property>
                 <property name="label_yalign">0</property>
                 <child>
@@ -1667,8 +1631,6 @@
                         <property name="has_tooltip">True</property>
                         <property name="tooltip_text" translatable="yes">video</property>
                         <property name="double_buffered">False</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
                         <signal name="draw" handler="drawingarea_video_draw_cb" swapped="no"/>
                         <signal name="configure-event" handler="drawingarea_video_configure_cb" swapped="no"/>
                         <signal name="key-press-event" handler="drawingarea_video_key_press_event_cb" swapped="no"/>
@@ -1696,7 +1658,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="hbox_status">
+          <object class="GtkHBox" id="hbox_status">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -1879,7 +1841,6 @@
     <property name="title" translatable="yes">ARDrone</property>
     <property name="resizable">False</property>
     <property name="destroy_with_parent">True</property>
-    <property name="hide_titlebar_when_maximized">True</property>
     <property name="accept_focus">False</property>
     <property name="focus_on_map">False</property>
     <property name="decorated">False</property>

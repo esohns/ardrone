@@ -262,7 +262,7 @@ typedef std::unordered_map<std::string, // stream name
 typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 #endif // ACE_WIN32 || ACE_WIN64
 
-typedef Net_WLAN_InetMonitor_T<struct ARDrone_WLANMonitorConfiguration,
+typedef Net_WLAN_InetMonitor_T<struct Net_WLAN_MonitorConfiguration,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                                NET_WLAN_MONITOR_API_WLANAPI,
 #else
@@ -270,6 +270,6 @@ typedef Net_WLAN_InetMonitor_T<struct ARDrone_WLANMonitorConfiguration,
                                Common_TimePolicy_t,
                                NET_WLAN_MONITOR_API_NL80211,
 #endif // ACE_WIN32 || ACE_WIN64
-                               struct ARDrone_UserData> ARDrone_WLANMonitor_t;
+                               struct Net_UserData> ARDrone_WLANMonitor_t;
 
 #endif // #ifndef ARDRONE_NETWORK_COMMON_H
