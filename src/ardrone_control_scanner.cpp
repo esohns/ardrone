@@ -1608,7 +1608,7 @@ static const flex_int32_t yy_rule_linenum[9] =
 #include "ace/Log_Msg.h"
 
 #include "ace/Synch.h"
-#include "common_tools.h"
+#include "common_string_tools.h"
 
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
@@ -2180,7 +2180,7 @@ case 5:
 YY_RULE_SETUP
 { current_key_value.first = yytext;
                   current_key_value.first =
-                    Common_Tools::strip (current_key_value.first);
+                    Common_String_Tools::strip (current_key_value.first);
                   BEGIN (delimiter_2); }
 	YY_BREAK
 // end <key>
@@ -2200,7 +2200,7 @@ YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 { current_key_value.second = yytext;
                   current_key_value.second =
-                    Common_Tools::strip (current_key_value.second);
+                    Common_String_Tools::strip (current_key_value.second);
 
                   // sanity check(s)
                   ACE_ASSERT (yyscanner);

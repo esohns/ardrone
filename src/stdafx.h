@@ -8,11 +8,23 @@
 // *NOTE*: work around quirky MSVC...
 #define NOMINMAX
 
-#define _USE_MATH_DEFINES
+//#include "targetver.h"
 
 // Windows Header Files
+#include "ace/config-lite.h"
 #include <windows.h>
-#include <intrin.h>
+
+#include <strmif.h>
+#include <reftime.h>
+// *NOTE*: uuids.h does not have double include protection (?) (and is therefore
+//         really a PITA to integrate consistently)
+// *NOTE*: M******** obviously relies on precompilation features to get this
+//         right; Note how this apparently precludes chances of meaningful
+//         compiler standardization at this stage; YMMV
+#define UUIDS_H
+#include <uuids.h>
+
+//#include <streams.h>
 #endif // _MSC_VER
 
 // C RunTime Header Files
@@ -29,22 +41,23 @@
 #include "valgrind/valgrind.h"
 #endif // VALGRIND_SUPPORT
 
+// Library Header Files
 #if defined (HAVE_CONFIG_H)
 #include "libCommon_config.h"
-#include "libACEStream_config.h"
-#include "libACENetwork_config.h"
-#include "ardrone_config.h"
 #endif // HAVE_CONFIG_H
-
-// Library Header Files
 #include "common.h"
 #include "common_macros.h"
 #include "common_pragmas.h"
 
+#if defined (HAVE_CONFIG_H)
+#include "libACEStream_config.h"
+#endif // HAVE_CONFIG_H
 #include "stream_common.h"
 #include "stream_macros.h"
 
-// Local Header Files
+#if defined (HAVE_CONFIG_H)
+#include "libACENetwork_config.h"
+#endif // HAVE_CONFIG_H
 #include "net_common.h"
 #include "net_macros.h"
 
@@ -55,6 +68,9 @@
 // *TODO*: reference additional headers your program requires here
 
 // Local Header Files
+#if defined (HAVE_CONFIG_H)
+#include "ardrone_config.h"
+#endif // HAVE_CONFIG_H
 #include "ardrone_macros.h"
 
 //#define LIGBGLADE_SUPPORT

@@ -463,7 +463,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_DirectShow_ConnectionManager_t,
                                     ARDrone_DirectShow_UDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_DirectShow_Controller;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_DirectShow_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_DirectShow_ModuleHandlerConfiguration,
@@ -475,7 +475,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_DirectShow_ConnectionManager_t,
                                     ARDrone_DirectShow_AsynchUDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_DirectShow_AsynchController;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_DirectShow_AsynchController;
 
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
@@ -488,7 +488,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_MediaFoundation_ConnectionManager_t,
                                     ARDrone_MediaFoundation_UDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_MediaFoundation_Controller;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_MediaFoundation_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
@@ -500,7 +500,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_MediaFoundation_ConnectionManager_t,
                                     ARDrone_MediaFoundation_AsynchUDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_MediaFoundation_AsynchController;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_MediaFoundation_AsynchController;
 #else
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
@@ -513,7 +513,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_UDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_Controller;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_Controller;
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Common_TimePolicy_t,
                                     struct ARDrone_ModuleHandlerConfiguration,
@@ -525,7 +525,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_Stream_ConnectionConfigurationIterator_t,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchUDPConnector_t,
-                                    struct ARDrone_GtkCBData_Base> ARDrone_Module_AsynchController;
+                                    struct ARDrone_UI_CBData_Base> ARDrone_Module_AsynchController;
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

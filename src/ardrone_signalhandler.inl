@@ -168,36 +168,15 @@ ARDrone_SignalHandler_T<ConfigurationType,
     ARDRONE_WLANMONITOR_SINGLETON::instance ()->stop (true,   // wait ?
                                                       false); // N/A
 
-    // step2: stop GTK event dispatch ?
+    // step2: stop UI event dispatch ?
     if (inherited::configuration_->hasUI)
     {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (inherited::configuration_->mediaFramework)
-      {
-        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-        {
-          ARDRONE_UI_DIRECTSHOW_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
-                                                                          false); // N/A
-          break;
-        }
-        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-        {
-          ARDRONE_UI_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
-                                                                               false); // N/A
-          break;
-        }
-        default:
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("invalid/unknown media framework (was: %d), continuing\n"),
-                      inherited::configuration_->mediaFramework));
-          break;
-        }
-      } // end SWITCH
-#else
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
                                                            false); // N/A
-#endif
+#endif // GTK_USE
+#endif // GUI_SUPPORT
     } // end IF
 
     // step3: stop reactor (&& proactor, if applicable)

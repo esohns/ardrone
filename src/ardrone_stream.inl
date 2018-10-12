@@ -74,7 +74,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
         (result != MF_E_SHUTDOWN)) // already shut down
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to IMFMediaSession::Shutdown(): \"%s\", continuing\n"),
-                  ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
+                  ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
     mediaSession_->Release ();
   } // end IF
 #endif
@@ -107,21 +107,21 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_AVIEncoder_Module (this,
-                                                                   ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
+                                                                   ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_Display_Module (this,
-                                                                ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_DIRECTSHOW_DEFAULT_NAME_STRING)),
+                                                                ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_DIRECTSHOW_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_H264Decoder_Module (this,
-                                                                    ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
+                                                                    ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
@@ -153,21 +153,21 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_AVIEncoder_Module (this,
-                                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
+                                                                        ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_Display_Module (this,
-                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING)),
+                                                                     ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_MEDIAFOUNDATION_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_H264Decoder_Module (this,
-                                                                         ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
+                                                                         ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
@@ -207,21 +207,21 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_AVIEncoder_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
+                                                    ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Display_Module (this,
-                                                 ACE_TEXT_ALWAYS_CHAR (MODULE_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING)),
+                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING)),
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_H264Decoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
+                                                     ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING)),
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
@@ -334,15 +334,16 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
 
       if (session_data_p->inputFormat)
-        Stream_MediaFramework_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
+        Stream_MediaFramework_DirectShow_Tools::delete_ (session_data_p->inputFormat);
 
       ACE_ASSERT (!session_data_p->inputFormat);
+      session_data_p->inputFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*(configuration_p->inputFormat));
       //if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
-      if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->inputFormat),
-                                                                  session_data_p->inputFormat))
+      if (!session_data_p->inputFormat)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copyMediaType(), aborting\n")));
+                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copy(), aborting\n")));
         goto error;
       } // end IF
       ACE_ASSERT (session_data_p->inputFormat);
@@ -427,7 +428,7 @@ error:
   //  session_data_p->direct3DDevice = NULL;
   //} // end IF
   if (session_data_p->inputFormat)
-    Stream_MediaFramework_DirectShow_Tools::deleteMediaType (session_data_p->inputFormat);
+    Stream_MediaFramework_DirectShow_Tools::delete_ (session_data_p->inputFormat);
   //session_data_p->resetToken = 0;
   //if (session_data_p->session)
   //{
@@ -1628,7 +1629,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         ACE_ASSERT (option_2);
 
         ACE_ASSERT (inherited::state_.CBData);
-        { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::state_.CBData->lock);
+        struct ARDrone_UI_GTK_State& state_r =
+          const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+        { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
           inherited::state_.CBData->openGLScene.orientation.x =
               option_2->phi; // roll (--> rotation along x)
           inherited::state_.CBData->openGLScene.orientation.y =
@@ -2023,11 +2026,7 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onConnect (REFGUID interfaceIdentifier_in,
-#else
-                        WLANMonitorSingletonType>::onConnect (const std::string& interfaceIdentifier_in,
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
@@ -2112,11 +2111,7 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onDisconnect (REFGUID interfaceIdentifier_in,
-#else
-                        WLANMonitorSingletonType>::onDisconnect (const std::string& interfaceIdentifier_in,
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
@@ -2193,11 +2188,7 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onHotPlug (REFGUID interfaceIdentifier_in,
-#else
-                        WLANMonitorSingletonType>::onHotPlug (const std::string& interfaceIdentifier_in,
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
@@ -2227,11 +2218,7 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onRemove (REFGUID interfaceIdentifier_in,
-#else
-                        WLANMonitorSingletonType>::onRemove (const std::string& interfaceIdentifier_in,
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
@@ -2261,11 +2248,7 @@ void
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
                         WLANMonitorSingletonType>::onScanComplete (REFGUID interfaceIdentifier_in)
-#else
-                        WLANMonitorSingletonType>::onScanComplete (const std::string& interfaceIdentifier_in)
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
