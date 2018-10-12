@@ -23,7 +23,7 @@
 
 #include "ace/Global_Macros.h"
 
-#include "common_signalhandler.h"
+#include "common_signal_handler.h"
 
 #include "ardrone_network.h"
 #include "ardrone_types.h"

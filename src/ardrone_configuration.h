@@ -26,6 +26,8 @@
 #include <map>
 #include <string>
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <gl/GL.h>
@@ -33,17 +35,36 @@
 #include <GL/gl.h>
 #endif // ACE_WIN32 || ACE_WIN64
 #endif /* GTKGL_SUPPORT */
+#endif /* GTK_USE */
+#endif /* GUI_SUPPORT */
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "gtk/gtk.h"
+#endif /* GTK_USE */
+#endif /* GUI_SUPPORT */
 
 #include "ace/Singleton.h"
 #include "ace/Synch_Traits.h"
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+#if defined (GTKGL_SUPPORT)
 #include "common_gl_common.h"
+#endif /* GTKGL_SUPPORT */
+#endif /* GTK_USE */
+#endif /* GUI_SUPPORT */
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "common_ui_gtk_builder_definition.h"
-#include "common_ui_gtk_gl_common.h"
 #include "common_ui_gtk_manager.h"
+
+#if defined (GTKGL_SUPPORT)
+#include "common_ui_gtk_gl_common.h"
+#endif /* GTKGL_SUPPORT */
+#endif /* GTK_USE */
+#endif /* GUI_SUPPORT */
 
 #include "stream_common.h"
 #include "stream_configuration.h"
@@ -257,56 +278,71 @@ struct ARDrone_Configuration
 };
 #endif // ACE_WIN32 || ACE_WIN64
 
-//////////////////////////////////////////
-
 typedef std::deque<ARDrone_Message*> ARDrone_Messages_t;
 typedef ARDrone_Messages_t::const_iterator ARDrone_MessagesIterator_t;
 
-struct ARDrone_GtkProgressData
- : Common_UI_GTK_ProgressData
+typedef std::map<std::string,
+                 Stream_Base_t*> ARDrone_Streams_t;
+typedef ARDrone_Streams_t::const_iterator ARDrone_StreamsIterator_t;
+
+//////////////////////////////////////////
+
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+struct ARDrone_UI_GTK_State
+ : Common_UI_GTK_State_t
 {
-  ARDrone_GtkProgressData ()
+  ARDrone_UI_GTK_State ()
+   : Common_UI_GTK_State_t ()
+   , eventStack ()
+  {}
+
+  ARDrone_Events_t eventStack;
+};
+#endif // GTK_USE
+
+struct ARDrone_UI_ProgressData
+#if defined (GTK_USE)
+ : Common_UI_GTK_ProgressData
+#elif defined (WXWIDGETS_USE)
+ : Common_UI_wxWidgets_ProgressData ()
+#endif
+{
+  ARDrone_UI_ProgressData ()
+#if defined (GTK_USE)
    : Common_UI_GTK_ProgressData ()
+#elif defined (WXWIDGETS_USE)
+   : Common_UI_wxWidgets_ProgressData ()
+#endif
    , statistic ()
   {}
 
   struct ARDrone_Statistic statistic;
 };
 
-typedef std::map<std::string,
-                 Stream_Base_t*> ARDrone_Streams_t;
-typedef ARDrone_Streams_t::const_iterator ARDrone_StreamsIterator_t;
 #if defined (_MSC_VER)
 #pragma pack (push, 1)
 #endif // _MSC_VER
-struct ARDrone_GtkCBData_Base
-#if defined (GTKGL_SUPPORT)
-  : Common_UI_GTK_GLState
-#else
-  : Common_UI_GTK_State
-#endif // GTKGL_SUPPORT
+struct ARDrone_UI_CBData_Base
 {
-  ARDrone_GtkCBData_Base ()
-#if defined (GTKGL_SUPPORT)
-   : Common_UI_GTK_GLState ()
-#else
-   : Common_UI_GTK_State ()
-#endif // GTKGL_SUPPORT
+  ARDrone_UI_CBData_Base ()
+   : allowUserRuntimeStatistic (true)
    , controller (NULL)
    , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
-   , eventStack ()
    , frameCounter (0)
    , localSAP ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
+   , mediaFramework (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
 #endif // ACE_WIN32 || ACE_WIN64
    , messages ()
    , messageAllocator (NULL)
+#if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
    , openGLModelListId (0)
    , openGLRefreshId (0)
    , openGLScene ()
 #endif // GTKGL_SUPPORT
+#endif // GTK_USE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
    , pixelBuffer (NULL)
@@ -317,11 +353,14 @@ struct ARDrone_GtkCBData_Base
    , timeStamp (ACE_Time_Value::zero)
    , videoMode (ARDRONE_DEFAULT_VIDEO_MODE)
   {
+#if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
 //    resetCamera ();
 #endif // GTKGL_SUPPORT
+#endif // GTK_USE
   }
 
+#if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
 //  void resetCamera ()
 //  {
@@ -329,13 +368,14 @@ struct ARDrone_GtkCBData_Base
 //    openGLScene.camera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
 //  };
 #endif // GTKGL_SUPPORT
+#endif // GTK_USE
 
+  bool                            allowUserRuntimeStatistic;
   ARDrone_IController*            controller;
   // *NOTE*: on the host ("server"), use the device bias registers instead !
   // *TODO*: implement a client->server protocol to do this
   //struct ARDrone_SensorBias clientSensorBias; // client side ONLY (!)
   bool                            enableVideo;
-  ARDrone_Events_t                eventStack;
   unsigned int                    frameCounter;
   ACE_INET_Addr                   localSAP;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -343,16 +383,18 @@ struct ARDrone_GtkCBData_Base
 #endif // ACE_WIN32 || ACE_WIN64
   ARDrone_Messages_t              messages;
   ARDrone_MessageAllocator_t*     messageAllocator;
+#if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
   GLuint                          openGLModelListId;
   guint                           openGLRefreshId;
   struct Common_GL_Scene          openGLScene;
 #endif // GTKGL_SUPPORT
+#endif // GTK_USE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   GdkPixbuf*                      pixelBuffer;
 #endif // ACE_WIN32 || ACE_WIN64
-  struct ARDrone_GtkProgressData  progressData;
+  struct ARDrone_UI_ProgressData  progressData;
   guint                           stateEventId;
   ARDrone_Streams_t               streams;
   ACE_Time_Value                  timeStamp;
@@ -366,11 +408,11 @@ struct ARDrone_GtkCBData_Base
 #if defined (_MSC_VER)
 #pragma pack (push, 1)
 #endif // _MSC_VER
-struct ARDrone_DirectShow_GtkCBData
- : ARDrone_GtkCBData_Base
+struct ARDrone_DirectShow_UI_CBData
+ : ARDrone_UI_CBData_Base
 {
-  ARDrone_DirectShow_GtkCBData ()
-   : ARDrone_GtkCBData_Base ()
+  ARDrone_DirectShow_UI_CBData ()
+   : ARDrone_UI_CBData_Base ()
    , configuration (NULL)
   {}
 
@@ -380,28 +422,29 @@ struct ARDrone_DirectShow_GtkCBData
 #pragma pack (pop)
 #endif // _MSC_VER
 
-struct ARDrone_MediaFoundation_GtkCBData
- : ARDrone_GtkCBData_Base
+struct ARDrone_MediaFoundation_UI_CBData
+ : ARDrone_UI_CBData_Base
 {
-  ARDrone_MediaFoundation_GtkCBData ()
-   : ARDrone_GtkCBData_Base ()
+  ARDrone_MediaFoundation_UI_CBData ()
+   : ARDrone_UI_CBData_Base ()
    , configuration (NULL)
   {}
 
   struct ARDrone_MediaFoundation_Configuration* configuration;
 };
 #else
-struct ARDrone_GtkCBData
- : ARDrone_GtkCBData_Base
+struct ARDrone_UI_CBData
+ : ARDrone_UI_CBData_Base
 {
-  ARDrone_GtkCBData ()
-   : ARDrone_GtkCBData_Base ()
+  ARDrone_UI_CBData ()
+   : ARDrone_UI_CBData_Base ()
    , configuration (NULL)
   {}
 
   struct ARDrone_Configuration* configuration;
 };
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
 
 struct ARDrone_ThreadData
 {
@@ -409,35 +452,38 @@ struct ARDrone_ThreadData
    : CBData (NULL)
    , eventSourceId (0)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , mediaFramework (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK)
+   , mediaFramework (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
 #endif // ACE_WIN32 || ACE_WIN64
   {}
 
-  struct ARDrone_GtkCBData_Base*  CBData;
+  struct ARDrone_UI_CBData_Base*  CBData;
   guint                           eventSourceId;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   enum Stream_MediaFramework_Type mediaFramework;
 #endif // ACE_WIN32 || ACE_WIN64
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_DirectShow_GtkCBData> ARDrone_DirectShow_GtkBuilderDefinition_t;
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                struct ARDrone_DirectShow_GtkCBData> ARDrone_DirectShow_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_DirectShow_GTK_Manager_t,
-                      typename ACE_MT_SYNCH::MUTEX> ARDRONE_UI_DIRECTSHOW_GTK_MANAGER_SINGLETON;
+//////////////////////////////////////////
 
-typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_MediaFoundation_GtkCBData> ARDrone_MediaFoundation_GtkBuilderDefinition_t;
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                struct ARDrone_MediaFoundation_GtkCBData> ARDrone_MediaFoundation_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_MediaFoundation_GTK_Manager_t,
-                      typename ACE_MT_SYNCH::MUTEX> ARDRONE_UI_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_DirectShow_UI_CBData> ARDrone_DirectShow_GtkBuilderDefinition_t;
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_MediaFoundation_UI_CBData> ARDrone_MediaFoundation_GtkBuilderDefinition_t;
 #else
-typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_GtkCBData> ARDrone_GtkBuilderDefinition_t;
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                struct ARDrone_GtkCBData> ARDrone_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_GTK_Manager_t,
-                      typename ACE_MT_SYNCH::MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_UI_CBData> ARDrone_GtkBuilderDefinition_t;
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GTK_USE
+
+//////////////////////////////////////////
+
+typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+                                struct ARDrone_UI_GTK_State> ARDrone_UI_GTK_Manager_t;
+typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
+                      ACE_MT_SYNCH::MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
+#endif // GUI_SUPPORT
 
 #endif // #ifndef ARDRONE_CONFIGURATION_H

@@ -36,7 +36,7 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 #include "ace/Log_Msg.h"
 
 #include "ace/Synch.h"
-#include "common_tools.h"
+#include "common_string_tools.h"
 
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
@@ -133,7 +133,7 @@ OCTET                  [\x00-\xFF]
 <value>{
 {VALUE}*/\n     { current_key_value.second = yytext;
                   current_key_value.second =
-                    Common_Tools::strip (current_key_value.second);
+                    Common_String_Tools::strip (current_key_value.second);
 
                   // sanity check(s)
                   ACE_ASSERT (yyscanner);

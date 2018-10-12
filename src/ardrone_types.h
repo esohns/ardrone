@@ -21,7 +21,6 @@
 #ifndef ARDRONE_TYPES_H
 #define ARDRONE_TYPES_H
 
-#include <deque>
 #include <list>
 #include <map>
 #include <string>
@@ -40,6 +39,7 @@
 #undef FFMPEG_SUPPORT
 #include "VLIB/video_codec.h"
 
+#include "ace/Containers_T.h"
 #include "ace/Message_Block.h"
 
 #include "stream_common.h"
@@ -78,25 +78,10 @@ enum ARDrone_StreamType : int
   ///////////////////////////////////////
   ARDRONE_STREAM_MAX
 };
-
-#if defined (__llvm__)
-enum ARDrone_EventType
-#else
-enum ARDrone_EventType : int
-#endif
-{
-  ARDRONE_EVENT_INVALID = -1,
-  ARDRONE_EVENT_CONNECT,
-  ARDRONE_EVENT_DISCONNECT,
-  ARDRONE_EVENT_MESSAGE_DATA,
-  ARDRONE_EVENT_MESSAGE_SESSION,
-  ARDRONE_EVENT_RESIZE,
-  ///////////////////////////////////////
-  ARDRONE_EVENT_MAX
-};
-typedef std::deque<std::pair <enum ARDrone_StreamType,
-                              enum ARDrone_EventType> > ARDrone_Events_t;
-typedef ARDrone_Events_t::const_iterator ARDrone_EventsIterator_t;
+typedef std::pair <enum ARDrone_StreamType,
+                   enum Net_WLAN_UI_EventType> ARDrone_Event_t;
+typedef ACE_Unbounded_Stack<ARDrone_Event_t> ARDrone_Events_t;
+typedef ACE_Unbounded_Stack<ARDrone_Event_t>::ITERATOR ARDrone_EventsIterator_t;
 
 //struct ARDRone_SensorBias
 //{

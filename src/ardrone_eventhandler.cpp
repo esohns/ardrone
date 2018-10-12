@@ -25,19 +25,24 @@
 #include "ace/Guard_T.h"
 #include "ace/Synch_Traits.h"
 
-#include "ardrone_stream_common.h"
-
 #include "ardrone_common.h"
 #include "ardrone_callbacks.h"
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
 #include "ardrone_stream.h"
+#include "ardrone_stream_common.h"
 
-ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData_Base* CBData_in,
+#if defined (GUI_SUPPORT)
+ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_UI_CBData_Base* CBData_in,
+#else
+ARDrone_EventHandler::ARDrone_EventHandler (
+#endif // GUI_SUPPORT
                                             bool consoleMode_in)
  : consoleMode_ (consoleMode_in)
+#if defined (GUI_SUPPORT)
  , CBData_ (CBData_in)
+#endif // GUI_SUPPORT
  , ControlNotify_ (NULL)
  , MAVLinkNotify_ (NULL)
  , NavDataNotify_ (NULL)
@@ -46,7 +51,9 @@ ARDrone_EventHandler::ARDrone_EventHandler (struct ARDrone_GtkCBData_Base* CBDat
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::ARDrone_EventHandler"));
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+#endif // GUI_SUPPORT
 }
 
 void
@@ -56,16 +63,29 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+#if defined (GTK_USE)
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   ACE_ASSERT (sessionData_in.state);
 
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
-    streams_.insert (std::make_pair (sessionId_in, sessionData_in.state->type));
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GUI_SUPPORT
+    streams_.insert (std::make_pair (sessionId_in,
+                                     sessionData_in.state->type));
+#if defined (GUI_SUPPORT)
   } // end lock scope
+#endif // GUI_SUPPORT
 
   if (sessionData_in.state->type == ARDRONE_STREAM_NAVDATA)
   {
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#if defined (GTK_USE)
       guint event_source_id = g_idle_add (idle_session_start_cb,
                                           CBData_);
       if (event_source_id == 0)
@@ -74,8 +94,10 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
                     ACE_TEXT ("failed to g_idle_add(idle_session_start_cb): \"%m\", returning\n")));
         return;
       } // end IF
-      CBData_->eventSourceIds.insert (event_source_id);
+      state_r.eventSourceIds.insert (event_source_id);
+#endif // GTK_USE
     } // end lock scope
+#endif // GUI_SUPPORT
   } // end IF
 }
 
@@ -88,20 +110,28 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   ACE_UNUSED_ARG (sessionId_in);
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+#if defined (GTK_USE)
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
-  bool message_event = true;
-  enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
+  bool message_event_b = true;
+  ARDrone_Event_t event_s =
+    std::make_pair (ARDRONE_STREAM_INVALID,
+                    static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_DATA));
   ARDroneStreamStatisticIterator_t iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   bool refresh_display = false;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   switch (message_in.type ())
   {
     case ARDRONE_MESSAGE_ATCOMMAND:
     {
-      message_event = false; // do not register outbound messages
+      message_event_b = false; // do not register outbound messages
       //stream_type_e = ARDRONE_STREAM_NAVDATA;
       break;
     }
@@ -117,7 +147,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                     ACE_TEXT ("caught exception in ARDrone_IControlNotify::messageCB(), returning\n")));
       }
 
-      stream_type_e = ARDRONE_STREAM_CONTROL;
+      event_s.first = ARDRONE_STREAM_CONTROL;
 
       break;
     }
@@ -134,7 +164,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                     ACE_TEXT ("caught exception in ARDrone_IMAVLinkNotify::messageCB(), returning\n")));
       }
 
-      stream_type_e = ARDRONE_STREAM_MAVLINK;
+      event_s.first = ARDRONE_STREAM_MAVLINK;
 
       break;
     }
@@ -153,7 +183,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                     ACE_TEXT ("caught exception in ARDrone_INavDataNotify::messageCB(), returning\n")));
       }
 
-      stream_type_e = ARDRONE_STREAM_NAVDATA;
+      event_s.first = ARDRONE_STREAM_NAVDATA;
 
       break;
     }
@@ -162,9 +192,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
       refresh_display = true;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
-      stream_type_e = ARDRONE_STREAM_VIDEO;
+      event_s.first = ARDRONE_STREAM_VIDEO;
 
       break;
     }
@@ -177,23 +207,27 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
   } // end SWITCH
 
-  if (message_event)
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+  if (message_event_b)
+  { 
+#if defined (GUI_SUPPORT)
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 //    iterator =
 //      CBData_.progressData->statistic.streamStatistic.find (stream_type_e);
 //    ACE_ASSERT (iterator != CBData_.progressData->statistic.streamStatistic.end ());
 //    (*iterator).second.bytes += message_in.total_length ();
 //    ++(*iterator).second.dataMessages;
 //    +CBData_.progressData->statistic;
-
-    CBData_->eventStack.push_back (std::make_pair (stream_type_e,
-                                                   ARDRONE_EVENT_MESSAGE_DATA));
-  } // end lock scope
+      state_r.eventStack.push (event_s);
+    } // end lock scope
+#endif // GUI_SUPPORT
+  } // end IF
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   if (refresh_display)
   {
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
     guint event_source_id = g_idle_add (idle_update_video_display_cb,
                                         CBData_);
     if (event_source_id == 0)
@@ -202,8 +236,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                   ACE_TEXT ("failed to g_idle_add(idle_update_video_display_cb): \"%m\", returning\n")));
       return;
     } // end IF
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 }
 
 void
@@ -213,16 +249,25 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
   int result = -1;
-  enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
-  enum ARDrone_EventType event_e = ARDRONE_EVENT_MESSAGE_SESSION;
+  ARDrone_Event_t event_s =
+    std::make_pair (ARDRONE_STREAM_INVALID,
+                    static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_SESSION));
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
   ARDroneStreamStatisticIterator_t iterator_2;
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+#if defined (GTK_USE)
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   // update session id <-> stream mapping ?
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GUI_SUPPORT
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
       const ARDrone_SessionData_t& session_data_container_r =
@@ -256,16 +301,20 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       //            sessionId_in));
       return;
     } // end IF
-    stream_type_e = (*iterator).second;
+    event_s.first = (*iterator).second;
+#if defined (GUI_SUPPORT)
   } // end lock scope
+#endif // GUI_SUPPORT
 
   switch (message_in.type ())
   {
     case STREAM_SESSION_MESSAGE_CONNECT:
-      event_e = ARDRONE_EVENT_CONNECT;
+      event_s.second =
+        static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_CONNECT);
       break;
     case STREAM_SESSION_MESSAGE_DISCONNECT:
-      event_e = ARDRONE_EVENT_DISCONNECT;
+      event_s.second =
+        static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_DISCONNECT);
       break;
     case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
@@ -277,19 +326,20 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         NULL;
       struct ARDrone_MediaFoundation_Configuration* mediafoundation_configuration_p =
         NULL;
+#if defined (GUI_SUPPORT)
       switch (CBData_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
-          struct ARDrone_DirectShow_GtkCBData* cb_data_p =
-            static_cast<struct ARDrone_DirectShow_GtkCBData*> (CBData_);
+          struct ARDrone_DirectShow_UI_CBData* cb_data_p =
+            static_cast<struct ARDrone_DirectShow_UI_CBData*> (CBData_);
           directshow_configuration_p = cb_data_p->configuration;
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
         {
-          struct ARDrone_MediaFoundation_GtkCBData* cb_data_p =
-            static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (CBData_);
+          struct ARDrone_MediaFoundation_UI_CBData* cb_data_p =
+            static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (CBData_);
           mediafoundation_configuration_p = cb_data_p->configuration;
           break;
         }
@@ -301,12 +351,16 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
           return;
         }
       } // end SWITCH
+#endif // GUI_SUPPORT
 #else
-      struct ARDrone_GtkCBData* cb_data_p =
-        static_cast<struct ARDrone_GtkCBData*> (CBData_);
+#if defined (GUI_SUPPORT)
+      struct ARDrone_UI_CBData* cb_data_p =
+        static_cast<struct ARDrone_UI_CBData*> (CBData_);
       struct ARDrone_Configuration* configuration_p = cb_data_p->configuration;
+#endif // GUI_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
-      event_e = ARDRONE_EVENT_RESIZE;
+      event_s.second =
+        static_cast<Net_WLAN_UI_EventType> (COMMON_UI_EVENT_RESIZE);
 
       // update configuration (reused by gtk callback(s))
       const ARDrone_SessionData_t& session_data_container_r =
@@ -321,6 +375,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_video_streamconfiguration_iterator;
       ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_3;
       ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_4;
+#if defined (GUI_SUPPORT)
       switch (CBData_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -332,7 +387,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
             (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
           ACE_ASSERT (directshow_iterator_3 != (*directshow_video_streamconfiguration_iterator).second.end ());
           directshow_iterator_4 =
-            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
           ACE_ASSERT (directshow_iterator_4 != (*directshow_video_streamconfiguration_iterator).second.end ());
           break;
         }
@@ -345,7 +400,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
             (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
           ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
           mediafoundation_iterator_4 =
-            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
           ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
           break;
         }
@@ -357,6 +412,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
           return;
         }
     } // end SWITCH
+#endif // GUI_SUPPORT
 #else
       ACE_ASSERT (configuration_p);
       ARDrone_StreamConfigurationsIterator_t video_streamconfiguration_iterator =
@@ -366,7 +422,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
       ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
       ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -378,7 +434,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
       } // end IF
 
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       switch (CBData_->mediaFramework)
       {
@@ -456,7 +514,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         (*iterator_4).second.second.sourceFormat.height = session_data_r.height;
         (*iterator_4).second.second.sourceFormat.width = session_data_r.width;
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (GUI_SUPPORT)
       } // end lock scope
+#endif // GUI_SUPPORT
 
       if (session_data_r.lock)
       {
@@ -485,9 +545,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
                       ACE_TEXT ("failed to ACE_SYNCH_MUTEX::acquire(): \"%m\", continuing\n")));
       } // end IF
 
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
         CBData_->progressData.statistic = session_data_r.statistic;
       } // end lock scope
+#endif // GUI_SUPPORT
 
       if (session_data_r.lock)
       {
@@ -508,10 +570,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
   } // end SWITCH
 
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
-    CBData_->eventStack.push_back (std::make_pair (stream_type_e,
-                                                      event_e));
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+    state_r.eventStack.push (event_s);
   } // end lock scope
+#endif // GUI_SUPPORT
 }
 
 void
@@ -520,13 +583,21 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::end"));
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+#if defined (GTK_USE)
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   enum ARDrone_StreamType stream_type_e = ARDRONE_STREAM_INVALID;
   Stream_IStreamControlBase* istream_base_p = NULL;
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GUI_SUPPORT
     iterator = streams_.find (sessionId_in);
     if (iterator != streams_.end ())
     {
@@ -546,10 +617,12 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       // *NOTE*: the device closes the control connection after transmitting
       //         configuration data
       //         --> reconnect automatically ?
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       Common_UI_GTK_BuildersIterator_t iterator =
-        CBData_->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN));
+        state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
       // sanity check(s)
-      ACE_ASSERT (iterator != CBData_->builders.end ());
+      ACE_ASSERT (iterator != state_r.builders.end ());
 
       // disconnecting ?
       GtkToggleAction* toggle_action_p =
@@ -563,6 +636,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
         break;
       } // end IF
       gdk_threads_leave ();
+#endif // GTK_USE
 
       ARDrone_StreamsIterator_t iterator_2 =
           CBData_->streams.find (control_stream_name_string_);
@@ -571,13 +645,15 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
           dynamic_cast<Stream_IStreamControlBase*> ((*iterator_2).second);
       ACE_ASSERT (istream_base_p);
       istream_base_p->start ();
+#endif // GUI_SUPPORT
       break;
     }
     case ARDRONE_STREAM_MAVLINK:
       break;
     case ARDRONE_STREAM_NAVDATA:
     {
-      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, CBData_->lock);
+#if defined (GUI_SUPPORT)
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
         guint event_source_id = g_idle_add (idle_session_end_cb,
                                             CBData_);
         if (event_source_id == 0)
@@ -586,8 +662,9 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
                       ACE_TEXT ("failed to g_idle_add(idle_session_end_cb): \"%m\", returning\n")));
           return;
         } // end IF
-        CBData_->eventSourceIds.insert (event_source_id);
+        state_r.eventSourceIds.insert (event_source_id);
       } // end lock scope
+#endif // GUI_SUPPORT
 
       break;
     }

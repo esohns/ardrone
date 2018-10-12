@@ -45,11 +45,17 @@ extern "C"
 }
 #endif /* __cplusplus */
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "gtk/gtk.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #include "ace/OS.h"
 
+#if defined (GUI_SUPPORT)
 #include "common_ui_defines.h"
+#endif // GUI_SUPPORT
 
 #include "stream_base.h"
 #include "stream_common.h"
@@ -87,7 +93,9 @@ void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
 class ARDrone_Message;
 class ARDrone_SessionMessage;
 
-struct ARDrone_GtkCBData_Base;
+#if defined (GUI_SUPPORT)
+struct ARDrone_UI_CBData_Base;
+#endif // GUI_SUPPORT
 struct ARDrone_SessionData;
 struct ARDrone_UserData;
 struct ARDrone_StreamState
@@ -114,7 +122,9 @@ struct ARDrone_StreamState
     return *this;
   }
 
-  struct ARDrone_GtkCBData_Base* CBData;
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base* CBData;
+#endif // GUI_SUPPORT
   struct ARDrone_SessionData*    sessionData;
   enum ARDrone_StreamType        type;
 
@@ -182,8 +192,8 @@ struct ARDrone_SessionData
     bool format_is_empty =
       (!inputFormat || (InlineIsEqualGUID (inputFormat->majortype, GUID_NULL)));
     if (format_is_empty && rhs_in.inputFormat)
-      Stream_MediaFramework_DirectShow_Tools::copyMediaType (*rhs_in.inputFormat,
-                                                             inputFormat);
+      inputFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*rhs_in.inputFormat);
     if (rhs_in.builder)
     {
       if (builder)
@@ -219,29 +229,29 @@ struct ARDrone_SessionData
   }
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  IGraphBuilder*                  builder;
+  IGraphBuilder*              builder;
   // *TODO*: mediafoundation only, remove ASAP
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-  IDirect3DDevice9Ex*             direct3DDevice;
+  IDirect3DDevice9Ex*         direct3DDevice;
 #else
-  IDirect3DDevice9*               direct3DDevice;
+  IDirect3DDevice9*           direct3DDevice;
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
   // *TODO*: mediafoundation only, remove ASAP
-  UINT                            direct3DManagerResetToken; // direct 3D manager 'id'
-  struct _AMMediaType*            inputFormat;
-  IMFMediaSession*                session;
-  IVideoWindow*                   windowController;
+  UINT                        direct3DManagerResetToken; // direct 3D manager 'id'
+  struct _AMMediaType*        inputFormat;
+  IMFMediaSession*            session;
+  IVideoWindow*               windowController;
 #else
-  unsigned int                    height;
-  enum AVPixelFormat              inputFormat;
-  unsigned int                    width;
+  unsigned int                height;
+  enum AVPixelFormat          inputFormat;
+  unsigned int                width;
 #endif // ACE_WIN32 || ACE_WIN64
 
-  struct ARDrone_StreamState*     state;
-  struct ARDrone_Statistic        statistic;
-  std::string                     targetFileName;
+  struct ARDrone_StreamState* state;
+  struct ARDrone_Statistic    statistic;
+  std::string                 targetFileName;
 
-  struct ARDrone_UserData*        userData;
+  struct ARDrone_UserData*    userData;
 };
 typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_SessionData_t;
 
@@ -264,14 +274,16 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
-struct ARDrone_GtkCBData_Base;
+struct ARDrone_UI_CBData_Base;
 struct ARDrone_ModuleHandlerConfigurationBase
  : Stream_ModuleHandlerConfiguration
 {
   ARDrone_ModuleHandlerConfigurationBase ()
    : Stream_ModuleHandlerConfiguration ()
    , block (false)
+#if defined (GUI_SUPPORT)
    , CBData (NULL)
+#endif // GUI_SUPPORT
    , codecId (AV_CODEC_ID_H264)
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
    , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
@@ -287,7 +299,9 @@ struct ARDrone_ModuleHandlerConfigurationBase
   }
 
   bool                           block;                 // H264 decoder module
-  struct ARDrone_GtkCBData_Base* CBData;                // controller module
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base* CBData;                // controller module
+#endif // GUI_SUPPORT
   enum AVCodecID                 codecId;               // H264 decoder module
   bool                           fullScreen;            // display module
   std::string                    outboundStreamName;    // event handler module
@@ -335,7 +349,7 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
    , filterConfiguration (NULL)
    , inputFormat (NULL)
    , outputFormat (NULL)
-   , push (MODULE_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
+   , push (STREAM_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
    , window (NULL)
    , windowController (NULL)
    , windowController2 (NULL)
@@ -500,7 +514,9 @@ struct ARDrone_StreamConfiguration
 {
   ARDrone_StreamConfiguration ()
    : Stream_Configuration ()
+#if defined (GUI_SUPPORT)
    , CBData (NULL)
+#endif // GUI_SUPPORT
    , dispatch (NET_EVENT_DEFAULT_DISPATCH)
    , initializeControl (NULL)
    , initializeMAVLink (NULL)
@@ -508,7 +524,9 @@ struct ARDrone_StreamConfiguration
    , userData (NULL)
   {}
 
-  struct ARDrone_GtkCBData_Base* CBData;
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base* CBData;
+#endif // GUI_SUPPORT
   enum Common_EventDispatchType  dispatch;
   ARDrone_IControlInitialize_t*  initializeControl;
   ARDrone_IMAVLinkInitialize_t*  initializeMAVLink;

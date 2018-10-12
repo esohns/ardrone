@@ -36,10 +36,10 @@
 #endif // ENABLE_NLS
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <dshow.h>
+//#include <dshow.h>
 #include <initguid.h> // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
 #include <mfapi.h>
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
 extern "C"
@@ -54,34 +54,46 @@ extern "C"
 #include "ace/Get_Opt.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "ace/Init_ACE.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #include "ace/Log_Msg.h"
 #include "ace/OS.h"
 #include "ace/OS_main.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
 #include "ace/POSIX_Proactor.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #include "ace/Profile_Timer.h"
 #include "ace/Synch.h"
 #include "ace/Time_Value.h"
 
-#ifdef HAVE_CONFIG_H
-#include "ardrone_config.h"
-#endif
-
+#if defined (HAVE_CONFIG_H)
+#include "libCommon_config.h"
+#endif // HAVE_CONFIG_H
 #include "common_defines.h"
-#include "common_logger.h"
-#include "common_file_tools.h"
-#include "common_signal_tools.h"
 #include "common_tools.h"
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "common_error_tools.h"
+#endif // ACE_WIN32 || ACE_WIN64
+
+#include "common_log_tools.h"
+#include "common_logger.h"
+
+#include "common_signal_tools.h"
 
 #include "common_timer_tools.h"
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "common_ui_defines.h"
 #include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_manager_common.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
+#if defined (HAVE_CONFIG_H)
+#include "libACEStream_config.h"
+#endif // HAVE_CONFIG_H
 #include "stream_allocatorheap.h"
 
 #include "stream_dec_tools.h"
@@ -91,11 +103,17 @@ extern "C"
 #include "stream_lib_common.h"
 #include "stream_lib_defines.h"
 
+#if defined (HAVE_CONFIG_H)
+#include "libACENetwork_config.h"
+#endif // HAVE_CONFIG_H
 #include "net_defines.h"
 
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
 
+#if defined (HAVE_CONFIG_H)
+#include "ardrone_config.h"
+#endif // HAVE_CONFIG_H
 #include "ardrone_callbacks.h"
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
@@ -655,7 +673,7 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-m          : use media foundation framework (: directshow) [")
-            << (MODULE_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
+            << (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -796,7 +814,7 @@ do_processArguments (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
   logToFile_out               = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  mediaFramework_out          = MODULE_LIB_DEFAULT_MEDIAFRAMEWORK;
+  mediaFramework_out          = STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
 #endif // ACE_WIN32 || ACE_WIN64
   portNumber_out              = ARDRONE_PORT_TCP_VIDEO;
   useReactor_out              =
@@ -1140,7 +1158,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   // sanity check(s)
   ACE_ASSERT (!IGraphBuilder_out);
   if (mediaType_out)
-    Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_out);
+    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_out);
 
   Stream_MediaFramework_DirectShow_Tools::initialize (coInitialize_in);
 #if defined (_DEBUG)
@@ -1153,7 +1171,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to GetModuleHandleEx(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Tools::errorToString (::GetLastError ()).c_str ())));
+                ACE_TEXT (Common_Error_Tools::errorToString (::GetLastError ()).c_str ())));
     return false;
   } // end IF
   ACE_ASSERT (module_h);
@@ -1327,7 +1345,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
 
 error:
   if (mediaType_out)
-    Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_out);
+    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_out);
   if (IGraphBuilder_out)
   {
     IGraphBuilder_out->Release (); IGraphBuilder_out = NULL;
@@ -1347,7 +1365,7 @@ do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
     IGraphBuilder_inout->Release (); IGraphBuilder_inout = NULL;
   } // end IF
   if (mediaType_inout)
-    Stream_MediaFramework_DirectShow_Tools::deleteMediaType (mediaType_inout);
+    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_inout);
 
 #if defined (_DEBUG)
   DbgTerminate ();
@@ -1377,7 +1395,7 @@ do_initialize_mediafoundation (bool coInitialize_in)
     //         --> continue
     ACE_DEBUG ((LM_WARNING,
                 ACE_TEXT ("failed to CoInitializeEx(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
+                ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
   } // end IF
 
   result = MFStartup (MF_VERSION,
@@ -1386,7 +1404,7 @@ do_initialize_mediafoundation (bool coInitialize_in)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to MFStartup(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
+                ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
     goto error;
   } // end IF
 
@@ -1398,7 +1416,7 @@ error:
   if (FAILED (result))
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to MFShutdown(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
+                ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
 
   if (coInitialize_in)
     CoUninitialize ();
@@ -1416,7 +1434,7 @@ do_finalize_mediafoundation ()
   if (FAILED (result))
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to MFShutdown(): \"%s\", continuing\n"),
-                ACE_TEXT (Common_Tools::errorToString (result).c_str ())));
+                ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
 
   CoUninitialize ();
 }
@@ -1443,7 +1461,9 @@ do_work (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
          bool useReactor_in,
          const std::string& SSID_in,
+#if defined (GUI_SUPPORT)
          const std::string& UIInterfaceDefinitionFile_in,
+#endif // GUI_SUPPORT
          bool monitorWLAN_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -1453,7 +1473,17 @@ do_work (int argc_in,
 #endif // _DEBUG
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
-         struct ARDrone_GtkCBData_Base* CBData_in,
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+         struct ARDrone_UI_CBData_Base* CBData_in,
+#endif // GTK_USE
+#endif // GUI_SUPPORT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+         struct ARDrone_DirectShow_Configuration& directShowConfiguration_in,
+         struct ARDrone_MediaFoundation_Configuration& mediaFoundationConfiguration_in,
+#else
+         struct ARDrone_Configuration& configuration_in,
+#endif // ACE_WIN32 || ACE_WIN64
          const ACE_Sig_Set& signalSet_in,
          const ACE_Sig_Set& ignoredSignalSet_in,
          Common_SignalActions_t& previousSignalActions_inout,
@@ -1476,45 +1506,29 @@ do_work (int argc_in,
 
   // initialize common settings
 #if defined (_DEBUG)
-  Common_Tools::enableCoreDump (true);
+  Common_Error_Tools::enableCoreDump (true);
 #endif // _DEBUG
 
   // sanity check(s)
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_GtkCBData* directshow_cb_data_p = NULL;
-  struct ARDrone_DirectShow_Configuration* directshow_configuration_p = NULL;
-  struct ARDrone_MediaFoundation_GtkCBData* mediafoundation_cb_data_p = NULL;
-  struct ARDrone_MediaFoundation_Configuration* mediafoundation_configuration_p =
-    NULL;
+  struct ARDrone_DirectShow_UI_CBData* directshow_cb_data_p = NULL;
+  struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_cb_data_p = NULL;
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       directshow_cb_data_p =
-        static_cast<struct ARDrone_DirectShow_GtkCBData*> (CBData_in);
+        static_cast<struct ARDrone_DirectShow_UI_CBData*> (CBData_in);
       ACE_ASSERT (directshow_cb_data_p);
-      directshow_configuration_p = directshow_cb_data_p->configuration;
-      allocator_configuration_p =
-        &directshow_configuration_p->allocatorConfiguration;
-      wlan_monitor_configuration_p =
-        &directshow_configuration_p->WLANMonitorConfiguration;
-      dispatch_configuration_p =
-        &directshow_configuration_p->dispatchConfiguration;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       mediafoundation_cb_data_p =
-        static_cast<struct ARDrone_MediaFoundation_GtkCBData*> (CBData_in);
+        static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (CBData_in);
       ACE_ASSERT (mediafoundation_cb_data_p);
-      mediafoundation_configuration_p =
-        mediafoundation_cb_data_p->configuration;
-      allocator_configuration_p =
-        &mediafoundation_configuration_p->allocatorConfiguration;
-      wlan_monitor_configuration_p =
-        &mediafoundation_configuration_p->WLANMonitorConfiguration;
-      dispatch_configuration_p =
-        &mediafoundation_configuration_p->dispatchConfiguration;
       break;
     }
     default:
@@ -1526,15 +1540,48 @@ do_work (int argc_in,
     }
   } // end SWITCH
 #else
-  struct ARDrone_GtkCBData* cb_data_p =
-    static_cast<struct ARDrone_GtkCBData*> (CBData_in);
+  struct ARDrone_UI_CBData* cb_data_p =
+    static_cast<struct ARDrone_UI_CBData*> (CBData_in);
   ACE_ASSERT (cb_data_p);
-  struct ARDrone_Configuration* configuration_p = cb_data_p->configuration;
-  allocator_configuration_p = &configuration_p->allocatorConfiguration;
-  wlan_monitor_configuration_p =
-    &configuration_p->WLANMonitorConfiguration;
-  dispatch_configuration_p =
-    &configuration_p->dispatchConfiguration;
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // GTK_USE
+#endif // GUI_SUPPORT
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (CBData_in->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      allocator_configuration_p =
+        &directShowConfiguration_in.allocatorConfiguration;
+      wlan_monitor_configuration_p =
+        &directShowConfiguration_in.WLANMonitorConfiguration;
+      dispatch_configuration_p =
+        &directShowConfiguration_in.dispatchConfiguration;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      allocator_configuration_p =
+        &mediaFoundationConfiguration_in.allocatorConfiguration;
+      wlan_monitor_configuration_p =
+        &mediaFoundationConfiguration_in.WLANMonitorConfiguration;
+      dispatch_configuration_p =
+        &mediaFoundationConfiguration_in.dispatchConfiguration;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  CBData_in->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
+  allocator_configuration_p = &configuration_in.allocatorConfiguration;
+  wlan_monitor_configuration_p = &configuration_in.WLANMonitorConfiguration;
+  dispatch_configuration_p = &configuration_in.dispatchConfiguration;
 #endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (allocator_configuration_p);
   ACE_ASSERT (wlan_monitor_configuration_p);
@@ -1542,7 +1589,11 @@ do_work (int argc_in,
 
   // step1: initialize configuration data
   ARDrone_EventHandler event_handler (CBData_in,
+#if defined (GUI_SUPPORT)
                                       UIInterfaceDefinitionFile_in.empty ());
+#else
+                                      true);
+#endif // GUI_SUPPORT
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct ARDrone_AllocatorConfiguration> heap_allocator;
   if (!heap_allocator.initialize (*allocator_configuration_p))
@@ -1629,7 +1680,7 @@ do_work (int argc_in,
   struct Common_TimerConfiguration timer_configuration;
   struct Common_EventDispatchState dispatch_state_s;
   struct ARDrone_StreamConfiguration stream_configuration;
-  Common_UI_IGTK_SynchManager_t* igtk_manager_p = NULL;
+  Common_UI_IGTK_Manager_t* igtk_manager_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ConnectionConfiguration_t directshow_connection_configuration;
   ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_connection_iterator;
@@ -1665,7 +1716,7 @@ do_work (int argc_in,
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
 #if defined (_DEBUG)
-      directshow_configuration_p->parserConfiguration.debugScanner =
+      directShowConfiguration_in.parserConfiguration.debugScanner =
         debugScanner_in;
 #endif // _DEBUG
       break;
@@ -1673,7 +1724,7 @@ do_work (int argc_in,
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
 #if defined (_DEBUG)
-      mediafoundation_configuration_p->parserConfiguration.debugScanner =
+      mediaFoundationConfiguration_in.parserConfiguration.debugScanner =
         debugScanner_in;
 #endif // _DEBUG
       break;
@@ -1688,7 +1739,7 @@ do_work (int argc_in,
   } // end SWITCH
 #else
 #if defined (_DEBUG)
-  configuration_p->parserConfiguration.debugScanner = debugScanner_in;
+  configuration_in.parserConfiguration.debugScanner = debugScanner_in;
 #endif // _DEBUG
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -1705,12 +1756,12 @@ do_work (int argc_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      stream_configuration.userData = directshow_configuration_p->userData;
+      stream_configuration.userData = directShowConfiguration_in.userData;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      stream_configuration.userData = mediafoundation_configuration_p->userData;
+      stream_configuration.userData = mediaFoundationConfiguration_in.userData;
       break;
     }
     default:
@@ -1722,7 +1773,7 @@ do_work (int argc_in,
     }
   } // end SWITCH
 #else
-  stream_configuration.userData = configuration_p->userData;
+  stream_configuration.userData = configuration_in.userData;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1748,13 +1799,13 @@ do_work (int argc_in,
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    { ACE_ASSERT (directshow_configuration_p);
-      ACE_ASSERT (directshow_configuration_p->pinConfiguration.format);
-      if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*directshow_configuration_p->pinConfiguration.format,
-                                                                  directshow_modulehandler_configuration.inputFormat))
+    { ACE_ASSERT (directShowConfiguration_in.pinConfiguration.format);
+      directshow_modulehandler_configuration.inputFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*directShowConfiguration_in.pinConfiguration.format);
+      if (!directshow_modulehandler_configuration.inputFormat)
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copyMediaType(), returning\n")));
+                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copy(), returning\n")));
         goto clean;
       } // end IF
       ACE_ASSERT (directshow_modulehandler_configuration.inputFormat);
@@ -1771,14 +1822,14 @@ do_work (int argc_in,
       directshow_modulehandler_configuration.finishOnDisconnect = true;
       directshow_modulehandler_configuration.fullScreen = fullScreen_in;
       directshow_modulehandler_configuration.parserConfiguration =
-        &directshow_configuration_p->parserConfiguration;
+        &directShowConfiguration_in.parserConfiguration;
       directshow_modulehandler_configuration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
       directshow_modulehandler_configuration.subscriber = &event_handler;
       directshow_modulehandler_configuration.subscribers =
-        &directshow_configuration_p->streamSubscribers;
+        &directShowConfiguration_in.streamSubscribers;
       directshow_modulehandler_configuration.subscribersLock =
-        &directshow_cb_data_p->configuration->streamSubscribersLock;
+        &directShowConfiguration_in.streamSubscribersLock;
       //directshow_modulehandler_configuration.useYYScanBuffer = false;
 
       stream_configuration.module = &directshow_event_handler_module;
@@ -1786,26 +1837,26 @@ do_work (int argc_in,
       // control
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration,
-                                                    directshow_configuration_p->allocatorConfiguration,
+                                                    directShowConfiguration_in.allocatorConfiguration,
                                                     stream_configuration);
-      directshow_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                                               directshow_stream_configuration_2));
+      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+                                                                              directshow_stream_configuration_2));
 
       // mavlink
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration,
-                                                    directshow_configuration_p->allocatorConfiguration,
+                                                    directShowConfiguration_in.allocatorConfiguration,
                                                     stream_configuration);
-      directshow_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                                               directshow_stream_configuration_2));
+      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+                                                                              directshow_stream_configuration_2));
 
       // navdata
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration,
-                                                    directshow_configuration_p->allocatorConfiguration,
+                                                    directShowConfiguration_in.allocatorConfiguration,
                                                     stream_configuration);
-      directshow_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                                               directshow_stream_configuration_2));
+      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+                                                                              directshow_stream_configuration_2));
 
       // video (already added in main())
       //directshow_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
@@ -1817,27 +1868,27 @@ do_work (int argc_in,
       stream_configuration.module = NULL;
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration,
-                                                    directshow_configuration_p->allocatorConfiguration,
+                                                    directShowConfiguration_in.allocatorConfiguration,
                                                     stream_configuration);
-      directshow_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
-                                                                               directshow_stream_configuration_2));
+      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+                                                                              directshow_stream_configuration_2));
 
       directshow_control_streamconfiguration_iterator =
-        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_control_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
+        directShowConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_control_streamconfiguration_iterator != directShowConfiguration_in.streamConfigurations.end ());
       directshow_mavlink_streamconfiguration_iterator =
-        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_mavlink_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
+        directShowConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_mavlink_streamconfiguration_iterator != directShowConfiguration_in.streamConfigurations.end ());
       directshow_navdata_streamconfiguration_iterator =
-        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_navdata_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
+        directShowConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_navdata_streamconfiguration_iterator != directShowConfiguration_in.streamConfigurations.end ());
       directshow_video_streamconfiguration_iterator =
-        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_video_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
+        directShowConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_video_streamconfiguration_iterator != directShowConfiguration_in.streamConfigurations.end ());
 
       directshow_network_streamconfiguration_iterator =
-        directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (directshow_network_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
+        directShowConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
+      ACE_ASSERT (directshow_network_streamconfiguration_iterator != directShowConfiguration_in.streamConfigurations.end ());
 
       // reset video stream module configuration (it was added in main)
       (*directshow_video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
@@ -1857,7 +1908,7 @@ do_work (int argc_in,
       (*directshow_video_streamconfiguration_iterator).second.configuration_.printFinalReport =
         false;
       (*directshow_video_streamconfiguration_iterator).second.configuration_.userData =
-        directshow_configuration_p->userData;
+        directShowConfiguration_in.userData;
 
       break;
     }
@@ -1876,14 +1927,14 @@ do_work (int argc_in,
       mediafoundation_modulehandler_configuration.finishOnDisconnect = true;
       mediafoundation_modulehandler_configuration.fullScreen = fullScreen_in;
       mediafoundation_modulehandler_configuration.parserConfiguration =
-        &mediafoundation_configuration_p->parserConfiguration;
+        &mediaFoundationConfiguration_in.parserConfiguration;
       mediafoundation_modulehandler_configuration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
       mediafoundation_modulehandler_configuration.subscriber = &event_handler;
       mediafoundation_modulehandler_configuration.subscribers =
-        &mediafoundation_configuration_p->streamSubscribers;
+        &mediaFoundationConfiguration_in.streamSubscribers;
       mediafoundation_modulehandler_configuration.subscribersLock =
-        &mediafoundation_configuration_p->streamSubscribersLock;
+        &mediaFoundationConfiguration_in.streamSubscribersLock;
       //mediafoundation_modulehandler_configuration.useYYScanBuffer = false;
 
       stream_configuration.module = &mediafoundation_event_handler_module;
@@ -1891,26 +1942,26 @@ do_work (int argc_in,
       // control
       mediafoundation_stream_configuration_2.initialize (module_configuration,
                                                          mediafoundation_modulehandler_configuration,
-                                                         mediafoundation_configuration_p->allocatorConfiguration,
+                                                         mediaFoundationConfiguration_in.allocatorConfiguration,
                                                          stream_configuration);
-      mediafoundation_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                                                    mediafoundation_stream_configuration_2));
+      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+                                                                                   mediafoundation_stream_configuration_2));
 
       // mavlink
       mediafoundation_stream_configuration_2.initialize (module_configuration,
                                                          mediafoundation_modulehandler_configuration,
-                                                         mediafoundation_configuration_p->allocatorConfiguration,
+                                                         mediaFoundationConfiguration_in.allocatorConfiguration,
                                                          stream_configuration);
-      mediafoundation_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                                                    mediafoundation_stream_configuration_2));
+      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+                                                                                   mediafoundation_stream_configuration_2));
 
       // navdata
       mediafoundation_stream_configuration_2.initialize (module_configuration,
                                                          mediafoundation_modulehandler_configuration,
-                                                         mediafoundation_configuration_p->allocatorConfiguration,
+                                                         mediaFoundationConfiguration_in.allocatorConfiguration,
                                                          stream_configuration);
-      mediafoundation_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                                                    mediafoundation_stream_configuration_2));
+      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+                                                                                   mediafoundation_stream_configuration_2));
 
       // video (already added in main())
       //mediafoundation_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
@@ -1922,27 +1973,27 @@ do_work (int argc_in,
       stream_configuration.module = NULL;
       mediafoundation_stream_configuration_2.initialize (module_configuration,
                                                          mediafoundation_modulehandler_configuration,
-                                                         mediafoundation_configuration_p->allocatorConfiguration,
+                                                         mediaFoundationConfiguration_in.allocatorConfiguration,
                                                          stream_configuration);
-      mediafoundation_configuration_p->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
-                                                                                    mediafoundation_stream_configuration_2));
+      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+                                                                                   mediafoundation_stream_configuration_2));
 
       mediafoundation_control_streamconfiguration_iterator =
-        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_control_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
+        mediaFoundationConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_control_streamconfiguration_iterator != mediaFoundationConfiguration_in.streamConfigurations.end ());
       mediafoundation_mavlink_streamconfiguration_iterator =
-        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_mavlink_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
+        mediaFoundationConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_mavlink_streamconfiguration_iterator != mediaFoundationConfiguration_in.streamConfigurations.end ());
       mediafoundation_navdata_streamconfiguration_iterator =
-        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_navdata_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
+        mediaFoundationConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_navdata_streamconfiguration_iterator != mediaFoundationConfiguration_in.streamConfigurations.end ());
       mediafoundation_video_streamconfiguration_iterator =
-        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_video_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
+        mediaFoundationConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_video_streamconfiguration_iterator != mediaFoundationConfiguration_in.streamConfigurations.end ());
 
       mediafoundation_network_streamconfiguration_iterator =
-        mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (mediafoundation_network_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
+        mediaFoundationConfiguration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
+      ACE_ASSERT (mediafoundation_network_streamconfiguration_iterator != mediaFoundationConfiguration_in.streamConfigurations.end ());
 
       // reset video stream module configuration (it was added in main)
       (*mediafoundation_video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
@@ -1962,7 +2013,7 @@ do_work (int argc_in,
       (*mediafoundation_video_streamconfiguration_iterator).second.configuration_.printFinalReport =
         false;
       (*mediafoundation_video_streamconfiguration_iterator).second.configuration_.userData =
-        mediafoundation_configuration_p->userData;
+        mediaFoundationConfiguration_in.userData;
 
       break;
     }
@@ -2016,8 +2067,8 @@ do_work (int argc_in,
                                      modulehandler_configuration,
                                      cb_data_p->configuration->allocatorConfiguration,
                                      stream_configuration);
-  cb_data_p->configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                                         stream_configuration_2));
+  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+                                                                stream_configuration_2));
 
   // mavlink
   stream_configuration.initializeMAVLink = &event_handler;
@@ -2025,8 +2076,8 @@ do_work (int argc_in,
                                      modulehandler_configuration,
                                      cb_data_p->configuration->allocatorConfiguration,
                                      stream_configuration);
-  cb_data_p->configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                                         stream_configuration_2));
+  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+                                                                stream_configuration_2));
 
   // navdata
   stream_configuration.initializeNavData = &event_handler;
@@ -2034,8 +2085,8 @@ do_work (int argc_in,
                                      modulehandler_configuration,
                                      cb_data_p->configuration->allocatorConfiguration,
                                      stream_configuration);
-  cb_data_p->configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                                         stream_configuration_2));
+  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+                                                                stream_configuration_2));
 
   // video (already added in main())
   //CBData_in->configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
@@ -2047,27 +2098,27 @@ do_work (int argc_in,
   stream_configuration.module = NULL;
   stream_configuration_2.initialize (module_configuration,
                                      modulehandler_configuration,
-                                     cb_data_p->configuration->allocatorConfiguration,
+                                     *allocator_configuration_p,
                                      stream_configuration);
-  cb_data_p->configuration->streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
-                                                                         stream_configuration_2));
+  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+                                                                stream_configuration_2));
 
   control_streamconfiguration_iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-  ACE_ASSERT (control_streamconfiguration_iterator != cb_data_p->configuration->streamConfigurations.end ());
+    configuration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+  ACE_ASSERT (control_streamconfiguration_iterator != configuration_in.streamConfigurations.end ());
   mavlink_streamconfiguration_iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-  ACE_ASSERT (mavlink_streamconfiguration_iterator != cb_data_p->configuration->streamConfigurations.end ());
+    configuration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+  ACE_ASSERT (mavlink_streamconfiguration_iterator != configuration_in.streamConfigurations.end ());
   navdata_streamconfiguration_iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (navdata_streamconfiguration_iterator != cb_data_p->configuration->streamConfigurations.end ());
+    configuration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+  ACE_ASSERT (navdata_streamconfiguration_iterator != configuration_in.streamConfigurations.end ());
   video_streamconfiguration_iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (video_streamconfiguration_iterator != cb_data_p->configuration->streamConfigurations.end ());
+    configuration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (video_streamconfiguration_iterator != configuration_in.streamConfigurations.end ());
 
   network_streamconfiguration_iterator =
-    cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
-  ACE_ASSERT (network_streamconfiguration_iterator != cb_data_p->configuration->streamConfigurations.end ());
+    configuration_in.streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING));
+  ACE_ASSERT (network_streamconfiguration_iterator != configuration_in.streamConfigurations.end ());
 
   (*video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
       std::max (bufferSize_in,
@@ -2086,7 +2137,7 @@ do_work (int argc_in,
   (*video_streamconfiguration_iterator).second.configuration_.printFinalReport =
       false;
   (*video_streamconfiguration_iterator).second.configuration_.userData =
-      cb_data_p->configuration->userData;
+      configuration_in.userData;
 #endif // ACE_WIN32 || ACE_WIN64
 
   // ******************* socket configuration data ****************************
@@ -2117,7 +2168,15 @@ do_work (int argc_in,
   wlan_monitor_configuration_p->dispatch = COMMON_EVENT_DISPATCH_REACTOR;
   // *TODO*: implement an elegant way to specify a network interface on Win32
   wlan_monitor_configuration_p->interfaceIdentifier =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
     interfaceIdentifier_in;
+#else
+    Net_Common_Tools::indexToInterface_2 (Net_Common_Tools::interfaceToIndex (interfaceIdentifier_in));
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#else
+    interfaceIdentifier_in;
+#endif // ACE_WIN32 || ACE_WIN64
   wlan_monitor_configuration_p->SSID = SSID_in;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   wlan_monitor_configuration_p->timerInterface = timer_manager_p;
@@ -2132,7 +2191,7 @@ do_work (int argc_in,
         ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
 #endif // ACE_WIN32 || ACE_WIN64
       wlan_monitor_configuration_p->userData =
-        directshow_configuration_p->userData;
+        directShowConfiguration_in.userData;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -2144,7 +2203,7 @@ do_work (int argc_in,
         ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
 #endif // ACE_WIN32 || ACE_WIN64
       wlan_monitor_configuration_p->userData =
-        mediafoundation_configuration_p->userData;
+        mediaFoundationConfiguration_in.userData;
       break;
     }
     default:
@@ -2163,7 +2222,7 @@ do_work (int argc_in,
     ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
 #endif // ACE_WIN32 || ACE_WIN64
   wlan_monitor_configuration_p->userData =
-    configuration_p->userData;
+    configuration_in.userData;
 #endif // ACE_WIN32 || ACE_WIN64
   if (!WLAN_monitor_p->initialize (*wlan_monitor_configuration_p))
   {
@@ -2198,20 +2257,20 @@ do_work (int argc_in,
       directshow_connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
       directshow_connection_configuration.socketHandlerConfiguration.userData =
-        directshow_configuration_p->userData;
+        directShowConfiguration_in.userData;
       directshow_connection_configuration.userData =
-        directshow_configuration_p->userData;
+        directShowConfiguration_in.userData;
 
-      directshow_connection_configuration.initialize (directshow_configuration_p->allocatorConfiguration,
+      directshow_connection_configuration.initialize (directShowConfiguration_in.allocatorConfiguration,
                                                       (*directshow_network_streamconfiguration_iterator).second);
 
       directshow_connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                    directshow_connection_configuration));
-      directshow_configuration_p->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                                                   directshow_connection_configurations));
+      directShowConfiguration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+                                                                                  directshow_connection_configurations));
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_stream_connection_iterator =
         (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
@@ -2238,11 +2297,11 @@ do_work (int argc_in,
       directshow_connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                    directshow_connection_configuration));
 
-      directshow_configuration_p->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                                                   directshow_connection_configurations));
+      directShowConfiguration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+                                                                                  directshow_connection_configurations));
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_stream_connection_iterator =
         (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
@@ -2267,11 +2326,11 @@ do_work (int argc_in,
       directshow_connection_configurations.clear ();
       directshow_connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING),
                                                                    directshow_connection_configuration));
-      directshow_configuration_p->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                                                   directshow_connection_configurations));
+      directShowConfiguration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+                                                                                  directshow_connection_configurations));
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_stream_connection_iterator = (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
       (*directshow_stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
@@ -2332,11 +2391,11 @@ do_work (int argc_in,
       directshow_connection_configurations.clear ();
       directshow_connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                    directshow_connection_configuration));
-      directshow_configuration_p->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
-                                                                                   directshow_connection_configurations));
+      directShowConfiguration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
+                                                                                  directshow_connection_configurations));
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_stream_connection_iterator = (*directshow_connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_stream_connection_iterator != (*directshow_connection_iterator).second.end ());
       (*directshow_stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
@@ -2350,8 +2409,8 @@ do_work (int argc_in,
       // ******************** stream configuration data ***************************
       // control
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
 
       break;
     }
@@ -2398,11 +2457,11 @@ do_work (int argc_in,
 
   connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                     connection_configuration));
-  cb_data_p->configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                                            connection_configurations));
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+                                                                    connection_configurations));
   connection_iterator =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   stream_connection_iterator =
     (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
@@ -2429,11 +2488,11 @@ do_work (int argc_in,
   connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                     connection_configuration));
 
-  cb_data_p->configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                                            connection_configurations));
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+                                                                    connection_configurations));
   connection_iterator =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   stream_connection_iterator =
     (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
@@ -2458,11 +2517,11 @@ do_work (int argc_in,
   connection_configurations.clear ();
   connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING),
                                                     connection_configuration));
-  cb_data_p->configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                                            connection_configurations));
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+                                                                    connection_configurations));
   connection_iterator =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   stream_connection_iterator = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
   (*stream_connection_iterator).second.socketHandlerConfiguration.connectionConfiguration =
@@ -2523,11 +2582,11 @@ do_work (int argc_in,
   connection_configurations.clear ();
   connection_configurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                     connection_configuration));
-  cb_data_p->configuration->connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
-                                                                            connection_configurations));
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
+                                                                    connection_configurations));
   connection_iterator =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   stream_connection_iterator 
     = (*connection_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
   ACE_ASSERT (stream_connection_iterator != (*connection_iterator).second.end ());
@@ -2542,8 +2601,8 @@ do_work (int argc_in,
   // ******************** stream configuration data ***************************
   // control
   connection_iterator =
-    cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != cb_data_p->configuration->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2551,9 +2610,9 @@ do_work (int argc_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      directshow_configuration_p->filterConfiguration.allocatorProperties.cbBuffer =
+      directShowConfiguration_in.filterConfiguration.allocatorProperties.cbBuffer =
         directshow_modulehandler_configuration.inputFormat->lSampleSize;
-      directshow_configuration_p->pinConfiguration.isTopToBottom = true;
+      directShowConfiguration_in.pinConfiguration.isTopToBottom = true;
 
       directshow_modulehandler_configuration.connectionConfigurations =
         &(*directshow_connection_iterator).second;
@@ -2564,8 +2623,8 @@ do_work (int argc_in,
 
       // mavlink
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_modulehandler_configuration.connectionConfigurations =
         &(*directshow_connection_iterator).second;
       (*directshow_mavlink_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2574,8 +2633,8 @@ do_work (int argc_in,
 
       // navdata
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_modulehandler_configuration.connectionConfigurations =
         &(*directshow_connection_iterator).second;
       (*directshow_navdata_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2587,15 +2646,15 @@ do_work (int argc_in,
 
       // video
       directshow_connection_iterator =
-        directshow_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_connection_iterator != directshow_configuration_p->connectionConfigurations.end ());
+        directShowConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_connection_iterator != directShowConfiguration_in.connectionConfigurations.end ());
       directshow_modulehandler_configuration.connectionConfigurations =
         &(*directshow_connection_iterator).second;
       (*directshow_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (module_configuration,
                                                                                                       directshow_modulehandler_configuration)));
       directshow_modulehandler_configuration.connectionConfigurations = NULL;
-      (*directshow_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
+      (*directshow_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (module_configuration,
                                                                                                       directshow_modulehandler_configuration)));
 
@@ -2621,7 +2680,7 @@ do_work (int argc_in,
       // step2: initialize connection manager
       //configuration_2.streamConfiguration->module = NULL;
       directshow_connection_manager_p->set ((*directshow_stream_connection_iterator).second,
-                                            directshow_configuration_p->userData); // passed to all handlers
+                                            directShowConfiguration_in.userData); // passed to all handlers
 
       break;
     }
@@ -2636,8 +2695,8 @@ do_work (int argc_in,
 
       // mavlink
       mediafoundation_connection_iterator =
-        mediafoundation_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_connection_iterator != mediafoundation_configuration_p->connectionConfigurations.end ());
+        mediaFoundationConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_connection_iterator != mediaFoundationConfiguration_in.connectionConfigurations.end ());
       mediafoundation_modulehandler_configuration.connectionConfigurations =
         &(*mediafoundation_connection_iterator).second;
       (*mediafoundation_mavlink_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2646,8 +2705,8 @@ do_work (int argc_in,
 
       // navdata
       mediafoundation_connection_iterator =
-        mediafoundation_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_connection_iterator != mediafoundation_configuration_p->connectionConfigurations.end ());
+        mediaFoundationConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_connection_iterator != mediaFoundationConfiguration_in.connectionConfigurations.end ());
       mediafoundation_modulehandler_configuration.connectionConfigurations =
         &(*mediafoundation_connection_iterator).second;
       (*mediafoundation_navdata_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2659,8 +2718,8 @@ do_work (int argc_in,
 
       // video
       mediafoundation_connection_iterator =
-        mediafoundation_configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_connection_iterator != mediafoundation_configuration_p->connectionConfigurations.end ());
+        mediaFoundationConfiguration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+      ACE_ASSERT (mediafoundation_connection_iterator != mediaFoundationConfiguration_in.connectionConfigurations.end ());
       mediafoundation_modulehandler_configuration.connectionConfigurations =
         &(*mediafoundation_connection_iterator).second;
       (*mediafoundation_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2668,7 +2727,7 @@ do_work (int argc_in,
                                                                                                            mediafoundation_modulehandler_configuration)));
       mediafoundation_modulehandler_configuration.connectionConfigurations =
         NULL;
-      (*mediafoundation_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
+      (*mediafoundation_video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
                                                                                            std::make_pair (module_configuration,
                                                                                                            mediafoundation_modulehandler_configuration)));
 
@@ -2694,7 +2753,7 @@ do_work (int argc_in,
       // step2: initialize connection manager
       //configuration_2.streamConfiguration->module = NULL;
       mediafoundation_connection_manager_p->set ((*mediafoundation_stream_connection_iterator).second,
-                                                 mediafoundation_configuration_p->userData); // passed to all handlers
+                                                 mediaFoundationConfiguration_in.userData); // passed to all handlers
 
       break;
     }
@@ -2716,17 +2775,18 @@ do_work (int argc_in,
 
   // mavlink
   connection_iterator =
-    configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != configuration_p->connectionConfigurations.end ());
-  modulehandler_configuration.connectionConfigurations = &(*connection_iterator).second;
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
+  modulehandler_configuration.connectionConfigurations =
+    &(*connection_iterator).second;
   (*mavlink_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                          std::make_pair (module_configuration,
                                                                                          modulehandler_configuration)));
 
   // navdata
   connection_iterator =
-    configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != configuration_p->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   modulehandler_configuration.connectionConfigurations =
     &(*connection_iterator).second;
   (*navdata_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
@@ -2738,15 +2798,15 @@ do_work (int argc_in,
 
   // video
   connection_iterator =
-    configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (connection_iterator != configuration_p->connectionConfigurations.end ());
+    configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
+  ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
   modulehandler_configuration.connectionConfigurations =
     &(*connection_iterator).second;
   (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
   modulehandler_configuration.connectionConfigurations = NULL;
-  (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
+  (*video_streamconfiguration_iterator).second.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING),
                                                                        std::make_pair (module_configuration,
                                                                                        modulehandler_configuration)));
   if (useReactor_in)
@@ -2772,7 +2832,7 @@ do_work (int argc_in,
   // step2: initialize connection manager
   //configuration_2.streamConfiguration->module = NULL;
   connection_manager_p->set ((*stream_connection_iterator).second,
-                             configuration_p->userData); // passed to all handlers
+                             configuration_in.userData); // passed to all handlers
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step3: initialize event dispatch
@@ -2807,27 +2867,27 @@ do_work (int argc_in,
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       signal_handler_p = &directShowSignalHandler_in;
-      directshow_configuration_p->signalConfiguration.dispatchState =
+      directShowConfiguration_in.signalConfiguration.dispatchState =
         &dispatch_state_s;
-      directshow_configuration_p->signalConfiguration.hasUI =
+      directShowConfiguration_in.signalConfiguration.hasUI =
         !UIInterfaceDefinitionFile_in.empty ();
-      directshow_configuration_p->signalConfiguration.peerAddress =
+      directShowConfiguration_in.signalConfiguration.peerAddress =
         address_in;
       result_2 =
-        directShowSignalHandler_in.initialize (directshow_configuration_p->signalConfiguration);
+        directShowSignalHandler_in.initialize (directShowConfiguration_in.signalConfiguration);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       signal_handler_p = &mediaFoundationSignalHandler_in;
-      mediafoundation_configuration_p->signalConfiguration.dispatchState =
+      mediaFoundationConfiguration_in.signalConfiguration.dispatchState =
         &dispatch_state_s;
-      mediafoundation_configuration_p->signalConfiguration.hasUI =
+      mediaFoundationConfiguration_in.signalConfiguration.hasUI =
         !UIInterfaceDefinitionFile_in.empty ();
-      mediafoundation_configuration_p->signalConfiguration.peerAddress =
+      mediaFoundationConfiguration_in.signalConfiguration.peerAddress =
         address_in;
       result_2 =
-        mediaFoundationSignalHandler_in.initialize (mediafoundation_configuration_p->signalConfiguration);
+        mediaFoundationSignalHandler_in.initialize (mediaFoundationConfiguration_in.signalConfiguration);
       break;
     }
     default:
@@ -2840,13 +2900,13 @@ do_work (int argc_in,
   } // end SWITCH
 #else
   signal_handler_p = &signalHandler_in;
-  configuration_p->signalConfiguration.dispatchState =
+  configuration_in.signalConfiguration.dispatchState =
     &dispatch_state_s;
-  configuration_p->signalConfiguration.hasUI =
+  configuration_in.signalConfiguration.hasUI =
     !UIInterfaceDefinitionFile_in.empty ();
-  configuration_p->signalConfiguration.peerAddress = address_in;
+  configuration_in.signalConfiguration.peerAddress = address_in;
   result_2 =
-    signalHandler_in.initialize (configuration_p->signalConfiguration);
+    signalHandler_in.initialize (configuration_in.signalConfiguration);
 #endif // ACE_WIN32 || ACE_WIN64
   if (!result_2)
   {
@@ -2870,35 +2930,16 @@ do_work (int argc_in,
   // intialize timers
   timer_manager_p->start ();
 
-  // step1a: start GTK event loop ?
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (CBData_in->mediaFramework)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-      igtk_manager_p = ARDRONE_UI_DIRECTSHOW_GTK_MANAGER_SINGLETON::instance ();
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      igtk_manager_p =
-        ARDRONE_UI_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON::instance ();
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  CBData_in->mediaFramework));
-      return;
-    }
-  } // end SWITCH
-#else
-  igtk_manager_p = ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
-#endif // ACE_WIN32 || ACE_WIN64
-  ACE_ASSERT (igtk_manager_p);
+#if defined (GUI_SUPPORT)
+//#if defined (GTK_USE)
+//  Common_UI_IGTK_Manager_t* igtk_manager_p = NULL;
+//#endif // GTK_USE
+  // step1a: start UI event loop ?
   if (!UIInterfaceDefinitionFile_in.empty ())
   {
+#if defined (GTK_USE)
+    igtk_manager_p = ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+    ACE_ASSERT (igtk_manager_p);
     igtk_manager_p->start ();
     ACE_Time_Value delay (0,
                           ARDRONE_UI_INITIALIZATION_DELAY);
@@ -2913,6 +2954,7 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to start GTK event dispatch, returning\n")));
       goto clean;
     } // end IF
+#endif // GTK_USE
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     HWND window_p = GetConsoleWindow ();
@@ -2929,6 +2971,7 @@ do_work (int argc_in,
     ACE_UNUSED_ARG (was_visible_b);
 #endif // ACE_WIN32 || ACE_WIN64
   } // end IF
+#endif // GUI_SUPPORT
 
   // *WARNING*: from this point on, clean up any remote connections !
 
@@ -3002,8 +3045,10 @@ do_work (int argc_in,
     goto clean;
   } // end IF
 
+#if defined (GUI_SUPPORT)
   if (UIInterfaceDefinitionFile_in.empty ())
   {
+#endif // GUI_SUPPORT
 //    // *TODO*: verify the given address
 //    if (!Net_Common_Tools::IPAddressToInterface (cb_data_p->configuration->socketConfigurations.back ().address,
 //                                                 interface_identifier_string))
@@ -3287,9 +3332,15 @@ continue_2:
                              false,
                              false);
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (GUI_SUPPORT)
   } // end IF
   else
+#if defined (GTK_USE)
     igtk_manager_p->wait ();
+#else
+    ;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   // step9: clean up
 //  result = event_handler_module.close ();
@@ -3345,8 +3396,12 @@ clean:
                                        true);
   if (timer_manager_p)
     timer_manager_p->stop ();
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   if (igtk_manager_p && !UIInterfaceDefinitionFile_in.empty ())
     igtk_manager_p->stop ();
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 }
 
 int
@@ -3414,34 +3469,45 @@ ACE_TMAIN (int argc_in,
   ACE_Sig_Set ignored_signal_set (0);
   Common_SignalActions_t previous_signal_actions;
   sigset_t previous_signal_mask;
-  struct ARDrone_GtkCBData_Base* cb_data_base_p = NULL;
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base* ui_cb_data_base_p = NULL;
+#if defined (GTK_USE)
+  ARDrone_UI_GTK_Manager_t* gtk_manager_p =
+    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_UI_CBData directshow_cb_data;
+  ARDrone_DirectShow_GtkBuilderDefinition_t directshow_ui_definition (argc_in,
+                                                                      argv_in,
+                                                                      &directshow_cb_data);
+  struct ARDrone_MediaFoundation_UI_CBData mediafoundation_cb_data;
+  ARDrone_MediaFoundation_GtkBuilderDefinition_t mediafoundation_ui_definition (argc_in,
+                                                                                argv_in,
+                                                                                &mediafoundation_cb_data);
+#else
+  struct ARDrone_UI_CBData ui_cb_data;
+  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
+                                                argv_in,
+                                                &ui_cb_data);
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_Configuration directshow_configuration;
-  ARDrone_DirectShow_GtkBuilderDefinition_t directshow_ui_definition (argc_in,
-                                                                      argv_in);
-  struct ARDrone_DirectShow_GtkCBData directshow_cb_data;
   ARDrone_DirectShow_SignalHandler_t directshow_signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
                                                                                                                               : COMMON_SIGNAL_DISPATCH_REACTOR),
                                                                 NULL);
-
   struct ARDrone_MediaFoundation_Configuration mediafoundation_configuration;
-  ARDrone_MediaFoundation_GtkBuilderDefinition_t mediafoundation_ui_definition (argc_in,
-                                                                                argv_in);
-  struct ARDrone_MediaFoundation_GtkCBData mediafoundation_cb_data;
   ARDrone_MediaFoundation_SignalHandler_t mediafoundation_signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
                                                                                                                                         : COMMON_SIGNAL_DISPATCH_REACTOR),
                                                                           NULL);
 #else
   struct ARDrone_Configuration configuration;
-  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
-                                                argv_in);
-  struct ARDrone_GtkCBData gtk_cb_data;
   ARDrone_SignalHandler_t signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
                                                                                                         : COMMON_SIGNAL_DISPATCH_REACTOR),
                                           NULL);
 #endif // ACE_WIN32 || ACE_WIN64
-  //Common_Logger_t logger (&gtk_cb_data.logStack,
-  //                        &gtk_cb_data.lock);
   std::string log_file_name;
   struct ARDrone_UserData user_data;
   ACE_High_Res_Timer timer;
@@ -3466,15 +3532,16 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
+
     return EXIT_FAILURE;
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
 
-#if defined (ARDRONE_ENABLE_VALGRIND_SUPPORT)
+#if defined (VALGRIND_SUPPORT)
   if (RUNNING_ON_VALGRIND)
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("running on valgrind...\n")));
-#endif // ARDRONE_ENABLE_VALGRIND_SUPPORT
+#endif // VALGRIND_SUPPORT
 
   result = -1;
   // set default values
@@ -3491,6 +3558,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", aborting\n"),
                 ACE_TEXT (address_string.c_str ())));
+
     goto error;
   } // end IF
   buffer_size = ARDRONE_MESSAGE_BUFFER_SIZE;
@@ -3535,6 +3603,7 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Profile_Timer::start(): \"%m\", aborting\n")));
+
     goto error;
   } // end IF
 
@@ -3543,7 +3612,7 @@ ACE_TMAIN (int argc_in,
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   enum Stream_MediaFramework_Type media_framework_e =
-    MODULE_LIB_DEFAULT_MEDIAFRAMEWORK;
+    STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
 #endif // ACE_WIN32 || ACE_WIN64
   result =
     address.set (static_cast<u_short> (ARDRONE_PORT_TCP_VIDEO),                // (TCP) port number
@@ -3554,6 +3623,7 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_INET_Addr::set(): \"%m\", aborting\n")));
+
     goto error;
   } // end IF
   ACE_DEBUG ((LM_DEBUG,
@@ -3603,6 +3673,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
     do_printUsage (ACE::basename (argv_in[0]));
+
     goto error;
   } // end IF
 
@@ -3618,6 +3689,7 @@ ACE_TMAIN (int argc_in,
                 ACE_TEXT ("invalid configuration (was: \"%s\"), aborting\n"),
                 ACE_TEXT (Common_Tools::commandLineToString (argc_in, argv_in).c_str ())));
     do_printUsage (ACE::basename (argv_in[0]));
+
     goto error;
   } // end IF
 
@@ -3655,6 +3727,7 @@ ACE_TMAIN (int argc_in,
                   mode_e));
       do_printUsage (ACE::basename (argv_in[0],
                                     ACE_DIRECTORY_SEPARATOR_CHAR));
+
       goto error;
     }
   } // end SWITCH
@@ -3662,21 +3735,20 @@ ACE_TMAIN (int argc_in,
   // step4: initialize logging and/or tracing
   if (log_to_file)
     log_file_name =
-      Common_File_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
-                                         ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
-                                                                              ACE_DIRECTORY_SEPARATOR_CHAR)));
-  if (!Common_Tools::initializeLogging (ACE::basename (argv_in[0],
-                                                       ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
-                                        log_file_name,                                   // log file name
-                                        false,                                           // log to syslog ?
-                                        false,                                           // trace messages ?
-                                        trace_information,                               // debug messages ?
-                                        NULL))
-                                        //(interface_definition_file.empty () ? NULL
-                                        //                                    : &logger))) // logger ?
+      Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
+                                        ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0],
+                                                                             ACE_DIRECTORY_SEPARATOR_CHAR)));
+  if (!Common_Log_Tools::initializeLogging (ACE::basename (argv_in[0],
+                                                           ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
+                                            log_file_name,                                   // log file name
+                                            false,                                           // log to syslog ?
+                                            false,                                           // trace messages ?
+                                            trace_information,                               // debug messages ?
+                                            NULL))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::initializeLogging(), aborting\n")));
+                ACE_TEXT ("failed to Common_Log_Tools::initializeLogging(), aborting\n")));
+
     goto error;
   } // end IF
 
@@ -3690,7 +3762,8 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
-    Common_Tools::finalizeLogging ();
+
+    Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
   if (!Common_Signal_Tools::preInitialize (signal_set,
@@ -3700,22 +3773,24 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
-    Common_Tools::finalizeLogging ();
+
+    Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
 
   // step6: initialize configuration
+#if defined (GUI_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (media_framework_e)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      cb_data_base_p = &directshow_cb_data;
+      ui_cb_data_base_p = &directshow_cb_data;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      cb_data_base_p = &mediafoundation_cb_data;
+      ui_cb_data_base_p = &mediafoundation_cb_data;
       break;
     }
     default:
@@ -3723,18 +3798,20 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
+
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Tools::finalizeLogging ();
+      Common_Log_Tools::finalizeLogging ();
       goto error;
     }
   } // end SWITCH
 #else
-  cb_data_base_p = &gtk_cb_data;
+  ui_cb_data_base_p = &ui_cb_data;
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (media_framework_e)
   {
@@ -3779,18 +3856,19 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
+
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Tools::finalizeLogging ();
+      Common_Log_Tools::finalizeLogging ();
       goto error;
     }
   } // end SWITCH
 #else
   video_modulehandler_configuration.fullScreen = fullscreen;
-  video_modulehandler_configuration.pixelBufferLock = &gtk_cb_data.lock;
+  video_modulehandler_configuration.pixelBufferLock = &ui_cb_data.lock;
 
   stream_configuration_2.initialize (module_configuration,
                                      video_modulehandler_configuration,
@@ -3807,48 +3885,55 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step7: initialize user interface, if any
-  cb_data_base_p->argc = argc_in;
-  cb_data_base_p->argv = argv_in;
-  //ACE_OS::memset (&gtk_cb_data.clientSensorBias,
+#if defined (GUI_SUPPORT)
+  state_r.argc = argc_in;
+  state_r.argv = argv_in;
+  //ACE_OS::memset (&ui_cb_data.clientSensorBias,
   //                0,
-  //                sizeof (gtk_cb_data.clientSensorBias));
+  //                sizeof (ui_cb_data.clientSensorBias));
 #if defined (GTKGL_SUPPORT)
-  //  gtk_cb_data.openGLDoubleBuffered = ARDRONE_OPENGL_DOUBLE_BUFFERED;
+  //  ui_cb_data.openGLDoubleBuffered = ARDRONE_OPENGL_DOUBLE_BUFFERED;
 #endif // GTKGL_SUPPORT
-  //ACE_OS::memset (gtk_cb_data.temperature,
+  //ACE_OS::memset (ui_cb_data.temperature,
   //                0,
-  //                sizeof (gtk_cb_data.temperature));
-  cb_data_base_p->builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_GTK_DEFINITION_DESCRIPTOR_MAIN)] =
+  //                sizeof (ui_cb_data.temperature));
+#if defined (GTK_USE)
+  state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (interface_definition_file, static_cast<GtkBuilder*> (NULL));
-  cb_data_base_p->eventHooks.finiHook = idle_finalize_ui_cb;
-  cb_data_base_p->eventHooks.initHook = idle_initialize_ui_cb;
+  state_r.eventHooks.finiHook = idle_finalize_ui_cb;
+  state_r.eventHooks.initHook = idle_initialize_ui_cb;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  cb_data_base_p->mediaFramework = media_framework_e;
+  ui_cb_data_base_p->mediaFramework = media_framework_e;
 #endif // ACE_WIN32 || ACE_WIN64
-  cb_data_base_p->progressData.state = cb_data_base_p;
-  cb_data_base_p->userData = &user_data;
+  //ui_cb_data_base_p->progressData.state = ui_cb_data_base_p;
+  //ui_cb_data_base_p->userData = &user_data;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
+#if defined (GUI_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (media_framework_e)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       directshow_cb_data.configuration = &directshow_configuration;
+#if defined (GTK_USE)
       result_2 =
-        ARDRONE_UI_DIRECTSHOW_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
-                                                                              argv_in,
-                                                                              &directshow_cb_data,
-                                                                              &directshow_ui_definition);
+        ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
+                                                                   argv_in,
+                                                                   &directshow_ui_definition);
+#endif // GTK_USE
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       mediafoundation_cb_data.configuration = &mediafoundation_configuration;
+#if defined (GTK_USE)
       result_2 =
-        ARDRONE_UI_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
-                                                                                   argv_in,
-                                                                                   &mediafoundation_cb_data,
-                                                                                   &mediafoundation_ui_definition);
+        ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
+                                                                   argv_in,
+                                                                   &mediafoundation_ui_definition);
+#endif // GTK_USE
       break;
     }
     default:
@@ -3861,30 +3946,37 @@ ACE_TMAIN (int argc_in,
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Tools::finalizeLogging ();
+      Common_Log_Tools::finalizeLogging ();
       goto error;
     }
   } // end SWITCH
 #else
-  gtk_cb_data.configuration = &configuration;
+  ui_cb_data.configuration = &configuration;
+#if defined (GTK_USE)
   result_2 =
     ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                                argv_in,
-                                                               &gtk_cb_data,
                                                                &ui_definition);
+#endif // GTK_USE
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize gtk manager, returning\n")));
+
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                 : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                     signal_set,
                                     previous_signal_actions,
                                     previous_signal_mask);
-    Common_Tools::finalizeLogging ();
+    Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   // step8: (media) frameworks
   //Stream_Module_Decoder_Tools::initialize ();
@@ -3911,12 +4003,13 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
+
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Tools::finalizeLogging ();
+      Common_Log_Tools::finalizeLogging ();
       goto error;
     }
   } // end SWITCH
@@ -3924,12 +4017,13 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize media framework, returning\n")));
+
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                 : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                    signal_set,
                                    previous_signal_actions,
                                    previous_signal_mask);
-    Common_Tools::finalizeLogging ();
+    Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
@@ -3949,7 +4043,9 @@ ACE_TMAIN (int argc_in,
              interface_identifier,
              use_reactor,
              SSID_string,
+#if defined (GUI_SUPPORT)
              interface_definition_file,
+#endif // GUI_SUPPORT
              monitor_WLAN,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -3959,7 +4055,15 @@ ACE_TMAIN (int argc_in,
 #endif // _DEBUG
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
-             cb_data_base_p,
+#if defined (GUI_SUPPORT)
+             ui_cb_data_base_p,
+#endif // GUI_SUPPORT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+             directshow_configuration,
+             mediafoundation_configuration,
+#else
+             configuration,
+#endif // ACE_WIN32 || ACE_WIN64
              signal_set,
              ignored_signal_set,
              previous_signal_actions,
@@ -3993,6 +4097,7 @@ done:
   {
     ACE_DEBUG ((LM_ERROR,
                ACE_TEXT ("failed to ACE_Profile_Timer::elapsed_time: \"%m\", aborting\n")));
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     switch (media_framework_e)
     {
@@ -4022,7 +4127,7 @@ done:
                                    signal_set,
                                    previous_signal_actions,
                                    previous_signal_mask);
-    Common_Tools::finalizeLogging ();
+    Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
   ACE_Profile_Timer::Rusage elapsed_rusage;
@@ -4093,7 +4198,7 @@ done:
                                  signal_set,
                                  previous_signal_actions,
                                  previous_signal_mask);
-  Common_Tools::finalizeLogging ();
+  Common_Log_Tools::finalizeLogging ();
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = ACE::fini ();

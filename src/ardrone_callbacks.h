@@ -64,11 +64,11 @@ G_MODULE_EXPORT void entry_address_insert_text_cb (GtkEditable*,
 G_MODULE_EXPORT void combobox_display_device_changed_cb (GtkComboBox*, gpointer);
 G_MODULE_EXPORT void combobox_display_format_changed_cb (GtkComboBox*, gpointer);
 //G_MODULE_EXPORT void combobox_save_format_changed_cb (GtkComboBox*, gpointer);
-#if defined (GTK3_SUPPORT)
+#if GTK_CHECK_VERSION(3,10,0)
 G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
                                            GMountOperation*,
                                            gpointer);
-#endif // GTK3_SUPPORT
+#endif // GTK_CHECK_VERSION(3,10,0)
 //------------------------------------------------------------------------------
 #if defined (GTKGL_SUPPORT)
 G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);

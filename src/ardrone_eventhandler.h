@@ -35,7 +35,9 @@
 #include "ardrone_types.h"
 
 // forward declarations
-struct ARDrone_GtkCBData_Base;
+#if defined (GUI_SUPPORT)
+struct ARDrone_UI_CBData_Base;
+#endif // GUI_SUPPORT
 struct ARDrone_SessionData;
 
 class ARDrone_EventHandler
@@ -45,7 +47,11 @@ class ARDrone_EventHandler
  , public Common_IInitializeP_T<ARDrone_INavDataNotify>
 {
  public:
-  ARDrone_EventHandler (struct ARDrone_GtkCBData_Base*, // ui state
+#if defined (GUI_SUPPORT)
+  ARDrone_EventHandler (struct ARDrone_UI_CBData_Base*, // ui state
+#else
+  ARDrone_EventHandler (
+#endif // GUI_SUPPORT
                         bool = false);                  // console mode ?
   inline virtual ~ARDrone_EventHandler () {}
 
@@ -82,7 +88,9 @@ class ARDrone_EventHandler
   };
 
   bool                           consoleMode_;
-  struct ARDrone_GtkCBData_Base* CBData_;
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base* CBData_;
+#endif // GUI_SUPPORT
   ARDrone_IControlNotify*        ControlNotify_;
   ARDrone_IMAVLinkNotify*        MAVLinkNotify_;
   ARDrone_INavDataNotify*        NavDataNotify_;
