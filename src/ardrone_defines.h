@@ -48,14 +48,24 @@
 #define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
 //#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                  "ardrone.png"
 
-// *** Gtk UI-related ***
-#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.glade"
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+#if defined (GTK3_SUPPORT)
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk3"
+#elif defined (GTK3_SUPPORT)
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk2"
+#endif
+#elif defined (WXWIDGETS_USE)
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.xrc"
+#endif
+
 #define ARDRONE_UI_INITIALIZATION_DELAY                    100 // ms
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
 // *IMPORTANT NOTE*: also sets the (maximum) rate of message processing
 //#define ARDRONE_UI_WIDGET_GL_REFRESH_INTERVAL              1000.0F / 30.0F // Hz
 #define ARDRONE_UI_PROCESSING_THREAD_NAME                  "streams processor"
 
+#if defined (GTK_USE)
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_WIDTH  320
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE                   "action_calibrate"
@@ -126,6 +136,11 @@
 
 #define ARDRONE_UI_STATUSBAR_CONTEXT_DATA                         "data"
 #define ARDRONE_UI_STATUSBAR_CONTEXT_INFORMATION                  "information"
+#elif defined (WXWIDGETS_USE)
+#define ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_NAME          "dialog_main"
+#define ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_CLASS_NAME    "wxDialog"
+#endif // WXWIDGETS_SUPPORT
+#endif // GUI_SUPPORT
 
 // *** network-related ***
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

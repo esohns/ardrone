@@ -38,6 +38,7 @@
 #include "stream_statemachine_control.h"
 
 //#include "ardrone_message.h"
+#include "ardrone_modules_common.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
@@ -458,5 +459,44 @@ class ARDrone_MAVLinkStream_T
 
 // include template definition
 #include "ardrone_stream.inl"
+
+//////////////////////////////////////////
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                              ARDrone_Module_DirectShow_AsynchTCPSource_Module> ARDrone_DirectShow_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                              ARDrone_Module_DirectShow_TCPSource_Module> ARDrone_DirectShow_VideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                              ARDrone_Module_MediaFoundation_AsynchTCPSource_Module> ARDrone_MediaFoundation_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                              ARDrone_Module_MediaFoundation_TCPSource_Module> ARDrone_MediaFoundation_VideoStream_t;
+
+typedef ARDrone_ControlStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_ControlStream_t;
+typedef ARDrone_ControlStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_ControlStream_t;
+
+typedef ARDrone_NavDataStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                                ARDrone_DirectShow_Stream_ConnectionConfigurationIterator_t,
+                                ARDRONE_WLANMONITOR_SINGLETON> ARDrone_DirectShow_NavDataStream_t;
+typedef ARDrone_NavDataStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,
+                                ARDrone_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
+                                ARDRONE_WLANMONITOR_SINGLETON> ARDrone_MediaFoundation_NavDataStream_t;
+
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_MAVLinkStream_t;
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_MAVLinkStream_t;
+#else
+typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                              ARDrone_Module_AsynchTCPSource_Module> ARDrone_AsynchVideoStream_t;
+typedef ARDrone_VideoStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                              ARDrone_Module_TCPSource_Module> ARDrone_VideoStream_t;
+
+typedef ARDrone_ControlStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_ControlStream_t;
+
+typedef ARDrone_NavDataStream_T<struct ARDrone_ModuleHandlerConfiguration,
+                                ARDrone_Stream_ConnectionConfigurationIterator_t,
+                                ARDRONE_WLANMONITOR_SINGLETON> ARDrone_NavDataStream_t;
+
+typedef ARDrone_MAVLinkStream_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_MAVLinkStream_t;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #endif

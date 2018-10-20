@@ -77,7 +77,11 @@ extern "C"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "common_log_tools.h"
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "common_logger.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #include "common_signal_tools.h"
 
@@ -114,7 +118,6 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "ardrone_config.h"
 #endif // HAVE_CONFIG_H
-#include "ardrone_callbacks.h"
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_eventhandler.h"
@@ -124,6 +127,13 @@ extern "C"
 #include "ardrone_signalhandler.h"
 #include "ardrone_stream.h"
 #include "ardrone_types.h"
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+#include "ardrone_callbacks.h"
+#elif defined (WXWIDGETS_USE)
+#include "ardrone_ui.h"
+#endif
+#endif // GUI_SUPPORT
 
 //const char net_video_stream_name_string_[] =
 //  ACE_TEXT_ALWAYS_CHAR ("NetVideoStream");
@@ -133,6 +143,14 @@ extern "C"
 //  ACE_TEXT_ALWAYS_CHAR ("NetNavDataStream");
 //const char net_mavlink_stream_name_string_[] =
 //  ACE_TEXT_ALWAYS_CHAR ("NetMAVLinkStream");
+#if defined (GUI_SUPPORT)
+#if defined (WXWIDGETS_USE)
+const char toplevel_widget_classname_string_[] =
+  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_CLASS_NAME);
+const char toplevel_widget_name_string_[] =
+  ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_NAME);
+#endif // WXWIDGETS_USE
+#endif // GUI_SUPPORT
 
 //----------------------------------------
 
@@ -155,7 +173,7 @@ extern "C"
 
 bool
 do_setup (bool install_in,
-          const std::string& interfaceIdentifier_in)
+          const std::string& WLANInterfaceIdentifier_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_setup"));
 
@@ -213,7 +231,7 @@ do_setup (bool install_in,
                   ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
 
 continue_:
-      if (unlikely (interfaceIdentifier_in.empty ()                                 ||
+      if (unlikely (WLANInterfaceIdentifier_in.empty ()                                 ||
                     !Common_DBus_Tools::isUnitRunning (NULL,
                                                        COMMON_SYSTEMD_UNIT_RESOLVED)))
         goto continue_2;
@@ -241,7 +259,7 @@ continue_2:
 
   // step2: configure 'NetworkManager' (if any):
   //        - ignore the given interface
-  if (unlikely (interfaceIdentifier_in.empty ()                                       ||
+  if (unlikely (WLANInterfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_NETWORKMANAGER)))
     goto continue_3;
@@ -261,12 +279,12 @@ continue_2:
 //              ACE_TEXT ("stopped systemd service unit (was: %s)...\n"),
 //              ACE_TEXT (COMMON_SYSTEMD_UNIT_NETWORKMANAGER)));
 
-  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
+  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (WLANInterfaceIdentifier_in,
                                                                   false)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::networkManagerManageInterface(\"%s\",false), aborting\n"),
-                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+                ACE_TEXT (WLANInterfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
   ACE_DEBUG ((LM_DEBUG,
@@ -309,7 +327,7 @@ continue_3:
     }
   } // end SWITCH
 
-  if (unlikely (interfaceIdentifier_in.empty ()                                       ||
+  if (unlikely (WLANInterfaceIdentifier_in.empty ()                                       ||
                 !Common_DBus_Tools::isUnitRunning (NULL,
                                                    COMMON_SYSTEMD_UNIT_WPASUPPLICANT)))
     goto continue_4;
@@ -327,12 +345,12 @@ continue_3:
 //  } // end IF
 
   if (unlikely (!Net_WLAN_Tools::WPASupplicantManageInterface (NULL,
-                                                               interfaceIdentifier_in,
+                                                               WLANInterfaceIdentifier_in,
                                                                false)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_WLAN_Tools::WPASupplicantManageInterface(\"%s\",false), aborting\n"),
-                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+                ACE_TEXT (WLANInterfaceIdentifier_in.c_str ())));
     goto clean;
   } // end IF
   ACE_DEBUG ((LM_DEBUG,
@@ -342,20 +360,20 @@ continue_3:
 continue_4:
   // *NOTE*: apparently, reconfiguring the current NetworkManager interface
   //         disables it --> re-enable it manually
-  if (!Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in))
+  if (!Net_Common_Tools::isInterfaceEnabled (WLANInterfaceIdentifier_in))
   {
-    if (!Net_Common_Tools::toggleInterface (interfaceIdentifier_in))
+    if (!Net_Common_Tools::toggleInterface (WLANInterfaceIdentifier_in))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_Common_Tools::toggleInterface(\"%s\"), aborting\n"),
-                  ACE_TEXT (interfaceIdentifier_in.c_str ())));
+                  ACE_TEXT (WLANInterfaceIdentifier_in.c_str ())));
       goto clean;
     } // end IF
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("reenabled WLAN interface (was: \"%s\")...\n"),
-                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+                ACE_TEXT (WLANInterfaceIdentifier_in.c_str ())));
   } // end IF
-//  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
+//  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (WLANInterfaceIdentifier_in));
 
   // dhclient
 #if defined (DHCLIENT_USE)
@@ -396,7 +414,7 @@ clean:
     COMMON_COMMAND_ADD_SWITCH (command_line_string,NET_EXE_DHCLIENT_SWITCH_RUN_IN_FOREGROUND_STRING)
     command_line_string += ACE_TEXT_ALWAYS_CHAR (" ");
     command_line_string +=
-        ACE_TEXT_ALWAYS_CHAR (interfaceIdentifier_in.c_str ());
+        ACE_TEXT_ALWAYS_CHAR (WLANInterfaceIdentifier_in.c_str ());
     COMMON_COMMAND_START_IN_BACKGROUND (command_line_string);
     std::string stdout_content_string;
     int exit_status_i = 0;
@@ -441,7 +459,7 @@ clean:
 
 uninstall:
 #if defined (ACE_LINUX)
-  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (interfaceIdentifier_in));
+  ACE_ASSERT (Net_Common_Tools::isInterfaceEnabled (WLANInterfaceIdentifier_in));
 
   // step1: dhclient
 #if defined (DHCLIENT_USE)
@@ -470,7 +488,7 @@ uninstall:
 
   // step2: configure 'NetworkManager':
   //        - manage the given interface
-  ACE_ASSERT (!interfaceIdentifier_in.empty ());
+  ACE_ASSERT (!WLANInterfaceIdentifier_in.empty ());
   restart_networkmanager_b =
       Common_DBus_Tools::isUnitRunning (NULL,
                                         COMMON_SYSTEMD_UNIT_NETWORKMANAGER);
@@ -489,12 +507,12 @@ uninstall:
       return false;
     } // end IF
   } // end IF
-  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (interfaceIdentifier_in,
+  if (unlikely (!Net_Common_Tools::networkManagerManageInterface (WLANInterfaceIdentifier_in,
                                                                   true)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Net_Common_Tools::networkManagerManageInterface(\"%s\",true), aborting\n"),
-                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+                ACE_TEXT (WLANInterfaceIdentifier_in.c_str ())));
     return false;
   } // end IF
 
@@ -533,7 +551,7 @@ uninstall:
                   ACE_TEXT (COMMON_SYSTEMD_UNIT_RESOLVED)));
 
 continue__:
-      if (unlikely (interfaceIdentifier_in.empty ()                                 ||
+      if (unlikely (WLANInterfaceIdentifier_in.empty ()                                 ||
                     !Common_DBus_Tools::isUnitRunning (NULL,
                                                        COMMON_SYSTEMD_UNIT_RESOLVED)))
         goto continue__2;
@@ -650,12 +668,12 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-  struct _GUID interface_identifier =
+  struct _GUID wlan_interface_identifier =
     Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [GUID]   : network interface [\"")
-            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())
+            << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::interfaceToString (wlan_interface_identifier).c_str ())
             << ACE_TEXT_ALWAYS_CHAR ("\": ")
-            << ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (interface_identifier).c_str ())
+            << ACE_TEXT_ALWAYS_CHAR (Common_Tools::GUIDToString (wlan_interface_identifier).c_str ())
 #else
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-i [STRING] : network interface [\"")
             << ACE_TEXT_ALWAYS_CHAR (Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11).c_str ())
@@ -671,12 +689,20 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-m [STRING] : display interface [\"")
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-m          : use media foundation framework (: directshow) [")
-            << (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
-            << ACE_TEXT_ALWAYS_CHAR ("]")
-            << std::endl;
+            << ACE_TEXT_ALWAYS_CHAR (Common_UI_Tools::getDefaultDisplay ().device.c_str ())
+#else
+            << ACE_TEXT_ALWAYS_CHAR (Common_UI_Tools::getDefaultDisplay ().device.c_str ())
 #endif // ACE_WIN32 || ACE_WIN64
+            << ACE_TEXT_ALWAYS_CHAR ("\"]")
+            << std::endl;
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  std::cout << ACE_TEXT_ALWAYS_CHAR ("-m          : use media foundation framework (: directshow) [")
+//            << (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK == STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION)
+//            << ACE_TEXT_ALWAYS_CHAR ("]")
+//            << std::endl;
+//#endif // ACE_WIN32 || ACE_WIN64
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-p [UDP]    : drone video port [")
             << ARDRONE_PORT_TCP_VIDEO
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -743,14 +769,15 @@ do_processArguments (int argc_in,
                      bool& debugScanner_out,
 #endif // _DEBUG
                      bool& fullScreen_out,
+                     std::string& displayInterfaceIdentifier_out, // fullscreen-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-                     struct _GUID& interfaceIdentifier_out,
+                     struct _GUID& WLANInterfaceIdentifier_out,
 #else
-                     std::string& interfaceIdentifier_out,
+                     std::string& WLANInterfaceIdentifier_out,
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
-                     std::string& interfaceIdentifier_out,
+                     std::string& WLANInterfaceIdentifier_out,
 #endif // ACE_WIN32 || ACE_WIN64
                      bool& logToFile_out,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -802,7 +829,13 @@ do_processArguments (int argc_in,
   debugFfmpeg_out             = false;
   debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
-  interfaceIdentifier_out     =
+  displayInterfaceIdentifier_out =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    Common_UI_Tools::getDefaultDisplay ().device;
+#else
+    Common_UI_Tools::getDefaultDisplay ().device;
+#endif // ACE_WIN32 || ACE_WIN64
+  WLANInterfaceIdentifier_out     =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
     Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
@@ -843,16 +876,16 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:b:cdfi:lmp:rs:tu::v"),
+                               ACE_TEXT ("a:b:cdfi:lm:p:rs:tu::v"),
 #else
 #if defined (NL80211_USE)
 #if defined (_DEBUG)
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxyz"),
+                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxyz"),
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxy"),
+                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxy"),
 #endif // _DEBUG
 #else
-                               ACE_TEXT ("a:b:dfi:lp:rs:tu::vwxy"),
+                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxy"),
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
                                1,                          // skip command name
@@ -915,7 +948,7 @@ do_processArguments (int argc_in,
       }
       case 'i':
       {
-        interfaceIdentifier_out =
+        WLANInterfaceIdentifier_out =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
           Common_Tools::StringToGUID (ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ()));
@@ -932,13 +965,19 @@ do_processArguments (int argc_in,
         logToFile_out = true;
         break;
       }
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
       case 'm':
       {
-        mediaFramework_out = STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION;
+        displayInterfaceIdentifier_out =
+          ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
         break;
       }
-#endif
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//      case 'm':
+//      {
+//        mediaFramework_out = STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION;
+//        break;
+//      }
+//#endif
       case 'p':
       {
         converter.clear ();
@@ -1230,10 +1269,10 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   //         is delivered to the DirectShow (TM) pipeline. The ARDrone Parrot
   //         (TM) quadcopter serves an encapsulated H264 ('PaVe') format, which
   //         is currently pre-processed (ffmpeg) and streamed as uncompressed
-  //         RGB. Note that this implementation may be more efficient, as it
-  //         uses less DirectShow capabilities and resources; this requires more
+  //         RGB. Note how this implementation may be more efficient as it
+  //         uses less DirectShow capabilities and resources; requires more
   //         investigation, however. The DirectShow processing pipeline includes
-  //         the RGB Color Converter and a resizer DMO modules that transform
+  //         the RGB 'Color Converter' and a (DMO-) resizer module that transform
   //         and scale the frames to whatever format/size needed for convenient
   //         rendering
   // *TODO*: the current implementation does not leverage GPU hardware
@@ -1302,31 +1341,31 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   //else
   //  video_info_header_p->bmiHeader.biCompression = FCC (ACE_SWAP_LONG ((DWORD)'YV12'));
 
-  if (fullScreen_in)
-  {
-    GdkDisplay* display_p =
-      gdk_display_manager_get_default_display (gdk_display_manager_get ());
-    ACE_ASSERT (display_p);
-    GdkRectangle rectangle_s;
-#if GTK_CHECK_VERSION(3,22,0)
-    GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
-    ACE_ASSERT (monitor_p);
-    gdk_monitor_get_geometry (monitor_p,
-                              &rectangle_s);
-#else
-    GdkScreen* screen_p =
-      //gdk_display_get_screen (display_p,
-      //                        0);
-      gdk_display_get_default_screen (display_p);
-    ACE_ASSERT (screen_p);
-    gint monitor_i = gdk_screen_get_primary_monitor (screen_p);
-    gdk_screen_get_monitor_geometry (screen_p,
-                                     monitor_i,
-                                     &rectangle_s);
-#endif // GTK_CHECK_VERSION(3,22,0)
-    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
-    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
-  } // end IF
+//  if (fullScreen_in)
+//  {
+//    GdkDisplay* display_p =
+//      gdk_display_manager_get_default_display (gdk_display_manager_get ());
+//    ACE_ASSERT (display_p);
+//    GdkRectangle rectangle_s;
+//#if GTK_CHECK_VERSION(3,22,0)
+//    GdkMonitor* monitor_p = gdk_display_get_primary_monitor (display_p);
+//    ACE_ASSERT (monitor_p);
+//    gdk_monitor_get_geometry (monitor_p,
+//                              &rectangle_s);
+//#else
+//    GdkScreen* screen_p =
+//      //gdk_display_get_screen (display_p,
+//      //                        0);
+//      gdk_display_get_default_screen (display_p);
+//    ACE_ASSERT (screen_p);
+//    gint monitor_i = gdk_screen_get_primary_monitor (screen_p);
+//    gdk_screen_get_monitor_geometry (screen_p,
+//                                     monitor_i,
+//                                     &rectangle_s);
+//#endif // GTK_CHECK_VERSION(3,22,0)
+//    video_info_header_p->bmiHeader.biHeight = -rectangle_s.height;
+//    video_info_header_p->bmiHeader.biWidth = rectangle_s.width;
+//  } // end IF
   video_info_header_p->bmiHeader.biSizeImage =
     DIBSIZE (video_info_header_p->bmiHeader);
   //video_info_header_p->bmiHeader.biXPelsPerMeter;
@@ -1450,19 +1489,20 @@ do_work (int argc_in,
          bool debugScanner_in,
 #endif // _DEBUG
          bool fullScreen_in,
+         const std::string& displayInterfaceIdentifier_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-         REFGUID interfaceIdentifier_in,
+         REFGUID WLANInterfaceIdentifier_in,
 #else
-         const std::string& interfaceIdentifier_in,
+         const std::string& WLANInterfaceIdentifier_in,
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
-         const std::string& interfaceIdentifier_in,
+         const std::string& WLANInterfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
          bool useReactor_in,
          const std::string& SSID_in,
 #if defined (GUI_SUPPORT)
-         const std::string& UIInterfaceDefinitionFile_in,
+         const std::string& UIDefinitionFilePath_in,
 #endif // GUI_SUPPORT
          bool monitorWLAN_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1474,9 +1514,10 @@ do_work (int argc_in,
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
          struct ARDrone_UI_CBData_Base* CBData_in,
-#endif // GTK_USE
+#if defined (WXWIDGETS_USE)
+         Common_UI_wxWidgets_IManager_t* IWxWidgetsManager_in,
+#endif // WXWIDGETS_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
          struct ARDrone_DirectShow_Configuration& directShowConfiguration_in,
@@ -1511,10 +1552,9 @@ do_work (int argc_in,
 
   // sanity check(s)
 #if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_UI_CBData* directshow_cb_data_p = NULL;
   struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_cb_data_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -1544,7 +1584,6 @@ do_work (int argc_in,
     static_cast<struct ARDrone_UI_CBData*> (CBData_in);
   ACE_ASSERT (cb_data_p);
 #endif // ACE_WIN32 || ACE_WIN64
-#endif // GTK_USE
 #endif // GUI_SUPPORT
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1590,7 +1629,7 @@ do_work (int argc_in,
   // step1: initialize configuration data
   ARDrone_EventHandler event_handler (CBData_in,
 #if defined (GUI_SUPPORT)
-                                      UIInterfaceDefinitionFile_in.empty ());
+                                      UIDefinitionFilePath_in.empty ());
 #else
                                       true);
 #endif // GUI_SUPPORT
@@ -1680,7 +1719,11 @@ do_work (int argc_in,
   struct Common_TimerConfiguration timer_configuration;
   struct Common_EventDispatchState dispatch_state_s;
   struct ARDrone_StreamConfiguration stream_configuration;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   Common_UI_IGTK_Manager_t* igtk_manager_p = NULL;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_ConnectionConfiguration_t directshow_connection_configuration;
   ARDrone_DirectShow_ConnectionConfigurationIterator_t directshow_connection_iterator;
@@ -1743,7 +1786,9 @@ do_work (int argc_in,
 #endif // _DEBUG
 #endif // ACE_WIN32 || ACE_WIN64
 
+#if defined (GUI_SUPPORT)
   stream_configuration.CBData = CBData_in;
+#endif // GUI_SUPPORT
   if (useReactor_in)
     stream_configuration.dispatch = COMMON_EVENT_DISPATCH_REACTOR;
   stream_configuration.initializeControl = &event_handler;
@@ -1799,28 +1844,35 @@ do_work (int argc_in,
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    { ACE_ASSERT (directShowConfiguration_in.pinConfiguration.format);
-      directshow_modulehandler_configuration.inputFormat =
+    { 
+      directshow_modulehandler_configuration.direct3DConfiguration =
+        &directShowConfiguration_in.direct3DConfiguration;
+      ACE_ASSERT (directShowConfiguration_in.pinConfiguration.format);
+      ACE_ASSERT (!directshow_modulehandler_configuration.outputFormat);
+      directshow_modulehandler_configuration.outputFormat =
         Stream_MediaFramework_DirectShow_Tools::copy (*directShowConfiguration_in.pinConfiguration.format);
-      if (!directshow_modulehandler_configuration.inputFormat)
+      if (!directshow_modulehandler_configuration.outputFormat)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copy(), returning\n")));
         goto clean;
       } // end IF
-      ACE_ASSERT (directshow_modulehandler_configuration.inputFormat);
+      ACE_ASSERT (directshow_modulehandler_configuration.outputFormat);
 
       directshow_modulehandler_configuration.CBData = directshow_cb_data_p;
       directshow_modulehandler_configuration.connectionManager =
         directshow_connection_manager_p;
       //directshow_modulehandler_configuration.consoleMode =
-      //  UIInterfaceDefinitionFile_in.empty ();
+      //  UIDefinitionFilePath_in.empty ();
 #if defined (_DEBUG)
       directshow_modulehandler_configuration.debug = debugFfmpeg_in;
 #endif // _DEBUG
       directshow_modulehandler_configuration.demultiplex = true;
       directshow_modulehandler_configuration.finishOnDisconnect = true;
-      directshow_modulehandler_configuration.fullScreen = fullScreen_in;
+      directshow_modulehandler_configuration.direct3DConfiguration->presentationParameters.Windowed =
+        !fullScreen_in;
+      directshow_modulehandler_configuration.interfaceIdentifier =
+        displayInterfaceIdentifier_in;
       directshow_modulehandler_configuration.parserConfiguration =
         &directShowConfiguration_in.parserConfiguration;
       directshow_modulehandler_configuration.statisticReportingInterval =
@@ -1894,8 +1946,10 @@ do_work (int argc_in,
       (*directshow_video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
         std::max (bufferSize_in,
                   static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
+#if defined (GUI_SUPPORT)
       (*directshow_video_streamconfiguration_iterator).second.configuration_.CBData =
         directshow_cb_data_p;
+#endif // GUI_SUPPORT
       (*directshow_video_streamconfiguration_iterator).second.configuration_.dispatch =
         (useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR
                        : COMMON_EVENT_DISPATCH_PROACTOR);
@@ -1914,18 +1968,21 @@ do_work (int argc_in,
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
+      mediafoundation_modulehandler_configuration.direct3DConfiguration =
+        &mediaFoundationConfiguration_in.direct3DConfiguration;
       mediafoundation_modulehandler_configuration.CBData =
         mediafoundation_cb_data_p;
       mediafoundation_modulehandler_configuration.connectionManager =
         mediafoundation_connection_manager_p;
       //mediafoundation_modulehandler_configuration.consoleMode =
-      //  UIInterfaceDefinitionFile_in.empty ();
+      //  UIDefinitionFilePath_in.empty ();
 #if defined (_DEBUG)
       mediafoundation_modulehandler_configuration.debug = debugFfmpeg_in;
 #endif // _DEBUG
       mediafoundation_modulehandler_configuration.demultiplex = true;
       mediafoundation_modulehandler_configuration.finishOnDisconnect = true;
-      mediafoundation_modulehandler_configuration.fullScreen = fullScreen_in;
+      mediafoundation_modulehandler_configuration.direct3DConfiguration->presentationParameters.Windowed =
+        !fullScreen_in;
       mediafoundation_modulehandler_configuration.parserConfiguration =
         &mediaFoundationConfiguration_in.parserConfiguration;
       mediafoundation_modulehandler_configuration.statisticReportingInterval =
@@ -1999,8 +2056,10 @@ do_work (int argc_in,
       (*mediafoundation_video_streamconfiguration_iterator).second.allocatorConfiguration_.defaultBufferSize =
         std::max (bufferSize_in,
                   static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
+#if defined (GUI_SUPPORT)
       (*mediafoundation_video_streamconfiguration_iterator).second.configuration_.CBData =
         mediafoundation_cb_data_p;
+#endif // GUI_SUPPORT
       (*mediafoundation_video_streamconfiguration_iterator).second.configuration_.dispatch =
         (useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR
                        : COMMON_EVENT_DISPATCH_PROACTOR);
@@ -2037,7 +2096,9 @@ do_work (int argc_in,
     video_streamconfiguration_iterator,
     network_streamconfiguration_iterator;
 
+#if defined (GUI_SUPPORT)
   modulehandler_configuration.CBData = CBData_in;
+#endif // GUI_SUPPORT
   modulehandler_configuration.connectionManager = connection_manager_p;
 #if defined (_DEBUG)
   modulehandler_configuration.debug = debugFfmpeg_in;
@@ -2170,12 +2231,12 @@ do_work (int argc_in,
   wlan_monitor_configuration_p->interfaceIdentifier =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-    interfaceIdentifier_in;
+    WLANInterfaceIdentifier_in;
 #else
-    Net_Common_Tools::indexToInterface_2 (Net_Common_Tools::interfaceToIndex (interfaceIdentifier_in));
+    Net_Common_Tools::indexToInterface_2 (Net_Common_Tools::interfaceToIndex (WLANInterfaceIdentifier_in));
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
-    interfaceIdentifier_in;
+    WLANInterfaceIdentifier_in;
 #endif // ACE_WIN32 || ACE_WIN64
   wlan_monitor_configuration_p->SSID = SSID_in;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2366,19 +2427,19 @@ do_work (int argc_in,
       // video
       //  // *TODO*: verify the given address
       //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
-      //                                              interface_identifier_string))
+      //                                              wlan_interface_identifier_string))
       //  {
       //    ACE_DEBUG ((LM_ERROR,
       //                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
       //                ACE_TEXT (Net_Common_Tools::IPAddressToString (address_in).c_str ())));
       //    goto error;
       //  } // end IF
-      //  if (!Net_Common_Tools::interface2IPAddress (interface_identifier_string,
+      //  if (!Net_Common_Tools::interface2IPAddress (wlan_interface_identifier_string,
       //                                              CBData_in.localSAP))
       //  {
       //    ACE_DEBUG ((LM_ERROR,
       //                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
-      //                ACE_TEXT (interface_identifier_string.c_str ())));
+      //                ACE_TEXT (wlan_interface_identifier_string.c_str ())));
       //    goto error;
       //  } // end IF
       //  ACE_DEBUG ((LM_ERROR,
@@ -2557,19 +2618,19 @@ do_work (int argc_in,
   // video
   //  // *TODO*: verify the given address
   //  if (!Net_Common_Tools::IPAddressToInterface (address_in,
-  //                                               interface_identifier_string))
+  //                                               wlan_interface_identifier_string))
   //  {
   //    ACE_DEBUG ((LM_ERROR,
   //                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
   //                ACE_TEXT (Net_Common_Tools::IPAddressToString (address_in).c_str ())));
   //    goto error;
   //  } // end IF
-  //  if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
+  //  if (!Net_Common_Tools::interfaceToIPAddress (wlan_interface_identifier_string,
   //                                               CBData_in.localSAP))
   //  {
   //    ACE_DEBUG ((LM_ERROR,
   //                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
-  //                ACE_TEXT (interface_identifier_string.c_str ())));
+  //                ACE_TEXT (wlan_interface_identifier_string.c_str ())));
   //    goto error;
   //  } // end IF
   //  ACE_DEBUG ((LM_ERROR,
@@ -2609,9 +2670,9 @@ do_work (int argc_in,
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
+    { ACE_ASSERT (directshow_modulehandler_configuration.outputFormat);
       directShowConfiguration_in.filterConfiguration.allocatorProperties.cbBuffer =
-        directshow_modulehandler_configuration.inputFormat->lSampleSize;
+        directshow_modulehandler_configuration.outputFormat->lSampleSize;
       directShowConfiguration_in.pinConfiguration.isTopToBottom = true;
 
       directshow_modulehandler_configuration.connectionConfigurations =
@@ -2870,7 +2931,7 @@ do_work (int argc_in,
       directShowConfiguration_in.signalConfiguration.dispatchState =
         &dispatch_state_s;
       directShowConfiguration_in.signalConfiguration.hasUI =
-        !UIInterfaceDefinitionFile_in.empty ();
+        !UIDefinitionFilePath_in.empty ();
       directShowConfiguration_in.signalConfiguration.peerAddress =
         address_in;
       result_2 =
@@ -2883,7 +2944,7 @@ do_work (int argc_in,
       mediaFoundationConfiguration_in.signalConfiguration.dispatchState =
         &dispatch_state_s;
       mediaFoundationConfiguration_in.signalConfiguration.hasUI =
-        !UIInterfaceDefinitionFile_in.empty ();
+        !UIDefinitionFilePath_in.empty ();
       mediaFoundationConfiguration_in.signalConfiguration.peerAddress =
         address_in;
       result_2 =
@@ -2903,7 +2964,7 @@ do_work (int argc_in,
   configuration_in.signalConfiguration.dispatchState =
     &dispatch_state_s;
   configuration_in.signalConfiguration.hasUI =
-    !UIInterfaceDefinitionFile_in.empty ();
+    !UIDefinitionFilePath_in.empty ();
   configuration_in.signalConfiguration.peerAddress = address_in;
   result_2 =
     signalHandler_in.initialize (configuration_in.signalConfiguration);
@@ -2931,11 +2992,8 @@ do_work (int argc_in,
   timer_manager_p->start ();
 
 #if defined (GUI_SUPPORT)
-//#if defined (GTK_USE)
-//  Common_UI_IGTK_Manager_t* igtk_manager_p = NULL;
-//#endif // GTK_USE
   // step1a: start UI event loop ?
-  if (!UIInterfaceDefinitionFile_in.empty ())
+  if (!UIDefinitionFilePath_in.empty ())
   {
 #if defined (GTK_USE)
     igtk_manager_p = ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
@@ -2954,7 +3012,62 @@ do_work (int argc_in,
                   ACE_TEXT ("failed to start GTK event dispatch, returning\n")));
       goto clean;
     } // end IF
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+  ARDrone_UI_wxWidgets_IApplicationBase_t* iapplication_p = NULL;
+  struct ARDrone_UI_wxWidgets_State* state_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (CBData_in->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      ARDrone_DirectShow_WxWidgetsManager_t* imanager_p =
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsManager_t*> (IWxWidgetsManager_in);
+      ACE_ASSERT (imanager_p);
+      iapplication_p =
+        const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (imanager_p->getP ());
+      state_p =
+        &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      ARDrone_MediaFoundation_WxWidgetsManager_t* imanager_p =
+        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsManager_t*> (IWxWidgetsManager_in);
+      ACE_ASSERT (imanager_p);
+      iapplication_p =
+        const_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (imanager_p->getP ());
+      state_p =
+        &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  CBData_in->mediaFramework));
+      return;
+    }
+  } // end SWITCH
+#else
+  ARDrone_WxWidgetsManager_t* imanager_p =
+    dynamic_cast<ARDrone_WxWidgetsManager_t*> (IWxWidgetsManager_in);
+  ACE_ASSERT (imanager_p);
+  iapplication_p =
+    const_cast<ARDrone_UI_wxWidgets_IApplication_t*> (imanager_p->getP ());
+  state_p =
+    &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
+#endif // ACE_WIN32 || ACE_WIN64
+  ACE_ASSERT (state_p);
+  state_p->resources[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
+    std::make_pair (UIDefinitionFilePath_in, static_cast<wxObject*> (NULL));
+  IWxWidgetsManager_in->start ();
+  if (unlikely (!IWxWidgetsManager_in->isRunning ()))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to start wxWidgets event dispatch, returning\n")));
+    goto clean;
+  } // end IF
+#endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     HWND window_p = GetConsoleWindow ();
@@ -3046,24 +3159,24 @@ do_work (int argc_in,
   } // end IF
 
 #if defined (GUI_SUPPORT)
-  if (UIInterfaceDefinitionFile_in.empty ())
+  if (UIDefinitionFilePath_in.empty ())
   {
 #endif // GUI_SUPPORT
 //    // *TODO*: verify the given address
 //    if (!Net_Common_Tools::IPAddressToInterface (cb_data_p->configuration->socketConfigurations.back ().address,
-//                                                 interface_identifier_string))
+//                                                 wlan_interface_identifier_string))
 //    {
 //      ACE_DEBUG ((LM_ERROR,
 //                  ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
 //                  ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
 //      goto error;
 //    } // end IF
-//    if (!Net_Common_Tools::interfaceToIPAddress (interface_identifier_string,
+//    if (!Net_Common_Tools::interfaceToIPAddress (wlan_interface_identifier_string,
 //                                                 cb_data_p->localSAP))
 //    {
 //      ACE_DEBUG ((LM_ERROR,
 //                  ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
-//                  ACE_TEXT (interface_identifier_string.c_str ())));
+//                  ACE_TEXT (wlan_interface_identifier_string.c_str ())));
 //      goto error;
 //    } // end IF
 //    ACE_DEBUG ((LM_ERROR,
@@ -3337,9 +3450,11 @@ continue_2:
   else
 #if defined (GTK_USE)
     igtk_manager_p->wait ();
+#elif defined (WXWIDGETS_USE)
+    IWxWidgetsManager_in->wait ();
 #else
     ;
-#endif // GTK_USE
+#endif
 #endif // GUI_SUPPORT
 
   // step9: clean up
@@ -3381,27 +3496,30 @@ continue_2:
   connection_manager_p->stop ();
   connection_manager_p->abort (true); // wait for completion ?
 #endif
-  Common_Tools::finalizeEventDispatch (dispatch_state_s.reactorGroupId,
-                                       dispatch_state_s.proactorGroupId,
+  if (WLAN_monitor_p)
+    WLAN_monitor_p->stop (true,  // wait for completion ?
+                          true); // locked access ?
+  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
+                                       dispatch_state_s.reactorGroupId,
                                        true);
 
   return;
 
 clean:
-  if (WLAN_monitor_p)
-    WLAN_monitor_p->stop (true,  // wait for completion ?
-                          true); // locked access ?
-  Common_Tools::finalizeEventDispatch (dispatch_state_s.reactorGroupId,
-                                       dispatch_state_s.proactorGroupId,
-                                       true);
-  if (timer_manager_p)
-    timer_manager_p->stop ();
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  if (igtk_manager_p && !UIInterfaceDefinitionFile_in.empty ())
+  if (igtk_manager_p && !UIDefinitionFilePath_in.empty ())
     igtk_manager_p->stop ();
 #endif // GTK_USE
 #endif // GUI_SUPPORT
+  if (WLAN_monitor_p)
+    WLAN_monitor_p->stop (true,  // wait for completion ?
+                          true); // locked access ?
+  if (timer_manager_p)
+    timer_manager_p->stop ();
+  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
+                                       dispatch_state_s.reactorGroupId,
+                                       true);
 }
 
 int
@@ -3426,16 +3544,20 @@ ACE_TMAIN (int argc_in,
   bool debug_scanner;
 #endif // _DEBUG
   bool fullscreen;
+  std::string display_interface_identifier;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-  struct _GUID interface_identifier;
+  struct _GUID wlan_interface_identifier;
 #else
-  std::string interface_identifier;
+  std::string wlan_interface_identifier;
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
-  std::string interface_identifier;
+  std::string wlan_interface_identifier;
 #endif // ACE_WIN32 || ACE_WIN64
   bool log_to_file;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  enum Stream_MediaFramework_Type media_framework_e;
+#endif // ACE_WIN32 || ACE_WIN64
   unsigned short port_number;
   bool use_reactor;
   std::string SSID_string;
@@ -3471,27 +3593,94 @@ ACE_TMAIN (int argc_in,
   sigset_t previous_signal_mask;
 #if defined (GUI_SUPPORT)
   struct ARDrone_UI_CBData_Base* ui_cb_data_base_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_UI_CBData directshow_cb_data;
+  struct ARDrone_MediaFoundation_UI_CBData mediafoundation_cb_data;
+#else
+  struct ARDrone_UI_CBData ui_cb_data;
+#endif // ACE_WIN32 || ACE_WIN64
 #if defined (GTK_USE)
   ARDrone_UI_GTK_Manager_t* gtk_manager_p =
     ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
   struct ARDrone_UI_GTK_State& state_r =
     const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_DirectShow_UI_CBData directshow_cb_data;
   ARDrone_DirectShow_GtkBuilderDefinition_t directshow_ui_definition (argc_in,
                                                                       argv_in,
                                                                       &directshow_cb_data);
-  struct ARDrone_MediaFoundation_UI_CBData mediafoundation_cb_data;
   ARDrone_MediaFoundation_GtkBuilderDefinition_t mediafoundation_ui_definition (argc_in,
                                                                                 argv_in,
                                                                                 &mediafoundation_cb_data);
 #else
-  struct ARDrone_UI_CBData ui_cb_data;
   ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
                                                 argv_in,
                                                 &ui_cb_data);
 #endif // ACE_WIN32 || ACE_WIN64
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+  ARDrone_UI_wxWidgets_IApplicationBase_t* iapplication_p = NULL;
+  Common_UI_wxWidgets_IManager_t* imanager_p = NULL;
+  struct Common_UI_State* ui_state_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_WxWidgetsManager_t directshow_wxwidgets_manager (toplevel_widget_name_string_,
+                                                                      argc_in,
+                                                                      argv_in);
+  ARDrone_MediaFoundation_WxWidgetsManager_t mediafoundation_wxwidgets_manager (toplevel_widget_name_string_,
+                                                                                argc_in,
+                                                                                argv_in);
+  switch (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      iapplication_p =
+        const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (directshow_wxwidgets_manager.getP ());
+      imanager_p = &directshow_wxwidgets_manager;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      iapplication_p =
+        const_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (mediafoundation_wxwidgets_manager.getP ());
+      imanager_p = &mediafoundation_wxwidgets_manager;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  STREAM_LIB_DEFAULT_MEDIAFRAMEWORK));
+
+      Common_Log_Tools::finalizeLogging ();
+      // *PORTABILITY*: on Windows, finalize ACE...
+      result = ACE::fini ();
+      if (result == -1)
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+      return EXIT_FAILURE;
+    }
+  } // end SWITCH
+#else
+  ARDrone_WxWidgetsManager_t wxwidgets_manager (toplevel_widget_name_string_,
+                                                argc_in,
+                                                argv_in);
+  iapplication_p =
+    const_cast<ARDrone_UI_wxWidgets_IApplicationBase_t*> (wxwidgets_manager.getP ());
+  imanager_p = &wxwidgets_manager;
+#endif // ACE_WIN32 || ACE_WIN64
+  if (!iapplication_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate memory: %m, aborting\n")));
+
+    Common_Log_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, finalize ACE...
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+    return EXIT_FAILURE;
+  } // end IF
+  ACE_ASSERT (imanager_p);
+#endif
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_Configuration directshow_configuration;
@@ -3570,8 +3759,17 @@ ACE_TMAIN (int argc_in,
   debug_scanner          = COMMON_PARSER_DEFAULT_LEX_TRACE;
 #endif // _DEBUG
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
+  display_interface_identifier =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    Common_UI_Tools::getDefaultDisplay ().device;
+#else
+    Common_UI_Tools::getDefaultDisplay ().device;
+#endif // ACE_WIN32 || ACE_WIN64
   log_to_file            = false;
-  interface_identifier   =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  media_framework_e      = STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
+#endif // ACE_WIN32 || ACE_WIN64
+  wlan_interface_identifier   =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
     Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
@@ -3610,10 +3808,6 @@ ACE_TMAIN (int argc_in,
   // step1: process commandline options, if any
   configuration_path = Common_File_Tools::getWorkingDirectory ();
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  enum Stream_MediaFramework_Type media_framework_e =
-    STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
-#endif // ACE_WIN32 || ACE_WIN64
   result =
     address.set (static_cast<u_short> (ARDRONE_PORT_TCP_VIDEO),                // (TCP) port number
                  static_cast<ACE_UINT32> (192 << 24 | 168 << 16 | 1 << 8 | 1), // IPv4 address
@@ -3648,7 +3842,8 @@ ACE_TMAIN (int argc_in,
                             debug_scanner,
 #endif // _DEBUG
                             fullscreen,
-                            interface_identifier,
+                            display_interface_identifier,
+                            wlan_interface_identifier,
                             log_to_file,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                             media_framework_e,
@@ -3705,7 +3900,7 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
       do_setup (mode_e == COMMON_APPLICATION_MODE_INSTALL,
-                interface_identifier);
+                wlan_interface_identifier);
 #endif // ACE_WIN32 || ACE_WIN64
       goto done;
     }
@@ -3819,9 +4014,14 @@ ACE_TMAIN (int argc_in,
     {
       directshow_configuration.userData = &user_data;
 
+      directshow_video_modulehandler_configuration.direct3DConfiguration =
+        &directshow_configuration.direct3DConfiguration;
+      directshow_video_modulehandler_configuration.direct3DConfiguration->presentationParameters.Windowed =
+        !fullscreen;
+      directshow_video_modulehandler_configuration.interfaceIdentifier =
+        display_interface_identifier;
       directshow_video_modulehandler_configuration.filterConfiguration =
         &directshow_configuration.filterConfiguration;
-      directshow_video_modulehandler_configuration.fullScreen = fullscreen;
 
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_video_modulehandler_configuration,
@@ -3839,8 +4039,9 @@ ACE_TMAIN (int argc_in,
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      mediafoundation_video_modulehandler_configuration.fullScreen = fullscreen;
+    { ACE_ASSERT (mediafoundation_video_modulehandler_configuration.direct3DConfiguration);
+      mediafoundation_video_modulehandler_configuration.direct3DConfiguration->presentationParameters.Windowed =
+        !fullscreen;
 
       mediafoundation_stream_configuration_2.initialize (module_configuration,
                                                          mediafoundation_video_modulehandler_configuration,
@@ -3881,13 +4082,15 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   configuration.WLANMonitorConfiguration.interfaceIdentifier =
-      interface_identifier;
+      wlan_interface_identifier;
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step7: initialize user interface, if any
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   state_r.argc = argc_in;
   state_r.argv = argv_in;
+#endif // GTK_USE
   //ACE_OS::memset (&ui_cb_data.clientSensorBias,
   //                0,
   //                sizeof (ui_cb_data.clientSensorBias));
@@ -3922,7 +4125,23 @@ ACE_TMAIN (int argc_in,
         ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                                    argv_in,
                                                                    &directshow_ui_definition);
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+      directshow_cb_data.iapplication = iapplication_p;
+      ARDrone_DirectShow_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
+      iinitialize_p->initialize (directshow_cb_data);
+      ARDrone_DirectShow_WxWidgetsIApplication_t* iapplication_2 =
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (iapplication_p);
+      ACE_ASSERT (iapplication_2);
+      ARDrone_DirectShow_WxWidgetsApplication_t::STATE_T& state_r =
+        const_cast<ARDrone_DirectShow_WxWidgetsApplication_t::STATE_T&> (iapplication_2->getR ());
+      //ARDrone_DirectShow_WxWidgetsApplication_t::CONFIGURATION_T& configuration_r =
+      //  const_cast<ARDrone_DirectShow_WxWidgetsApplication_t::CONFIGURATION_T&> (iapplication_2->getR_2 ());
+      //configuration_r.UIState = &state_r;
+      //ACE_ASSERT (configuration_r.UIState);
+      ui_state_p = &state_r;
+        //const_cast<ARDrone_DirectShow_WxWidgetsApplication_t::CONFIGURATION_T&> (configuration_r).UIState;
+#endif
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -3933,7 +4152,22 @@ ACE_TMAIN (int argc_in,
         ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                                    argv_in,
                                                                    &mediafoundation_ui_definition);
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+      mediafoundation_cb_data.iapplication = iapplication_p;
+      ARDrone_MediaFoundation_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
+        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
+      iinitialize_p->initialize (mediafoundation_cb_data);
+      ARDrone_MediaFoundation_WxWidgetsIApplication_t* iapplication_2 =
+        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (iapplication_p);
+      ACE_ASSERT (iapplication_2);
+      ARDrone_MediaFoundation_WxWidgetsApplication_t::STATE_T& state_r =
+        const_cast<ARDrone_MediaFoundation_WxWidgetsApplication_t::STATE_T&> (iapplication_2->getR ());
+      //const ARDrone_MediaFoundation_WxWidgetsApplication_t::CONFIGURATION_T& configuration_r =
+      //  iapplication_2->getR_2 ();
+      //ACE_ASSERT (configuration_r.UIState);
+      ui_state_p = &state_r;
+        //const_cast<ARDrone_MediaFoundation_WxWidgetsApplication_t::CONFIGURATION_T&> (configuration_r).UIState;
+#endif
       break;
     }
     default:
@@ -3941,6 +4175,7 @@ ACE_TMAIN (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
                   media_framework_e));
+
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                   : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      signal_set,
@@ -3957,6 +4192,21 @@ ACE_TMAIN (int argc_in,
     ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
                                                                argv_in,
                                                                &ui_definition);
+#elif defined (WXWIDGETS_USE)
+  ui_cb_data.iapplication = iapplication_p;
+  ARDrone_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
+    dynamic_cast<ARDrone_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
+  iinitialize_p->initialize (ui_cb_data);
+  ARDrone_WxWidgetsIApplication_t* iapplication_2 =
+    dynamic_cast<ARDrone_WxWidgetsIApplication_t*> (iapplication_p);
+  ACE_ASSERT (iapplication_2);
+  ARDrone_WxWidgetsApplication_t::STATE_T& state_r =
+    const_cast<ARDrone_WxWidgetsApplication_t::STATE_T&> (iapplication_2->getR ());
+  //const ARDrone_V4L_WxWidgetsApplication_t::CONFIGURATION_T& configuration_r =
+  //  iapplication_2->getR_2 ();
+  //ACE_ASSERT (configuration_r.UIState);
+  ui_state_p = &state_r;
+    //const_cast<ARDrone_V4L_WxWidgetsApplication_t::CONFIGURATION_T&> (configuration_r).UIState;
 #endif // GTK_USE
 #endif // ACE_WIN32 || ACE_WIN64
 #endif // GUI_SUPPORT
@@ -3965,7 +4215,7 @@ ACE_TMAIN (int argc_in,
   if (!result_2)
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize gtk manager, returning\n")));
+                ACE_TEXT ("failed to initialize GTK, returning\n")));
 
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
                                                 : COMMON_SIGNAL_DISPATCH_PROACTOR),
@@ -3975,7 +4225,21 @@ ACE_TMAIN (int argc_in,
     Common_Log_Tools::finalizeLogging ();
     goto error;
   } // end IF
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+  if (!ui_state_p)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize wxWidgets, returning\n")));
+
+    Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
+                                                : COMMON_SIGNAL_DISPATCH_PROACTOR),
+                                    signal_set,
+                                    previous_signal_actions,
+                                    previous_signal_mask);
+    Common_Log_Tools::finalizeLogging ();
+    goto error;
+  } // end IF
+#endif
 #endif // GUI_SUPPORT
 
   // step8: (media) frameworks
@@ -3985,12 +4249,15 @@ ACE_TMAIN (int argc_in,
   switch (media_framework_e)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
+    { ACE_ASSERT ((*directshow_video_modulehandlerconfiguration_iterator).second.second.direct3DConfiguration);
       result_2 =
         do_initialize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
                                   directshow_configuration.pinConfiguration.format,
                                   true, // initialize COM ?
-                                  directshow_video_modulehandler_configuration.fullScreen);
+                                  !(*directshow_video_modulehandlerconfiguration_iterator).second.second.direct3DConfiguration->presentationParameters.Windowed);
+      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
+      (*directshow_video_modulehandlerconfiguration_iterator).second.second.outputFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4040,7 +4307,8 @@ ACE_TMAIN (int argc_in,
              debug_scanner,
 #endif // _DEBUG
              fullscreen,
-             interface_identifier,
+             display_interface_identifier,
+             wlan_interface_identifier,
              use_reactor,
              SSID_string,
 #if defined (GUI_SUPPORT)
@@ -4057,6 +4325,9 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (GUI_SUPPORT)
              ui_cb_data_base_p,
+#if defined (WXWIDGETS_USE)
+             imanager_p,
+#endif // WXWIDGETS_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
              directshow_configuration,
@@ -4075,6 +4346,8 @@ ACE_TMAIN (int argc_in,
              signal_handler);
 #endif // ACE_WIN32 || ACE_WIN64
   } COMMON_CATCH (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in do_work(), continuing\n")));
   }
   timer.stop ();
 
@@ -4104,7 +4377,7 @@ done:
       case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
       {
         do_finalize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
-                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat,
+                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.outputFormat,
                                 true); // finalize COM ?
         break;
       }
@@ -4174,7 +4447,7 @@ done:
       case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
       {
         do_finalize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
-                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.inputFormat,
+                                (*directshow_video_modulehandlerconfiguration_iterator).second.second.outputFormat,
                                 true); // finalize COM ?
         break;
       }

@@ -79,7 +79,7 @@ enum ARDrone_StreamType : int
   ARDRONE_STREAM_MAX
 };
 typedef std::pair <enum ARDrone_StreamType,
-                   enum Net_WLAN_UI_EventType> ARDrone_Event_t;
+                   enum Net_WLAN_EventType> ARDrone_Event_t;
 typedef ACE_Unbounded_Stack<ARDrone_Event_t> ARDrone_Events_t;
 typedef ACE_Unbounded_Stack<ARDrone_Event_t>::ITERATOR ARDrone_EventsIterator_t;
 

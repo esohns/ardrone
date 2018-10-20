@@ -22,7 +22,11 @@
 
 #include "common_tools.h"
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "common_ui_gtk_manager_common.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #include "ardrone_configuration.h"
 #include "ardrone_macros.h"
@@ -170,14 +174,14 @@ ARDrone_SignalHandler_T<ConfigurationType,
 
     // step2: stop UI event dispatch ?
     if (inherited::configuration_->hasUI)
-    {
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
       ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
                                                            false); // N/A
 #endif // GTK_USE
+#else
+      ;
 #endif // GUI_SUPPORT
-    } // end IF
 
     // step3: stop reactor (&& proactor, if applicable)
     Common_Tools::finalizeEventDispatch (inherited::configuration_->dispatchState->proactorGroupId,
