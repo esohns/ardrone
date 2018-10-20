@@ -73,19 +73,23 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (sessionData_in.state);
 
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
 #endif // GUI_SUPPORT
     streams_.insert (std::make_pair (sessionId_in,
                                      sessionData_in.state->type));
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 
   if (sessionData_in.state->type == ARDRONE_STREAM_NAVDATA)
   {
 #if defined (GUI_SUPPORT)
-    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 #if defined (GTK_USE)
+    { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
       guint event_source_id = g_idle_add (idle_session_start_cb,
                                           CBData_);
       if (event_source_id == 0)
@@ -95,8 +99,8 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
         return;
       } // end IF
       state_r.eventSourceIds.insert (event_source_id);
-#endif // GTK_USE
     } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
   } // end IF
 }
@@ -121,7 +125,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   bool message_event_b = true;
   ARDrone_Event_t event_s =
     std::make_pair (ARDRONE_STREAM_INVALID,
-                    static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_DATA));
+                    static_cast<enum Net_WLAN_EventType> (COMMON_UI_EVENT_DATA));
   ARDroneStreamStatisticIterator_t iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -210,6 +214,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   if (message_event_b)
   { 
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 //    iterator =
 //      CBData_.progressData->statistic.streamStatistic.find (stream_type_e);
@@ -219,6 +224,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 //    +CBData_.progressData->statistic;
       state_r.eventStack.push (event_s);
     } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
   } // end IF
 
@@ -251,7 +257,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   int result = -1;
   ARDrone_Event_t event_s =
     std::make_pair (ARDRONE_STREAM_INVALID,
-                    static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_SESSION));
+                    static_cast<enum Net_WLAN_EventType> (COMMON_UI_EVENT_SESSION));
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
   ARDroneStreamStatisticIterator_t iterator_2;
 
@@ -266,7 +272,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 
   // update session id <-> stream mapping ?
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
 #endif // GUI_SUPPORT
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
@@ -303,18 +311,20 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     } // end IF
     event_s.first = (*iterator).second;
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 
   switch (message_in.type ())
   {
     case STREAM_SESSION_MESSAGE_CONNECT:
       event_s.second =
-        static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_CONNECT);
+        static_cast<enum Net_WLAN_EventType> (COMMON_UI_EVENT_CONNECT);
       break;
     case STREAM_SESSION_MESSAGE_DISCONNECT:
       event_s.second =
-        static_cast<enum Net_WLAN_UI_EventType> (COMMON_UI_EVENT_DISCONNECT);
+        static_cast<enum Net_WLAN_EventType> (COMMON_UI_EVENT_DISCONNECT);
       break;
     case STREAM_SESSION_MESSAGE_ABORT:
     case STREAM_SESSION_MESSAGE_LINK:
@@ -360,7 +370,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #endif // GUI_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
       event_s.second =
-        static_cast<Net_WLAN_UI_EventType> (COMMON_UI_EVENT_RESIZE);
+        static_cast<Net_WLAN_EventType> (COMMON_UI_EVENT_RESIZE);
 
       // update configuration (reused by gtk callback(s))
       const ARDrone_SessionData_t& session_data_container_r =
@@ -435,7 +445,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       } // end IF
 
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       switch (CBData_->mediaFramework)
@@ -443,56 +455,38 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
           // sanity check(s)
+          ACE_ASSERT (!session_data_r.formats.empty ());
+          struct _AMMediaType& media_type_r = session_data_r.formats.front ();
+          ACE_ASSERT (InlineIsEqualGUID (media_type_r.formattype, FORMAT_VideoInfo));
+          ACE_ASSERT (media_type_r.cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+
+          struct tagVIDEOINFOHEADER* video_info_header_p =
+            reinterpret_cast<struct tagVIDEOINFOHEADER*> (media_type_r.pbFormat);
+          Common_UI_Resolution_t resolution_s;
+          resolution_s.cx = video_info_header_p->bmiHeader.biWidth;
+          resolution_s.cy = video_info_header_p->bmiHeader.biHeight;
+
+          // sanity check(s)
           ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration);
           ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration);
           ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-          struct tagVIDEOINFOHEADER* video_info_header_p =
-            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                          *(*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
+          ACE_ASSERT ((*directshow_iterator_3).second.second.outputFormat);
 
-          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat->formattype == FORMAT_VideoInfo);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-          struct tagVIDEOINFOHEADER* video_info_header_2 =
-            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.inputFormat->pbFormat);
+          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                          *(*directshow_iterator_3).second.second.outputFormat);
 
+          // sanity check(s)
           ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration);
           ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration);
           ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-          struct tagVIDEOINFOHEADER* video_info_header_3 =
-            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                          *(*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
+          ACE_ASSERT ((*directshow_iterator_4).second.second.outputFormat);
 
-          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat->formattype == FORMAT_VideoInfo);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-          struct tagVIDEOINFOHEADER* video_info_header_4 =
-            reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_4).second.second.inputFormat->pbFormat);
-
-          ACE_ASSERT (session_data_r.inputFormat);
-          ACE_ASSERT (session_data_r.inputFormat->formattype == FORMAT_VideoInfo);
-          ACE_ASSERT (session_data_r.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-          struct tagVIDEOINFOHEADER* video_info_header_5 =
-            reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.inputFormat->pbFormat);
-
-          video_info_header_p->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-          video_info_header_p->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-          video_info_header_p->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_p->bmiHeader);
-          video_info_header_2->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-          video_info_header_2->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-          video_info_header_2->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_2->bmiHeader);
-          video_info_header_3->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-          video_info_header_3->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-          video_info_header_3->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_3->bmiHeader);
-          video_info_header_4->bmiHeader.biHeight = video_info_header_5->bmiHeader.biHeight;
-          video_info_header_4->bmiHeader.biWidth = video_info_header_5->bmiHeader.biWidth;
-          video_info_header_4->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_4->bmiHeader);
+          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                          *(*directshow_iterator_4).second.second.outputFormat);
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -515,7 +509,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         (*iterator_4).second.second.sourceFormat.width = session_data_r.width;
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 
       if (session_data_r.lock)
@@ -546,9 +542,13 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       } // end IF
 
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
         CBData_->progressData.statistic = session_data_r.statistic;
+#if defined (GTK_USE)
       } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 
       if (session_data_r.lock)
@@ -571,9 +571,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   } // end SWITCH
 
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
     state_r.eventStack.push (event_s);
   } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 }
 
@@ -596,7 +598,9 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
 #endif // GUI_SUPPORT
     iterator = streams_.find (sessionId_in);
     if (iterator != streams_.end ())
@@ -608,7 +612,11 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
                   ACE_TEXT (ARDroneStreamTypeToString (stream_type_e).c_str ()),
                   sessionId_in));
     } // end IF
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   } // end lock scope
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   switch (stream_type_e)
   {
@@ -645,7 +653,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
           dynamic_cast<Stream_IStreamControlBase*> ((*iterator_2).second);
       ACE_ASSERT (istream_base_p);
       istream_base_p->start ();
-#endif // GUI_SUPPORT
+#endif // GUI_SUPPORT // *TODO*
       break;
     }
     case ARDRONE_STREAM_MAVLINK:
@@ -653,6 +661,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
     case ARDRONE_STREAM_NAVDATA:
     {
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
         guint event_source_id = g_idle_add (idle_session_end_cb,
                                             CBData_);
@@ -664,6 +673,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
         } // end IF
         state_r.eventSourceIds.insert (event_source_id);
       } // end lock scope
+#endif // GTK_USE
 #endif // GUI_SUPPORT
 
       break;

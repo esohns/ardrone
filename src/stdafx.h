@@ -1,4 +1,7 @@
-﻿// stdafx.h : include file for standard system include files,
+﻿#ifndef __STDAFX__
+#define __STDAFX__
+
+// stdafx.h : include file for standard system include files,
 //  or project specific include files that are used frequently, but
 //      are changed infrequently
 //
@@ -16,6 +19,13 @@
 
 #include <strmif.h>
 #include <reftime.h>
+#if defined (DEBUG)
+// *NOTE*: wxWidgets may have #defined __WXDEBUG__
+#if defined (__WXDEBUG__)
+#undef __WXDEBUG__
+#endif // __WXDEBUG__
+#include <wxdebug.h>
+#endif // DEBUG
 // *NOTE*: uuids.h does not have double include protection (?) (and is therefore
 //         really a PITA to integrate consistently)
 // *NOTE*: M******** obviously relies on precompilation features to get this
@@ -73,4 +83,4 @@
 #endif // HAVE_CONFIG_H
 #include "ardrone_macros.h"
 
-//#define LIGBGLADE_SUPPORT
+#endif // __STDAFX__

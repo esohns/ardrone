@@ -114,7 +114,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       module_p = NULL;
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_Display_Module (this,
-                                                                ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_DIRECTSHOW_DEFAULT_NAME_STRING)),
+                                                                ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_DIRECT3D_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       modules_out.push_back (module_p);
@@ -271,14 +271,12 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     if (graphBuilder_)
     {
-      graphBuilder_->Release ();
-      graphBuilder_ = NULL;
+      graphBuilder_->Release (); graphBuilder_ = NULL;
     } // end IF
 
     if (mediaSession_)
     {
-      mediaSession_->Release ();
-      mediaSession_ = NULL;
+      mediaSession_->Release (); mediaSession_ = NULL;
     } // end IF
 #endif
   } // end IF
@@ -328,25 +326,25 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       // sanity check(s)
-      ACE_ASSERT (configuration_p->inputFormat);
+      ACE_ASSERT (configuration_in.configuration_.sourceFormat);
       //ACE_ASSERT (configuration_p->filterConfiguration);
       //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration);
       //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
 
-      if (session_data_p->inputFormat)
-        Stream_MediaFramework_DirectShow_Tools::delete_ (session_data_p->inputFormat);
+      if (!session_data_p->formats.empty ())
+        Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
+      ACE_ASSERT (!session_data_p->formats.empty ());
 
-      ACE_ASSERT (!session_data_p->inputFormat);
-      session_data_p->inputFormat =
-        Stream_MediaFramework_DirectShow_Tools::copy (*(configuration_p->inputFormat));
+      struct _AMMediaType* media_type_p =
+        Stream_MediaFramework_DirectShow_Tools::copy (*(configuration_in.configuration_.sourceFormat));
       //if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
-      if (!session_data_p->inputFormat)
+      if (!media_type_p)
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copy(), aborting\n")));
         goto error;
       } // end IF
-      ACE_ASSERT (session_data_p->inputFormat);
+      session_data_p->formats.push_front (*media_type_p);
 
       break;
     }
@@ -427,8 +425,8 @@ error:
   //  session_data_p->direct3DDevice->Release ();
   //  session_data_p->direct3DDevice = NULL;
   //} // end IF
-  if (session_data_p->inputFormat)
-    Stream_MediaFramework_DirectShow_Tools::delete_ (session_data_p->inputFormat);
+  if (!session_data_p->formats.empty ())
+    Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
   //session_data_p->resetToken = 0;
   //if (session_data_p->session)
   //{
@@ -1628,17 +1626,21 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
           reinterpret_cast<struct _navdata_demo_t*> (option_p);
         ACE_ASSERT (option_2);
 
+#if defined (GUI_SUPPORT)
         ACE_ASSERT (inherited::state_.CBData);
-        struct ARDrone_UI_GTK_State& state_r =
-          const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-        { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+        //struct ARDrone_UI_GTK_State& state_r =
+        //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+        //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
           inherited::state_.CBData->openGLScene.orientation.x =
               option_2->phi; // roll (--> rotation along x)
           inherited::state_.CBData->openGLScene.orientation.y =
               option_2->psi; // yaw (--> rotation along y)
           inherited::state_.CBData->openGLScene.orientation.z =
               option_2->theta; // pitch (--> rotation along z)
-        } // end lock scope
+#endif
+        //} // end lock scope
+#endif // GUI_SUPPORT
 
         break;
       }
@@ -1901,7 +1903,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onSignalQualityChange (const std::string& interfaceIdentifier_in,
                                                                           unsigned int signalQuality_in)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::onSignalQualityChange"));
 
@@ -1939,7 +1941,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onAssociate (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                                 const std::string& SSID_in,
                                                                 bool success_in)
 {
@@ -1955,6 +1957,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     return;
 
   // update GUI ?
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: move this to onConnect() (see below)
   if (inherited::configuration_->configuration_.CBData)
@@ -1970,7 +1974,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       return;
     } // end IF
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 }
 
 template <typename ModuleConfigurationType,
@@ -1985,7 +1991,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onDisassociate (const std::string& interfaceIdentifier_in,
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
                                                                    const std::string& SSID_in,
                                                                    bool success_in)
 {
@@ -2001,6 +2007,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     return;
 
   // update GUI ?
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: move this to onDisconnect() (see below)
   if (inherited::configuration_->configuration_.CBData)
@@ -2016,7 +2024,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       return;
     } // end IF
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 }
 
 template <typename ModuleConfigurationType,
@@ -2041,8 +2051,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   ACE_UNUSED_ARG (SSID_in);
 
   // sanity check(s)
-  if (!inherited::configuration_)
-    return;
   if (!success_in)
     return;
 
@@ -2070,38 +2078,52 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #endif // ACE_WIN32 || ACE_WIN64
     return;
   } // end IF
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
-              ACE_TEXT (SSID_in.c_str ()),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
-#else
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-              ACE_TEXT (interfaceIdentifier_in.c_str ()),
-              ACE_TEXT (SSID_in.c_str ()),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
-#endif // ACE_WIN32 || ACE_WIN64
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+//              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
+//              ACE_TEXT (SSID_in.c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+//#else
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
+//              ACE_TEXT (interfaceIdentifier_in.c_str ()),
+//              ACE_TEXT (SSID_in.c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+//#endif // ACE_WIN32 || ACE_WIN64
 
-  // update GUI ?
+  // update UI
+  if (!inherited::configuration_)
+    return;
+#if defined (GUI_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-  if (inherited::configuration_->configuration_.CBData)
+#if defined (GTK_USE)
+  guint event_source_id =
+    g_idle_add (idle_associated_SSID_cb,
+                inherited::configuration_->configuration_.CBData);
+  if (event_source_id == 0)
   {
-    guint event_source_id =
-      g_idle_add (idle_associated_SSID_cb,
-                  inherited::configuration_->configuration_.CBData);
-    if (event_source_id == 0)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
-      return;
-    } // end IF
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n")));
+    return;
   } // end IF
+#elif (WXWIDGETS_USE)
+  ACE_ASSERT (inherited::configuration_->configuration_.CBData->iapplication);
+  ARDrone_DirectShow_WxWidgetsIApplication_t* iapplication_p =
+    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (inherited::configuration_->configuration_.CBData->iapplication);
+  ACE_ASSERT (iapplication_p);
+  struct ARDrone_UI_wxWidgets_State& state_r =
+    const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
+  ARDrone_Event_t event_s = std::make_pair (ARDRONE_STREAM_INVALID,
+                                            NET_WLAN_EVENT_CONNECT);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+    state_r.eventStack.push (event_s);
+  } // end lock scope
+#endif
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
 }
 
 template <typename ModuleConfigurationType,
@@ -2126,8 +2148,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   ACE_UNUSED_ARG (SSID_in);
 
   // sanity check(s)
-  if (!inherited::configuration_)
-    return;
   if (!success_in)
     return;
 
@@ -2163,22 +2183,37 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 //              ACE_TEXT (SSID_in.c_str ())));
 //#endif
 
-  // update GUI ?
+  // update UI
+  if (!inherited::configuration_)
+    return;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  if (inherited::configuration_->configuration_.CBData)
+  guint event_source_id =
+    g_idle_add (idle_disassociated_SSID_cb,
+                inherited::configuration_->configuration_.CBData);
+  if (event_source_id == 0)
   {
-    guint event_source_id =
-      g_idle_add (idle_disassociated_SSID_cb,
-                  inherited::configuration_->configuration_.CBData);
-    if (event_source_id == 0)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to g_idle_add(idle_disassociated_SSID_cb): \"%m\", returning\n")));
-      return;
-    } // end IF
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to g_idle_add(idle_disassociated_SSID_cb): \"%m\", returning\n")));
+    return;
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
+#elif (WXWIDGETS_USE)
+  ACE_ASSERT (inherited::configuration_->configuration_.CBData->iapplication);
+  ARDrone_DirectShow_WxWidgetsIApplication_t* iapplication_p =
+    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (inherited::configuration_->configuration_.CBData->iapplication);
+  ACE_ASSERT (iapplication_p);
+  struct ARDrone_UI_wxWidgets_State& state_r =
+    const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
+  ARDrone_Event_t event_s = std::make_pair (ARDRONE_STREAM_INVALID,
+                                            NET_WLAN_EVENT_DISCONNECT);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+    state_r.eventStack.push (event_s);
+  } // end lock scope
+#endif
+#endif // GUI_SUPPORT
 }
 
 template <typename ModuleConfigurationType,

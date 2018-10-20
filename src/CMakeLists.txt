@@ -531,7 +531,9 @@ if (UNIX)
     include_directories (${PKG_GTK2_INCLUDE_DIRS})
     include_directories (${PKG_GLADE_INCLUDE_DIRS})
    endif ()
-  endif (GTK_USE)
+  elseif (WXWIDGETS_USE)
+   include_directories (${wxWidgets_INCLUDE_DIRS})
+  endif ()
  endif (GUI_SUPPORT)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/generated/include)
@@ -558,12 +560,15 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/log)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/signal)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/timer)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/test_u)
 
  if (GUI_SUPPORT)
   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/ui)
   if (GTK_USE)
    include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/ui/gtk)
-  endif (GTK_USE)
+  elseif (WXWIDGETS_USE)
+   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libCommon/src/ui/wxwidgets)
+  endif ()
  endif (GUI_SUPPORT)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACEStream/src)
@@ -575,6 +580,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACEStream/src/modules/net)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACEStream/src/modules/vis)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACEStream/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/3rd_party/bison)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/libACENetwork/src)
@@ -633,9 +639,12 @@ elseif (WIN32)
   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libCommon/src/ui)
   if (GTK_USE)
    include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libCommon/src/ui/gtk)
-  endif (GTK_USE)
+  elseif (WXWIDGETS_USE)
+   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libCommon/src/ui/wxwidgets)
+  endif ()
  endif (GUI_SUPPORT)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libCommon/src/xml)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libCommon/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/src/modules/dec)
@@ -646,6 +655,7 @@ elseif (WIN32)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/src/modules/net)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/src/modules/vis)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACEStream/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACENetwork/3rd_party)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libACENetwork/3rd_party/bison)
@@ -660,8 +670,6 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR}/..)
 ############## next target ################
 set (source_files
      ardrone.cpp
-     ardrone_callbacks.cpp
-     ardrone_callbacks.h
      ardrone_common.cpp
      ardrone_common.h
      ardrone_configuration.h
@@ -712,6 +720,22 @@ set (source_files
      ardrone_stream.inl
      ardrone_stream_common.h
      ardrone_types.h)
+if (GUI_SUPPORT)
+ if (GTK_USE)
+  set (source_files
+       ${source_files}
+       ardrone_callbacks.cpp
+       ardrone_callbacks.h)
+ elseif (WXWIDGETS_USE)
+  set (source_files
+       ${source_files}
+       ardrone_ui.cpp
+       ardrone_ui.h
+       ardrone_ui.inl
+       ardrone_ui_base.cpp
+       ardrone_ui_base.h)
+ endif ()
+endif (GUI_SUPPORT)
 file (GLOB script_files scripts/*.l)
 
 set (LLVM_COMPILER_ID_STRING "Clang")
@@ -723,14 +747,28 @@ if (CXX_COMPILER_ID_STRING_LOWER STREQUAL LLVM_COMPILER_ID_STRING_LOWER)
 endif ()
 
 set (EXECUTABLE ardrone)
+set (ui_definition_file "")
+if (GUI_SUPPORT)
+ if (GTK_USE)
+  if (GTK3_USE)
+   set (ui_definition_file ${EXECUTABLE}.gtk3)
+  elseif (GTK2_USE)
+   set (ui_definition_file ${EXECUTABLE}.gtk2)
+  endif ()
+ elseif (WXWIDGETS_USE)
+  if (WIN32)
+   add_definitions(-DUNICODE -D_UNICODE)
+  endif (WIN32)
+  set (ui_definition_file ${EXECUTABLE}.xrc)
+ endif ()
+endif (GUI_SUPPORT)
 add_executable (${EXECUTABLE}
                 stdafx.cpp
                 stdafx.h
                 ${source_files}
+                etc/${ui_definition_file}
                 ${script_files}
                 etc/ardrone.3ds
-                etc/ardrone.gtk2
-                etc/ardrone.gtk3
                 etc/ardrone.jpg
                 etc/ardrone.png
                 etc/ardrone_small.ico
@@ -770,6 +808,7 @@ add_dependencies (${EXECUTABLE} CommonTimer)
 if (GUI_SUPPORT)
  add_dependencies (${EXECUTABLE} CommonUI)
 endif (GUI_SUPPORT)
+add_dependencies (${EXECUTABLE} Common_Test_U)
 
 add_dependencies (${EXECUTABLE} ACEStream)
 
@@ -881,7 +920,9 @@ elseif (WIN32)
     target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../libepoxy/cmake/${CMAKE_BUILD_TYPE}/epoxy1_static.lib)
     target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
    endif (GTKGL_SUPPORT)
-  endif (GTK_USE)
+  elseif (WXWIDGETS_USE)
+   target_link_libraries (${EXECUTABLE} ${wxWidgets_LIBRARIES})
+  endif ()
  endif (GUI_SUPPORT)
 endif ()
 
@@ -915,8 +956,11 @@ if (GUI_SUPPORT)
  target_link_libraries (${EXECUTABLE} CommonUI)
  if (GTK_USE)
   target_link_libraries (${EXECUTABLE} CommonUI_GTK)
- endif (GTK_USE)
+ elseif (WXWIDGETS_USE)
+  target_link_libraries (${EXECUTABLE} CommonUI_wxWidgets)
+ endif ()
 endif (GUI_SUPPORT)
+target_link_libraries (${EXECUTABLE} Common_Test_U)
 
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
@@ -952,10 +996,6 @@ if (UNIX)
   target_link_libraries (${EXECUTABLE} ${GSS_KRB5_LIBRARY})
   target_link_libraries (${EXECUTABLE} ${KRB5_LIBRARY})
  endif (DHCLIENT_USE)
-
-# target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
-# target_link_libraries (${EXECUTABLE} ACENetwork)
-# target_link_libraries (${EXECUTABLE} Common)
 endif (UNIX)
 
 # add PCH
@@ -1005,46 +1045,58 @@ install (FILES
 ##########################################
 
 #cmake_policy (SET CMP0053 OLD)
-set (ENVIRONMENT "")
+file (TO_NATIVE_PATH ${PROJECT_BINARY_DIR}/../src WORKING_DIRECTORY)
+
+if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
+ set (ARGS "-c")
+endif (WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
+set (ARGS "${ARGS} -l")
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
+ set (ARGS "${ARGS} -t")
+endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 if (UNIX)
- file (TO_NATIVE_PATH ${PROJECT_BINARY_DIR}/../src WORKING_DIRECTORY)
- if (GTK3_SUPPORT)
-  set (ARGS "-l -t -u./etc/ardrone.gtk3")
+ if (GUI_SUPPORT)
+  set (ARGS "-u./etc/${ui_definition_file} ${ARGS}")
  else ()
-  set (ARGS "-l -t -u./etc/ardrone.gtk2")
- endif (GTK3_SUPPORT)
+  set (ARGS "-u ${ARGS}")
+ endif (GUI_SUPPORT)
+ set (ENVIRONMENT "GDK_BACKEND=x11")
  set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
                            ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
- set (ENVIRONMENT "GDK_BACKEND=x11")
 elseif (WIN32)
  string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src) 
- if (GTK3_SUPPORT)
-  set (ARGS "-c -l -t -u.\\\\etc\\\\ardrone.gtk3")
+ if (GUI_SUPPORT)
+  set (ARGS "-u.\\\\etc\\\\${ui_definition_file} ${ARGS}")
+
+  if (GTK3_SUPPORT)
+   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                             G:/software/Development/dll
+                             ${PROJECT_SOURCE_DIR}/../gtk3/bin)
+  elseif (GTK2_SUPPORT)
+   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                             G:/software/Development/dll
+                             ${PROJECT_SOURCE_DIR}/../gtk2/bin)
+  endif ()
+  if (WXWIDGETS_SUPPORT)
+  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                            ${wxWidgets_LIB_DIR})
+  endif (WXWIDGETS_SUPPORT)
  else ()
-  set (ARGS "-c -l -t -u.\\\\etc\\\\ardrone.gtk2")
- endif (GTK3_SUPPORT)
- set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
+  set (ARGS "-g ${ARGS}")
+ endif (GUI_SUPPORT)
+ set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
                            ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
                            ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
                            ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
-#                           G:/software/Development/dll
 #                           ${PROJECT_SOURCE_DIR}/../openssl/bin
                            ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
- if (GTK_SUPPORT)
-  if (GTK3_SUPPORT)
-   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                             ${PROJECT_SOURCE_DIR}/../gtk3/bin)
-  elseif (GTK2_SUPPORT)
-   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                             ${PROJECT_SOURCE_DIR}/../gtk2/bin)
-  endif (GTK3_SUPPORT)
- endif (GTK_SUPPORT)
 endif ()
 
 if (UNIX)
@@ -1056,7 +1108,7 @@ elseif (WIN32)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   if (DEBUG_HEAP_SUPPORT)
   else ()
-   set (ENVIRONMENT "${ENVIRONMENT} _NO_DEBUG_HEAP=1 foo=bar")
+   set (ENVIRONMENT "${ENVIRONMENT} _NO_DEBUG_HEAP=1")
   endif ()
  endif ()
 endif ()

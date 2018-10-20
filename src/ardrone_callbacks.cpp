@@ -342,13 +342,6 @@ stream_processing_function (void* arg_in)
   bool result_2 = false;
 //  guint context_id = 0;
 
-//  {
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, -1);
-//#else
-//    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, *lock_p, std::numeric_limits<void*>::max ());
-//#endif
-
     // configure streams and retrieve stream handles
 //    ARDrone_ConnectionConfigurationIterator_t iterator_3;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

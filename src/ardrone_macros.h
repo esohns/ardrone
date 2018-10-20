@@ -38,12 +38,12 @@
 #  include "ace/Trace.h"
 #endif /* ARDRONE_NTRACE */
 
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#endif
-#define COMPILER_NAME ACE::compiler_name()
-#define COMPILER_VERSION (ACE::compiler_major_version() * 10000 + ACE::compiler_minor_version() * 100 + ACE::compiler_beta_version())
-
-#define ARDRONE_STRINGIZE(X) #X
+//#ifdef __GNUC__
+//#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+//#endif
+//#define COMPILER_NAME ACE::compiler_name()
+//#define COMPILER_VERSION (ACE::compiler_major_version() * 10000 + ACE::compiler_minor_version() * 100 + ACE::compiler_beta_version())
+//
+//#define ARDRONE_STRINGIZE(X) #X
 
 #endif

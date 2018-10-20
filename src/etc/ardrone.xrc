@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwindows.org/wxxrc" version="2.3.0.1">
+  <object class="wxDialog" name="dialog_main">
+    <style>wxCAPTION|wxDIALOG_NO_PARENT|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER</style>
+    <size>518,517</size>
+    <title>ardrone</title>
+    <centered>1</centered>
+    <object class="wxBoxSizer">
+      <orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag>wxEXPAND</flag>
+        <border>0</border>
+        <object class="wxBoxSizer">
+          <orient>wxHORIZONTAL</orient>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag>wxEXPAND</flag>
+            <border>0</border>
+            <object class="wxBoxSizer">
+              <orient>wxVERTICAL</orient>
+              <object class="sizeritem">
+                <option>0</option>
+                <flag>wxEXPAND</flag>
+                <border>0</border>
+                <object class="wxBoxSizer">
+                  <orient>wxHORIZONTAL</orient>
+                  <object class="sizeritem">
+                    <option>0</option>
+                    <flag>wxEXPAND</flag>
+                    <border>0</border>
+                    <object class="wxBoxSizer">
+                      <orient>wxVERTICAL</orient>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxToggleButton" name="togglebutton_connect">
+                          <enabled>0</enabled>
+                          <tooltip>connect</tooltip>
+                          <label>connect</label>
+                          <checked>0</checked>
+                        </object>
+                      </object>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxBitmapButton" name="button_calibrate">
+                          <enabled>0</enabled>
+                          <tooltip>calibrate sensors</tooltip>
+                          <bitmap stock_id="wxART_TICK_MARK" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                          <default>0</default>
+                        </object>
+                      </object>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxBitmapButton" name="button_animate_leds">
+                          <enabled>0</enabled>
+                          <tooltip>animate LEDS</tooltip>
+                          <bitmap stock_id="wxART_TIP" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                          <default>0</default>
+                        </object>
+                      </object>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxBitmapButton" name="button_report">
+                          <enabled>0</enabled>
+                          <tooltip>report status information</tooltip>
+                          <bitmap stock_id="wxART_QUESTION" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                          <default>0</default>
+                        </object>
+                      </object>
+                    </object>
+                  </object>
+                  <object class="sizeritem">
+                    <option>0</option>
+                    <flag>wxEXPAND</flag>
+                    <border>0</border>
+                    <object class="wxBoxSizer">
+                      <orient>wxVERTICAL</orient>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxPanel" name="m_panel5">
+                          <style>wxBORDER_SIMPLE|wxTAB_TRAVERSAL</style>
+                          <object class="wxBoxSizer">
+                            <orient>wxVERTICAL</orient>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxBoxSizer">
+                                <orient>wxVERTICAL</orient>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag></flag>
+                                  <border>0</border>
+                                  <object class="wxToggleButton" name="togglebutton_auto_associate">
+                                    <enabled>0</enabled>
+                                    <tooltip>auto-associate ?</tooltip>
+                                    <label>associate</label>
+                                    <checked>0</checked>
+                                  </object>
+                                </object>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxChoice" name="choice_interface">
+                                <enabled>0</enabled>
+                                <tooltip>wireless LAN interface</tooltip>
+                                <selection>0</selection>
+                                <content />
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxTextCtrl" name="textcontrol_SSID">
+                                <enabled>0</enabled>
+                                <tooltip>SSID</tooltip>
+                                <value></value>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxTextCtrl" name="textcontrol_address">
+                                <enabled>0</enabled>
+                                <tooltip>IP address</tooltip>
+                                <value></value>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxSpinCtrl" name="spincontrol_port_video">
+                                <style>wxSP_ARROW_KEYS|wxSP_WRAP</style>
+                                <enabled>0</enabled>
+                                <tooltip>video port (TCP)</tooltip>
+                                <value>0</value>
+                                <min>0</min>
+                                <max>10</max>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxSpinCtrl" name="spincontrol_buffer">
+                                <style>wxSP_ARROW_KEYS</style>
+                                <enabled>0</enabled>
+                                <tooltip>video frame buffer (bytes)</tooltip>
+                                <value>0</value>
+                                <min>0</min>
+                                <max>10</max>
+                              </object>
+                            </object>
+                          </object>
+                        </object>
+                      </object>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxPanel" name="m_panel4">
+                          <style>wxBORDER_SIMPLE|wxTAB_TRAVERSAL</style>
+                          <object class="wxBoxSizer">
+                            <orient>wxVERTICAL</orient>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxBoxSizer">
+                                <orient>wxHORIZONTAL</orient>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag></flag>
+                                  <border>0</border>
+                                  <object class="wxToggleButton" name="togglebutton_display_video">
+                                    <enabled>0</enabled>
+                                    <tooltip>display video ?</tooltip>
+                                    <label>display</label>
+                                    <checked>0</checked>
+                                  </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag></flag>
+                                  <border>0</border>
+                                  <object class="wxToggleButton" name="togglebutton_fullscreen">
+                                    <enabled>0</enabled>
+                                    <tooltip>fullscreen display ?</tooltip>
+                                    <label>fullscreen</label>
+                                    <checked>0</checked>
+                                  </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag></flag>
+                                  <border>0</border>
+                                  <object class="wxBitmapButton" name="button_switch_camera">
+                                    <enabled>0</enabled>
+                                    <tooltip>switch camera</tooltip>
+                                    <bitmap stock_id="wxART_LIST_VIEW" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                                    <default>0</default>
+                                  </object>
+                                </object>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxChoice" name="choice_display_video_format">
+                                <enabled>0</enabled>
+                                <tooltip>video format</tooltip>
+                                <selection>0</selection>
+                                <content />
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxChoice" name="choice_adapter">
+                                <enabled>0</enabled>
+                                <tooltip>display adapter</tooltip>
+                                <selection>0</selection>
+                                <content />
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxBoxSizer">
+                                <orient>wxHORIZONTAL</orient>
+                                <object class="sizeritem">
+                                  <option>1</option>
+                                  <flag>wxEXPAND</flag>
+                                  <border>0</border>
+                                  <object class="wxChoice" name="choice_display">
+                                    <enabled>0</enabled>
+                                    <tooltip>display device</tooltip>
+                                    <selection>0</selection>
+                                    <content />
+                                  </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag>wxEXPAND</flag>
+                                  <border>0</border>
+                                  <object class="wxBitmapButton" name="button_display_settings">
+                                    <enabled>0</enabled>
+                                    <tooltip>display settings</tooltip>
+                                    <bitmap stock_id="wxART_LIST_VIEW" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                                    <default>0</default>
+                                  </object>
+                                </object>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxChoice" name="choice_display_resolution">
+                                <enabled>0</enabled>
+                                <tooltip>display resolution</tooltip>
+                                <selection>0</selection>
+                                <content />
+                              </object>
+                            </object>
+                          </object>
+                        </object>
+                      </object>
+                      <object class="sizeritem">
+                        <option>0</option>
+                        <flag>wxEXPAND</flag>
+                        <border>0</border>
+                        <object class="wxPanel" name="m_panel3">
+                          <style>wxBORDER_SIMPLE|wxTAB_TRAVERSAL</style>
+                          <object class="wxBoxSizer">
+                            <orient>wxVERTICAL</orient>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxBoxSizer">
+                                <orient>wxHORIZONTAL</orient>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag>wxEXPAND</flag>
+                                  <border>0</border>
+                                  <object class="wxToggleButton" name="togglebutton_save_video">
+                                    <enabled>0</enabled>
+                                    <tooltip>save video stream ?</tooltip>
+                                    <label>save</label>
+                                    <checked>0</checked>
+                                  </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag></flag>
+                                  <border>0</border>
+                                  <object class="wxBitmapButton" name="button_snapshot">
+                                    <enabled>0</enabled>
+                                    <bitmap stock_id="wxART_COPY" stock_client="wxART_BUTTON">undefined.png</bitmap>
+                                    <default>0</default>
+                                  </object>
+                                </object>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxChoice" name="choice_save_video_format">
+                                <enabled>0</enabled>
+                                <tooltip>video format</tooltip>
+                                <selection>0</selection>
+                                <content />
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxEXPAND</flag>
+                              <border>0</border>
+                              <object class="wxBoxSizer">
+                                <orient>wxHORIZONTAL</orient>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag>wxEXPAND</flag>
+                                  <border>0</border>
+                                  <object class="wxTextCtrl" name="textcontrol_save_video_filename">
+                                    <enabled>0</enabled>
+                                    <tooltip>save video filename</tooltip>
+                                    <value></value>
+                                  </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <option>0</option>
+                                  <flag>wxEXPAND</flag>
+                                  <border>0</border>
+                                  <object class="wxDirPickerCtrl" name="directorypicker_save_video">
+                                    <value></value>
+                                    <message>select a folder</message>
+                                    <style>wxDIRP_SMALL</style>
+                                    <enabled>0</enabled>
+                                    <tooltip>save video file directory</tooltip>
+                                  </object>
+                                </object>
+                              </object>
+                            </object>
+                          </object>
+                        </object>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+              </object>
+            </object>
+          </object>
+          <object class="sizeritem">
+            <option>1</option>
+            <flag>wxEXPAND</flag>
+            <border>0</border>
+            <object class="wxPanel" name="panel_video">
+              <style>wxBORDER_SUNKEN|wxTAB_TRAVERSAL</style>
+              <hidden>1</hidden>
+            </object>
+          </object>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag>wxEXPAND</flag>
+        <border>0</border>
+        <object class="wxPanel" name="m_panel6">
+          <style>wxBORDER_SUNKEN|wxTAB_TRAVERSAL</style>
+          <object class="wxFlexGridSizer">
+            <rows>5</rows>
+            <cols>4</cols>
+            <vgap>0</vgap>
+            <hgap>0</hgap>
+            <growablecols></growablecols>
+            <growablerows></growablerows>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+              <border>0</border>
+              <object class="wxStaticText" name="label_control">
+                <enabled>0</enabled>
+                <label>control</label>
+                <wrap>-1</wrap>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_control_session_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>session messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_control_data_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>data messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxGauge" name="control_gauge">
+                <style>wxGA_HORIZONTAL</style>
+                <enabled>0</enabled>
+                <range>100</range>
+                <value>0</value>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxStaticText" name="label_navdata">
+                <enabled>0</enabled>
+                <label>navdata</label>
+                <wrap>-1</wrap>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_navdata_session_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>session messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_navdata_data_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>data messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxGauge" name="navdata_gauge">
+                <style>wxGA_HORIZONTAL</style>
+                <enabled>0</enabled>
+                <range>100</range>
+                <value>0</value>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+              <border>0</border>
+              <object class="wxStaticText" name="label_mavlink">
+                <enabled>0</enabled>
+                <label>mavlink</label>
+                <wrap>-1</wrap>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_mavlink_session_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>session messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_mavlink_data_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>data messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxGauge" name="mavlink_gauge">
+                <style>wxGA_HORIZONTAL</style>
+                <enabled>0</enabled>
+                <range>100</range>
+                <value>0</value>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+              <border>0</border>
+              <object class="wxStaticText" name="label_video">
+                <enabled>0</enabled>
+                <label>video</label>
+                <wrap>-1</wrap>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_video_session_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>session messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_video_data_messages">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>data messages</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxGauge" name="video_gauge">
+                <style>wxGA_HORIZONTAL</style>
+                <enabled>0</enabled>
+                <range>100</range>
+                <value>0</value>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+              <border>0</border>
+              <object class="wxStaticText" name="label_">
+                <enabled>0</enabled>
+                <label></label>
+                <wrap>-1</wrap>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_connections">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>connections</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxSpinCtrl" name="spincontrol_data">
+                <style>wxSP_ARROW_KEYS</style>
+                <enabled>0</enabled>
+                <tooltip>data (bytes)</tooltip>
+                <value>0</value>
+                <min>0</min>
+                <max>10</max>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxGauge" name="cache_gauge">
+                <style>wxGA_HORIZONTAL</style>
+                <enabled>0</enabled>
+                <tooltip>cache</tooltip>
+                <range>100</range>
+                <value>0</value>
+              </object>
+            </object>
+          </object>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag>wxEXPAND</flag>
+        <border>0</border>
+        <object class="wxPanel" name="m_panel7">
+          <style>wxBORDER_SUNKEN|wxTAB_TRAVERSAL</style>
+          <object class="wxBoxSizer">
+            <orient>wxHORIZONTAL</orient>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxFlexGridSizer">
+                <rows>3</rows>
+                <cols>2</cols>
+                <vgap>0</vgap>
+                <hgap>0</hgap>
+                <growablecols></growablecols>
+                <growablerows></growablerows>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxEXPAND</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_roll">
+                    <enabled>0</enabled>
+                    <label>roll</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxEXPAND</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_roll_value">
+                    <enabled>0</enabled>
+                    <label>0</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxEXPAND</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_pitch">
+                    <enabled>0</enabled>
+                    <label>pitch</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxALL</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_pitch_value">
+                    <enabled>0</enabled>
+                    <label>0</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxEXPAND</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_yaw">
+                    <enabled>0</enabled>
+                    <label>yaw</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>0</option>
+                  <flag>wxEXPAND</flag>
+                  <border>0</border>
+                  <object class="wxStaticText" name="label_yaw_value">
+                    <enabled>0</enabled>
+                    <label>0</label>
+                    <wrap>-1</wrap>
+                  </object>
+                </object>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>0</option>
+              <flag>wxEXPAND</flag>
+              <border>0</border>
+              <object class="wxPanel" name="panel_orientation">
+                <style>wxTAB_TRAVERSAL</style>
+                <enabled>0</enabled>
+                <hidden>1</hidden>
+              </object>
+            </object>
+          </object>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag>wxEXPAND</flag>
+        <border>0</border>
+        <object class="wxStaticLine" name="m_staticline1">
+          <style>wxLI_HORIZONTAL</style>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag></flag>
+        <border>0</border>
+        <object class="wxBoxSizer">
+          <orient>wxHORIZONTAL</orient>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag></flag>
+            <border>0</border>
+            <object class="wxBitmapButton" name="button_about">
+              <enabled>0</enabled>
+              <tooltip>about</tooltip>
+              <bitmap stock_id="wxART_TIP" stock_client="wxART_BUTTON">undefined.png</bitmap>
+              <default>0</default>
+            </object>
+          </object>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag></flag>
+            <border>0</border>
+            <object class="wxBitmapButton" name="button_quit">
+              <enabled>0</enabled>
+              <tooltip>quit</tooltip>
+              <bitmap stock_id="wxART_QUIT" stock_client="wxART_BUTTON">undefined.png</bitmap>
+              <default>0</default>
+            </object>
+          </object>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag></flag>
+            <border>0</border>
+            <object class="wxAnimationCtrl" name="animation_associating">
+              <style>wxAC_DEFAULT_STYLE</style>
+              <enabled>0</enabled>
+              <tooltip>associating...</tooltip>
+              <animation></animation>
+            </object>
+          </object>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag></flag>
+            <border>0</border>
+            <object class="wxGauge" name="gauge_progress">
+              <style>wxGA_HORIZONTAL|wxGA_SMOOTH</style>
+              <enabled>0</enabled>
+              <range>100</range>
+              <value>0</value>
+            </object>
+          </object>
+        </object>
+      </object>
+    </object>
+  </object>
+</resource>

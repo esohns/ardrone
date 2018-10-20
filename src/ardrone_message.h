@@ -32,7 +32,7 @@
 #include "stream_messageallocatorheap_base.h"
 
 #include "ardrone_common.h"
-#include "ardrone_configuration.h"
+//#include "ardrone_configuration.h"
 #include "ardrone_types.h"
 
 // forward declaration(s)
@@ -41,6 +41,7 @@ class ACE_Data_Block;
 class ACE_Message_Block;
 class ARDrone_Message;
 class ARDrone_SessionMessage;
+struct ARDrone_AllocatorConfiguration;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;

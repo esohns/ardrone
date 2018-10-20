@@ -357,46 +357,29 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
       typename SessionDataContainerType::DATA_T& session_data_r =
           const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
       // sanity check(s)
-      ACE_ASSERT (session_data_r.inputFormat);
-      ACE_ASSERT (session_data_r.inputFormat->formattype == FORMAT_VideoInfo);
-      ACE_ASSERT (session_data_r.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
-      struct tagVIDEOINFOHEADER* video_info_header_p =
-        reinterpret_cast<struct tagVIDEOINFOHEADER*> (session_data_r.inputFormat->pbFormat);
-#endif
+      ACE_ASSERT (!session_data_r.formats.empty ());
+      Common_UI_Resolution_t resolution_s;
       // *TODO*: remove type inferences
       switch (videoMode_)
       {
         case ARDRONE_VIDEOMODE_360P:
         {
+          resolution_s.cx = ARDRONE_H264_360P_VIDEO_WIDTH;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          // sanity check(s)
-          ACE_ASSERT (video_info_header_p);
-
-          video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
-          video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
-          video_info_header_p->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_p->bmiHeader);
+          resolution_s.cy = -ARDRONE_H264_360P_VIDEO_HEIGHT;
 #else
-          session_data_r.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
-          session_data_r.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+          resolution_s.cy = ARDRONE_H264_360P_VIDEO_HEIGHT;
 #endif
           break;
         }
         case ARDRONE_VIDEOMODE_720P:
         {
+          resolution_s.cx = ARDRONE_H264_720P_VIDEO_WIDTH;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          // sanity check(s)
-          ACE_ASSERT (video_info_header_p);
-
-          video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
-          video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
-          video_info_header_p->bmiHeader.biSizeImage =
-            DIBSIZE (video_info_header_p->bmiHeader);
+          resolution_s.cy = -ARDRONE_H264_720P_VIDEO_HEIGHT;
 #else
-          session_data_r.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
-          session_data_r.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+          resolution_s.cy = ARDRONE_H264_720P_VIDEO_HEIGHT;
 #endif
           break;
         }
@@ -409,7 +392,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
           break;
         }
       } // end SWITCH
-
+      Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                      session_data_r.formats.front ());
       break;
     }
     default:
