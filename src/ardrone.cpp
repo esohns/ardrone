@@ -719,7 +719,7 @@ do_printUsage (const std::string& programName_in)
             << std::endl;
   std::string path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_DIRECTORY);
+  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
   std::string UI_file = path;
   UI_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   UI_file += ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_DEFINITION_FILE_NAME);
@@ -857,7 +857,7 @@ do_processArguments (int argc_in,
   traceInformation_out        = false;
   std::string path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_DIRECTORY);
+  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
   interfaceDefinitionFile_out = path;
   interfaceDefinitionFile_out += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   interfaceDefinitionFile_out +=
@@ -1517,6 +1517,7 @@ do_work (int argc_in,
          struct ARDrone_UI_CBData_Base* CBData_in,
 #if defined (WXWIDGETS_USE)
          Common_UI_wxWidgets_IManager_t* IWxWidgetsManager_in,
+         //ARDrone_UI_wxWidgets_IApplicationBase_t* IApplication_in,
 #endif // WXWIDGETS_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -3023,7 +3024,7 @@ do_work (int argc_in,
       ARDrone_DirectShow_WxWidgetsManager_t* imanager_p =
         dynamic_cast<ARDrone_DirectShow_WxWidgetsManager_t*> (IWxWidgetsManager_in);
       ACE_ASSERT (imanager_p);
-      iapplication_p =
+      iapplication_p =// IApplication_in;
         const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (imanager_p->getP ());
       state_p =
         &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -3034,7 +3035,7 @@ do_work (int argc_in,
       ARDrone_MediaFoundation_WxWidgetsManager_t* imanager_p =
         dynamic_cast<ARDrone_MediaFoundation_WxWidgetsManager_t*> (IWxWidgetsManager_in);
       ACE_ASSERT (imanager_p);
-      iapplication_p =
+      iapplication_p =// IApplication_in;
         const_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (imanager_p->getP ());
       state_p =
         &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -3052,7 +3053,7 @@ do_work (int argc_in,
   ARDrone_WxWidgetsManager_t* imanager_p =
     dynamic_cast<ARDrone_WxWidgetsManager_t*> (IWxWidgetsManager_in);
   ACE_ASSERT (imanager_p);
-  iapplication_p =
+  iapplication_p =// IApplication_in;
     const_cast<ARDrone_UI_wxWidgets_IApplication_t*> (imanager_p->getP ());
   state_p =
     &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -3452,6 +3453,7 @@ continue_2:
     igtk_manager_p->wait ();
 #elif defined (WXWIDGETS_USE)
     IWxWidgetsManager_in->wait ();
+    //IApplication_in->run ();
 #else
     ;
 #endif
@@ -3599,89 +3601,6 @@ ACE_TMAIN (int argc_in,
 #else
   struct ARDrone_UI_CBData ui_cb_data;
 #endif // ACE_WIN32 || ACE_WIN64
-#if defined (GTK_USE)
-  ARDrone_UI_GTK_Manager_t* gtk_manager_p =
-    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
-  struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_DirectShow_GtkBuilderDefinition_t directshow_ui_definition (argc_in,
-                                                                      argv_in,
-                                                                      &directshow_cb_data);
-  ARDrone_MediaFoundation_GtkBuilderDefinition_t mediafoundation_ui_definition (argc_in,
-                                                                                argv_in,
-                                                                                &mediafoundation_cb_data);
-#else
-  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
-                                                argv_in,
-                                                &ui_cb_data);
-#endif // ACE_WIN32 || ACE_WIN64
-#elif defined (WXWIDGETS_USE)
-  ARDrone_UI_wxWidgets_IApplicationBase_t* iapplication_p = NULL;
-  Common_UI_wxWidgets_IManager_t* imanager_p = NULL;
-  struct Common_UI_State* ui_state_p = NULL;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_DirectShow_WxWidgetsManager_t directshow_wxwidgets_manager (toplevel_widget_name_string_,
-                                                                      argc_in,
-                                                                      argv_in);
-  ARDrone_MediaFoundation_WxWidgetsManager_t mediafoundation_wxwidgets_manager (toplevel_widget_name_string_,
-                                                                                argc_in,
-                                                                                argv_in);
-  switch (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-      iapplication_p =
-        const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (directshow_wxwidgets_manager.getP ());
-      imanager_p = &directshow_wxwidgets_manager;
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      iapplication_p =
-        const_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (mediafoundation_wxwidgets_manager.getP ());
-      imanager_p = &mediafoundation_wxwidgets_manager;
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  STREAM_LIB_DEFAULT_MEDIAFRAMEWORK));
-
-      Common_Log_Tools::finalizeLogging ();
-      // *PORTABILITY*: on Windows, finalize ACE...
-      result = ACE::fini ();
-      if (result == -1)
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-      return EXIT_FAILURE;
-    }
-  } // end SWITCH
-#else
-  ARDrone_WxWidgetsManager_t wxwidgets_manager (toplevel_widget_name_string_,
-                                                argc_in,
-                                                argv_in);
-  iapplication_p =
-    const_cast<ARDrone_UI_wxWidgets_IApplicationBase_t*> (wxwidgets_manager.getP ());
-  imanager_p = &wxwidgets_manager;
-#endif // ACE_WIN32 || ACE_WIN64
-  if (!iapplication_p)
-  {
-    ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("failed to allocate memory: %m, aborting\n")));
-
-    Common_Log_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, finalize ACE...
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-    return EXIT_FAILURE;
-  } // end IF
-  ACE_ASSERT (imanager_p);
-#endif
-#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_Configuration directshow_configuration;
   ARDrone_DirectShow_SignalHandler_t directshow_signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
@@ -3732,6 +3651,120 @@ ACE_TMAIN (int argc_in,
                 ACE_TEXT ("running on valgrind...\n")));
 #endif // VALGRIND_SUPPORT
 
+  // initialize framework(s)
+  Common_Tools::initialize (false); // initialize random number generator ?
+#if defined (GUI_SUPPORT)
+#if defined (WXWIDGETS_USE)
+  if (!Common_UI_WxWidgets_Tools::initialize (argc_in,
+                                              argv_in))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_UI_WxWidgets_Tools::initialize(), aborting\n")));
+  } // end IF
+#endif // WXWIDGETS_USE
+#endif // GUI_SUPPORT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
+#endif // ACE_WIN32 || ACE_WIN64
+
+#if defined (GTK_USE)
+  ARDrone_UI_GTK_Manager_t* gtk_manager_p =
+    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_GtkBuilderDefinition_t directshow_ui_definition (argc_in,
+                                                                      argv_in,
+                                                                      &directshow_cb_data);
+  ARDrone_MediaFoundation_GtkBuilderDefinition_t mediafoundation_ui_definition (argc_in,
+                                                                                argv_in,
+                                                                                &mediafoundation_cb_data);
+#else
+  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
+                                                argv_in,
+                                                &ui_cb_data);
+#endif // ACE_WIN32 || ACE_WIN64
+#elif defined (WXWIDGETS_USE)
+  ARDrone_UI_wxWidgets_IApplicationBase_t* iapplication_p = NULL;
+  Common_UI_wxWidgets_IManager_t* imanager_p = NULL;
+  struct Common_UI_State* ui_state_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_WxWidgetsManager_t directshow_wxwidgets_manager (toplevel_widget_name_string_,
+                                                                      argc_in,
+                                                                      argv_in);
+  ARDrone_MediaFoundation_WxWidgetsManager_t mediafoundation_wxwidgets_manager (toplevel_widget_name_string_,
+                                                                                argc_in,
+                                                                                argv_in);
+  //ARDrone_DirectShow_WxWidgetsApplication_t directshow_wxwidgets_application (toplevel_widget_name_string_,
+  //                                                                            argc_in,
+  //                                                                            Common_UI_WxWidgets_Tools::convertArgV (argc_in,
+  //                                                                                                                    argv_in),
+  //                                                                            COMMON_UI_WXWIDGETS_APP_CMDLINE_DEFAULT_PARSE);
+  //ARDrone_MediaFoundation_WxWidgetsApplication_t mediafoundation_wxwidgets_application (toplevel_widget_name_string_,
+  //                                                                                      argc_in,
+  //                                                                                      Common_UI_WxWidgets_Tools::convertArgV (argc_in,
+  //                                                                                                                              argv_in),
+  //                                                                                      COMMON_UI_WXWIDGETS_APP_CMDLINE_DEFAULT_PARSE);
+  switch (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    { // *IMPORTANT NOTE*: the wxAppConsoleBase ctor sets the global
+      //                   ms_appInstance variable, which is also used by the
+      //                   wxTheApp logic to retrieve a handle to the 'active'
+      //                   application (see also: wx/app.h:746). Since several
+      //                   application instances are currently kept on the stack
+      //                   (see above), ms_appInstance needs to be reset
+      //                   accordingly
+      // *TODO*: move this logic into the wxwidgets manager ASAP
+      iapplication_p =// &directshow_wxwidgets_application;
+        const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (directshow_wxwidgets_manager.getP ());
+      ACE_ASSERT (iapplication_p);
+      ARDrone_DirectShow_WxWidgetsApplication_t* application_p =
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsApplication_t*> (iapplication_p);
+      ACE_ASSERT (application_p);
+      wxAppConsoleBase::SetInstance (//&directshow_wxwidgets_application);
+                                     application_p);
+      imanager_p = &directshow_wxwidgets_manager;
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      iapplication_p =// &mediafoundation_wxwidgets_application;
+        const_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (mediafoundation_wxwidgets_manager.getP ());
+      imanager_p = &mediafoundation_wxwidgets_manager;
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  STREAM_LIB_DEFAULT_MEDIAFRAMEWORK));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  ARDrone_WxWidgetsManager_t wxwidgets_manager (toplevel_widget_name_string_,
+                                                argc_in,
+                                                argv_in);
+  //ARDrone_WxWidgetsApplication_t wxwidgets_application (toplevel_widget_name_string_,
+  //                                                      argc_in,
+  //                                                      Common_UI_WxWidgets_Tools::convertArgV (argc_in,
+  //                                                                                              argv_in),
+  //                                                      COMMON_UI_WXWIDGETS_APP_CMDLINE_DEFAULT_PARSE);
+  iapplication_p =// &wxwidgets_application;
+    const_cast<ARDrone_UI_wxWidgets_IApplicationBase_t*> (wxwidgets_manager.getP ());
+  imanager_p = &wxwidgets_manager;
+#endif // ACE_WIN32 || ACE_WIN64
+  if (!iapplication_p)
+  {
+    ACE_DEBUG ((LM_CRITICAL,
+                ACE_TEXT ("failed to allocate memory: %m, aborting\n")));
+    goto error;
+  } // end IF
+  ACE_ASSERT (imanager_p);
+#endif
+#endif // GUI_SUPPORT
+
   result = -1;
   // set default values
   address_string = ACE_TEXT_ALWAYS_CHAR (ARDRONE_DEFAULT_IP_ADDRESS);
@@ -3747,7 +3780,6 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_INET_Addr::set(\"%s\"): \"%m\", aborting\n"),
                 ACE_TEXT (address_string.c_str ())));
-
     goto error;
   } // end IF
   buffer_size = ARDRONE_MESSAGE_BUFFER_SIZE;
@@ -3801,7 +3833,6 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Profile_Timer::start(): \"%m\", aborting\n")));
-
     goto error;
   } // end IF
 
@@ -3817,7 +3848,6 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_INET_Addr::set(): \"%m\", aborting\n")));
-
     goto error;
   } // end IF
   ACE_DEBUG ((LM_DEBUG,
@@ -3825,7 +3855,7 @@ ACE_TMAIN (int argc_in,
               ACE_TEXT (Net_Common_Tools::IPAddressToString (address).c_str ())));
   path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
-  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_DIRECTORY);
+  path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
   interface_definition_file = path;
   interface_definition_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   interface_definition_file +=
@@ -3868,7 +3898,6 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to do_processArguments(), aborting\n")));
     do_printUsage (ACE::basename (argv_in[0]));
-
     goto error;
   } // end IF
 
@@ -3884,7 +3913,6 @@ ACE_TMAIN (int argc_in,
                 ACE_TEXT ("invalid configuration (was: \"%s\"), aborting\n"),
                 ACE_TEXT (Common_Tools::commandLineToString (argc_in, argv_in).c_str ())));
     do_printUsage (ACE::basename (argv_in[0]));
-
     goto error;
   } // end IF
 
@@ -3922,7 +3950,6 @@ ACE_TMAIN (int argc_in,
                   mode_e));
       do_printUsage (ACE::basename (argv_in[0],
                                     ACE_DIRECTORY_SEPARATOR_CHAR));
-
       goto error;
     }
   } // end SWITCH
@@ -3943,7 +3970,6 @@ ACE_TMAIN (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Log_Tools::initializeLogging(), aborting\n")));
-
     goto error;
   } // end IF
 
@@ -4326,6 +4352,7 @@ ACE_TMAIN (int argc_in,
 #if defined (GUI_SUPPORT)
              ui_cb_data_base_p,
 #if defined (WXWIDGETS_USE)
+             //iapplication_p,
              imanager_p,
 #endif // WXWIDGETS_USE
 #endif // GUI_SUPPORT

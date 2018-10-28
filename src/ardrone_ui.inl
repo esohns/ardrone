@@ -616,7 +616,7 @@ ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t>::OnInit_2 
   togglebutton_auto_associate->SetValue (configuration_r.configuration->WLANMonitorConfiguration.autoAssociate);
 
   Net_InterfaceIdentifiers_t interfaces_a =
-    Net_WLAN_Tools::getInterfaces (ARDRONE_WLANMONITOR_SINGLETON::instance ()->get ());
+    Net_WLAN_Tools::getInterfaces (ARDRONE_WLANMONITOR_SINGLETON::instance ()->get_2 ());
 
   int index_i = -1;
   wxStringClientData* client_data_p = NULL;
@@ -1389,19 +1389,34 @@ ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t>::choice_in
   ARDrone_DirectShow_WxWidgetsIApplication_t::CONFIGURATION_T& configuration_r =
     const_cast<ARDrone_DirectShow_WxWidgetsIApplication_t::CONFIGURATION_T&> (application_->getR_2 ());
   ACE_ASSERT (configuration_r.configuration);
+  ARDrone_WLANMonitor_t* wlan_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (wlan_monitor_p);
 
   wxStringClientData* client_data_p =
     dynamic_cast<wxStringClientData*> (choice_interface->GetClientObject (event_in.GetSelection ()));
   ACE_ASSERT (client_data_p);
-  configuration_r.configuration->WLANMonitorConfiguration.interfaceIdentifier =
+  struct _GUID interface_identifier_s =
     Common_Tools::StringToGUID (client_data_p->GetData ().ToStdString ());
+  bool wlan_monitor_was_running_b = wlan_monitor_p->isRunning ();
+  bool restart_wlan_monitor_b =
+    (wlan_monitor_was_running_b                             &&
+     !InlineIsEqualGUID (interface_identifier_s, GUID_NULL) &&
+     !InlineIsEqualGUID (interface_identifier_s, configuration_r.configuration->WLANMonitorConfiguration.interfaceIdentifier));
+  configuration_r.configuration->WLANMonitorConfiguration.interfaceIdentifier =
+    interface_identifier_s;
   ACE_ASSERT (!InlineIsEqualGUID (configuration_r.configuration->WLANMonitorConfiguration.interfaceIdentifier, GUID_NULL));
-  ARDrone_WLANMonitor_t* wlan_monitor_p =
-    ARDRONE_WLANMONITOR_SINGLETON::instance ();
-  ACE_ASSERT (wlan_monitor_p);
-  wlan_monitor_p->stop (true,
-                        true);
-  wlan_monitor_p->start ();
+  if (wlan_monitor_was_running_b &&
+      InlineIsEqualGUID (interface_identifier_s, GUID_NULL))
+    wlan_monitor_p->stop (true,
+                          true);
+  if (restart_wlan_monitor_b)
+  {
+    if (wlan_monitor_was_running_b)
+      wlan_monitor_p->stop (true,
+                            true);
+    wlan_monitor_p->start ();
+  } // end IF
 }
 void
 ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t>::spincontrol_port_changed_cb (wxSpinEvent& event_in)
@@ -1977,7 +1992,7 @@ ARDrone_WxWidgetsDialog_T<ARDrone_MediaFoundation_WxWidgetsIApplication_t>::OnIn
   togglebutton_auto_associate->SetValue (configuration_r.configuration->WLANMonitorConfiguration.autoAssociate);
 
   Net_InterfaceIdentifiers_t interfaces_a =
-    Net_WLAN_Tools::getInterfaces (ARDRONE_WLANMONITOR_SINGLETON::instance ()->get ());
+    Net_WLAN_Tools::getInterfaces (ARDRONE_WLANMONITOR_SINGLETON::instance ()->get_2 ());
 
   int index_i = -1;
   wxStringClientData* client_data_p = NULL;
