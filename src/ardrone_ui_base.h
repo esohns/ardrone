@@ -133,7 +133,7 @@ class dialog_main : public wxDialog
 	
 	public:
 		
-		dialog_main( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("ardrone"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 518,531 ), long style = wxCAPTION|wxDIALOG_NO_PARENT|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER ); 
+		dialog_main( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("ardrone"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 518,517 ), long style = wxCAPTION|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxSYSTEM_MENU ); 
 		~dialog_main();
 	
 };

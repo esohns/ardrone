@@ -2,6 +2,7 @@
 #define ARDRONE_UI_H
 
 #include "wx/wx.h"
+#include "wx/apptrait.h"
 
 #include "ace/config-macros.h"
 
@@ -239,21 +240,24 @@ typedef ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t> AR
 typedef Comon_UI_WxWidgets_Application_T<ARDrone_WxWidgetsXRCDefinition_t,
                                          struct ARDrone_UI_wxWidgets_State,
                                          struct ARDrone_DirectShow_UI_CBData,
-                                         ARDrone_DirectShow_WxWidgetsDialog_t> ARDrone_DirectShow_WxWidgetsApplication_t;
+                                         ARDrone_DirectShow_WxWidgetsDialog_t,
+                                         wxGUIAppTraits> ARDrone_DirectShow_WxWidgetsApplication_t;
 typedef Common_UI_WxWidgets_Manager_T<ARDrone_DirectShow_WxWidgetsApplication_t> ARDrone_DirectShow_WxWidgetsManager_t;
 
 typedef ARDrone_WxWidgetsDialog_T<ARDrone_MediaFoundation_WxWidgetsIApplication_t> ARDrone_MediaFoundation_WxWidgetsDialog_t;
 typedef Comon_UI_WxWidgets_Application_T<ARDrone_WxWidgetsXRCDefinition_t,
                                          struct ARDrone_UI_wxWidgets_State,
                                          struct ARDrone_MediaFoundation_UI_CBData,
-                                         ARDrone_MediaFoundation_WxWidgetsDialog_t> ARDrone_MediaFoundation_WxWidgetsApplication_t;
+                                         ARDrone_MediaFoundation_WxWidgetsDialog_t,
+                                         wxGUIAppTraits> ARDrone_MediaFoundation_WxWidgetsApplication_t;
 typedef Common_UI_WxWidgets_Manager_T<ARDrone_MediaFoundation_WxWidgetsApplication_t> ARDrone_MediaFoundation_WxWidgetsManager_t;
 #else
 typedef ARDrone_WxWidgetsDialog_T<ARDrone_WxWidgetsIApplication_t> ARDrone_WxWidgetsDialog_t;
 typedef Comon_UI_WxWidgets_Application_T<ARDrone_WxWidgetsXRCDefinition_t,
                                          struct ARDrone_UI_wxWidgets_State,
                                          struct ARDrone_UI_CBData,
-                                         ARDrone_WxWidgetsDialog_t> ARDrone_WxWidgetsApplication_t;
+                                         ARDrone_WxWidgetsDialog_t,
+                                         wxGUIAppTraits> ARDrone_WxWidgetsApplication_t;
 typedef Common_UI_WxWidgets_Manager_T<ARDrone_WxWidgetsApplication_t> ARDrone_WxWidgetsManager_t;
 #endif // ACE_WIN32 || ACE_WIN64
 
