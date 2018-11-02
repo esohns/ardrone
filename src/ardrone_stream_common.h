@@ -154,9 +154,6 @@ struct ARDrone_SessionData
    , userData (NULL)
   {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    struct _AMMediaType media_type_s;
-    ACE_OS::memset (&media_type_s, 0, sizeof (struct _AMMediaType));
-    formats.push_back (media_type_s);
 #else
     formats.push_back (AV_PIX_FMT_RGBA);
     ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
@@ -290,11 +287,6 @@ struct ARDrone_ModuleHandlerConfigurationBase
 #endif // GUI_SUPPORT
   enum AVCodecID                                       codecId; // H264 decoder module
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-//  IDirect3DDevice9Ex*            direct3DDevice;        // display module
-//#else
-//  IDirect3DDevice9*              direct3DDevice;        // display module
-//#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
   struct Stream_MediaFramework_Direct3D_Configuration* direct3DConfiguration; // display module
 #else
   bool                                                 fullScreen; // display module
@@ -482,6 +474,7 @@ struct ARDrone_StreamConfiguration
 #if defined (GUI_SUPPORT)
    , CBData (NULL)
 #endif // GUI_SUPPORT
+   , deviceConfiguration (NULL)
    , dispatch (NET_EVENT_DEFAULT_DISPATCH)
    , initializeControl (NULL)
    , initializeMAVLink (NULL)
@@ -498,6 +491,7 @@ struct ARDrone_StreamConfiguration
 #if defined (GUI_SUPPORT)
   struct ARDrone_UI_CBData_Base*          CBData;
 #endif // GUI_SUPPORT
+  ARDrone_IDeviceConfiguration*           deviceConfiguration;
   enum Common_EventDispatchType           dispatch;
   ARDrone_IControlInitialize_t*           initializeControl;
   ARDrone_IMAVLinkInitialize_t*           initializeMAVLink;

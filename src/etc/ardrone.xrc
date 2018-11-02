@@ -2,6 +2,7 @@
 <resource xmlns="http://www.wxwindows.org/wxxrc" version="2.3.0.1">
   <object class="wxDialog" name="dialog_main">
     <style>wxCAPTION|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxSYSTEM_MENU</style>
+    <exstyle>wxWS_EX_PROCESS_IDLE</exstyle>
     <size>518,517</size>
     <title>ardrone</title>
     <object class="wxBoxSizer">

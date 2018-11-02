@@ -312,9 +312,9 @@ struct ARDrone_UI_ProgressData
   struct ARDrone_Statistic           statistic;
 };
 
-#if defined (_MSC_VER)
-#pragma pack (push, 1)
-#endif // _MSC_VER
+//#if defined (_MSC_VER)
+//#pragma pack (push, 1)
+//#endif // _MSC_VER
 struct ARDrone_UI_CBData_Base
  : Common_Test_U_UI_CBData
 {
@@ -344,22 +344,22 @@ struct ARDrone_UI_CBData_Base
    , timeStamp (ACE_Time_Value::zero)
    , videoMode (ARDRONE_DEFAULT_VIDEO_MODE)
   {
-#if defined (GTK_USE)
-#if defined (GTKGL_SUPPORT)
+//#if defined (GTK_USE)
+//#if defined (GTKGL_SUPPORT)
 //    resetCamera ();
-#endif // GTKGL_SUPPORT
-#endif // GTK_USE
+//#endif // GTKGL_SUPPORT
+//#endif // GTK_USE
   }
 
-#if defined (GTK_USE)
-#if defined (GTKGL_SUPPORT)
+//#if defined (GTK_USE)
+//#if defined (GTKGL_SUPPORT)
 //  void resetCamera ()
 //  {
 //    ACE_OS::memset (&openGLScene, 0, sizeof (openGLScene));
 //    openGLScene.camera.zoom = ARDRONE_OPENGL_CAMERA_DEFAULT_ZOOM;
 //  };
-#endif // GTKGL_SUPPORT
-#endif // GTK_USE
+//#endif // GTKGL_SUPPORT
+//#endif // GTK_USE
 
   ARDrone_IController*            controller;
   // *NOTE*: on the host ("server"), use the device bias registers instead !
@@ -388,14 +388,14 @@ struct ARDrone_UI_CBData_Base
   ACE_Time_Value                  timeStamp;
   enum ARDrone_VideoMode          videoMode;
 };
-#if defined (_MSC_VER)
-#pragma pack (pop)
-#endif // _MSC_VER
+//#if defined (_MSC_VER)
+//#pragma pack (pop)
+//#endif // _MSC_VER
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if defined (_MSC_VER)
-#pragma pack (push, 1)
-#endif // _MSC_VER
+//#if defined (_MSC_VER)
+//#pragma pack (push, 1)
+//#endif // _MSC_VER
 struct ARDrone_DirectShow_UI_CBData
  : ARDrone_UI_CBData_Base
 {
@@ -406,9 +406,9 @@ struct ARDrone_DirectShow_UI_CBData
 
   struct ARDrone_DirectShow_Configuration* configuration;
 };
-#if defined (_MSC_VER)
-#pragma pack (pop)
-#endif // _MSC_VER
+//#if defined (_MSC_VER)
+//#pragma pack (pop)
+//#endif // _MSC_VER
 
 struct ARDrone_MediaFoundation_UI_CBData
  : ARDrone_UI_CBData_Base

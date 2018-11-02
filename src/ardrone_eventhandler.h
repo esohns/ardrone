@@ -48,7 +48,7 @@ class ARDrone_EventHandler
 {
  public:
 #if defined (GUI_SUPPORT)
-  ARDrone_EventHandler (struct ARDrone_UI_CBData_Base*, // ui state
+  ARDrone_EventHandler (struct ARDrone_UI_CBData_Base*, // ui callback data
 #else
   ARDrone_EventHandler (
 #endif // GUI_SUPPORT

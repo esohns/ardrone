@@ -549,7 +549,7 @@ stream_processing_thread (void* arg_in)
   ACE_ASSERT (dialog_p);
   toggle_button_p =
     XRCCTRL (*dialog_p,
-             ACE_TEXT_ALWAYS_CHAR ("togglebutton_display"),
+             ACE_TEXT_ALWAYS_CHAR ("togglebutton_display_video"),
              wxToggleButton);
   ACE_ASSERT (toggle_button_p);
 
@@ -557,43 +557,14 @@ stream_processing_thread (void* arg_in)
   switch (thread_data_p->CBData->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    { // control
-      streams_iterator =
-        directshow_cb_data_p->streams.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (streams_iterator != directshow_cb_data_p->streams.end ());
-
-      ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T* iinitialize_p =
-        dynamic_cast<ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
-      ACE_ASSERT (iinitialize_p);
-      directshow_iterator =
-        directshow_cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_iterator != directshow_cb_data_p->configuration->streamConfigurations.end ());
-      //directshow_iterator_2 =
-      //  const_cast<ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T&> ((*directshow_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("")));
-      //ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator).second.end ());
-      if (!iinitialize_p->initialize ((*directshow_iterator).second))
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to initialize %s, aborting\n"),
-                    ACE_TEXT (ARDRONE_CONTROL_STREAM_NAME_STRING)));
-        goto error;
-      } // end IF
-      istream_base_p =
-        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
-      ACE_ASSERT (istream_base_p);
-      streams_a.push_back (istream_base_p);
-
+    { 
+      // *IMPORTANT NOTE*: the control stream initialization needs a handle to
+      //                   the controller module of the navdata stream
+      //                   --> initialize that first
       // navdata
       streams_iterator =
           directshow_cb_data_p->streams.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
       ACE_ASSERT (streams_iterator != directshow_cb_data_p->streams.end ());
-      iget_p =
-        dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
-      ACE_ASSERT (iget_p);
-      session_data_container_p =
-        &const_cast<ARDrone_SessionData_t&> (iget_p->getR ());
-      session_data_p =
-        &const_cast<ARDrone_SessionData&> (session_data_container_p->getR ());
       iget_2 =
         dynamic_cast<Common_IGetP_T<ARDrone_IController>*> ((*streams_iterator).second);
       ACE_ASSERT (iget_2);
@@ -606,14 +577,44 @@ stream_processing_thread (void* arg_in)
       directshow_iterator =
         directshow_cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
       ACE_ASSERT (directshow_iterator != directshow_cb_data_p->configuration->streamConfigurations.end ());
-      //directshow_iterator_2 =
-      //  const_cast<ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T&> ((*directshow_iterator).second.find (ACE_TEXT_ALWAYS_CHAR ("")));
-      //ACE_ASSERT (directshow_iterator_2 != (*directshow_iterator).second.end ());
       if (!iinitialize_2->initialize ((*directshow_iterator).second))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to initialize %s, aborting\n"),
                     ACE_TEXT (ARDRONE_NAVDATA_STREAM_NAME_STRING)));
+        goto error;
+      } // end IF
+      iget_p =
+        dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+      ACE_ASSERT (iget_p);
+      session_data_container_p =
+        &const_cast<ARDrone_SessionData_t&> (iget_p->getR ());
+      session_data_p =
+        &const_cast<ARDrone_SessionData&> (session_data_container_p->getR ());
+      istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+      ACE_ASSERT (istream_base_p);
+      streams_a.push_back (istream_base_p);
+
+      // control
+      streams_iterator =
+        directshow_cb_data_p->streams.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (streams_iterator != directshow_cb_data_p->streams.end ());
+
+      ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T* iinitialize_p =
+        dynamic_cast<ARDrone_DirectShow_ControlStream_t::IINITIALIZE_T*> ((*streams_iterator).second);
+      ACE_ASSERT (iinitialize_p);
+      directshow_iterator =
+        directshow_cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING));
+      ACE_ASSERT (directshow_iterator != directshow_cb_data_p->configuration->streamConfigurations.end ());
+      ACE_ASSERT (!(*directshow_iterator).second.configuration_.deviceConfiguration);
+      (*directshow_iterator).second.configuration_.deviceConfiguration =
+        icontroller_p;
+      if (!iinitialize_p->initialize ((*directshow_iterator).second))
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to initialize %s, aborting\n"),
+                    ACE_TEXT (ARDRONE_CONTROL_STREAM_NAME_STRING)));
         goto error;
       } // end IF
       istream_base_p =
