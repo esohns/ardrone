@@ -30,7 +30,7 @@ OUR_GUID_ENTRY(CLSID_VideoInputDeviceCategory,
 #include "common_test_u_tools.h"
 
 #if defined (HAVE_CONFIG_H)
-#include "libACEStream_config.h"
+#include "ACEStream_config.h"
 #endif // HAVE_CONFIG_H
 #include "stream_macros.h"
 

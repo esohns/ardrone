@@ -67,7 +67,7 @@ extern "C"
 #include "ace/Time_Value.h"
 
 #if defined (HAVE_CONFIG_H)
-#include "libCommon_config.h"
+#include "Common_config.h"
 #endif // HAVE_CONFIG_H
 #include "common_defines.h"
 #include "common_tools.h"
@@ -96,7 +96,7 @@ extern "C"
 #endif // GUI_SUPPORT
 
 #if defined (HAVE_CONFIG_H)
-#include "libACEStream_config.h"
+#include "ACEStream_config.h"
 #endif // HAVE_CONFIG_H
 #include "stream_allocatorheap.h"
 
@@ -108,7 +108,7 @@ extern "C"
 #include "stream_lib_defines.h"
 
 #if defined (HAVE_CONFIG_H)
-#include "libACENetwork_config.h"
+#include "ACENetwork_config.h"
 #endif // HAVE_CONFIG_H
 #include "net_defines.h"
 
@@ -1200,40 +1200,40 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
     Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_out);
 
   Stream_MediaFramework_DirectShow_Tools::initialize (coInitialize_in);
-#if defined (_DEBUG)
-  DWORD dwFlags = GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
-  HMODULE module_h = NULL;
-  result = GetModuleHandleEx (dwFlags,
-                              NULL,
-                              &module_h);
-  if (!result)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to GetModuleHandleEx(): \"%s\", aborting\n"),
-                ACE_TEXT (Common_Error_Tools::errorToString (::GetLastError ()).c_str ())));
-    return false;
-  } // end IF
-  ACE_ASSERT (module_h);
-  DbgInitialise (module_h);
-
-  DWORD debug_log_type = (LOG_ERROR   |
-                          LOG_LOCKING |
-                          LOG_MEMORY  |
-                          LOG_TIMING  |
-                          LOG_TRACE   |
-                          LOG_CUSTOM1 |
-                          LOG_CUSTOM2 |
-                          LOG_CUSTOM3 |
-                          LOG_CUSTOM4 |
-                          LOG_CUSTOM5);
-  // *NOTE*: message levels < of the current setting will be displayed
-  //         --> 0: display all messages
-  // *TODO*: find other debug levels in the DirectShow base-class code
-  DWORD debug_log_level = 0;
-  //DWORD debug_log_level = CONNECT_TRACE_LEVEL;
-  DbgSetModuleLevel (debug_log_type,
-                     debug_log_level);
-#endif // _DEBUG
+//#if defined (_DEBUG)
+//  DWORD dwFlags = GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+//  HMODULE module_h = NULL;
+//  result = GetModuleHandleEx (dwFlags,
+//                              NULL,
+//                              &module_h);
+//  if (!result)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to GetModuleHandleEx(): \"%s\", aborting\n"),
+//                ACE_TEXT (Common_Error_Tools::errorToString (::GetLastError ()).c_str ())));
+//    return false;
+//  } // end IF
+//  ACE_ASSERT (module_h);
+//  DbgInitialise (module_h);
+//
+//  DWORD debug_log_type = (LOG_ERROR   |
+//                          LOG_LOCKING |
+//                          LOG_MEMORY  |
+//                          LOG_TIMING  |
+//                          LOG_TRACE   |
+//                          LOG_CUSTOM1 |
+//                          LOG_CUSTOM2 |
+//                          LOG_CUSTOM3 |
+//                          LOG_CUSTOM4 |
+//                          LOG_CUSTOM5);
+//  // *NOTE*: message levels < of the current setting will be displayed
+//  //         --> 0: display all messages
+//  // *TODO*: find other debug levels in the DirectShow base-class code
+//  DWORD debug_log_level = 0;
+//  //DWORD debug_log_level = CONNECT_TRACE_LEVEL;
+//  DbgSetModuleLevel (debug_log_type,
+//                     debug_log_level);
+//#endif // _DEBUG
 
   // sanity check(s)
   ACE_ASSERT (!mediaType_out);
@@ -1628,11 +1628,11 @@ do_work (int argc_in,
   ACE_ASSERT (dispatch_configuration_p);
 
   // step1: initialize configuration data
-  ARDrone_EventHandler event_handler (CBData_in,
 #if defined (GUI_SUPPORT)
+  ARDrone_EventHandler event_handler (CBData_in,
                                       UIDefinitionFilePath_in.empty ());
 #else
-                                      true);
+  ARDrone_EventHandler event_handler (true);
 #endif // GUI_SUPPORT
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct ARDrone_AllocatorConfiguration> heap_allocator;
@@ -3999,6 +3999,58 @@ ACE_TMAIN (int argc_in,
     goto error;
   } // end IF
 
+  // step6: (media) frameworks
+  //Stream_Module_Decoder_Tools::initialize ();
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  //Stream_Module_Device_Tools::initialize (true); // initialize media frameworks ?
+  switch (media_framework_e)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      result_2 =
+        do_initialize_directshow (directshow_video_modulehandler_configuration.builder,
+                                  directshow_configuration.pinConfiguration.format,
+                                  true, // initialize COM ?
+                                  fullscreen);
+      //ACE_ASSERT (directshow_video_modulehandler_configuration.builder);
+      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      do_initialize_mediafoundation (true);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  media_framework_e));
+
+      Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
+                                                  : COMMON_SIGNAL_DISPATCH_PROACTOR),
+                                     signal_set,
+                                     previous_signal_actions,
+                                     previous_signal_mask);
+      Common_Log_Tools::finalizeLogging ();
+      goto error;
+    }
+  } // end SWITCH
+  if (!result_2)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize media framework, returning\n")));
+
+    Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
+                                                : COMMON_SIGNAL_DISPATCH_PROACTOR),
+                                   signal_set,
+                                   previous_signal_actions,
+                                   previous_signal_mask);
+    Common_Log_Tools::finalizeLogging ();
+    goto error;
+  } // end IF
+#endif // ACE_WIN32 || ACE_WIN64
+
   // step6: initialize configuration
 #if defined (GUI_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -4048,6 +4100,13 @@ ACE_TMAIN (int argc_in,
         display_interface_identifier;
       directshow_video_modulehandler_configuration.filterConfiguration =
         &directshow_configuration.filterConfiguration;
+      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
+      directshow_video_modulehandler_configuration.outputFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
+
+      stream_configuration.sourceFormat =
+        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
+      ACE_ASSERT (stream_configuration.sourceFormat);
 
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_video_modulehandler_configuration,
@@ -4267,59 +4326,6 @@ ACE_TMAIN (int argc_in,
   } // end IF
 #endif
 #endif // GUI_SUPPORT
-
-  // step8: (media) frameworks
-  //Stream_Module_Decoder_Tools::initialize ();
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //Stream_Module_Device_Tools::initialize (true); // initialize media frameworks ?
-  switch (media_framework_e)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    { ACE_ASSERT ((*directshow_video_modulehandlerconfiguration_iterator).second.second.direct3DConfiguration);
-      result_2 =
-        do_initialize_directshow ((*directshow_video_modulehandlerconfiguration_iterator).second.second.builder,
-                                  directshow_configuration.pinConfiguration.format,
-                                  true, // initialize COM ?
-                                  !(*directshow_video_modulehandlerconfiguration_iterator).second.second.direct3DConfiguration->presentationParameters.Windowed);
-      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
-      (*directshow_video_modulehandlerconfiguration_iterator).second.second.outputFormat =
-        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      do_initialize_mediafoundation (true);
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  media_framework_e));
-
-      Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
-                                                  : COMMON_SIGNAL_DISPATCH_PROACTOR),
-                                     signal_set,
-                                     previous_signal_actions,
-                                     previous_signal_mask);
-      Common_Log_Tools::finalizeLogging ();
-      goto error;
-    }
-  } // end SWITCH
-  if (!result_2)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize media framework, returning\n")));
-
-    Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR
-                                                : COMMON_SIGNAL_DISPATCH_PROACTOR),
-                                   signal_set,
-                                   previous_signal_actions,
-                                   previous_signal_mask);
-    Common_Log_Tools::finalizeLogging ();
-    goto error;
-  } // end IF
-#endif // ACE_WIN32 || ACE_WIN64
 
   // step9: run program
   timer.start ();

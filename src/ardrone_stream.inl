@@ -288,7 +288,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #endif
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ModuleConfigurationType* configuration_p = NULL;
+  //ModuleConfigurationType* configuration_p = NULL;
 #endif
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
   typename SourceModuleType::WRITER_T* sourceWriter_impl_p = NULL;
@@ -312,28 +312,23 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
-  configuration_p =
-    dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
+  //configuration_p =
+  //  dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
 
   // sanity check(s)
-  ACE_ASSERT (configuration_p);
+  //ACE_ASSERT (configuration_p);
   ACE_ASSERT (inherited::sessionData_);
 
   session_data_p =
     &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
-  switch (configuration_p->mediaFramework)
+  switch (configuration_in.configuration_.mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       // sanity check(s)
       ACE_ASSERT (configuration_in.configuration_.sourceFormat);
-      //ACE_ASSERT (configuration_p->filterConfiguration);
-      //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration);
-      //ACE_ASSERT (configuration_p->filterConfiguration->pinConfiguration->format);
-
       if (!session_data_p->formats.empty ())
         Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
-      ACE_ASSERT (!session_data_p->formats.empty ());
 
       struct _AMMediaType* media_type_p =
         Stream_MediaFramework_DirectShow_Tools::copy (*(configuration_in.configuration_.sourceFormat));
@@ -351,13 +346,14 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       ACE_ASSERT (false); // *TODO*
-      break;
+      ACE_NOTSUP_RETURN (false);
+      ACE_NOTREACHED (break;)
     }
     default:
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  configuration_p->mediaFramework));
+                  configuration_in.configuration_.mediaFramework));
       goto error;
     }
   } // end SWITCH
@@ -378,7 +374,6 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
                 ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
-
   sourceWriter_impl_p =
     dynamic_cast<typename SourceModuleType::WRITER_T*> (module_p->writer ());
   if (!sourceWriter_impl_p)
@@ -407,7 +402,6 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     } // end IF
 
   inherited::isInitialized_ = true;
-  //   inherited::dump_state();
 
   return true;
 
@@ -422,26 +416,23 @@ error:
   //  topology_p->Release ();
   //if (session_data_p->direct3DDevice)
   //{
-  //  session_data_p->direct3DDevice->Release ();
-  //  session_data_p->direct3DDevice = NULL;
+  //  session_data_p->direct3DDevice->Release (); session_data_p->direct3DDevice = NULL;
   //} // end IF
   if (!session_data_p->formats.empty ())
     Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
   //session_data_p->resetToken = 0;
   //if (session_data_p->session)
   //{
-  //  session_data_p->session->Release ();
-  //  session_data_p->session = NULL;
+  //  session_data_p->session->Release (); session_data_p->session = NULL;
   //} // end IF
   //if (mediaSession_)
   //{
-  //  mediaSession_->Release ();
-  //  mediaSession_ = NULL;
+  //  mediaSession_->Release (); mediaSession_ = NULL;
   //} // end IF
 
   //if (COM_initialized)
   //  CoUninitialize ();
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   return false;
 }
 
@@ -623,7 +614,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const typename inh
   bool reset_setup_pipeline = false;
   //  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
-  ModuleConfigurationType* configuration_p = NULL;
+  //ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
@@ -643,12 +634,9 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const typename inh
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (configuration_in.configuration_.CBData);
+  ACE_ASSERT (configuration_in.configuration_.deviceConfiguration);
 
-  configuration_ = configuration_in.configuration_.CBData->controller;
-
-  // sanity check(s)
-  ACE_ASSERT (configuration_);
+  configuration_ = configuration_in.configuration_.deviceConfiguration;
 
   iterator =
     const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -656,16 +644,20 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const typename inh
   // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
 
-  configuration_p =
-    dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
+  //configuration_p =
+    //dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
 
   // sanity check(s)
-  ACE_ASSERT (configuration_p);
-  ACE_ASSERT (configuration_p->subscribers);
+  //ACE_ASSERT (configuration_p);
+  //ACE_ASSERT (configuration_p->subscribers);
+  ACE_ASSERT ((*iterator).second.second.subscribers);
 
-  configuration_p->subscribers->push_back (this);
-  configuration_p->subscribers->sort ();
-  configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
+  //configuration_p->subscribers->push_back (this);
+  //configuration_p->subscribers->sort ();
+  //configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
+  (*iterator).second.second.subscribers->push_back (this);
+  (*iterator).second.second.subscribers->sort ();
+  (*iterator).second.second.subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
 
   // ---------------------------------------------------------------------------
 
@@ -682,7 +674,6 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const typename inh
                 ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
-
   iset_p =
     dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
   ACE_ASSERT (iset_p);
@@ -2078,21 +2069,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #endif // ACE_WIN32 || ACE_WIN64
     return;
   } // end IF
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-//              ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
-//              ACE_TEXT (SSID_in.c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
-//#else
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("\"%s\": connected to SSID %s: %s <---> %s\n"),
-//              ACE_TEXT (interfaceIdentifier_in.c_str ()),
-//              ACE_TEXT (SSID_in.c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-//              ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
-//#endif // ACE_WIN32 || ACE_WIN64
 
   // update UI
   if (!inherited::configuration_)

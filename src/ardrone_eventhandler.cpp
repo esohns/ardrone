@@ -116,6 +116,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   // sanity check(s)
 #if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
+
+  const ARDrone_MessageData_t& data_container_r = message_in.getR ();
+  const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 #if defined (GTK_USE)
   struct ARDrone_UI_GTK_State& state_r =
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
@@ -141,8 +144,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
     case ARDRONE_MESSAGE_CONTROL:
     { ACE_ASSERT (ControlNotify_);
-      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
-      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
       try {
         // *TODO*: remove type inference
         ControlNotify_->messageCB (data_r.controlData);
@@ -157,8 +158,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
     case ARDRONE_MESSAGE_MAVLINK:
     { ACE_ASSERT (MAVLinkNotify_);
-      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
-      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
       try {
         // *TODO*: remove type inference
         MAVLinkNotify_->messageCB (data_r.MAVLinkData,
@@ -174,9 +173,6 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     }
     case ARDRONE_MESSAGE_NAVDATA:
     { ACE_ASSERT (NavDataNotify_);
-      const ARDrone_MessageData_t& data_container_r = message_in.getR ();
-      const struct ARDrone_MessageData& data_r = data_container_r.getR ();
-
       try {
         // *TODO*: remove type inference
         NavDataNotify_->messageCB (data_r.NavData.NavData,
