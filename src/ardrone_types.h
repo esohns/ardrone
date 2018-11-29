@@ -35,7 +35,7 @@
 #define PAVE_CHECK(x) ( (*((uint32_t*)(x)))==PAVE_INT32LE_SIGNATURE )
 #else
 #include "Soft/Common/video_encapsulation.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #undef FFMPEG_SUPPORT
 #include "VLIB/video_codec.h"
 
@@ -46,13 +46,15 @@
 
 #include "net_common.h"
 
+#include "net_wlan_common.h"
+
 #include "ardrone_defines.h"
 
 #if defined (__llvm__)
 enum ARDrone_MessageType
 #else
 enum ARDrone_MessageType : int
-#endif
+#endif // __llvm__
 {
   ARDRONE_MESSAGE_INVALID = -1,
   ARDRONE_MESSAGE_ATCOMMAND = ACE_Message_Block::MB_PROTO, // outbound navdata
@@ -68,7 +70,7 @@ enum ARDrone_MessageType : int
 enum ARDrone_StreamType
 #else
 enum ARDrone_StreamType : int
-#endif
+#endif // __llvm__
 {
   ARDRONE_STREAM_INVALID = -1,
   ARDRONE_STREAM_CONTROL,
@@ -134,13 +136,13 @@ struct parrot_video_encapsulation_t
   /*52*/ uint8_t  reserved3[12];           /* Padding to align on 64 bytes */
 };
 __pragma (pack (pop))
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (__llvm__)
 enum ARDrone_VideoMode
 #else
 enum ARDrone_VideoMode : int
-#endif
+#endif // __llvm__
 {
   ARDRONE_VIDEOMODE_INVALID = -1,
   ARDRONE_VIDEOMODE_360P = H264_360P_CODEC,

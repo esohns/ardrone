@@ -1,6 +1,8 @@
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 
+#include "ace/Synch.h"
+
 #include "ardrone_types.h"
 
 // forward declarations
