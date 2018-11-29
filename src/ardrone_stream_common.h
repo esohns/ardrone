@@ -35,7 +35,7 @@
 #include <mfidl.h>
 //#include <minwindef.h>
 #else
-#include "linux/videodev2.h"
+//#include "linux/videodev2.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
@@ -48,7 +48,9 @@ extern "C"
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #include "gtk/gtk.h"
-#endif // GTK_USE
+#elif defined (WXWIDGETS_USE)
+#include "wx/apptrait.h"
+#endif
 #endif // GUI_SUPPORT
 
 #include "ace/OS.h"
@@ -72,6 +74,9 @@ extern "C"
 
 #include "stream_lib_directshow_tools.h"
 #endif // ACE_WIN32 || ACE_WIN64
+
+#include "stream_vis_common.h"
+#include "stream_vis_defines.h"
 
 #include "net_configuration.h"
 #include "net_defines.h"
@@ -133,43 +138,36 @@ struct ARDrone_StreamState
 };
 
 struct ARDrone_ConnectionState;
-struct ARDrone_SessionData
- : Stream_SessionData
-{
-  ARDrone_SessionData ()
-   : Stream_SessionData ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+class ARDrone_DirectShow_SessionData
+ : public Stream_SessionDataMediaBase_T<struct _AMMediaType,
+                                        struct ARDrone_StreamState,
+                                        struct ARDrone_Statistic,
+                                        struct ARDrone_UserData>
+{
+ public:
+  ARDrone_DirectShow_SessionData ()
+   : Stream_SessionDataMediaBase_T<struct _AMMediaType,
+                                   struct ARDrone_StreamState,
+                                   struct ARDrone_Statistic,
+                                   struct ARDrone_UserData> ()
    , builder (NULL)
    , direct3DDevice (NULL)
    , direct3DManagerResetToken (0)
    , session (NULL)
    , windowController (NULL)
-#else
-   , height (0)
-   , width (0)
-#endif // ACE_WIN32 || ACE_WIN64
-   , state (NULL)
-   , statistic ()
    , targetFileName ()
-   , userData (NULL)
-  {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-    formats.push_back (AV_PIX_FMT_RGBA);
-    ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
-                                  width,
-                                  height);
-#endif // ACE_WIN32 || ACE_WIN64
-  }
+  {}
 
-  struct ARDrone_SessionData operator+= (const struct ARDrone_SessionData& rhs_in)
+  ARDrone_DirectShow_SessionData& operator+= (const ARDrone_DirectShow_SessionData& rhs_in)
   {
     // *NOTE*: the idea is to 'merge' the data
-    Stream_SessionData::operator+= (rhs_in);
+    Stream_SessionDataMediaBase_T<struct _AMMediaType,
+                                  struct ARDrone_StreamState,
+                                  struct ARDrone_Statistic,
+                                  struct ARDrone_UserData>::operator+= (rhs_in);
 
     // *NOTE*: the idea is to 'merge' the data
-    statistic += rhs_in.statistic;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
     // *NOTE*: always use upstream data, if available
     ULONG reference_count = 0;
     if (rhs_in.direct3DDevice)
@@ -200,20 +198,12 @@ struct ARDrone_SessionData
       reference_count = rhs_in.windowController->AddRef ();
       windowController = rhs_in.windowController;
     } // end IF
-#else
-    height = (height ? height : rhs_in.height);
-    width = (width ? width : rhs_in.width);
-#endif // ACE_WIN32 || ACE_WIN64
-    state = (state ? state : rhs_in.state);
     targetFileName =
       (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
-
-    userData = (userData ? userData : rhs_in.userData);
 
     return *this;
   }
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   IGraphBuilder*              builder;
   // *TODO*: mediafoundation only, remove ASAP
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
@@ -225,18 +215,54 @@ struct ARDrone_SessionData
   UINT                        direct3DManagerResetToken; // direct 3D manager 'id'
   IMFMediaSession*            session;
   IVideoWindow*               windowController;
-#else
-  unsigned int                height;
-  unsigned int                width;
-#endif // ACE_WIN32 || ACE_WIN64
 
-  struct ARDrone_StreamState* state;
-  struct ARDrone_Statistic    statistic;
   std::string                 targetFileName;
-
-  struct ARDrone_UserData*    userData;
 };
-typedef Stream_SessionData_T<struct ARDrone_SessionData> ARDrone_SessionData_t;
+typedef Stream_SessionData_T<ARDrone_DirectShow_SessionData> ARDrone_DirectShow_SessionData_t;
+#else
+class ARDrone_SessionData
+ : public Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+                                        struct ARDrone_StreamState,
+                                        struct ARDrone_Statistic,
+                                        struct ARDrone_UserData>
+{
+ public:
+  ARDrone_SessionData ()
+   : Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+                                   struct ARDrone_StreamState,
+                                   struct ARDrone_Statistic,
+                                   struct ARDrone_UserData> ()
+   , resolution ()
+   , targetFileName ()
+  {
+    formats.push_back (AV_PIX_FMT_RGBA);
+    ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
+                                  resolution.width, resolution.height);
+  }
+
+  ARDrone_SessionData& operator+= (const ARDrone_SessionData& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+                                  struct ARDrone_StreamState,
+                                  struct ARDrone_Statistic,
+                                  struct ARDrone_UserData>::operator+= (rhs_in);
+
+    resolution.height = (resolution.height ? resolution.height
+                                           : rhs_in.resolution.height);
+    resolution.width = (resolution.width ? resolution.width
+                                         : rhs_in.resolution.width);
+    targetFileName =
+      (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
+
+    return *this;
+  }
+
+  Common_UI_Resolution_t resolution;
+  std::string            targetFileName;
+};
+typedef Stream_SessionData_T<ARDrone_SessionData> ARDrone_SessionData_t;
+#endif // ACE_WIN32 || ACE_WIN64
 
 struct ARDrone_AllocatorConfiguration;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
@@ -439,27 +465,51 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
    , ARDrone_ModuleHandlerConfigurationBase ()
+#if defined (GUI_SUPPORT)
    , area ()
+#endif // GUI_SUPPORT
    , connection (NULL)
    , connectionConfigurations (NULL)
    , connectionManager (NULL)
    , frameRate ()
+#if defined (GUI_SUPPORT)
+   , fullScreen (false)
+#if defined (GTK_USE)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
+#endif // GTK_USE
    , window (NULL)
+ #endif // GUI_SUPPORT
   {
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
     passive = false;
   }
 
-  GdkRectangle                               area;                     // display module
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+  GdkRectangle                               area;
+#elif defined (WXWIDGETS_USE)
+  wxRect                                     area;
+#endif
+#endif // GUI_SUPPORT
   ARDrone_IConnection_t*                     connection;               // net source/IO module
   ARDrone_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
   ARDrone_IConnectionManager_t*              connectionManager;        // IO module
   struct AVRational                          frameRate;                // AVI encoder module
+#if defined (GUI_SUPPORT)
+  bool                                       fullScreen;
+#if defined (GTK_USE)
   GdkPixbuf*                                 pixelBuffer;              // display module
   ACE_SYNCH_MUTEX*                           pixelBufferLock;          // display module
-  GdkWindow*                                 window;                   // display module
+#endif // GTK_USE
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  HWND                                       window;
+#else
+#if defined (GTK_USE)
+  GdkWindow*                                 window;
+#endif // GTK_USE
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
 };
 #endif // ACE_WIN32 || ACE_WIN64
 typedef Common_IInitializeP_T<ARDrone_IControlNotify> ARDrone_IControlInitialize_t;

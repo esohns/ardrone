@@ -39,7 +39,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                               SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
 #else
                               SessionDataContainerType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
  : inherited (stream_in)
  , buffer_ (NULL)
  , header_ ()
@@ -69,7 +69,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::~ARDrone_Module_PaVEDecoder_T"));
 
   // clean up any unprocessed (chained) buffer(s)
-  if (buffer_)
+  if (unlikely (buffer_))
     buffer_->release ();
 }
 
@@ -92,11 +92,12 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::initialize"));
 
-  if (inherited::isInitialized_)
+  if (unlikely (inherited::isInitialized_))
   {
     if (buffer_)
-      buffer_->release ();
-    buffer_ = NULL;
+    {
+      buffer_->release (); buffer_ = NULL;
+    } // end IF
     videoMode_ = ARDRONE_VIDEOMODE_INVALID;
   } // end IF
 
@@ -156,7 +157,7 @@ next:
   buffered_bytes = buffer_->total_length ();
   message_block_p = buffer_;
 
-  if (!headerDecoded_)
+  if (unlikely (!headerDecoded_))
   {
     // PaVE header has not been received yet
 
@@ -190,7 +191,7 @@ next:
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: corrupt PaVE header, continuing\n"),
                   inherited::mod_->name ()));
-#endif
+#endif // _DEBUG
 
     buffered_bytes -= sizeof (parrot_video_encapsulation_t);
 
@@ -201,11 +202,11 @@ next:
   video_mode_e =
     ((header_.display_width == ARDRONE_H264_360P_VIDEO_WIDTH) ? ARDRONE_VIDEOMODE_360P
                                                               : ARDRONE_VIDEOMODE_720P);
-  if (videoMode_ == ARDRONE_VIDEOMODE_INVALID)
+  if (unlikely (videoMode_ == ARDRONE_VIDEOMODE_INVALID))
     videoMode_ = video_mode_e;
   else
   {
-    if (videoMode_ != video_mode_e)
+    if (unlikely (videoMode_ != video_mode_e))
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("%s: detected video mode change (was: %d, is: %d)\n"),
@@ -272,7 +273,7 @@ next:
     } // end FOR
 
     message_block_2 = message_block_p->duplicate ();
-    if (!message_block_2)
+    if (unlikely (!message_block_2))
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: failed to MessageType::duplicate(): \"%m\", returning\n"),
@@ -293,18 +294,14 @@ next:
   buffer_->set (ARDRONE_MESSAGE_VIDEO);
   //buffer_->set_2 (inherited::stream_);
   result = inherited::put_next (buffer_, NULL);
-  if (result == -1)
+  if (unlikely (result == -1))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to ACE_Task::put_next(): \"%m\", returning\n"),
                 inherited::mod_->name ()));
-
-    // clean up
     if (message_block_2)
       message_block_2->release ();
-    buffer_->release ();
-    buffer_ = NULL;
-
+    buffer_->release (); buffer_ = NULL;
     return;
   } // end IF
   if (message_block_2)
@@ -365,22 +362,24 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
       {
         case ARDRONE_VIDEOMODE_360P:
         {
-          resolution_s.cx = ARDRONE_H264_360P_VIDEO_WIDTH;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+          resolution_s.cx = ARDRONE_H264_360P_VIDEO_WIDTH;
           resolution_s.cy = -ARDRONE_H264_360P_VIDEO_HEIGHT;
 #else
-          resolution_s.cy = ARDRONE_H264_360P_VIDEO_HEIGHT;
-#endif
+          resolution_s.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+          resolution_s.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
+#endif // ACE_WIN32 || ACE_WIN64
           break;
         }
         case ARDRONE_VIDEOMODE_720P:
         {
-          resolution_s.cx = ARDRONE_H264_720P_VIDEO_WIDTH;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+          resolution_s.cx = ARDRONE_H264_720P_VIDEO_WIDTH;
           resolution_s.cy = -ARDRONE_H264_720P_VIDEO_HEIGHT;
 #else
-          resolution_s.cy = ARDRONE_H264_720P_VIDEO_HEIGHT;
-#endif
+          resolution_s.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+          resolution_s.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
+#endif // ACE_WIN32 || ACE_WIN64
           break;
         }
         default:
@@ -392,8 +391,27 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
           break;
         }
       } // end SWITCH
-      Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
-                                                      session_data_r.formats.front ());
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      switch (session_data_r.mediaFramework)
+      {
+        case :
+        {
+          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+                                                          session_data_r.formats.back ());
+          break;
+        }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: invalid/unknown media framework (was: %d), continuing\n"),
+                      inherited::mod_->name (),
+                      session_data_r.mediaFramework));
+          break;
+        }
+      } // end SWITCH
+#else
+      session_data_r.formats.back () = resolution_s;
+#endif // ACE_WIN32 || ACE_WIN64
       break;
     }
     default:

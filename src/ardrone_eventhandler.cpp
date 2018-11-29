@@ -26,7 +26,11 @@
 #include "ace/Synch_Traits.h"
 
 #include "ardrone_common.h"
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "ardrone_callbacks.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"

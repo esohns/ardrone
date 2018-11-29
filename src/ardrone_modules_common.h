@@ -40,7 +40,7 @@
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_lib_directshow_asynch_source_filter.h"
 #include "stream_lib_directshow_source_filter.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 #include "stream_misc_dump.h"
 
 #include "stream_net_source.h"
@@ -48,12 +48,20 @@
 #include "stream_stat_statistic_report.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if defined (GUI_SUPPORT)
 #include "stream_vis_target_direct3d.h"
 #include "stream_vis_target_directshow.h"
 #include "stream_vis_target_mediafoundation.h"
+#endif // GUI_SUPPORT
 #else
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "stream_vis_gtk_pixbuf.h"
+#elif defined (WXWIDGETS_USE)
+#include "stream_vis_x11_window.h"
 #endif
+#endif // GUI_SUPPORT
+#endif // ACE_WIN32 || ACE_WIN64
 
 #include "net_connection_manager.h"
 

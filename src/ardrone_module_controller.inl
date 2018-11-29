@@ -26,7 +26,11 @@
 #include "Soft/Common/ardrone_api.h"
 #include "VLIB/video_codec.h"
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "ardrone_callbacks.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 //#include "ardrone_configuration.h"
 #include "ardrone_macros.h"
 
