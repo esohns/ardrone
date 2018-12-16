@@ -1185,7 +1185,7 @@ do_initializeSignals (bool useReactor_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 bool
 do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
-                          struct _AMMediaType*& mediaType_out,
+                          struct _AMMediaType& mediaType_inout,
                           bool coInitialize_in,
                           bool fullScreen_in)
 {
@@ -1196,8 +1196,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
 
   // sanity check(s)
   ACE_ASSERT (!IGraphBuilder_out);
-  if (mediaType_out)
-    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_out);
+  Stream_MediaFramework_DirectShow_Tools::free (mediaType_inout);
 
   Stream_MediaFramework_DirectShow_Tools::initialize (coInitialize_in);
 //#if defined (_DEBUG)
@@ -1235,24 +1234,13 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
 //                     debug_log_level);
 //#endif // _DEBUG
 
-  // sanity check(s)
-  ACE_ASSERT (!mediaType_out);
+  //ACE_OS::memset (&mediaType_inout, 0, sizeof (struct _AMMediaType));
 
-  mediaType_out =
-    static_cast<struct _AMMediaType*> (CoTaskMemAlloc (sizeof (struct _AMMediaType)));
-  if (!mediaType_out)
-  {
-    ACE_DEBUG ((LM_CRITICAL,
-                ACE_TEXT ("failed to allocate memory, aborting\n")));
-    goto error;
-  } // end IF
-  ACE_OS::memset (mediaType_out, 0, sizeof (struct _AMMediaType));
-
-  ACE_ASSERT (!mediaType_out->pbFormat);
-  mediaType_out->pbFormat =
+  ACE_ASSERT (!mediaType_inout.pbFormat);
+  mediaType_inout.pbFormat =
     static_cast<BYTE*> (CoTaskMemAlloc (sizeof (struct tagVIDEOINFOHEADER)));
       //static_cast<BYTE*> (CoTaskMemAlloc (sizeof (struct tagVIDEOINFOHEADER2)));
-  if (!mediaType_out->pbFormat)
+  if (!mediaType_inout.pbFormat)
   {
     ACE_DEBUG ((LM_CRITICAL,
                 ACE_TEXT ("failed to CoTaskMemAlloc(%u): \"%m\", aborting\n"),
@@ -1260,7 +1248,7 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
                 //sizeof (struct tagVIDEOINFOHEADER2)));
     goto error;
   } // end IF
-  ACE_OS::memset (mediaType_out->pbFormat,
+  ACE_OS::memset (mediaType_inout.pbFormat,
                   0,
                   sizeof (struct tagVIDEOINFOHEADER));
                   //sizeof (struct tagVIDEOINFOHEADER2));
@@ -1281,23 +1269,23 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   //         Also, GNU/Linux support is incomplete. Given the diversity of
   //         computing platforms and graphics capabilities of host devices, this
   //         may not be an issue at this point and will require specification
-  mediaType_out->majortype = MEDIATYPE_Video;
+  mediaType_inout.majortype = MEDIATYPE_Video;
   //mediaType_out->subtype = MEDIASUBTYPE_H264;
   //mediaType_out->subtype = MEDIASUBTYPE_YV12;
-  mediaType_out->subtype = MEDIASUBTYPE_RGB24;
+  mediaType_inout.subtype = MEDIASUBTYPE_RGB24;
   //mediaType_out->bFixedSizeSamples = FALSE;
   //mediaType_out->bTemporalCompression = TRUE;
-  mediaType_out->bFixedSizeSamples = TRUE;
-  mediaType_out->bTemporalCompression = FALSE;
+  mediaType_inout.bFixedSizeSamples = TRUE;
+  mediaType_inout.bTemporalCompression = FALSE;
   // *NOTE*: lSampleSize is set after pbFormat (see below)
   //mediaType_out->lSampleSize = video_info_header_p->bmiHeader.biSizeImage;
-  mediaType_out->formattype = FORMAT_VideoInfo;
+  mediaType_inout.formattype = FORMAT_VideoInfo;
   //mediaType_out->formattype = FORMAT_VideoInfo2;
-  mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER);
+  mediaType_inout.cbFormat = sizeof (struct tagVIDEOINFOHEADER);
   //mediaType_out->cbFormat = sizeof (struct tagVIDEOINFOHEADER2);
 
   struct tagVIDEOINFOHEADER* video_info_header_p =
-    reinterpret_cast<struct tagVIDEOINFOHEADER*> (mediaType_out->pbFormat);
+    reinterpret_cast<struct tagVIDEOINFOHEADER*> (mediaType_inout.pbFormat);
   //struct tagVIDEOINFOHEADER2* video_info_header_p =
   //  reinterpret_cast<struct tagVIDEOINFOHEADER2*> (mediaType_out->pbFormat);
   ACE_ASSERT (video_info_header_p);
@@ -1378,13 +1366,12 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
   //video_info_header_p->dwBitMasks = {0, 0, 0};
   //video_info_header_p->TrueColorInfo = ;
 
-  mediaType_out->lSampleSize = video_info_header_p->bmiHeader.biSizeImage;
+  mediaType_inout.lSampleSize = video_info_header_p->bmiHeader.biSizeImage;
 
   return true;
 
 error:
-  if (mediaType_out)
-    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_out);
+  Stream_MediaFramework_DirectShow_Tools::free (mediaType_inout);
   if (IGraphBuilder_out)
   {
     IGraphBuilder_out->Release (); IGraphBuilder_out = NULL;
@@ -1394,7 +1381,7 @@ error:
 }
 void
 do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
-                        struct _AMMediaType*& mediaType_inout,
+                        struct _AMMediaType& mediaType_inout,
                         bool coInitialize_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("::do_finalize_directshow"));
@@ -1403,8 +1390,7 @@ do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
   {
     IGraphBuilder_inout->Release (); IGraphBuilder_inout = NULL;
   } // end IF
-  if (mediaType_inout)
-    Stream_MediaFramework_DirectShow_Tools::delete_ (mediaType_inout);
+  Stream_MediaFramework_DirectShow_Tools::free (mediaType_inout);
 
 #if defined (_DEBUG)
   DbgTerminate ();
@@ -1848,17 +1834,11 @@ do_work (int argc_in,
     { 
       directshow_modulehandler_configuration.direct3DConfiguration =
         &directShowConfiguration_in.direct3DConfiguration;
-      ACE_ASSERT (directShowConfiguration_in.pinConfiguration.format);
-      ACE_ASSERT (!directshow_modulehandler_configuration.outputFormat);
-      directshow_modulehandler_configuration.outputFormat =
-        Stream_MediaFramework_DirectShow_Tools::copy (*directShowConfiguration_in.pinConfiguration.format);
-      if (!directshow_modulehandler_configuration.outputFormat)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("failed to Stream_MediaFramework_DirectShow_Tools::copy(), returning\n")));
-        goto clean;
-      } // end IF
-      ACE_ASSERT (directshow_modulehandler_configuration.outputFormat);
+      struct _AMMediaType* media_type_p =
+        Stream_MediaFramework_DirectShow_Tools::copy (directShowConfiguration_in.pinConfiguration.format);
+      ACE_ASSERT (media_type_p);
+      directshow_modulehandler_configuration.outputFormat = *media_type_p;
+      CoTaskMemFree (media_type_p); media_type_p = NULL;
 
       directshow_modulehandler_configuration.CBData = directshow_cb_data_p;
       directshow_modulehandler_configuration.connectionManager =
@@ -2671,9 +2651,9 @@ do_work (int argc_in,
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    { ACE_ASSERT (directshow_modulehandler_configuration.outputFormat);
+    {
       directShowConfiguration_in.filterConfiguration.allocatorProperties.cbBuffer =
-        directshow_modulehandler_configuration.outputFormat->lSampleSize;
+        directshow_modulehandler_configuration.outputFormat.lSampleSize;
       directShowConfiguration_in.pinConfiguration.isTopToBottom = true;
 
       directshow_modulehandler_configuration.connectionConfigurations =
@@ -4013,7 +3993,6 @@ ACE_TMAIN (int argc_in,
                                   true, // initialize COM ?
                                   fullscreen);
       //ACE_ASSERT (directshow_video_modulehandler_configuration.builder);
-      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4100,13 +4079,16 @@ ACE_TMAIN (int argc_in,
         display_interface_identifier;
       directshow_video_modulehandler_configuration.filterConfiguration =
         &directshow_configuration.filterConfiguration;
-      ACE_ASSERT (directshow_configuration.pinConfiguration.format);
-      directshow_video_modulehandler_configuration.outputFormat =
-        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
-
-      stream_configuration.sourceFormat =
-        Stream_MediaFramework_DirectShow_Tools::copy (*directshow_configuration.pinConfiguration.format);
-      ACE_ASSERT (stream_configuration.sourceFormat);
+      struct _AMMediaType* media_type_p =
+        Stream_MediaFramework_DirectShow_Tools::copy (directshow_configuration.pinConfiguration.format);
+      ACE_ASSERT (media_type_p);
+      directshow_video_modulehandler_configuration.outputFormat = *media_type_p;
+      CoTaskMemFree (media_type_p); media_type_p = NULL;
+      media_type_p =
+        Stream_MediaFramework_DirectShow_Tools::copy (directshow_configuration.pinConfiguration.format);
+      ACE_ASSERT (media_type_p);
+      stream_configuration.sourceFormat = *media_type_p;
+      CoTaskMemFree (media_type_p); media_type_p = NULL;
 
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_video_modulehandler_configuration,
@@ -4211,7 +4193,7 @@ ACE_TMAIN (int argc_in,
                                                                    argv_in,
                                                                    &directshow_ui_definition);
 #elif defined (WXWIDGETS_USE)
-      directshow_cb_data.iapplication = iapplication_p;
+      //directshow_cb_data.iapplication = iapplication_p;
       ARDrone_DirectShow_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
         dynamic_cast<ARDrone_DirectShow_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
       iinitialize_p->initialize (directshow_cb_data);
@@ -4238,7 +4220,7 @@ ACE_TMAIN (int argc_in,
                                                                    argv_in,
                                                                    &mediafoundation_ui_definition);
 #elif defined (WXWIDGETS_USE)
-      mediafoundation_cb_data.iapplication = iapplication_p;
+      //mediafoundation_cb_data.iapplication = iapplication_p;
       ARDrone_MediaFoundation_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
         dynamic_cast<ARDrone_MediaFoundation_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
       iinitialize_p->initialize (mediafoundation_cb_data);
@@ -4278,7 +4260,7 @@ ACE_TMAIN (int argc_in,
                                                                argv_in,
                                                                &ui_definition);
 #elif defined (WXWIDGETS_USE)
-  ui_cb_data.iapplication = iapplication_p;
+  //ui_cb_data.iapplication = iapplication_p;
   ARDrone_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =
     dynamic_cast<ARDrone_WxWidgetsApplication_t::IINITIALIZE_T*> (iapplication_p);
   iinitialize_p->initialize (ui_cb_data);

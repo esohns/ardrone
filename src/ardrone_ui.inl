@@ -1033,9 +1033,8 @@ ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t>::togglebut
     case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_3D:
     {
       // sanity check(s)
-      ACE_ASSERT ((*stream_iterator).second.second.outputFormat);
       Common_UI_Resolution_t resolution_2 =
-        Stream_MediaFramework_DirectShow_Tools::toResolution (*(*stream_iterator).second.second.outputFormat);
+        Stream_MediaFramework_DirectShow_Tools::toResolution ((*stream_iterator).second.second.outputFormat);
       configuration_r.configuration->direct3DConfiguration.presentationParameters.BackBufferWidth =
         resolution_2.cx;
       configuration_r.configuration->direct3DConfiguration.presentationParameters.BackBufferHeight =
@@ -1704,9 +1703,8 @@ ARDrone_WxWidgetsDialog_T<ARDrone_DirectShow_WxWidgetsIApplication_t>::choice_di
   Common_UI_Resolutions_t resolutions_a =
     Common_UI_Tools::get ((*stream_iterator).second.second.interfaceIdentifier);
   ACE_ASSERT (!resolutions_a.empty ());
-  ACE_ASSERT ((*stream_iterator).second.second.outputFormat);
   Common_UI_Resolution_t resolution_s =
-    Stream_MediaFramework_DirectShow_Tools::toResolution (*(*stream_iterator).second.second.outputFormat);
+    Stream_MediaFramework_DirectShow_Tools::toResolution ((*stream_iterator).second.second.outputFormat);
   Common_UI_Resolution_t resolution_2;
 
   choice_display_resolution->SetSelection (wxNOT_FOUND);

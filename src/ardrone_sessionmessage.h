@@ -36,6 +36,50 @@ class ACE_Data_Block;
 class ACE_Message_Block;
 class ARDrone_Message;
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+class ARDrone_DirectShow_SessionMessage
+ : public Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
+                                      enum Stream_SessionMessageType,
+                                      ARDrone_DirectShow_SessionData_t,
+                                      struct ARDrone_UserData>
+{
+  typedef Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
+                                      enum Stream_SessionMessageType,
+                                      ARDrone_DirectShow_SessionData_t,
+                                      struct ARDrone_UserData> inherited;
+
+  // enable access to private ctor(s)
+  friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                                 struct ARDRone_AllocatorConfiguration,
+                                                 ARDrone_ControlMessage_t,
+                                                 ARDrone_Message,
+                                                 ARDrone_DirectShow_SessionMessage>;
+
+ public:
+  // *NOTE*: assume lifetime responsibility for the third argument
+  ARDrone_DirectShow_SessionMessage (Stream_SessionId_t,                 // session id
+                                     enum Stream_SessionMessageType,     // session message type
+                                     ARDrone_DirectShow_SessionData_t*&, // session data handle
+                                     struct ARDrone_UserData*);          // user data handle
+  // *NOTE*: to be used by message allocators
+  ARDrone_DirectShow_SessionMessage (Stream_SessionId_t, // session id
+                                     ACE_Allocator*);    // message allocator
+  ARDrone_DirectShow_SessionMessage (Stream_SessionId_t, // session id
+                                     ACE_Data_Block*,    // data block to use
+                                     ACE_Allocator*);    // message allocator
+  inline virtual ~ARDrone_DirectShow_SessionMessage () {}
+
+  // override from ACE_Message_Block
+  // *WARNING*: any children need to override this as well
+  virtual ACE_Message_Block* duplicate (void) const;
+
+ private:
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_DirectShow_SessionMessage ())
+  // copy ctor (to be used by duplicate())
+  ARDrone_DirectShow_SessionMessage (const ARDrone_DirectShow_SessionMessage&);
+  ACE_UNIMPLEMENTED_FUNC (ARDrone_DirectShow_SessionMessage& operator= (const ARDrone_DirectShow_SessionMessage&))
+};
+#else
 class ARDrone_SessionMessage
  : public Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
@@ -78,5 +122,6 @@ class ARDrone_SessionMessage
   ARDrone_SessionMessage (const ARDrone_SessionMessage&);
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SessionMessage& operator= (const ARDrone_SessionMessage&))
 };
+#endif // ACE_WIN32 || ACE_WIN64
 
 #endif

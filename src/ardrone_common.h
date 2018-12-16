@@ -142,7 +142,9 @@ struct ARDrone_MessageData
       {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         if (videoFrame.sample)
-          videoFrame.sample->Release ();
+        {
+          videoFrame.sample->Release (); videoFrame.sample = NULL;
+        } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
         break;
       }

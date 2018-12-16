@@ -62,7 +62,11 @@ ARDrone_EventHandler::ARDrone_EventHandler (
 
 void
 ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                             const ARDrone_DirectShow_SessionData& sessionData_in)
+#else
                              const struct ARDrone_SessionData& sessionData_in)
+#endif // ACE_WIN32 || ACE_WIN64
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::start"));
 
@@ -250,7 +254,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 
 void
 ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                              const ARDrone_DirectShow_SessionMessage& message_in)
+#else
                               const ARDrone_SessionMessage& message_in)
+#endif // ACE_WIN32 || ACE_WIN64
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_EventHandler::notify"));
 
@@ -278,10 +286,17 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #endif // GUI_SUPPORT
     if (message_in.type () == STREAM_SESSION_MESSAGE_LINK)
     {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      const ARDrone_DirectShow_SessionData_t& session_data_container_r =
+        message_in.getR ();
+      ARDrone_DirectShow_SessionData& session_data_r =
+        const_cast<ARDrone_DirectShow_SessionData&> (session_data_container_r.getR ());
+#else
       const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+#endif // ACE_WIN32 || ACE_WIN64
       iterator =
         std::find_if (streams_.begin (), streams_.end (),
                       std::bind2nd (SESSIONID_TO_STREAM_MAP_FIND_S (),
@@ -370,13 +385,20 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #endif // GUI_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
       event_s.second =
-        static_cast<Net_WLAN_EventType> (COMMON_UI_EVENT_RESIZE);
+        static_cast<enum Net_WLAN_EventType> (COMMON_UI_EVENT_RESIZE);
 
       // update configuration (reused by gtk callback(s))
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      const ARDrone_DirectShow_SessionData_t& session_data_container_r =
+        message_in.getR ();
+      ARDrone_DirectShow_SessionData& session_data_r =
+        const_cast<ARDrone_DirectShow_SessionData&> (session_data_container_r.getR ());
+#else
       const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_video_streamconfiguration_iterator;
@@ -469,24 +491,20 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
           // sanity check(s)
           ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration);
           ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
           Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
-                                                          *(*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
-          ACE_ASSERT ((*directshow_iterator_3).second.second.outputFormat);
+                                                          (*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
 
           Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
-                                                          *(*directshow_iterator_3).second.second.outputFormat);
+                                                          (*directshow_iterator_3).second.second.outputFormat);
 
           // sanity check(s)
           ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration);
           ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
           Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
-                                                          *(*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
-          ACE_ASSERT ((*directshow_iterator_4).second.second.outputFormat);
+                                                          (*directshow_iterator_4).second.second.filterConfiguration->pinConfiguration->format);
 
           Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
-                                                          *(*directshow_iterator_4).second.second.outputFormat);
+                                                          (*directshow_iterator_4).second.second.outputFormat);
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -528,10 +546,17 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      const ARDrone_DirectShow_SessionData_t& session_data_container_r =
+        message_in.getR ();
+      ARDrone_DirectShow_SessionData& session_data_r =
+        const_cast<ARDrone_DirectShow_SessionData&> (session_data_container_r.getR ());
+#else
       const ARDrone_SessionData_t& session_data_container_r =
         message_in.getR ();
       struct ARDrone_SessionData& session_data_r =
         const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+#endif // ACE_WIN32 || ACE_WIN64
 
       if (session_data_r.lock)
       {

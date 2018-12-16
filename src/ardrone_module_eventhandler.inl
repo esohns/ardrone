@@ -46,7 +46,8 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleDataMessage (ARDrone_Mes
   // *NOTE*: messages traversing this module will be sent to the device
   //         --> filter inbound NavData here
 
-  enum ARDrone_MessageType message_type_e = message_inout->type ();
+  enum ARDrone_MessageType message_type_e =
+    static_cast<enum ARDrone_MessageType> (message_inout->type ());
   ARDrone_Message* message_p = message_inout;
 
   // the base class release()s all messages; 'this' needs to forward AT commands
@@ -73,16 +74,27 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleDataMessage (ARDrone_Mes
 
 template <typename ConfigurationType>
 void
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_DirectShow_SessionMessage*& message_inout,
+#else
 ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_SessionMessage*& message_inout,
+#endif // ACE_WIN32 || ACE_WIN64
                                                                         bool& passMessageDownstream_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler_T::handleSessionMessage"));
 
   Stream_SessionId_t session_id = message_inout->sessionId ();
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  const ARDrone_DirectShow_SessionData_t& session_data_container_r =
+    message_inout->getR ();
+  ARDrone_DirectShow_SessionData& session_data_r =
+    const_cast<ARDrone_DirectShow_SessionData&> (session_data_container_r.getR ());
+#else
   const ARDrone_SessionData_t& session_data_container_r =
     message_inout->getR ();
   struct ARDrone_SessionData& session_data_r =
     const_cast<struct ARDrone_SessionData&> (session_data_container_r.getR ());
+#endif // ACE_WIN32 || ACE_WIN64
 
   if (message_inout->type () == STREAM_SESSION_MESSAGE_STATISTIC)
   {
@@ -90,7 +102,11 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
     // *TODO*: move this into the base-class
 
     typename inherited::SESSION_DATA_ITERATOR_T iterator_2;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ARDrone_DirectShow_SessionData* session_data_p = NULL;
+#else
     struct ARDrone_SessionData* session_data_p = NULL;
+#endif // ACE_WIN32 || ACE_WIN64
     ARDroneStreamStatisticIterator_t iterator_3, iterator_4;
     struct ARDrone_Statistic statistic_s;
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
@@ -100,7 +116,11 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
         goto continue_;
       ACE_ASSERT ((*iterator_2).second);
       session_data_p =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        &const_cast<ARDrone_DirectShow_SessionData&> ((*iterator_2).second->getR ());
+#else
         &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
+#endif // ACE_WIN32 || ACE_WIN64
       ACE_ASSERT (session_data_p->lock);
       ACE_ASSERT (session_data_p->state);
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard_2, *session_data_p->lock);
@@ -115,8 +135,13 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
            iterator_2 != inherited::sessionData_.end ();
            ++iterator_2)
       {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+        session_data_p =
+          &const_cast<ARDrone_DirectShow_SessionData&> ((*iterator_2).second->getR ());
+#else
         session_data_p =
           &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (session_data_p->state);
         iterator_3 =
             session_data_p->statistic.streamStatistic.find (session_data_p->state->type);

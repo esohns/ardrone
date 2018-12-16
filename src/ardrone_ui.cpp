@@ -18,6 +18,8 @@ process_stream_events (struct ARDrone_UI_CBData_Base* CBData_in,
 
   // sanity check(s)
   ACE_ASSERT (CBData_in);
+  wxAppConsole* wx_app_console_p = wxApp::GetInstance ();
+  ACE_ASSERT (wx_app_console_p);
 
   struct ARDrone_Configuration_Base* configuration_base_p = NULL;
   enum Stream_Visualization_VideoRenderer renderer_e =
@@ -48,7 +50,7 @@ process_stream_events (struct ARDrone_UI_CBData_Base* CBData_in,
       renderer_e = (*streams_iterator).second.configuration_.renderer;
 
       directshow_iapplication_p =
-        dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (CBData_in->iapplication);
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (wx_app_console_p);
       ACE_ASSERT (directshow_iapplication_p);
       ui_state_p =
         &const_cast<struct ARDrone_UI_wxWidgets_State&> (directshow_iapplication_p->getR ());
@@ -68,7 +70,7 @@ process_stream_events (struct ARDrone_UI_CBData_Base* CBData_in,
       renderer_e = (*streams_iterator).second.configuration_.renderer;
 
       mediafoundation_iapplication_p =
-        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (CBData_in->iapplication);
+        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (wx_app_console_p);
       ACE_ASSERT (mediafoundation_iapplication_p);
       ui_state_p =
         &const_cast<struct ARDrone_UI_wxWidgets_State&> (mediafoundation_iapplication_p->getR ());
@@ -93,7 +95,7 @@ process_stream_events (struct ARDrone_UI_CBData_Base* CBData_in,
   renderer_e = (*streams_iterator).second.configuration_.renderer;
 
   ARDrone_WxWidgetsIApplication_t* directshow_iapplication_p =
-    dynamic_cast<ARDrone_WxWidgetsIApplication_t*> (CBData_in->iapplication);
+    dynamic_cast<ARDrone_WxWidgetsIApplication_t*> (wx_app_console_p);
   ACE_ASSERT (iapplication_p);
   ui_state_p =
     &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -468,20 +470,27 @@ stream_processing_thread (void* arg_in)
   result = arg_in;
 #endif // ACE_WIN32 || ACE_WIN64
 
+  // sanity check(s)
   struct ARDrone_ThreadData* thread_data_p =
       static_cast<struct ARDrone_ThreadData*> (arg_in);
-
-  // sanity check(s)
   ACE_ASSERT (thread_data_p);
   ACE_ASSERT (thread_data_p->CBData);
-  ACE_ASSERT (thread_data_p->CBData->iapplication);
+  wxAppConsole* wx_app_console_p = wxApp::GetInstance ();
+  ACE_ASSERT (wx_app_console_p);
 
   Common_UI_wxWidgets_XmlResourcesIterator_t iterator;
   wxDialog* dialog_p = NULL;
   wxToggleButton* toggle_button_p = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_IGetR_T<ARDrone_DirectShow_SessionData_t>* iget_p = NULL;
+  const ARDrone_DirectShow_SessionData_t* directshow_session_data_container_p =
+    NULL;
+  const ARDrone_DirectShow_SessionData* directshow_session_data_p = NULL;
+#else
   Common_IGetR_T<ARDrone_SessionData_t>* iget_p = NULL;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const ARDrone_SessionData* session_data_p = NULL;
+#endif // ACE_WIN32 || ACE_WIN64
   ARDrone_IController* icontroller_p = NULL;
   //ACE_Time_Value session_start_timeout =
   //    COMMON_TIME_NOW + ACE_Time_Value (3, 0);
@@ -494,10 +503,12 @@ stream_processing_thread (void* arg_in)
   struct ARDrone_DirectShow_UI_CBData* directshow_cb_data_p = NULL;
   ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_iterator;
   ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_iterator_2;
+
   struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_cb_data_p =
     NULL;
   ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_iterator;
   ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_2;
+
   ARDrone_DirectShow_WxWidgetsIApplication_t* directshow_iapplication_p = NULL;
   ARDrone_MediaFoundation_WxWidgetsIApplication_t* mediafoundation_iapplication_p =
     NULL;
@@ -510,7 +521,7 @@ stream_processing_thread (void* arg_in)
       ACE_ASSERT (directshow_cb_data_p->configuration);
 
       directshow_iapplication_p =
-        dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (thread_data_p->CBData->iapplication);
+        dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (wx_app_console_p);
       ACE_ASSERT (directshow_iapplication_p);
       ui_state_p =
         &const_cast<struct ARDrone_UI_wxWidgets_State&> (directshow_iapplication_p->getR ());
@@ -521,6 +532,12 @@ stream_processing_thread (void* arg_in)
       mediafoundation_cb_data_p =
         static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (thread_data_p->CBData);
       ACE_ASSERT (mediafoundation_cb_data_p->configuration);
+
+      mediafoundation_iapplication_p =
+        dynamic_cast<ARDrone_MediaFoundation_WxWidgetsIApplication_t*> (wx_app_console_p);
+      ACE_ASSERT (mediafoundation_iapplication_p);
+      ui_state_p =
+        &const_cast<struct ARDrone_UI_wxWidgets_State&> (mediafoundation_iapplication_p->getR ());
       break;
     }
     default:
@@ -535,8 +552,15 @@ stream_processing_thread (void* arg_in)
   struct ARDrone_UI_CBData* cb_data_p =
     static_cast<struct ARDrone_UI_CBData*> (thread_data_p->CBData);
   ACE_ASSERT (cb_data_p->configuration);
+
   ARDrone_StreamConfigurationsIterator_t iterator;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2;
+
+  iapplication_p =
+    dynamic_cast<ARDrone_WxWidgetsIApplication_t*> (wx_app_console_p);
+  ACE_ASSERT (iapplication_p);
+  ui_state_p =
+    &const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
 #endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (ui_state_p);
 
@@ -585,12 +609,14 @@ stream_processing_thread (void* arg_in)
         goto error;
       } // end IF
       iget_p =
-        dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+        dynamic_cast<Common_IGetR_T<ARDrone_DirectShow_SessionData_t>*> ((*streams_iterator).second);
       ACE_ASSERT (iget_p);
-      session_data_container_p =
-        &const_cast<ARDrone_SessionData_t&> (iget_p->getR ());
-      session_data_p =
-        &const_cast<ARDrone_SessionData&> (session_data_container_p->getR ());
+      directshow_session_data_container_p =
+        &const_cast<ARDrone_DirectShow_SessionData_t&> (iget_p->getR ());
+      directshow_session_data_p =
+        &const_cast<ARDrone_DirectShow_SessionData&> (directshow_session_data_container_p->getR ());
+      thread_data_p->sessionId = directshow_session_data_p->sessionId;
+
       istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
       ACE_ASSERT (istream_base_p);
@@ -690,6 +716,9 @@ continue_:
       //} // end IF
       //stream_p = mediafoundation_cb_data_p->stream;
       //session_data_container_p = &mediafoundation_cb_data_p->stream->getR ();
+      //ACE_ASSERT (session_data_container_p);
+      //session_data_p = &session_data_container_p->getR ();
+      //thread_data_p->sessionId = session_data_p->sessionId;
       break;
     }
     default:
@@ -709,10 +738,10 @@ continue_:
   //} // end IF
   //stream_p = cb_data_p->stream;
   //session_data_container_p = &cb_data_p->stream->getR ();
-#endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (session_data_container_p);
   session_data_p = &session_data_container_p->getR ();
   thread_data_p->sessionId = session_data_p->sessionId;
+#endif // ACE_WIN32 || ACE_WIN64
 
   for (std::vector<Stream_IStreamControlBase*>::iterator iterator = streams_a.begin ();
        iterator != streams_a.end ();
