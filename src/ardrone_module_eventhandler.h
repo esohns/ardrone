@@ -42,6 +42,17 @@ extern const char ardrone_default_handler_module_name_string[];
 
 template <typename ConfigurationType>
 class ARDrone_Module_EventHandler_T
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+ : public Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
+                                          Common_TimePolicy_t,
+                                          ConfigurationType,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_DirectShow_SessionMessage,
+                                          Stream_SessionId_t,
+                                          ARDrone_DirectShow_SessionData,
+                                          struct ARDrone_UserData>
+#else
  : public Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
                                           Common_TimePolicy_t,
                                           ConfigurationType,
@@ -51,7 +62,19 @@ class ARDrone_Module_EventHandler_T
                                           Stream_SessionId_t,
                                           struct ARDrone_SessionData,
                                           struct ARDrone_UserData>
+#endif // ACE_WIN32 || ACE_WIN64
 {
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  typedef Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
+                                          Common_TimePolicy_t,
+                                          ConfigurationType,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_DirectShow_SessionMessage,
+                                          Stream_SessionId_t,
+                                          ARDrone_DirectShow_SessionData,
+                                          struct ARDrone_UserData> inherited;
+#else
   typedef Stream_Module_MessageHandlerA_T<ACE_MT_SYNCH,
                                           Common_TimePolicy_t,
                                           ConfigurationType,
@@ -61,6 +84,7 @@ class ARDrone_Module_EventHandler_T
                                           Stream_SessionId_t,
                                           struct ARDrone_SessionData,
                                           struct ARDrone_UserData> inherited;
+#endif // ACE_WIN32 || ACE_WIN64
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -74,8 +98,13 @@ class ARDrone_Module_EventHandler_T
   // override (part of) Stream_ITaskBase_T
   virtual void handleDataMessage (ARDrone_Message*&, // message handle
                                   bool&);            // return value: pass message downstream ?
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  virtual void handleSessionMessage (ARDrone_DirectShow_SessionMessage*&, // session message handle
+                                     bool&);                   // return value: pass message downstream ?
+#else
   virtual void handleSessionMessage (ARDrone_SessionMessage*&, // session message handle
                                      bool&);                   // return value: pass message downstream ?
+#endif // ACE_WIN32 || ACE_WIN64
 
   // implement Common_IClone_T
   virtual ACE_Task<ACE_MT_SYNCH,
@@ -88,6 +117,19 @@ class ARDrone_Module_EventHandler_T
 
   // convenient types
   typedef ARDrone_Module_EventHandler_T<ConfigurationType> OWN_TYPE_T;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  typedef Stream_StreamModuleA_T<ACE_MT_SYNCH,
+                                 Common_TimePolicy_t,
+                                 Stream_SessionId_t,
+                                 ARDrone_DirectShow_SessionData,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_ModuleConfiguration,
+                                 ConfigurationType,
+                                 ardrone_default_handler_module_name_string,
+                                 Stream_INotify_t,
+                                 typename OWN_TYPE_T::READER_TASK_T,
+                                 OWN_TYPE_T> MODULE_T;
+#else
   typedef Stream_StreamModuleA_T<ACE_MT_SYNCH,
                                  Common_TimePolicy_t,
                                  Stream_SessionId_t,
@@ -99,6 +141,7 @@ class ARDrone_Module_EventHandler_T
                                  Stream_INotify_t,
                                  typename OWN_TYPE_T::READER_TASK_T,
                                  OWN_TYPE_T> MODULE_T;
+#endif // ACE_WIN32 || ACE_WIN64
 };
 
 // include template definition
@@ -111,7 +154,7 @@ typedef ARDrone_Module_EventHandler_T<struct ARDrone_DirectShow_ModuleHandlerCon
 typedef ARDrone_Module_EventHandler_T<struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_Module_MediaFoundation_EventHandler_t;
 
 // declare module
-DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                              // session data type
+DATASTREAM_MODULE_DUPLEX_A (ARDrone_DirectShow_SessionData,                          // session data type
                             enum Stream_SessionMessageType,                          // session event type
                             struct ARDrone_DirectShow_ModuleHandlerConfiguration,    // module handler configuration type
                             ardrone_default_handler_module_name_string,              // module name
@@ -119,7 +162,7 @@ DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                         
                             ARDrone_Module_DirectShow_EventHandler_t::READER_TASK_T, // reader type
                             ARDrone_Module_DirectShow_EventHandler_t,                // writer type
                             ARDrone_Module_DirectShow_EventHandler);                 // class name
-DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                                   // session data type
+DATASTREAM_MODULE_DUPLEX_A (ARDrone_DirectShow_SessionData,                               // session data type
                             enum Stream_SessionMessageType,                               // session event type
                             struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,    // module handler configuration type
                             ardrone_default_handler_module_name_string,                   // module name

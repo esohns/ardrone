@@ -32,7 +32,6 @@
 #include "stream_messageallocatorheap_base.h"
 
 #include "ardrone_common.h"
-//#include "ardrone_configuration.h"
 #include "ardrone_types.h"
 
 // forward declaration(s)
@@ -40,7 +39,12 @@ class ACE_Allocator;
 class ACE_Data_Block;
 class ACE_Message_Block;
 class ARDrone_Message;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+class ARDrone_DirectShow_SessionMessage;
+#else
 class ARDrone_SessionMessage;
+#endif // ACE_WIN32 || ACE_WIN64
+
 struct ARDrone_AllocatorConfiguration;
 typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
@@ -52,12 +56,25 @@ class ARDrone_Message
                                    ARDrone_MessageData_t,
                                    int>
 {
+  typedef Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
+                                   enum ARDrone_MessageType,
+                                   ARDrone_MessageData_t,
+                                   int> inherited;
+
   // enable access to specific private ctors
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                                 struct ARDrone_AllocatorConfiguration,
+                                                 ARDrone_ControlMessage_t,
+                                                 ARDrone_Message,
+                                                 ARDrone_DirectShow_SessionMessage>;
+#else
   friend class Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                                  struct ARDrone_AllocatorConfiguration,
                                                  ARDrone_ControlMessage_t,
                                                  ARDrone_Message,
                                                  ARDrone_SessionMessage>;
+#endif // ACE_WIN32 || ACE_WIN64
 
  public:
   ARDrone_Message (enum ARDrone_MessageType); // message type
@@ -93,11 +110,6 @@ class ARDrone_Message
   ARDrone_Message (const ARDrone_Message&);
 
  private:
-  typedef Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
-                                   enum ARDrone_MessageType,
-                                   ARDrone_MessageData_t,
-                                   int> inherited;
-
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message ())
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Message& operator= (const ARDrone_Message&))
 };

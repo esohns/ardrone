@@ -40,8 +40,12 @@
 #include "ardrone_network_common.h"
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename SourceModuleType>
 ARDrone_VideoStream_T<ModuleConfigurationType,
+                      SessionDataType,
+                      SessionMessageType,
                       SourceModuleType>::ARDrone_VideoStream_T ()
  : inherited ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -55,8 +59,12 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename SourceModuleType>
 ARDrone_VideoStream_T<ModuleConfigurationType,
+                      SessionDataType,
+                      SessionMessageType,
                       SourceModuleType>::~ARDrone_VideoStream_T ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::~ARDrone_VideoStream_T"));
@@ -84,9 +92,13 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename SourceModuleType>
 bool
 ARDrone_VideoStream_T<ModuleConfigurationType,
+                      SessionDataType,
+                      SessionMessageType,
                       SourceModuleType>::load (Stream_ModuleList_t& modules_out,
                                                bool& delete_out)
 {
@@ -254,13 +266,16 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename SourceModuleType>
 bool
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_VideoStream_T<ModuleConfigurationType,
+                      SessionDataType,
+                      SessionMessageType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                       SourceModuleType>::initialize (const CONFIGURATION_T& configuration_in)
 #else
-ARDrone_VideoStream_T<ModuleConfigurationType,
                       SourceModuleType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 #endif
 {
@@ -284,7 +299,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   bool setup_pipeline = configuration_in.configuration_.setupPipeline;
   bool reset_setup_pipeline = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct ARDrone_SessionData* session_data_p = NULL;
+  typename SessionDataType::DATA_T* session_data_p = NULL;
 #endif
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -320,18 +335,15 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   ACE_ASSERT (inherited::sessionData_);
 
   session_data_p =
-    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
   switch (configuration_in.configuration_.mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      // sanity check(s)
-      ACE_ASSERT (configuration_in.configuration_.sourceFormat);
-      if (!session_data_p->formats.empty ())
-        Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
+      Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
 
       struct _AMMediaType* media_type_p =
-        Stream_MediaFramework_DirectShow_Tools::copy (*(configuration_in.configuration_.sourceFormat));
+        Stream_MediaFramework_DirectShow_Tools::copy (configuration_in.configuration_.sourceFormat);
       //if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
       if (!media_type_p)
       {
@@ -340,6 +352,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
         goto error;
       } // end IF
       session_data_p->formats.push_front (*media_type_p);
+      CoTaskMemFree (media_type_p); media_type_p = NULL;
 
       break;
     }
@@ -438,8 +451,12 @@ error:
 
 //////////////////////////////////////////
 
-template <typename ModuleConfigurationType>
-ARDrone_ControlStream_T<ModuleConfigurationType>::ARDrone_ControlStream_T ()
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::ARDrone_ControlStream_T ()
  : inherited ()
  , inherited2 (&(inherited::sessionDataLock_))
 {
@@ -448,10 +465,14 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::ARDrone_ControlStream_T ()
   inherited::state_.type = ARDRONE_STREAM_CONTROL;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 bool
-ARDrone_ControlStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& modules_out,
-                                                        bool& delete_out)
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::load (Stream_ModuleList_t& modules_out,
+                                                   bool& delete_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::load"));
 
@@ -594,12 +615,16 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
   return true;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 bool
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const CONFIGURATION_T& configuration_in)
+                        SessionMessageType>::initialize (const CONFIGURATION_T& configuration_in)
 #else
-ARDrone_ControlStream_T<ModuleConfigurationType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
+                        SessionMessageType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 #endif
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::initialize"));
@@ -719,10 +744,14 @@ error:
   return false;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_ControlStream_T<ModuleConfigurationType>::start (Stream_SessionId_t sessionId_in,
-                                                         const struct ARDrone_SessionData& sessionData_in)
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::start (Stream_SessionId_t sessionId_in,
+                                                    const typename SessionDataType::DATA_T& sessionData_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::start"));
 
@@ -730,16 +759,20 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::start (Stream_SessionId_t sess
   ACE_UNUSED_ARG (sessionData_in);
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_ControlStream_T<ModuleConfigurationType>::notify (Stream_SessionId_t sessionId_in,
-                                                          const enum Stream_SessionMessageType& event_in)
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::notify (Stream_SessionId_t sessionId_in,
+                                                     const enum Stream_SessionMessageType& event_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::notify"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
@@ -747,23 +780,31 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::notify (Stream_SessionId_t ses
   ACE_UNUSED_ARG (event_in);
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_ControlStream_T<ModuleConfigurationType>::end (Stream_SessionId_t sessionId_in)
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::end (Stream_SessionId_t sessionId_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::end"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_ControlStream_T<ModuleConfigurationType>::messageCB (const ARDrone_DeviceConfiguration_t& deviceConfiguration_in)
+ARDrone_ControlStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::messageCB (const ARDrone_DeviceConfiguration_t& deviceConfiguration_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::messageCB"));
 
@@ -809,9 +850,13 @@ ARDrone_ControlStream_T<ModuleConfigurationType>::messageCB (const ARDrone_Devic
 //////////////////////////////////////////
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::ARDrone_NavDataStream_T ()
  : inherited ()
@@ -828,9 +873,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::~ARDrone_NavDataStream_T ()
 {
@@ -844,10 +893,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 bool
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::load (Stream_ModuleList_t& modules_out,
                                                          bool& delete_out)
@@ -1071,16 +1124,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 bool
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::initialize (const CONFIGURATION_T& configuration_in)
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 #endif
 {
@@ -1201,13 +1256,17 @@ error:
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::start (Stream_SessionId_t sessionId_in,
-                                                          const struct ARDrone_SessionData& sessionData_in)
+                                                          const typename SessionDataType::DATA_T& sessionData_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::start"));
 
@@ -1233,10 +1292,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::notify (Stream_SessionId_t sessionId_in,
                                                            const enum Stream_SessionMessageType& event_in)
@@ -1245,7 +1308,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
@@ -1520,10 +1583,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::end (Stream_SessionId_t sessionId_in)
 {
@@ -1531,7 +1598,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
@@ -1551,10 +1618,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::messageCB (const struct _navdata_t& record_in,
                                                               const ARDrone_NavDataOptionOffsets_t& offsets_in,
@@ -1844,10 +1915,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 const ARDrone_IController* const
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::getP () const
 {
@@ -1881,17 +1956,19 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 //////////////////////////////////////////
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onSignalQualityChange (REFGUID interfaceIdentifier_in,
                                                                           WLAN_SIGNAL_QUALITY signalQuality_in)
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onSignalQualityChange (const std::string& interfaceIdentifier_in,
                                                                           unsigned int signalQuality_in)
 #endif // ACE_WIN32 || ACE_WIN64
@@ -1921,16 +1998,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onAssociate (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onAssociate (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                                 const std::string& SSID_in,
@@ -1971,16 +2050,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onDisassociate (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onDisassociate (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                                    const std::string& SSID_in,
@@ -2021,16 +2102,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onConnect (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onConnect (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                               const std::string& SSID_in,
@@ -2086,9 +2169,10 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     return;
   } // end IF
 #elif (WXWIDGETS_USE)
-  ACE_ASSERT (inherited::configuration_->configuration_.CBData->iapplication);
+  wxAppConsole* wx_app_console_p = wxApp::GetInstance ();
+  ACE_ASSERT (wx_app_console_p);
   ARDrone_DirectShow_WxWidgetsIApplication_t* iapplication_p =
-    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (inherited::configuration_->configuration_.CBData->iapplication);
+    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (wx_app_console_p);
   ACE_ASSERT (iapplication_p);
   struct ARDrone_UI_wxWidgets_State& state_r =
     const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -2103,16 +2187,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onDisconnect (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onDisconnect (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                                  const std::string& SSID_in,
@@ -2177,9 +2263,10 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
 #elif (WXWIDGETS_USE)
-  ACE_ASSERT (inherited::configuration_->configuration_.CBData->iapplication);
+  wxAppConsole* wx_app_console_p = wxApp::GetInstance ();
+  ACE_ASSERT (wx_app_console_p);
   ARDrone_DirectShow_WxWidgetsIApplication_t* iapplication_p =
-    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (inherited::configuration_->configuration_.CBData->iapplication);
+    dynamic_cast<ARDrone_DirectShow_WxWidgetsIApplication_t*> (wx_app_console_p);
   ACE_ASSERT (iapplication_p);
   struct ARDrone_UI_wxWidgets_State& state_r =
     const_cast<struct ARDrone_UI_wxWidgets_State&> (iapplication_p->getR ());
@@ -2193,16 +2280,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onHotPlug (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onHotPlug (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                               bool enabled_in)
@@ -2223,16 +2312,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onRemove (REFGUID interfaceIdentifier_in,
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onRemove (const std::string& interfaceIdentifier_in,
 #endif // ACE_WIN32 || ACE_WIN64
                                                              bool enabled_in)
@@ -2253,16 +2344,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 }
 
 template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType,
           typename ConnectionConfigurationIteratorType,
           typename WLANMonitorSingletonType>
 void
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 ARDrone_NavDataStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType,
                         ConnectionConfigurationIteratorType,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
                         WLANMonitorSingletonType>::onScanComplete (REFGUID interfaceIdentifier_in)
 #else
-ARDrone_NavDataStream_T<ModuleConfigurationType,
-                        ConnectionConfigurationIteratorType,
                         WLANMonitorSingletonType>::onScanComplete (const std::string& interfaceIdentifier_in)
 #endif // ACE_WIN32 || ACE_WIN64
 {
@@ -2292,8 +2385,12 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
 //////////////////////////////////////////
 
-template <typename ModuleConfigurationType>
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::ARDrone_MAVLinkStream_T ()
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::ARDrone_MAVLinkStream_T ()
  : inherited ()
  , inherited2 (&(inherited::sessionDataLock_))
 {
@@ -2302,10 +2399,14 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::ARDrone_MAVLinkStream_T ()
   inherited::state_.type = ARDRONE_STREAM_MAVLINK;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 bool
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& modules_out,
-                                                        bool& delete_out)
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::load (Stream_ModuleList_t& modules_out,
+                                                   bool& delete_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::load"));
 
@@ -2473,12 +2574,16 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::load (Stream_ModuleList_t& mod
   return true;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 bool
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::initialize (const CONFIGURATION_T& configuration_in)
+                        SessionMessageType>::initialize (const CONFIGURATION_T& configuration_in)
 #else
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
+                        SessionMessageType>::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 #endif
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::initialize"));
@@ -2612,10 +2717,14 @@ error:
   return false;
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::start (Stream_SessionId_t sessionId_in,
-                                                         const struct ARDrone_SessionData& sessionData_in)
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::start (Stream_SessionId_t sessionId_in,
+                                                    const typename SessionDataType::DATA_T& sessionData_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::start"));
 
@@ -2640,16 +2749,20 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::start (Stream_SessionId_t sess
   }
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::notify (Stream_SessionId_t sessionId_in,
-                                                          const enum Stream_SessionMessageType& event_in)
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::notify (Stream_SessionId_t sessionId_in,
+                                                     const enum Stream_SessionMessageType& event_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::notify"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
@@ -2657,15 +2770,19 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::notify (Stream_SessionId_t ses
   ACE_UNUSED_ARG (event_in);
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::end (Stream_SessionId_t sessionId_in)
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::end (Stream_SessionId_t sessionId_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::end"));
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  const struct ARDrone_SessionData& session_data_r =
+  const typename SessionDataType::DATA_T& session_data_r =
       inherited::sessionData_->getR ();
   if (session_data_r.sessionId != sessionId_in)
     return;
@@ -2684,10 +2801,14 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType>::end (Stream_SessionId_t sessio
   } // end lock scope
 }
 
-template <typename ModuleConfigurationType>
+template <typename ModuleConfigurationType,
+          typename SessionDataType,
+          typename SessionMessageType>
 void
-ARDrone_MAVLinkStream_T<ModuleConfigurationType>::messageCB (const struct __mavlink_message& record_in,
-                                                             void* payload_in)
+ARDrone_MAVLinkStream_T<ModuleConfigurationType,
+                        SessionDataType,
+                        SessionMessageType>::messageCB (const struct __mavlink_message& record_in,
+                                                        void* payload_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::messageCB"));
 

@@ -331,13 +331,19 @@ stream_processing_function (void* arg_in)
   ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_iterator_2;
 #else
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_2;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
   //  struct ARDrone_ModuleHandlerConfiguration* configuration_p = NULL;
   Stream_IStreamControlBase* istream_base_p = NULL;
   std::ostringstream converter;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_IGetR_T<ARDrone_DirectShow_SessionData_t>* iget_p = NULL;
+  const ARDrone_DirectShow_SessionData_t* session_data_container_p = NULL;
+  const ARDrone_DirectShow_SessionData* session_data_p = NULL;
+#else
   Common_IGetR_T<ARDrone_SessionData_t>* iget_p = NULL;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
+#endif // ACE_WIN32 || ACE_WIN64
   std::string logfile_name_string;
   bool result_2 = false;
 //  guint context_id = 0;
@@ -539,13 +545,21 @@ stream_processing_function (void* arg_in)
         } // end IF
 
         iget_p =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          dynamic_cast<Common_IGetR_T<ARDrone_DirectShow_SessionData_t>*> ((*streams_iterator).second);
+#else
           dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (iget_p);
 
         session_data_container_p = &iget_p->getR ();
         ACE_ASSERT (session_data_container_p);
         session_data_p =
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+          &const_cast<ARDrone_DirectShow_SessionData&> (session_data_container_p->getR ());
+#else
           &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());
+#endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (session_data_p);
         converter.clear ();
         converter.str (ACE_TEXT_ALWAYS_CHAR (""));
@@ -786,13 +800,12 @@ continue_:
 #endif
 
 done:
-  { // synch access
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, -1);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, -1);
 #else
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, std::numeric_limits<void*>::max ());
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, std::numeric_limits<void*>::max ());
 #endif
-    data_p->CBData->progressData.completedActions.insert (data_p->eventSourceId);
+    data_p->CBData->progressData.completedActions.insert (data_p->CBData->progressData.eventSourceId);
   } // end lock scope
 
   // clean up
@@ -1421,8 +1434,9 @@ idle_initialize_ui_cb (gpointer userData_in)
       ACE_ASSERT (directshow_iterator_4 != (*directshow_iterator_3).second.end ());
       target_filename_string =
         (*directshow_iterator_4).second.second.targetFileName;
+      ACE_ASSERT ((*directshow_iterator_4).second.second.direct3DConfiguration);
       is_fullscreen =
-        (*directshow_iterator_4).second.second.fullScreen;
+        !(*directshow_iterator_4).second.second.direct3DConfiguration->presentationParameters.Windowed;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -1432,8 +1446,9 @@ idle_initialize_ui_cb (gpointer userData_in)
       ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_iterator_3).second.end ());
       target_filename_string =
         (*mediafoundation_iterator_4).second.second.targetFileName;
+      ACE_ASSERT ((*mediafoundation_iterator_4).second.second.direct3DConfiguration);
       is_fullscreen =
-        (*mediafoundation_iterator_4).second.second.fullScreen;
+        !(*mediafoundation_iterator_4).second.second.direct3DConfiguration->presentationParameters.Windowed;
       break;
     }
     default:
@@ -2719,12 +2734,11 @@ idle_update_info_display_cb (gpointer userData_in)
             // sanity check(s)
             ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration);
             ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration);
-            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format);
 
-            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+            ACE_ASSERT (InlineIsEqualGUID ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format.formattype, FORMAT_VideoInfo));
+            ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format.cbFormat == sizeof (struct tagVIDEOINFOHEADER));
             struct tagVIDEOINFOHEADER* video_info_header_p =
-              reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+              reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format.pbFormat);
             height = video_info_header_p->bmiHeader.biHeight;
             width = video_info_header_p->bmiHeader.biWidth;
             break;
@@ -3669,8 +3683,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       directshow_iterator_6 =
         (*directshow_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
       ACE_ASSERT (directshow_iterator_6 != (*directshow_iterator_4).second.end ());
-
-      is_fullscreen = (*directshow_iterator_5).second.second.fullScreen;
+      ACE_ASSERT ((*directshow_iterator_5).second.second.direct3DConfiguration);
+      is_fullscreen =
+        !(*directshow_iterator_5).second.second.direct3DConfiguration->presentationParameters.Windowed;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -3683,8 +3698,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
       mediafoundation_iterator_6 =
         (*mediafoundation_iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
       ACE_ASSERT (mediafoundation_iterator_6 != (*mediafoundation_iterator_4).second.end ());
-
-      is_fullscreen = (*mediafoundation_iterator_5).second.second.fullScreen;
+      ACE_ASSERT ((*mediafoundation_iterator_5).second.second.direct3DConfiguration);
+      is_fullscreen =
+        !(*mediafoundation_iterator_5).second.second.direct3DConfiguration->presentationParameters.Windowed;
       break;
     }
     default:
@@ -3747,15 +3763,15 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   switch (cb_data_base_p->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-      (*directshow_iterator_5).second.second.fullScreen =
-        gtk_toggle_action_get_active (toggle_action_p);
+    { ACE_ASSERT ((*directshow_iterator_5).second.second.direct3DConfiguration);
+      (*directshow_iterator_5).second.second.direct3DConfiguration->presentationParameters.Windowed =
+        !gtk_toggle_action_get_active (toggle_action_p);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-      (*mediafoundation_iterator_5).second.second.fullScreen =
-        gtk_toggle_action_get_active (toggle_action_p);
+    { ACE_ASSERT ((*mediafoundation_iterator_5).second.second.direct3DConfiguration);
+      (*mediafoundation_iterator_5).second.second.direct3DConfiguration->presentationParameters.Windowed =
+        !gtk_toggle_action_get_active (toggle_action_p);
       break;
     }
     default:
@@ -3805,14 +3821,14 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     {
       case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
       {
-        (*directshow_iterator_5).second.second.inputFormat->subtype =
+        (*directshow_iterator_5).second.second.outputFormat.subtype =
           Common_Tools::StringToGUID (g_value_get_string (&value));
         break;
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      {
-        (*mediafoundation_iterator_5).second.second.inputFormat->subtype =
-          Common_Tools::StringToGUID (g_value_get_string (&value));
+      { ACE_ASSERT ((*mediafoundation_iterator_5).second.second.outputFormat);
+        (*mediafoundation_iterator_5).second.second.outputFormat->SetGUID (MF_MT_SUBTYPE,
+                                                                           Common_Tools::StringToGUID (g_value_get_string (&value)));
         break;
       }
       default:
@@ -3844,17 +3860,15 @@ continue_:
       // sanity check(s)
       ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration);
       ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration);
-      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format);
-      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->formattype == FORMAT_VideoInfo);
-      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      ACE_ASSERT (InlineIsEqualGUID ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format.formattype, FORMAT_VideoInfo));
+      ACE_ASSERT ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format.cbFormat == sizeof (struct tagVIDEOINFOHEADER));
       video_info_header_p =
-        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->pbFormat);
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format.pbFormat);
 
-      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat);
-      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat->formattype == FORMAT_VideoInfo);
-      ACE_ASSERT ((*directshow_iterator_5).second.second.inputFormat->cbFormat == sizeof (struct tagVIDEOINFOHEADER));
+      ACE_ASSERT (InlineIsEqualGUID ((*directshow_iterator_5).second.second.outputFormat.formattype, FORMAT_VideoInfo));
+      ACE_ASSERT ((*directshow_iterator_5).second.second.outputFormat.cbFormat == sizeof (struct tagVIDEOINFOHEADER));
       video_info_header_2 =
-        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.inputFormat->pbFormat);
+        reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_5).second.second.outputFormat.pbFormat);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -3901,13 +3915,13 @@ continue_:
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      (*directshow_iterator_5).second.second.deviceIdentifier =
+      (*directshow_iterator_5).second.second.interfaceIdentifier =
         g_value_get_string (&value);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      (*mediafoundation_iterator_5).second.second.deviceIdentifier =
+      (*mediafoundation_iterator_5).second.second.interfaceIdentifier =
         g_value_get_string (&value);
       break;
     }
@@ -3920,7 +3934,7 @@ continue_:
     }
   } // end SWITCH
 #else
-  (*iterator_5).second.second.displayDeviceIdentifier =
+  (*iterator_5).second.second.displayinterfaceIdentifier =
       g_value_get_string (&value);
 #endif
   g_value_unset (&value);
@@ -3948,7 +3962,7 @@ continue_:
       ACE_ASSERT (monitor_p);
 
       if (!ACE_OS::strcmp (gdk_monitor_get_model (monitor_p),
-                           (*iterator_5).second.second.displayDeviceIdentifier.c_str ()))
+                           (*iterator_5).second.second.displayinterfaceIdentifier.c_str ()))
         break;
     } // end FOR
   } // end FOR
@@ -3956,7 +3970,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ())));
     goto error;
   } // end IF
   display_p = gdk_monitor_get_display (monitor_p);
@@ -4004,7 +4018,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ())));
     goto error;
   } // end IF
 #endif
@@ -4078,10 +4092,7 @@ continue_:
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown display format (was: %d), returning\n"),
                   g_value_get_int (&value)));
-
-      // clean up
       g_value_unset (&value);
-
       goto error;
     }
   } // end SWITCH
@@ -4101,7 +4112,7 @@ continue_:
       video_info_header_p->dwBitRate =
         (video_info_header_p->bmiHeader.biWidth         *
          abs (video_info_header_p->bmiHeader.biHeight)) * 4 * 30 * 8;
-      (*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format->lSampleSize =
+      (*directshow_iterator_5).second.second.filterConfiguration->pinConfiguration->format.lSampleSize =
         video_info_header_p->bmiHeader.biSizeImage;
       directshow_configuration_p->filterConfiguration.allocatorProperties.cbBuffer =
         video_info_header_p->bmiHeader.biSizeImage;
@@ -4154,7 +4165,7 @@ continue_:
           DIBSIZE (video_info_header_2->bmiHeader);
 
         unsigned int source_buffer_size =
-          av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaSubTypeToAVPixelFormat ((*directshow_iterator_5).second.second.inputFormat->subtype),
+          av_image_get_buffer_size (Stream_Module_Decoder_Tools::mediaSubTypeToAVPixelFormat ((*directshow_iterator_5).second.second.outputFormat.subtype),
                                     video_info_header_p->bmiHeader.biWidth,
                                     ::abs (video_info_header_p->bmiHeader.biHeight),
                                     1); // *TODO*: linesize alignment
@@ -4162,7 +4173,7 @@ continue_:
           std::max (video_info_header_2->bmiHeader.biSizeImage,
                     static_cast<ULONG> (source_buffer_size));
 
-        (*directshow_iterator_5).second.second.inputFormat->lSampleSize =
+        (*directshow_iterator_5).second.second.outputFormat.lSampleSize =
           video_info_header_2->bmiHeader.biSizeImage;
         directshow_configuration_p->filterConfiguration.allocatorProperties.cbBuffer =
           video_info_header_2->bmiHeader.biSizeImage;
@@ -4244,7 +4255,7 @@ continue_:
 
         window_h = (*directshow_iterator_5).second.second.window;
         device_name_string =
-          (*directshow_iterator_5).second.second.deviceIdentifier;
+          ACE_TEXT ((*directshow_iterator_5).second.second.interfaceIdentifier.c_str ());
         break;
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4252,7 +4263,7 @@ continue_:
         ACE_ASSERT (false); // *TODO*
         window_h = (*mediafoundation_iterator_5).second.second.window;
         device_name_string =
-          (*mediafoundation_iterator_5).second.second.deviceIdentifier;
+          ACE_TEXT ((*mediafoundation_iterator_5).second.second.interfaceIdentifier.c_str ());
         break;
       }
       default:
@@ -4355,7 +4366,7 @@ continue_:
           DIBSIZE (video_info_header_2->bmiHeader);
         video_info_header_2->dwBitRate =
           (video_info_header_2->bmiHeader.biWidth * std::abs (video_info_header_2->bmiHeader.biHeight)) * 4 * 30 * 8;
-        (*directshow_iterator_5).second.second.inputFormat->lSampleSize =
+        (*directshow_iterator_5).second.second.outputFormat.lSampleSize =
           video_info_header_2->bmiHeader.biSizeImage;
         directshow_configuration_p->filterConfiguration.allocatorProperties.cbBuffer =
           std::max (directshow_configuration_p->filterConfiguration.allocatorProperties.cbBuffer,
@@ -4390,7 +4401,7 @@ continue_:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-                  ACE_TEXT ((*directshow_iterator_5).second.second.deviceIdentifier.c_str ()),
+                  ACE_TEXT ((*directshow_iterator_5).second.second.interfaceIdentifier.c_str ()),
                   (*directshow_iterator_5).second.second.area.left,
                   (*directshow_iterator_5).second.second.area.right,
                   (*directshow_iterator_5).second.second.area.top,
@@ -4406,7 +4417,7 @@ continue_:
     {
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("using display device \"%s\" [lrtb: %d/%d/%d/%d]: %dx%d\n"),
-                  ACE_TEXT ((*mediafoundation_iterator_5).second.second.deviceIdentifier.c_str ()),
+                  ACE_TEXT ((*mediafoundation_iterator_5).second.second.interfaceIdentifier.c_str ()),
                   (*mediafoundation_iterator_5).second.second.area.left,
                   (*mediafoundation_iterator_5).second.second.area.right,
                   (*mediafoundation_iterator_5).second.second.area.top,
@@ -4430,7 +4441,7 @@ continue_:
   (*iterator_5).second.second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d\n"),
-              ACE_TEXT ((*iterator_5).second.second.displayDeviceIdentifier.c_str ()),
+              ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ()),
               ACE_TEXT (gdk_display_get_name (display_p)),
               monitor_number,
               (*iterator_5).second.second.area.x,
@@ -4586,7 +4597,6 @@ continue_:
                             NULL);
     if (cb_data_base_p->progressData.eventSourceId > 0)
     {
-      thread_data_p->eventSourceId = cb_data_base_p->progressData.eventSourceId;
       cb_data_base_p->progressData.pendingActions[cb_data_base_p->progressData.eventSourceId] =
           ACE_Thread_ID (thread_id, thread_handle);
       state_r.eventSourceIds.insert (cb_data_base_p->progressData.eventSourceId);
@@ -4786,7 +4796,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
   std::string SSID_string =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if defined (WLANAPI_USE)
-    Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get (),
+    Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->get_2 (),
                                     wlan_monitor_configuration_p->interfaceIdentifier);
 #else
   ACE_TEXT_ALWAYS_CHAR ("");
@@ -8060,12 +8070,17 @@ key_cb (GtkWidget* widget_in,
       switch (cb_data_base_p->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-          (*directshow_iterator_3).second.second.fullScreen = is_fullscreen;
+        { ACE_ASSERT ((*directshow_iterator_3).second.second.direct3DConfiguration);
+          (*directshow_iterator_3).second.second.direct3DConfiguration->presentationParameters.Windowed =
+            !is_fullscreen;
           break;
+        }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-          (*mediafoundation_iterator_3).second.second.fullScreen =
-            is_fullscreen;
+        { ACE_ASSERT ((*mediafoundation_iterator_3).second.second.direct3DConfiguration);
+          (*mediafoundation_iterator_3).second.second.direct3DConfiguration->presentationParameters.Windowed =
+            !is_fullscreen;
           break;
+        }
         default:
         {
           ACE_DEBUG ((LM_ERROR,

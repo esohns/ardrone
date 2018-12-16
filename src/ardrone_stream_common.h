@@ -97,12 +97,17 @@ void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
 
 // forward declarations
 //class ARDrone_Message;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+class ARDrone_DirectShow_SessionMessage;
+class ARDrone_DirectShow_SessionData;
+#else
 class ARDrone_SessionMessage;
+struct ARDrone_SessionData;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (GUI_SUPPORT)
 struct ARDrone_UI_CBData_Base;
 #endif // GUI_SUPPORT
-struct ARDrone_SessionData;
 struct ARDrone_UserData;
 struct ARDrone_StreamState
  : Stream_State
@@ -129,25 +134,31 @@ struct ARDrone_StreamState
   }
 
 #if defined (GUI_SUPPORT)
-  struct ARDrone_UI_CBData_Base* CBData;
+  struct ARDrone_UI_CBData_Base*  CBData;
 #endif // GUI_SUPPORT
-  struct ARDrone_SessionData*    sessionData;
-  enum ARDrone_StreamType        type;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_SessionData* sessionData;
+#else
+  struct ARDrone_SessionData*     sessionData;
+#endif // ACE_WIN32 || ACE_WIN64
+  enum ARDrone_StreamType         type;
 
-  struct ARDrone_UserData*       userData;
+  struct ARDrone_UserData*        userData;
 };
 
 struct ARDrone_ConnectionState;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 class ARDrone_DirectShow_SessionData
- : public Stream_SessionDataMediaBase_T<struct _AMMediaType,
+ : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                        struct _AMMediaType,
                                         struct ARDrone_StreamState,
                                         struct ARDrone_Statistic,
                                         struct ARDrone_UserData>
 {
  public:
   ARDrone_DirectShow_SessionData ()
-   : Stream_SessionDataMediaBase_T<struct _AMMediaType,
+   : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                   struct _AMMediaType,
                                    struct ARDrone_StreamState,
                                    struct ARDrone_Statistic,
                                    struct ARDrone_UserData> ()
@@ -162,7 +173,8 @@ class ARDrone_DirectShow_SessionData
   ARDrone_DirectShow_SessionData& operator+= (const ARDrone_DirectShow_SessionData& rhs_in)
   {
     // *NOTE*: the idea is to 'merge' the data
-    Stream_SessionDataMediaBase_T<struct _AMMediaType,
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  struct _AMMediaType,
                                   struct ARDrone_StreamState,
                                   struct ARDrone_Statistic,
                                   struct ARDrone_UserData>::operator+= (rhs_in);
@@ -221,14 +233,16 @@ class ARDrone_DirectShow_SessionData
 typedef Stream_SessionData_T<ARDrone_DirectShow_SessionData> ARDrone_DirectShow_SessionData_t;
 #else
 class ARDrone_SessionData
- : public Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+ : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                        enum AVPixelFormat,
                                         struct ARDrone_StreamState,
                                         struct ARDrone_Statistic,
                                         struct ARDrone_UserData>
 {
  public:
   ARDrone_SessionData ()
-   : Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+   : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                   enum AVPixelFormat,
                                    struct ARDrone_StreamState,
                                    struct ARDrone_Statistic,
                                    struct ARDrone_UserData> ()
@@ -243,7 +257,8 @@ class ARDrone_SessionData
   ARDrone_SessionData& operator+= (const ARDrone_SessionData& rhs_in)
   {
     // *NOTE*: the idea is to 'merge' the data
-    Stream_SessionDataMediaBase_T<enum AVPixelFormat,
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  enum AVPixelFormat,
                                   struct ARDrone_StreamState,
                                   struct ARDrone_Statistic,
                                   struct ARDrone_UserData>::operator+= (rhs_in);
@@ -269,6 +284,19 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 enum Stream_ControlMessageType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
+                                          struct ARDrone_AllocatorConfiguration,
+                                          ARDrone_ControlMessage_t,
+                                          ARDrone_Message,
+                                          ARDrone_DirectShow_SessionMessage> ARDrone_MessageAllocator_t;
+
+typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
+                                    ARDrone_DirectShow_SessionData,
+                                    enum Stream_SessionMessageType,
+                                    ARDrone_Message,
+                                    ARDrone_DirectShow_SessionMessage> ARDrone_Notification_t;
+#else
 typedef Stream_MessageAllocatorHeapBase_T<ACE_MT_SYNCH,
                                           struct ARDrone_AllocatorConfiguration,
                                           ARDrone_ControlMessage_t,
@@ -280,6 +308,7 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     enum Stream_SessionMessageType,
                                     ARDrone_Message,
                                     ARDrone_SessionMessage> ARDrone_Notification_t;
+#endif // ACE_WIN32 || ACE_WIN64
 typedef std::list<ARDrone_Notification_t*> ARDrone_Subscribers_t;
 typedef ARDrone_Subscribers_t::iterator ARDrone_SubscribersIterator_t;
 
@@ -530,30 +559,26 @@ struct ARDrone_StreamConfiguration
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
    , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , sourceFormat (NULL)
-#else
-   , sourceFormat (AV_PIX_FMT_NONE)
-#endif // ACE_WIN32 || ACE_WIN64
+   , sourceFormat ()
    , userData (NULL)
   {}
 
 #if defined (GUI_SUPPORT)
-  struct ARDrone_UI_CBData_Base*          CBData;
+  struct ARDrone_UI_CBData_Base*                CBData;
 #endif // GUI_SUPPORT
-  ARDrone_IDeviceConfiguration*           deviceConfiguration;
-  enum Common_EventDispatchType           dispatch;
-  ARDrone_IControlInitialize_t*           initializeControl;
-  ARDrone_IMAVLinkInitialize_t*           initializeMAVLink;
-  ARDrone_INavDataInitialize_t*           initializeNavData;
-  enum Stream_Visualization_VideoRenderer renderer;
+  ARDrone_IDeviceConfiguration*                 deviceConfiguration;
+  enum Common_EventDispatchType                 dispatch;
+  ARDrone_IControlInitialize_t*                 initializeControl;
+  ARDrone_IMAVLinkInitialize_t*                 initializeMAVLink;
+  ARDrone_INavDataInitialize_t*                 initializeNavData;
+  enum Stream_Visualization_VideoRenderer       renderer;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct _AMMediaType*                    sourceFormat;
+  struct _AMMediaType                           sourceFormat;
 #else
-  enum AVPixelFormat                      sourceFormat;
+  struct Stream_MediaFramework_FFMPEG_MediaType sourceFormat;
 #endif // ACE_WIN32 || ACE_WIN64
 
-  struct ARDrone_UserData*                userData;
+  struct ARDrone_UserData*                      userData;
 };
 
 //extern const char stream_name_string_[];

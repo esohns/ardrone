@@ -63,7 +63,7 @@ enum ARDrone_MessageType : int
   ARDRONE_MESSAGE_NAVDATA,
   ARDRONE_MESSAGE_VIDEO,
   ///////////////////////////////////////
-  ARDRONE_MESSAGE_MAX
+  ARDRONE_MESSAGE_MAX = (int)0xFFFFFFFF
 };
 
 #if defined (__llvm__)

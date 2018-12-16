@@ -57,13 +57,21 @@ class ARDrone_EventHandler
 
   // implement Stream_ISessionDataNotify_T
   virtual void start (Stream_SessionId_t,          // session id
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                      const ARDrone_DirectShow_SessionData&); // session data
+#else
                       const ARDrone_SessionData&); // session data
+#endif // ACE_WIN32 || ACE_WIN64
   inline virtual void notify (Stream_SessionId_t,                       // session id
                               const enum Stream_SessionMessageType&) {} // event (state/status change, ...)
   virtual void notify (Stream_SessionId_t,      // session id
                        const ARDrone_Message&); // data
-  virtual void notify (Stream_SessionId_t,             // session id
+  virtual void notify (Stream_SessionId_t,                        // session id
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+                       const ARDrone_DirectShow_SessionMessage&); // session message
+#else
                        const ARDrone_SessionMessage&); // session message
+#endif // ACE_WIN32 || ACE_WIN64
   virtual void end (Stream_SessionId_t); // session id
 
   // implement Common_IInitializeP_T

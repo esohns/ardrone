@@ -386,7 +386,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       std::string interface_identifier;
 #endif // ACE_WIN32 || ACE_WIN64
       ACE_Message_Block* message_block_p = NULL;
-      unsigned char buffer_a[] = {0x01, 0x00, 0x00, 0x00};
+      // *TODO*: add a reference to this API (including its' endianness)
+      ACE_UINT32 message_content_i =
+        ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? 1 : ACE_SWAP_LONG (1));
 
       // retrieve listen address (connection has been set up upstream) and peer
       // address to set up the local SAP
@@ -473,21 +475,22 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
 
       // 'subscribe' to the NavData stream
-      message_block_p = inherited::allocateMessage (sizeof (buffer_a));
+      message_block_p = inherited::allocateMessage (sizeof (ACE_UINT32));
       if (unlikely (!message_block_p))
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_TaskBase_T::allocateMessage(%u): \"%m\", returning\n"),
                     inherited::mod_->name (),
-                    sizeof (buffer_a)));
+                    sizeof (ACE_UINT32)));
         goto error;
       } // end IF
       //message_p->initialize (session_data_r.sessionId,
       //                       NULL);
       //message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
       //message_p->set_2 (inherited::stream_);
-      result = message_block_p->copy (reinterpret_cast<char*> (buffer_a),
-                                      sizeof (buffer_a));
+      result =
+        message_block_p->copy (reinterpret_cast<char*> (&message_content_i),
+                               sizeof (ACE_UINT32));
       if (unlikely (result == -1))
       {
         ACE_DEBUG ((LM_ERROR,
@@ -504,13 +507,15 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     inherited::mod_->name (),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ()),
-                    sizeof (buffer_a)));
+                    sizeof (ACE_UINT32)));
         goto error;
       } // end IF
 
 error:
-      if (message_block_p)
-        message_block_p->release ();
+      if (likely (message_block_p))
+      {
+        message_block_p->release (); message_block_p = NULL;
+      } // end IF
 
       break;
     }

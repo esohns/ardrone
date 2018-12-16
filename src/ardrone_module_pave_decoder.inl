@@ -394,10 +394,15 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       switch (session_data_r.mediaFramework)
       {
-        case :
+        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
           Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
                                                           session_data_r.formats.back ());
+          break;
+        }
+        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+        {
+          ACE_ASSERT (false); // *TODO*
           break;
         }
         default:
