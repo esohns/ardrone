@@ -252,9 +252,10 @@ struct ARDrone_AllocatorConfiguration
     //         ffmpeg
     paddingBytes =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      AV_INPUT_BUFFER_PADDING_SIZE;
+        AV_INPUT_BUFFER_PADDING_SIZE;
 #else
-      FF_INPUT_BUFFER_PADDING_SIZE;
+//      FF_INPUT_BUFFER_PADDING_SIZE;
+        AV_INPUT_BUFFER_PADDING_SIZE;
 #endif // ACE_WIN32 || ACE_WIN64
     paddingBytes =
       std::max (static_cast<unsigned int> (COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE),
