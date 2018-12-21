@@ -77,6 +77,8 @@ extern "C"
 
 #include "common_image_tools.h"
 
+#include "common_log_tools.h"
+
 #include "common_timer_manager.h"
 
 #include "common_ui_common.h"
@@ -316,6 +318,7 @@ stream_processing_function (void* arg_in)
 #else
   struct ARDrone_UI_CBData* cb_data_p =
     static_cast<struct ARDrone_UI_CBData*> (data_p->CBData);
+  ACE_ASSERT (cb_data_p);
   struct ARDrone_Configuration* configuration_p = cb_data_p->configuration;
   ACE_ASSERT (configuration_p);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -746,7 +749,7 @@ stream_processing_function (void* arg_in)
       GTK_STATUSBAR (gtk_builder_get_object ((*iterator).second.second,
                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_STATUSBAR)));
     ACE_ASSERT (statusbar_p);
-    data_p->CBData->contextIds[COMMON_UI_GTK_STATUSCONTEXT_DATA] =
+    cb_data_p->UIState->contextIds[COMMON_UI_GTK_STATUSCONTEXT_DATA] =
         gtk_statusbar_get_context_id (statusbar_p,
                                       converter.str ().c_str ());
     gdk_threads_leave ();
@@ -2671,7 +2674,7 @@ idle_update_info_display_cb (gpointer userData_in)
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
         ACE_ASSERT (drawing_area_p);
 
-        unsigned int height, width;
+        Common_UI_Resolution_t resolution_s;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_video_streamconfiguration_iterator;
         ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_video_streamconfiguration_iterator;
@@ -2739,8 +2742,8 @@ idle_update_info_display_cb (gpointer userData_in)
             ACE_ASSERT ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format.cbFormat == sizeof (struct tagVIDEOINFOHEADER));
             struct tagVIDEOINFOHEADER* video_info_header_p =
               reinterpret_cast<struct tagVIDEOINFOHEADER*> ((*directshow_iterator_3).second.second.filterConfiguration->pinConfiguration->format.pbFormat);
-            height = video_info_header_p->bmiHeader.biHeight;
-            width = video_info_header_p->bmiHeader.biWidth;
+            resolution_s.width = video_info_header_p->bmiHeader.biWidth;
+            resolution_s.height = video_info_header_p->bmiHeader.biHeight;
             break;
           }
           case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -2757,15 +2760,15 @@ idle_update_info_display_cb (gpointer userData_in)
           }
         } // end SWITCH
 #else
-        ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
-        ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
+//        ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
+//          (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+//        ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
 
-        height = (*iterator_4).second.second.sourceFormat.height;
-        width = (*iterator_4).second.second.sourceFormat.width;
+        resolution_s =
+            (*video_streamconfiguration_iterator).second.configuration_.format.resolution;
 #endif
         gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
-                                     width, height);
+                                     resolution_s.width, resolution_s.height);
 
         is_session_message = true;
 
@@ -3718,7 +3721,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   iterator_5 = (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator_5 != (*iterator_4).second.end ());
   iterator_6 =
-      (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (MODULE_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+      (*iterator_4).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
   ACE_ASSERT (iterator_6 != (*iterator_4).second.end ());
   is_fullscreen = (*iterator_5).second.second.fullScreen;
 #endif
@@ -3842,7 +3845,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
 #else
                               2, &value);
     ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
-    (*iterator_5).second.second.inputFormat =
+    (*iterator_5).second.second.outputFormat.format =
       static_cast<enum AVPixelFormat> (g_value_get_int (&value));
 #endif
     g_value_unset (&value);
@@ -3915,13 +3918,13 @@ continue_:
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      (*directshow_iterator_5).second.second.interfaceIdentifier =
+      (*directshow_iterator_5).second.second.display.interfaceIdentifier =
         g_value_get_string (&value);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      (*mediafoundation_iterator_5).second.second.interfaceIdentifier =
+      (*mediafoundation_iterator_5).second.second.display.interfaceIdentifier =
         g_value_get_string (&value);
       break;
     }
@@ -3934,7 +3937,7 @@ continue_:
     }
   } // end SWITCH
 #else
-  (*iterator_5).second.second.displayinterfaceIdentifier =
+  (*iterator_5).second.second.display.device =
       g_value_get_string (&value);
 #endif
   g_value_unset (&value);
@@ -3962,7 +3965,7 @@ continue_:
       ACE_ASSERT (monitor_p);
 
       if (!ACE_OS::strcmp (gdk_monitor_get_model (monitor_p),
-                           (*iterator_5).second.second.displayinterfaceIdentifier.c_str ()))
+                           (*iterator_5).second.second.display.device.c_str ()))
         break;
     } // end FOR
   } // end FOR
@@ -3970,7 +3973,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.display.device.c_str ())));
     goto error;
   } // end IF
   display_p = gdk_monitor_get_display (monitor_p);
@@ -4018,7 +4021,7 @@ continue_:
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("device not found (was: \"%s\"), returning\n"),
-                ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ())));
+                ACE_TEXT ((*iterator_5).second.second.display.device.c_str ())));
     goto error;
   } // end IF
 #endif
@@ -4045,57 +4048,8 @@ continue_:
                             1, &value);
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
 
-  switch (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)))
-  {
-    case ARDRONE_VIDEOMODE_360P:
-    { // *TODO*: use ffmpeg to determine the format resolution
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      ACE_ASSERT (video_info_header_p);
-      video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_360P_VIDEO_WIDTH;
-      video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_360P_VIDEO_HEIGHT;
-      video_info_header_p->bmiHeader.biSizeImage =
-        DIBSIZE (video_info_header_p->bmiHeader);
-#else
-      (*iterator_5).second.second.sourceFormat.height =
-          ARDRONE_H264_360P_VIDEO_HEIGHT;
-      (*iterator_5).second.second.sourceFormat.width =
-          ARDRONE_H264_360P_VIDEO_WIDTH;
-      (*iterator_6).second.second.sourceFormat.height =
-          ARDRONE_H264_360P_VIDEO_HEIGHT;
-      (*iterator_6).second.second.sourceFormat.width =
-          ARDRONE_H264_360P_VIDEO_WIDTH;
-#endif
-      break;
-    }
-    case ARDRONE_VIDEOMODE_720P:
-    {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      ACE_ASSERT (video_info_header_p);
-      video_info_header_p->bmiHeader.biWidth = ARDRONE_H264_720P_VIDEO_WIDTH;
-      video_info_header_p->bmiHeader.biHeight = -ARDRONE_H264_720P_VIDEO_HEIGHT;
-      video_info_header_p->bmiHeader.biSizeImage =
-        DIBSIZE (video_info_header_p->bmiHeader);
-#else
-      (*iterator_5).second.second.sourceFormat.height =
-          ARDRONE_H264_720P_VIDEO_HEIGHT;
-      (*iterator_5).second.second.sourceFormat.width =
-          ARDRONE_H264_720P_VIDEO_WIDTH;
-      (*iterator_6).second.second.sourceFormat.height =
-          ARDRONE_H264_720P_VIDEO_HEIGHT;
-      (*iterator_6).second.second.sourceFormat.width =
-          ARDRONE_H264_720P_VIDEO_WIDTH;
-#endif
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown display format (was: %d), returning\n"),
-                  g_value_get_int (&value)));
-      g_value_unset (&value);
-      goto error;
-    }
-  } // end SWITCH
+  ARDroneVideoModeToResolution (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)),
+                                (*iterator_4).second.configuration_.format.resolution);
   g_value_unset (&value);
 
   drawing_area_p =
@@ -4441,7 +4395,7 @@ continue_:
   (*iterator_5).second.second.area = rectangle_s;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("using display device \"%s\" (display: \"%s\", monitor: %d) [%d/%d/%d/%d]: %dx%d\n"),
-              ACE_TEXT ((*iterator_5).second.second.displayinterfaceIdentifier.c_str ()),
+              ACE_TEXT ((*iterator_5).second.second.display.device.c_str ()),
               ACE_TEXT (gdk_display_get_name (display_p)),
               monitor_number,
               (*iterator_5).second.second.area.x,
@@ -5199,7 +5153,10 @@ places_save_mount_cb (GtkPlacesSidebar* placesSidebar_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::places_save_mount_cb"));
 
-//  struct ARDrone_UI_CBData_Base* cb_data_p =
+  ACE_UNUSED_ARG (placesSidebar_in);
+  ACE_UNUSED_ARG (mountOperation_in);
+
+  //  struct ARDrone_UI_CBData_Base* cb_data_p =
 //      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
 
 }
@@ -5223,6 +5180,22 @@ glarea_realize_cb (GtkWidget* widget_in,
   GLuint* model_list_id_p = NULL;
   struct Common_GL_Scene* gl_scene_p = NULL;
   GtkAllocation allocation;
+
+  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
+  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
+  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
+  // position the light in eye space
+  GLfloat light0_position[] = {0.0F,
+                               5.0F * 2,
+                               5.0F * 2,
+                               0.0F}; // --> directional light
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  struct ARDrone_UI_CBData* data_p = NULL;
+  ARDrone_StreamConfigurationsIterator_t streams_iterator;
+  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
@@ -5303,16 +5276,15 @@ glarea_realize_cb (GtkWidget* widget_in,
     }
   } // end SWITCH
 #else
-  struct ARDrone_UI_CBData* data_p =
-    static_cast<struct ARDrone_UI_CBData*> (userData_in);
+  data_p = static_cast<struct ARDrone_UI_CBData*> (userData_in);
   // sanity check(s)
   ACE_ASSERT (data_p);
   ACE_ASSERT (data_p->configuration);
 
-  ARDrone_StreamConfigurationsIterator_t streams_iterator =
+  streams_iterator =
       data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
   ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator =
+  modulehandler_configuration_iterator =
     (*streams_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second.end ());
 #endif // ACE_WIN32 || ACE_WIN64
@@ -5345,17 +5317,22 @@ glarea_realize_cb (GtkWidget* widget_in,
 #endif /* GTK_CHECK_VERSION (3,0,0) */
 
 #if GTK_CHECK_VERSION(3,0,0)
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3,24,1)
+  gtk_gl_area_make_current (gl_area_p);
+#elif GTK_CHECK_VERSION(3,16,0)
   if (!gtk_gl_area_make_current (gl_area_p))
+    return;
 #else
 #if defined (GTKGLAREA_SUPPORT)
   if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+    return;
 #else
 #endif // GTKGLAREA_SUPPORT
-#endif // GTK_CHECK_VERSION(3,16,0)
+#endif // GTK_CHECK_VERSION(3,24,1)
 #else
 #if defined (GTKGLAREA_SUPPORT)
   if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
+    return;
 #else
   bool result = gdk_gl_drawable_make_current (drawable_p,
                                               context_p);
@@ -5364,9 +5341,9 @@ glarea_realize_cb (GtkWidget* widget_in,
   result = gdk_gl_drawable_gl_begin (drawable_p,
                                      context_p);
   if (!result)
+    return;
 #endif // GTKGLAREA_SUPPORT
 #endif // GTK_CHECK_VERSION(3,0,0)
-    return;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
@@ -5500,20 +5477,12 @@ glarea_realize_cb (GtkWidget* widget_in,
 //  glEnable (GL_LIGHTING);
 
   // set up light colors (ambient, diffuse, specular)
-  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
   glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
   COMMON_GL_ASSERT
-  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
   glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
   COMMON_GL_ASSERT
-  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
   glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
   COMMON_GL_ASSERT
-  // position the light in eye space
-  GLfloat light0_position[] = {0.0F,
-                               5.0F * 2,
-                               5.0F * 2,
-                               0.0F}; // --> directional light
   glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
   COMMON_GL_ASSERT
   glEnable (GL_LIGHT0);
@@ -5680,7 +5649,7 @@ glarea_render_cb (GtkGLArea* GLArea_in,
 //  else
 //    model_list_id_p = &directshow_data_p->openGLModelListId;
 //#else
-  model_list_id_p = &data_p->openGLModelListId;
+  model_list_id_p = &cb_data_base_p->openGLModelListId;
 //#endif
   ACE_ASSERT (model_list_id_p);
   ACE_ASSERT (*model_list_id_p);
@@ -5718,23 +5687,23 @@ glarea_render_cb (GtkGLArea* GLArea_in,
 
   // scale the whole asset to fit into the view frustum
   static GLfloat scale_factor = 0.0f;
-  scale_factor = (data_p->openGLScene.boundingBox.second.x -
-                  data_p->openGLScene.boundingBox.first.x);
+  scale_factor = (cb_data_base_p->openGLScene.boundingBox.second.x -
+                  cb_data_base_p->openGLScene.boundingBox.first.x);
   scale_factor =
-      COMMON_GL_ASSIMP_MAX (data_p->openGLScene.boundingBox.second.y - data_p->openGLScene.boundingBox.first.y, scale_factor);
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLScene.boundingBox.second.y - cb_data_base_p->openGLScene.boundingBox.first.y, scale_factor);
   scale_factor =
-      COMMON_GL_ASSIMP_MAX (data_p->openGLScene.boundingBox.second.z - data_p->openGLScene.boundingBox.first.z, scale_factor);
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLScene.boundingBox.second.z - cb_data_base_p->openGLScene.boundingBox.first.z, scale_factor);
   scale_factor = (1.0f / scale_factor) * 2.0f;
   glScalef (scale_factor, scale_factor, scale_factor);
   COMMON_GL_ASSERT
 
   // center the model
-  glTranslatef (-data_p->openGLScene.center.x,
-                -data_p->openGLScene.center.y,
-                -data_p->openGLScene.center.z);
+  glTranslatef (-cb_data_base_p->openGLScene.center.x,
+                -cb_data_base_p->openGLScene.center.y,
+                -cb_data_base_p->openGLScene.center.z);
   COMMON_GL_ASSERT
 
-  glCallList (data_p->openGLModelListId);
+  glCallList (cb_data_base_p->openGLModelListId);
   COMMON_GL_ASSERT
 
 //  Common_GL_Tools::drawCube (true);
@@ -7583,8 +7552,8 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   } // end IF
 #endif
 
-  ACE_ASSERT (&cb_data_p->lock == (*iterator_3).second.second.pixelBufferLock);
-  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock);
+  ACE_ASSERT (&state_r.lock == (*iterator_3).second.second.pixelBufferLock);
+  { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
     if (cb_data_p->pixelBuffer)
     {
       g_object_unref (cb_data_p->pixelBuffer);
@@ -7911,7 +7880,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
                                cb_data_p->pixelBuffer,
                                0.0, 0.0);
 
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, FALSE);
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, FALSE);
     // *IMPORTANT NOTE*: potentially, this involves tranfer of image data to an
     //                   X server running on a different host
     //gdk_draw_pixbuf (GDK_DRAWABLE (window_p), NULL,

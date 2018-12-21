@@ -40,6 +40,8 @@
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_lib_directshow_asynch_source_filter.h"
 #include "stream_lib_directshow_source_filter.h"
+#else
+#include "stream_lib_ffmpeg_common.h"
 #endif // ACE_WIN32 || ACE_WIN64
 #include "stream_misc_dump.h"
 
@@ -282,7 +284,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchUDPConnector_t,
                                     struct ARDrone_UserData> ARDrone_Module_AsynchUDPSource;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
@@ -353,7 +355,7 @@ typedef Stream_Statistic_StatisticReport_WriterTask_T<ACE_MT_SYNCH,
                                                       Common_Timer_Manager_t,
                                                       struct ARDrone_SessionData,
                                                       ARDrone_SessionData_t> ARDrone_Module_Statistic_WriterTask_t;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef ARDrone_Module_ControlDecoder_T<ACE_MT_SYNCH,
@@ -466,7 +468,7 @@ typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,
                                       ARDrone_SessionMessage,
                                       ARDrone_SessionData_t,
                                       struct Stream_MediaFramework_FFMPEG_MediaType> ARDrone_Module_H264Decoder;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
@@ -543,7 +545,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     ARDrone_ConnectionManager_t,
                                     ARDrone_AsynchUDPConnector_t,
                                     struct ARDrone_UI_CBData_Base> ARDrone_Module_AsynchController;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Vis_Target_Direct3D_T<ACE_MT_SYNCH,
@@ -603,8 +605,9 @@ typedef Stream_Module_Vis_GTK_Pixbuf_T<ACE_MT_SYNCH,
                                        ARDrone_ControlMessage_t,
                                        ARDrone_Message,
                                        ARDrone_SessionMessage,
-                                       ARDrone_SessionData_t> ARDrone_Module_Display;
-#endif
+                                       ARDrone_SessionData_t,
+                                       struct Stream_MediaFramework_FFMPEG_MediaType> ARDrone_Module_Display;
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (_DEBUG)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -634,8 +637,8 @@ typedef Stream_Module_Dump_T<ACE_MT_SYNCH,
                              ARDrone_SessionMessage,
                              ARDrone_SessionData_t,
                              struct ARDrone_UserData> ARDrone_Module_Dump;
-#endif
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
+#endif // _DEBUG
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
@@ -661,7 +664,7 @@ typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    ARDrone_Message,
                                    ARDrone_SessionMessage,
                                    struct ARDrone_SessionData> ARDrone_Module_FileWriter;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Decoder_AVIEncoder_ReaderTask_T<ACE_MT_SYNCH,
@@ -726,7 +729,7 @@ typedef Stream_Decoder_AVIEncoder_WriterTask_T<ACE_MT_SYNCH,
                                                struct ARDrone_SessionData,
                                                struct Stream_MediaFramework_FFMPEG_MediaType,
                                                struct ARDrone_UserData> ARDrone_Module_AVIEncoder_WriterTask_t;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 //////////////////////////////////////////
 

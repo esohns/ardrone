@@ -69,12 +69,12 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "Common_config.h"
 #endif // HAVE_CONFIG_H
+#include "common.h"
 #include "common_defines.h"
+#include "common_macros.h"
 #include "common_tools.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "common_error_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
 
 #include "common_log_tools.h"
 #if defined (GUI_SUPPORT)
@@ -90,6 +90,8 @@ extern "C"
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #include "common_ui_defines.h"
+#include "common_ui_tools.h"
+
 #include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_manager_common.h"
 #endif // GTK_USE
@@ -110,10 +112,15 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "ACENetwork_config.h"
 #endif // HAVE_CONFIG_H
+#include "net_common_tools.h"
 #include "net_defines.h"
 
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
+
+#if defined (DHCLIENT_USE)
+#include "dhcp_defines.h"
+#endif // DHCLIENT_USE
 
 #if defined (HAVE_CONFIG_H)
 #include "ardrone_config.h"
@@ -213,7 +220,7 @@ do_setup (bool install_in,
   {
     case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
     {
-      COMMON_IF_LINUX_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
+      COMMON_OS_LINUX_IF_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
       else
         goto continue_2;
 
@@ -378,11 +385,11 @@ continue_4:
   // dhclient
 #if defined (DHCLIENT_USE)
   pid_i =
-      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
-  if (!Net_Common_Tools::DHClientOmapiSupport (true))
+      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (DHCP_DHCLIENT_STRING));
+  if (!DHCP_Tools::DHClientOmapiSupport (true))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::DHClientOmapiSupport(true), aborting\n")));
+                ACE_TEXT ("failed to DHCP_Tools::DHClientOmapiSupport(true), aborting\n")));
     goto clean;
   } // end IF
 
@@ -410,8 +417,8 @@ clean:
   if (likely (restart_dhclient_b))
   {
     std::string command_line_string =
-        ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING);
-    COMMON_COMMAND_ADD_SWITCH (command_line_string,NET_EXE_DHCLIENT_SWITCH_RUN_IN_FOREGROUND_STRING)
+        ACE_TEXT_ALWAYS_CHAR (DHCP_DHCLIENT_STRING);
+    COMMON_COMMAND_ADD_SWITCH (command_line_string, DHCP_DHCLIENT_SWITCH_RUN_IN_FOREGROUND_STRING)
     command_line_string += ACE_TEXT_ALWAYS_CHAR (" ");
     command_line_string +=
         ACE_TEXT_ALWAYS_CHAR (WLANInterfaceIdentifier_in.c_str ());
@@ -429,17 +436,17 @@ clean:
     } // end IF
 #if defined (_DEBUG)
     pid_i =
-        Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
+        Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (DHCP_DHCLIENT_STRING));
     if (likely (pid_i))
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("started \"%s\" (PID: %u)...\n"),
-                  ACE_TEXT (NET_EXE_DHCLIENT_STRING),
+                  ACE_TEXT (DHCP_DHCLIENT_STRING),
                   pid_i));
     else
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to (re)start \"%s\", aborting\n"),
-                  ACE_TEXT (NET_EXE_DHCLIENT_STRING)));
+                  ACE_TEXT (DHCP_DHCLIENT_STRING)));
       result = false;
     } // end ELSE
 #endif // _DEBUG
@@ -464,7 +471,7 @@ uninstall:
   // step1: dhclient
 #if defined (DHCLIENT_USE)
   pid_i =
-      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (NET_EXE_DHCLIENT_STRING));
+      Common_Tools::getProcessId (ACE_TEXT_ALWAYS_CHAR (DHCP_DHCLIENT_STRING));
 //  if (!Net_Common_Tools::DHClientOmapiSupport (true))
 //  {
 //    ACE_DEBUG ((LM_ERROR,
@@ -533,7 +540,7 @@ uninstall:
   {
     case COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU:
     {
-      COMMON_IF_LINUX_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
+      COMMON_OS_LINUX_IF_DISTRIBUTION_AT_LEAST (COMMON_OPERATINGSYSTEM_DISTRIBUTION_LINUX_UBUNTU,18,4,0); // bionic beaver
       else
         goto continue__;
 
@@ -1708,7 +1715,11 @@ do_work (int argc_in,
   struct ARDrone_StreamConfiguration stream_configuration;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  Common_UI_IGTK_Manager_t* igtk_manager_p = NULL;
+  ARDrone_UI_GTK_Manager_t* gtk_manager_p =
+      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+  ACE_ASSERT (gtk_manager_p);
+  struct ARDrone_UI_GTK_State& state_r =
+      const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2086,12 +2097,18 @@ do_work (int argc_in,
 #endif // _DEBUG
   modulehandler_configuration.demultiplex = true;
   modulehandler_configuration.finishOnDisconnect = true;
+#if defined (GUI_SUPPORT)
   modulehandler_configuration.fullScreen = fullScreen_in;
+#endif // GUI_SUPPORT
   modulehandler_configuration.parserConfiguration =
     &cb_data_p->configuration->parserConfiguration;
   modulehandler_configuration.frameRate.den = 1;
   modulehandler_configuration.frameRate.num = 30;
-  modulehandler_configuration.pixelBufferLock = &CBData_in->lock;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+  modulehandler_configuration.pixelBufferLock = &state_r.lock;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   modulehandler_configuration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
   modulehandler_configuration.subscriber = &event_handler;
@@ -2942,8 +2959,7 @@ do_work (int argc_in,
   } // end SWITCH
 #else
   signal_handler_p = &signalHandler_in;
-  configuration_in.signalConfiguration.dispatchState =
-    &dispatch_state_s;
+  configuration_in.signalConfiguration.dispatchState = &dispatch_state_s;
   configuration_in.signalConfiguration.hasUI =
     !UIDefinitionFilePath_in.empty ();
   configuration_in.signalConfiguration.peerAddress = address_in;
@@ -2973,13 +2989,18 @@ do_work (int argc_in,
   timer_manager_p->start ();
 
 #if defined (GUI_SUPPORT)
+//#if defined (GTK_USE)
+//  ARDrone_UI_GTK_Manager_t* gtk_manager_p =
+//      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+//  ACE_ASSERT (gtk_manager_p);
+//  struct ARDrone_UI_GTK_State& state_r = gtk_manager_p->getR_2 ();
+//#endif // GTK_USE
+
   // step1a: start UI event loop ?
   if (!UIDefinitionFilePath_in.empty ())
   {
 #if defined (GTK_USE)
-    igtk_manager_p = ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
-    ACE_ASSERT (igtk_manager_p);
-    igtk_manager_p->start ();
+    gtk_manager_p->start ();
     ACE_Time_Value delay (0,
                           ARDRONE_UI_INITIALIZATION_DELAY);
     result = ACE_OS::sleep (delay);
@@ -2987,7 +3008,7 @@ do_work (int argc_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to ACE_OS::sleep(%#T): \"%m\", continuing\n"),
                   &delay));
-    if (!igtk_manager_p->isRunning ())
+    if (!gtk_manager_p->isRunning ())
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to start GTK event dispatch, returning\n")));
@@ -3079,9 +3100,7 @@ do_work (int argc_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start event dispatch, returning\n")));
-//		{ // synch access
-//			ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
-
+//		{ ACE_Guard<ACE_Recursive_Thread_Mutex> aGuard  (CBData_in.lock);
 //			for (Net_GTK_EventSourceIDsIterator_t iterator = CBData_in.event_source_ids.begin ();
 //					 iterator != CBData_in.event_source_ids.end ();
 //					 iterator++)
@@ -3149,7 +3168,7 @@ do_work (int argc_in,
 //    {
 //      ACE_DEBUG ((LM_ERROR,
 //                  ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
-//                  ACE_TEXT (Net_Common_Tools::IPAddress2String (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
+//                  ACE_TEXT (Net_Common_Tools::IPAddressToString (cb_data_p->configuration->socketConfigurations.back ().address).c_str ())));
 //      goto error;
 //    } // end IF
 //    if (!Net_Common_Tools::interfaceToIPAddress (wlan_interface_identifier_string,
@@ -3430,7 +3449,7 @@ continue_2:
   } // end IF
   else
 #if defined (GTK_USE)
-    igtk_manager_p->wait ();
+    gtk_manager_p->wait ();
 #elif defined (WXWIDGETS_USE)
     IWxWidgetsManager_in->wait ();
     //IApplication_in->run ();
@@ -3490,8 +3509,8 @@ continue_2:
 clean:
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  if (igtk_manager_p && !UIDefinitionFilePath_in.empty ())
-    igtk_manager_p->stop ();
+  if (gtk_manager_p && !UIDefinitionFilePath_in.empty ())
+    gtk_manager_p->stop ();
 #endif // GTK_USE
 #endif // GUI_SUPPORT
   if (WLAN_monitor_p)
@@ -4135,8 +4154,12 @@ ACE_TMAIN (int argc_in,
     }
   } // end SWITCH
 #else
+#if defined (GUI_SUPPORT)
   video_modulehandler_configuration.fullScreen = fullscreen;
-  video_modulehandler_configuration.pixelBufferLock = &ui_cb_data.lock;
+#if defined (GTK_USE)
+  video_modulehandler_configuration.pixelBufferLock = &state_r.lock;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   stream_configuration_2.initialize (module_configuration,
                                      video_modulehandler_configuration,

@@ -22,6 +22,8 @@
 
 #include "stream_macros.h"
 
+#include "ardrone_stream_common.h"
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,
@@ -356,47 +358,16 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
           const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
       // sanity check(s)
       ACE_ASSERT (!session_data_r.formats.empty ());
-      Common_UI_Resolution_t resolution_s;
-      // *TODO*: remove type inferences
-      switch (videoMode_)
-      {
-        case ARDRONE_VIDEOMODE_360P:
-        {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-          resolution_s.cx = ARDRONE_H264_360P_VIDEO_WIDTH;
-          resolution_s.cy = -ARDRONE_H264_360P_VIDEO_HEIGHT;
-#else
-          resolution_s.width = ARDRONE_H264_360P_VIDEO_WIDTH;
-          resolution_s.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
-#endif // ACE_WIN32 || ACE_WIN64
-          break;
-        }
-        case ARDRONE_VIDEOMODE_720P:
-        {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-          resolution_s.cx = ARDRONE_H264_720P_VIDEO_WIDTH;
-          resolution_s.cy = -ARDRONE_H264_720P_VIDEO_HEIGHT;
-#else
-          resolution_s.width = ARDRONE_H264_720P_VIDEO_WIDTH;
-          resolution_s.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
-#endif // ACE_WIN32 || ACE_WIN64
-          break;
-        }
-        default:
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: invalid/unknown video mode (was: %d), continuing\n"),
-                      inherited::mod_->name (),
-                      videoMode_));
-          break;
-        }
-      } // end SWITCH
+      struct Stream_MediaFramework_FFMPEG_MediaType format_s =
+         session_data_r.formats.back ();
+      ARDroneVideoModeToResolution (videoMode_,
+                                    format_s.resolution);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       switch (session_data_r.mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
-          Stream_MediaFramework_DirectShow_Tools::resize (resolution_s,
+          Stream_MediaFramework_DirectShow_Tools::resize (format_s.resolution,
                                                           session_data_r.formats.back ());
           break;
         }
@@ -415,7 +386,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
         }
       } // end SWITCH
 #else
-      session_data_r.formats.back () = resolution_s;
+      session_data_r.formats.back () = format_s;
 #endif // ACE_WIN32 || ACE_WIN64
       break;
     }

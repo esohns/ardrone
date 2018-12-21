@@ -37,7 +37,6 @@
 #include "stream_session_base.h"
 #include "stream_statemachine_control.h"
 
-//#include "ardrone_message.h"
 #include "ardrone_modules_common.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"

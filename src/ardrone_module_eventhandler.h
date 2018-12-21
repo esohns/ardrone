@@ -60,7 +60,7 @@ class ARDrone_Module_EventHandler_T
                                           ARDrone_Message,
                                           ARDrone_SessionMessage,
                                           Stream_SessionId_t,
-                                          struct ARDrone_SessionData,
+                                          ARDrone_SessionData,
                                           struct ARDrone_UserData>
 #endif // ACE_WIN32 || ACE_WIN64
 {
@@ -82,7 +82,7 @@ class ARDrone_Module_EventHandler_T
                                           ARDrone_Message,
                                           ARDrone_SessionMessage,
                                           Stream_SessionId_t,
-                                          struct ARDrone_SessionData,
+                                          ARDrone_SessionData,
                                           struct ARDrone_UserData> inherited;
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -121,7 +121,7 @@ class ARDrone_Module_EventHandler_T
   typedef Stream_StreamModuleA_T<ACE_MT_SYNCH,
                                  Common_TimePolicy_t,
                                  Stream_SessionId_t,
-                                 ARDrone_DirectShow_SessionData,
+  ARDrone_DirectShow_SessionData,
                                  enum Stream_SessionMessageType,
                                  struct Stream_ModuleConfiguration,
                                  ConfigurationType,
@@ -133,7 +133,7 @@ class ARDrone_Module_EventHandler_T
   typedef Stream_StreamModuleA_T<ACE_MT_SYNCH,
                                  Common_TimePolicy_t,
                                  Stream_SessionId_t,
-                                 struct ARDrone_SessionData,
+                                 ARDrone_SessionData,
                                  enum Stream_SessionMessageType,
                                  struct Stream_ModuleConfiguration,
                                  ConfigurationType,
@@ -174,7 +174,7 @@ DATASTREAM_MODULE_DUPLEX_A (ARDrone_DirectShow_SessionData,                     
 typedef ARDrone_Module_EventHandler_T<struct ARDrone_ModuleHandlerConfiguration> ARDrone_Module_EventHandler_t;
 
 // declare module
-DATASTREAM_MODULE_DUPLEX_A (struct ARDrone_SessionData,                   // session data type
+DATASTREAM_MODULE_DUPLEX_A (ARDrone_SessionData,                          // session data type
                             enum Stream_SessionMessageType,               // session event type
                             struct ARDrone_ModuleHandlerConfiguration,    // module handler configuration type
                             ardrone_default_handler_module_name_string,   // module name

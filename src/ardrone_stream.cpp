@@ -25,7 +25,6 @@
 #include "stream_misc_defines.h"
 
 #include "ardrone_defines.h"
-//#include "ardrone_modules_common.h"
 
 const char video_stream_name_string_[] =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING);
@@ -87,24 +86,32 @@ ARDroneVideoModeToString (const enum ARDrone_VideoMode mode_in)
 }
 void
 ARDroneVideoModeToResolution (const enum ARDrone_VideoMode mode_in,
-                              unsigned int& width_out,
-                              unsigned int& height_out)
+                              Common_UI_Resolution_t& resolution_out)
 {
   ARDRONE_TRACE (ACE_TEXT ("::ARDroneVideoModeToResolution"));
 
   // initialize return value(s)
-  width_out = 0;
-  height_out = 0;
+  ACE_OS::memset (&resolution_out, 0, sizeof (Common_UI_Resolution_t));
 
   switch (mode_in)
   {
     case ARDRONE_VIDEOMODE_360P:
-      width_out = ARDRONE_H264_360P_VIDEO_WIDTH;
-      height_out = ARDRONE_H264_360P_VIDEO_HEIGHT;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      resolution_out.cx = ARDRONE_H264_360P_VIDEO_WIDTH;
+      resolution_out.cy = ARDRONE_H264_360P_VIDEO_HEIGHT;
+#else
+      resolution_out.width = ARDRONE_H264_360P_VIDEO_WIDTH;
+      resolution_out.height = ARDRONE_H264_360P_VIDEO_HEIGHT;
+#endif // ACE_WIN32 || ACE_WIN64
       break;
     case ARDRONE_VIDEOMODE_720P:
-      width_out = ARDRONE_H264_720P_VIDEO_WIDTH;
-      height_out = ARDRONE_H264_720P_VIDEO_HEIGHT;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+      resolution_out.cx = ARDRONE_H264_720P_VIDEO_WIDTH;
+      resolution_out.cy = ARDRONE_H264_720P_VIDEO_HEIGHT;
+#else
+      resolution_out.width = ARDRONE_H264_720P_VIDEO_WIDTH;
+      resolution_out.height = ARDRONE_H264_720P_VIDEO_HEIGHT;
+#endif // ACE_WIN32 || ACE_WIN64
       break;
     default:
     {

@@ -56,6 +56,7 @@ extern "C"
 #include "ace/OS.h"
 
 #if defined (GUI_SUPPORT)
+#include "common_ui_common.h"
 #include "common_ui_defines.h"
 #endif // GUI_SUPPORT
 
@@ -73,6 +74,8 @@ extern "C"
 #include "stream_dev_directshow_tools.h"
 
 #include "stream_lib_directshow_tools.h"
+#else
+#include "stream_lib_ffmpeg_common.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "stream_vis_common.h"
@@ -92,8 +95,7 @@ std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
 std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
 // *TODO*: use libav here
 void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
-                                   unsigned int&,  // return value: width
-                                   unsigned int&); // return value: height
+                                   Common_UI_Resolution_t&);
 
 // forward declarations
 //class ARDrone_Message;
@@ -102,7 +104,7 @@ class ARDrone_DirectShow_SessionMessage;
 class ARDrone_DirectShow_SessionData;
 #else
 class ARDrone_SessionMessage;
-struct ARDrone_SessionData;
+class ARDrone_SessionData;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (GUI_SUPPORT)
@@ -139,7 +141,7 @@ struct ARDrone_StreamState
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_SessionData* sessionData;
 #else
-  struct ARDrone_SessionData*     sessionData;
+  ARDrone_SessionData*            sessionData;
 #endif // ACE_WIN32 || ACE_WIN64
   enum ARDrone_StreamType         type;
 
@@ -234,7 +236,7 @@ typedef Stream_SessionData_T<ARDrone_DirectShow_SessionData> ARDrone_DirectShow_
 #else
 class ARDrone_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                        enum AVPixelFormat,
+                                        struct Stream_MediaFramework_FFMPEG_MediaType,
                                         struct ARDrone_StreamState,
                                         struct ARDrone_Statistic,
                                         struct ARDrone_UserData>
@@ -242,39 +244,35 @@ class ARDrone_SessionData
  public:
   ARDrone_SessionData ()
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                   enum AVPixelFormat,
+                                   struct Stream_MediaFramework_FFMPEG_MediaType,
                                    struct ARDrone_StreamState,
                                    struct ARDrone_Statistic,
                                    struct ARDrone_UserData> ()
-   , resolution ()
    , targetFileName ()
   {
-    formats.push_back (AV_PIX_FMT_RGBA);
+    struct Stream_MediaFramework_FFMPEG_MediaType format_s;
+    format_s.format = AV_PIX_FMT_RGBA;
     ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
-                                  resolution.width, resolution.height);
+                                  format_s.resolution);
+    formats.push_back (format_s);
   }
 
   ARDrone_SessionData& operator+= (const ARDrone_SessionData& rhs_in)
   {
     // *NOTE*: the idea is to 'merge' the data
     Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                  enum AVPixelFormat,
+                                  struct Stream_MediaFramework_FFMPEG_MediaType,
                                   struct ARDrone_StreamState,
                                   struct ARDrone_Statistic,
                                   struct ARDrone_UserData>::operator+= (rhs_in);
 
-    resolution.height = (resolution.height ? resolution.height
-                                           : rhs_in.resolution.height);
-    resolution.width = (resolution.width ? resolution.width
-                                         : rhs_in.resolution.width);
     targetFileName =
       (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
 
     return *this;
   }
 
-  Common_UI_Resolution_t resolution;
-  std::string            targetFileName;
+  std::string targetFileName;
 };
 typedef Stream_SessionData_T<ARDrone_SessionData> ARDrone_SessionData_t;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -323,11 +321,14 @@ struct ARDrone_ModuleHandlerConfigurationBase
    , CBData (NULL)
 #endif // GUI_SUPPORT
    , codecId (AV_CODEC_ID_H264)
+#if defined (GUI_SUPPORT)
+   , display ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , direct3DConfiguration (NULL)
 #else
    , fullScreen (ARDRONE_DEFAULT_VIDEO_FULLSCREEN)
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
    , interfaceIdentifier ()
    , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
    , printProgressDot (false)
@@ -341,11 +342,14 @@ struct ARDrone_ModuleHandlerConfigurationBase
   struct ARDrone_UI_CBData_Base*                       CBData; // controller module
 #endif // GUI_SUPPORT
   enum AVCodecID                                       codecId; // H264 decoder module
+#if defined (GUI_SUPPORT)
+  struct Common_UI_DisplayDevice                       display; // display module
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct Stream_MediaFramework_Direct3D_Configuration* direct3DConfiguration; // display module
 #else
   bool                                                 fullScreen; // display module
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
   std::string                                          interfaceIdentifier; // wireless-/display-
   std::string                                          outboundStreamName;  // event handler module
   bool                                                 printProgressDot;    // file writer module
@@ -503,12 +507,13 @@ struct ARDrone_ModuleHandlerConfiguration
    , frameRate ()
 #if defined (GUI_SUPPORT)
    , fullScreen (false)
+   , outputFormat ()
 #if defined (GTK_USE)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
 #endif // GTK_USE
    , window (NULL)
- #endif // GUI_SUPPORT
+#endif // GUI_SUPPORT
   {
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
     passive = false;
@@ -516,26 +521,27 @@ struct ARDrone_ModuleHandlerConfiguration
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  GdkRectangle                               area;
+  GdkRectangle                                  area;
 #elif defined (WXWIDGETS_USE)
-  wxRect                                     area;
+  wxRect                                        area;
 #endif
 #endif // GUI_SUPPORT
-  ARDrone_IConnection_t*                     connection;               // net source/IO module
-  ARDrone_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*              connectionManager;        // IO module
-  struct AVRational                          frameRate;                // AVI encoder module
+  ARDrone_IConnection_t*                        connection;               // net source/IO module
+  ARDrone_Stream_ConnectionConfigurations_t*    connectionConfigurations; // net source/target modules
+  ARDrone_IConnectionManager_t*                 connectionManager;        // IO module
+  struct AVRational                             frameRate;                // AVI encoder module
 #if defined (GUI_SUPPORT)
-  bool                                       fullScreen;
+  bool                                          fullScreen;
+  struct Stream_MediaFramework_FFMPEG_MediaType outputFormat;
 #if defined (GTK_USE)
-  GdkPixbuf*                                 pixelBuffer;              // display module
-  ACE_SYNCH_MUTEX*                           pixelBufferLock;          // display module
+  GdkPixbuf*                                    pixelBuffer;              // display module
+  ACE_SYNCH_MUTEX*                              pixelBufferLock;          // display module
 #endif // GTK_USE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  HWND                                       window;
+  HWND                                          window;
 #else
 #if defined (GTK_USE)
-  GdkWindow*                                 window;
+  GdkWindow*                                    window;
 #endif // GTK_USE
 #endif // ACE_WIN32 || ACE_WIN64
 #endif // GUI_SUPPORT
@@ -555,11 +561,11 @@ struct ARDrone_StreamConfiguration
 #endif // GUI_SUPPORT
    , deviceConfiguration (NULL)
    , dispatch (NET_EVENT_DEFAULT_DISPATCH)
+   , format ()
    , initializeControl (NULL)
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
    , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
-   , sourceFormat ()
    , userData (NULL)
   {}
 
@@ -568,15 +574,15 @@ struct ARDrone_StreamConfiguration
 #endif // GUI_SUPPORT
   ARDrone_IDeviceConfiguration*                 deviceConfiguration;
   enum Common_EventDispatchType                 dispatch;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct _AMMediaType                           format;
+#else
+  struct Stream_MediaFramework_FFMPEG_MediaType format;
+#endif // ACE_WIN32 || ACE_WIN64
   ARDrone_IControlInitialize_t*                 initializeControl;
   ARDrone_IMAVLinkInitialize_t*                 initializeMAVLink;
   ARDrone_INavDataInitialize_t*                 initializeNavData;
   enum Stream_Visualization_VideoRenderer       renderer;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct _AMMediaType                           sourceFormat;
-#else
-  struct Stream_MediaFramework_FFMPEG_MediaType sourceFormat;
-#endif // ACE_WIN32 || ACE_WIN64
 
   struct ARDrone_UserData*                      userData;
 };

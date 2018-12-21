@@ -1,13 +1,16 @@
-﻿include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml/scripts/PreXMLImplementation.cmake)
+﻿if (UNIX)
+ option (NETLINK_SUPPORT "enable netlink support" ON)
+endif (UNIX)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml/scripts/PreXMLImplementation.cmake)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml/scripts/SetXMLImplementation.cmake)
 
 include (CMakeDependentOption)
 include (FeatureSummary)
 
 if (UNIX)
- option (WEXT_SUPPORT "enable wireless extensions (aka wext) support" ON)
- option (NL80211_SUPPORT "enable nl80211 support" ON)
- option (DBUS_SUPPORT "enable DBus/NetworkManager support" ON)
+# option (WEXT_SUPPORT "enable wireless extensions (aka wext) support" ON)
+# option (NL80211_SUPPORT "enable nl80211 support" ON)
+# option (DBUS_SUPPORT "enable DBus/NetworkManager support" ON)
 
  option (DHCLIENT_SUPPORT "enable ISC dhclient support" ON)
 elseif (WIN32)
@@ -131,135 +134,6 @@ if (UNIX)
   pkg_check_modules (PKG_DBUS REQUIRED dbus-1)
   pkg_check_modules (PKG_NETWORKMANAGER REQUIRED NetworkManager)
  endif ()
-
- if (DHCLIENT_USE)
-  set (JSON_LIB_FILE libjson-c.so.3)
-  find_library (JSON_LIBRARY ${JSON_LIB_FILE}
-                HINTS /usr/lib
-                PATH_SUFFIXES x86_64-linux-gnu
-                DOC "searching for ${JSON_LIB_FILE} (system paths)")
-  if (NOT JSON_LIBRARY)
-   message (FATAL_ERROR "could not find ${JSON_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found json library \"${JSON_LIBRARY}\"")
-  endif ()
-
-  set (ISC_LIB_FILE libisc.a)
-  find_library (ISC_LIBRARY ${ISC_LIB_FILE}
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${ISC_LIB_FILE} (system paths)")
-  if (NOT ISC_LIBRARY)
-   message (FATAL_ERROR "could not find ${ISC_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found isc library \"${ISC_LIBRARY}\"")
-  endif ()
-
-  set (ISC_CFG_LIB_FILE libisccfg.a)
-  find_library (ISC_CFG_LIBRARY ${ISC_CFG_LIB_FILE}
-#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${ISC_CFG_LIB_FILE} (system paths)")
-  if (NOT ISC_CFG_LIBRARY)
-   message (FATAL_ERROR "could not find ${ISC_CFG_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found isccfg library \"${ISC_CFG_LIBRARY}\"")
-  endif ()
-
-  set (GEOIP_LIB_FILE libGeoIP.so.1)
-  find_library (GEOIP_LIBRARY ${GEOIP_LIB_FILE}
-                HINTS /usr/lib
-                PATH_SUFFIXES x86_64-linux-gnu
-                DOC "searching for ${GEOIP_LIB_FILE} (system paths)")
-  if (NOT GEOIP_LIBRARY)
-   message (FATAL_ERROR "could not find ${GEOIP_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found GeoIP library \"${GEOIP_LIBRARY}\"")
-  endif ()
-
-  set (KRB5_LIB_FILE libkrb5.so.3)
-  find_library (KRB5_LIBRARY ${KRB5_LIB_FILE}
-                HINTS /usr/lib
-                PATH_SUFFIXES x86_64-linux-gnu
-                DOC "searching for ${KRB5_LIB_FILE} (system paths)")
-  if (NOT KRB5_LIBRARY)
-   message (FATAL_ERROR "could not find ${KRB5_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found MIT kerberos library \"${KRB5_LIBRARY}\"")
-  endif ()
-
-  set (GSS_KRB5_LIB_FILE libgssapi_krb5.so.2)
-  find_library (GSS_KRB5_LIBRARY ${GSS_KRB5_LIB_FILE}
-                HINTS /usr/lib
-                PATH_SUFFIXES x86_64-linux-gnu
-                DOC "searching for ${GSS_KRB5_LIB_FILE} (system paths)")
-  if (NOT GSS_KRB5_LIBRARY)
-   message (FATAL_ERROR "could not find ${GSS_KRB5_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found MIT kerberos library \"${GSS_KRB5_LIBRARY}\"")
-  endif ()
-
-  # set (GSS_LIB_FILE libgss.so.3)
-#    set (GSS_LIB_FILE libgssglue.so)
-#    find_library (GSS_LIBRARY ${GSS_LIB_FILE}
-#                  HINTS /usr/lib64 /usr/lib
-#                  PATH_SUFFIXES x86_64-linux-gnu
-#                  DOC "searching for ${GSS_LIB_FILE} (system paths)")
-#    if (NOT GSS_LIBRARY)
-#     message (FATAL_ERROR "could not find ${GSS_LIB_FILE}, aborting")
-#    else ()
-#     message (STATUS "Found generic security services library \"${GSS_LIBRARY}\"")
-#    endif ()
-
-  set (IRS_LIB_FILE libirs.a)
-  find_library (IRS_LIBRARY ${IRS_LIB_FILE}
-#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${IRS_LIB_FILE} (system paths)")
-  if (NOT IRS_LIBRARY)
-   message (FATAL_ERROR "could not find ${IRS_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found irs library \"${IRS_LIBRARY}\"")
-  endif ()
-
-  set (DNS_LIB_FILE libdns.a)
-  find_library (DNS_LIBRARY ${DNS_LIB_FILE}
-#               HINTS ../../../dhcpctl/dhcp-4.3.6/bind /usr/lib
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${DNS_LIB_FILE} (system paths)")
-  if (NOT DNS_LIBRARY)
-   message (FATAL_ERROR "could not find ${DNS_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found dns library \"${DNS_LIBRARY}\"")
-  endif ()
-
-  set (OMAPI_LIB_FILE libomapi.a)
-  find_library (OMAPI_LIBRARY ${OMAPI_LIB_FILE}
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${OMAPI_LIB_FILE} (system paths)")
-  if (NOT OMAPI_LIBRARY)
-   message (FATAL_ERROR "could not find ${OMAPI_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found omapi library \"${OMAPI_LIBRARY}\"")
-  endif ()
-
-  set (DHCPCTL_LIB_FILE libdhcpctl.a)
-  find_library (DHCPCTL_LIBRARY ${DHCPCTL_LIB_FILE}
-                HINTS /usr/lib64 /usr/lib
-                PATH_SUFFIXES dhcp x86_64-linux-gnu
-                DOC "searching for ${DHCPCTL_LIB_FILE} (system paths)")
-  if (NOT DHCPCTL_LIBRARY)
-   message (FATAL_ERROR "could not find ${DHCPCTL_LIB_FILE}, aborting")
-  else ()
-   message (STATUS "Found dhcpctl library \"${DHCPCTL_LIBRARY}\"")
-  endif ()
-# add_library (dhcpctl STATIC IMPORTED)
-# set_property (TARGET dhcpctl PROPERTY IMPORTED_LOCATION /usr/lib/libdhcpctl.a)
- endif (DHCLIENT_USE)
 endif (UNIX)
 
 set (ACE_LIB_FILE libACE.so)
@@ -822,7 +696,7 @@ add_dependencies (${EXECUTABLE} ACEStream)
 add_dependencies (${EXECUTABLE} ACENetwork)
 
 if (UNIX)
-  message (STATUS "CMAKE_CXX_COMPILER_ID: \"${CMAKE_CXX_COMPILER_ID}\"")
+#  message (STATUS "CMAKE_CXX_COMPILER_ID: \"${CMAKE_CXX_COMPILER_ID}\"")
 # if (CMAKE_COMPILER_IS_GNUCXX)
  if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   set (CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
@@ -833,8 +707,9 @@ target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX)
  target_link_libraries (${EXECUTABLE} rt)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
- target_link_libraries (${EXECUTABLE} iw)
- if (NL80211_USE)
+ if (WEXT_USE)
+  target_link_libraries (${EXECUTABLE} iw)
+ elseif (NL80211_USE)
   target_link_libraries (${EXECUTABLE} ${PKG_NL80211_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_DBUS_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_LIBSYSTEMD_LIBRARIES})
@@ -848,13 +723,13 @@ if (UNIX)
  if (DHCLIENT_USE)
   target_link_libraries (${EXECUTABLE} ${PKG_OPENSSL_LIBRARIES})
   target_link_libraries (${EXECUTABLE} ${PKG_LIBXML_LIBRARIES})
-  target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${IRS_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${DNS_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
-  target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${DHCPCTL_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${OMAPI_LIBRARY})
+ # target_link_libraries (${EXECUTABLE} ${IRS_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${DNS_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${ISC_CFG_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${ISC_LIBRARY})
+#  target_link_libraries (${EXECUTABLE} ${JSON_LIBRARY})
  endif (DHCLIENT_USE)
 
  if (GUI_SUPPORT)
@@ -991,6 +866,7 @@ target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
 target_link_libraries (${EXECUTABLE} ACENetwork)
+target_link_libraries (${EXECUTABLE} ACENetwork_Protocol_DHCP)
 target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
 
 if (UNIX)

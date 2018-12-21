@@ -521,10 +521,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         }
       } // end SWITCH
 #else
-        (*iterator_3).second.second.sourceFormat.height = session_data_r.height;
-        (*iterator_3).second.second.sourceFormat.width = session_data_r.width;
-        (*iterator_4).second.second.sourceFormat.height = session_data_r.height;
-        (*iterator_4).second.second.sourceFormat.width = session_data_r.width;
+        ACE_ASSERT (!session_data_r.formats.empty ());
+        struct Stream_MediaFramework_FFMPEG_MediaType& media_type_r =
+            const_cast<struct Stream_MediaFramework_FFMPEG_MediaType&> (session_data_r.formats.front ());
+        (*iterator_3).second.second.outputFormat = media_type_r;
+        (*iterator_4).second.second.outputFormat = media_type_r;
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
