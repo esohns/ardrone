@@ -1543,6 +1543,14 @@ do_work (int argc_in,
 #if defined (_DEBUG)
   Common_Error_Tools::enableCoreDump (true);
 #endif // _DEBUG
+#if defined (ACE_LINUX) && defined (DBUS_SUPPORT)
+  if (!Common_DBus_Tools::initialize ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_DBus_Tools::initialize(), returning\n")));
+    return;
+  } // end IF
+#endif // ACE_LINUX && DBUS_SUPPORT
 
   // sanity check(s)
 #if defined (GUI_SUPPORT)
@@ -2280,8 +2288,7 @@ do_work (int argc_in,
   wlan_monitor_configuration_p->enableMediaStreamingMode =
     ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
 #endif // ACE_WIN32 || ACE_WIN64
-  wlan_monitor_configuration_p->userData =
-    configuration_in.userData;
+  wlan_monitor_configuration_p->userData = configuration_in.userData;
 #endif // ACE_WIN32 || ACE_WIN64
   if (!WLAN_monitor_p->initialize (*wlan_monitor_configuration_p))
   {

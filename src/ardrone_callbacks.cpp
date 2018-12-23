@@ -8222,16 +8222,17 @@ button_about_clicked_cb (GtkWidget* widget_in,
   ARDRONE_TRACE (ACE_TEXT ("::button_about_clicked_cb"));
 
   ACE_UNUSED_ARG (widget_in);
+  ACE_UNUSED_ARG (userData_in);
 
   // sanity check(s)
-  ACE_ASSERT (userData_in);
-  struct ARDrone_UI_CBData_Base* cb_data_p =
-      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
+//  struct ARDrone_UI_CBData_Base* cb_data_p =
+//      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
+//  ACE_ASSERT (cb_data_p);
   ACE_ASSERT (iterator != state_r.builders.end ());
 
   // retrieve about dialog handle
