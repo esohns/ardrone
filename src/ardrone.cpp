@@ -724,6 +724,7 @@ do_printUsage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+#if defined (GUI_SUPPORT)
   std::string path = configuration_path;
   path += ACE_DIRECTORY_SEPARATOR_CHAR_A;
   path += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
@@ -734,6 +735,7 @@ do_printUsage (const std::string& programName_in)
             << UI_file
             << ACE_TEXT_ALWAYS_CHAR ("\"] {\"\" --> no GUI}")
             << std::endl;
+#endif // GUI_SUPPORT
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-v          : print version information and exit [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -794,7 +796,9 @@ do_processArguments (int argc_in,
                      bool& useReactor_out,
                      std::string& SSID_out,
                      bool& traceInformation_out,
+#if defined (GUI_SUPPORT)
                      std::string& interfaceDefinitionFile_out,
+#endif // GUI_SUPPORT
                      bool& monitorWLAN_out,
                      enum Common_ApplicationModeType& mode_out
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1717,6 +1721,7 @@ do_work (int argc_in,
   ARDrone_AsynchVideoStream_t asynch_video_stream;
   ARDrone_VideoStream_t video_stream;
 #endif // ACE_WIN32 || ACE_WIN64
+  ACE_thread_t thread_id;
   Common_Timer_Manager_t* timer_manager_p = NULL;
   struct Common_TimerConfiguration timer_configuration;
   struct Common_EventDispatchState dispatch_state_s;
@@ -1724,7 +1729,7 @@ do_work (int argc_in,
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
   ARDrone_UI_GTK_Manager_t* gtk_manager_p =
-      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+      ARDRONE_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   struct ARDrone_UI_GTK_State& state_r =
       const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
@@ -2122,7 +2127,7 @@ do_work (int argc_in,
   modulehandler_configuration.subscriber = &event_handler;
   modulehandler_configuration.subscribers =
     &cb_data_p->configuration->streamSubscribers;
-  modulehandler_configuration.subscribersLock =
+  modulehandler_configuration.lock =
     &cb_data_p->configuration->streamSubscribersLock;
   //modulehandler_configuration.useYYScanBuffer = false;
 
@@ -2993,7 +2998,8 @@ do_work (int argc_in,
   } // end IF
 
   // intialize timers
-  timer_manager_p->start ();
+  timer_manager_p->start (thread_id);
+  ACE_UNUSED_ARG (thread_id);
 
 #if defined (GUI_SUPPORT)
 //#if defined (GTK_USE)
@@ -3007,7 +3013,8 @@ do_work (int argc_in,
   if (!UIDefinitionFilePath_in.empty ())
   {
 #if defined (GTK_USE)
-    gtk_manager_p->start ();
+    gtk_manager_p->start (thread_id);
+    ACE_UNUSED_ARG (thread_id);
     ACE_Time_Value delay (0,
                           ARDRONE_UI_INITIALIZATION_DELAY);
     result = ACE_OS::sleep (delay);
@@ -3540,7 +3547,9 @@ ACE_TMAIN (int argc_in,
   bool result_2;
   std::string configuration_path;
   std::string path;
+#if defined (GUI_SUPPORT)
   std::string interface_definition_file;
+#endif // GUI_SUPPORT
   std::string address_string;
   ACE_INET_Addr address;
   unsigned int buffer_size;
@@ -3607,6 +3616,7 @@ ACE_TMAIN (int argc_in,
 #else
   struct ARDrone_UI_CBData ui_cb_data;
 #endif // ACE_WIN32 || ACE_WIN64
+#endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_Configuration directshow_configuration;
   ARDrone_DirectShow_SignalHandler_t directshow_signal_handler ((NET_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR ? COMMON_SIGNAL_DISPATCH_PROACTOR
@@ -3673,9 +3683,10 @@ ACE_TMAIN (int argc_in,
   Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
 #endif // ACE_WIN32 || ACE_WIN64
 
+#if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
   ARDrone_UI_GTK_Manager_t* gtk_manager_p =
-    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ();
+    ARDRONE_GTK_MANAGER_SINGLETON::instance ();
   struct ARDrone_UI_GTK_State& state_r =
     const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR_2 ());
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -3686,9 +3697,8 @@ ACE_TMAIN (int argc_in,
                                                                                 argv_in,
                                                                                 &mediafoundation_cb_data);
 #else
-  ARDrone_GtkBuilderDefinition_t ui_definition (argc_in,
-                                                argv_in,
-                                                &ui_cb_data);
+  ARDrone_GtkBuilderDefinition_t ui_definition;
+  ui_definition.initialize (state_r);
 #endif // ACE_WIN32 || ACE_WIN64
 #elif defined (WXWIDGETS_USE)
   ARDrone_UI_wxWidgets_IApplicationBase_t* iapplication_p = NULL;
@@ -4184,10 +4194,6 @@ ACE_TMAIN (int argc_in,
 
   // step7: initialize user interface, if any
 #if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
-  state_r.argc = argc_in;
-  state_r.argv = argv_in;
-#endif // GTK_USE
   //ACE_OS::memset (&ui_cb_data.clientSensorBias,
   //                0,
   //                sizeof (ui_cb_data.clientSensorBias));
@@ -4200,8 +4206,6 @@ ACE_TMAIN (int argc_in,
 #if defined (GTK_USE)
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (interface_definition_file, static_cast<GtkBuilder*> (NULL));
-  state_r.eventHooks.finiHook = idle_finalize_ui_cb;
-  state_r.eventHooks.initHook = idle_initialize_ui_cb;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ui_cb_data_base_p->mediaFramework = media_framework_e;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -4285,10 +4289,17 @@ ACE_TMAIN (int argc_in,
 #else
   ui_cb_data.configuration = &configuration;
 #if defined (GTK_USE)
+  configuration.GTKConfiguration.argc = argc_in;
+  configuration.GTKConfiguration.argv = argv_in;
+  configuration.GTKConfiguration.CBData = &ui_cb_data;
+  configuration.GTKConfiguration.eventHooks.finiHook =
+      idle_finalize_ui_cb;
+  configuration.GTKConfiguration.eventHooks.initHook =
+      idle_initialize_ui_cb;
+  configuration.GTKConfiguration.definition = &ui_definition;
+
   result_2 =
-    ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->initialize (argc_in,
-                                                               argv_in,
-                                                               &ui_definition);
+    ARDRONE_GTK_MANAGER_SINGLETON::instance ()->initialize (configuration.GTKConfiguration);
 #elif defined (WXWIDGETS_USE)
   //ui_cb_data.iapplication = iapplication_p;
   ARDrone_WxWidgetsApplication_t::IINITIALIZE_T* iinitialize_p =

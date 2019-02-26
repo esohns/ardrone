@@ -50,14 +50,14 @@
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-#if defined (GTK3_SUPPORT)
+#if defined (GTK3_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk3"
-#elif defined (GTK3_SUPPORT)
+#elif defined (GTK2_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk2"
 #endif
 #elif defined (WXWIDGETS_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.xrc"
-#endif
+#endif // GUI_SUPPORT
 
 #define ARDRONE_UI_INITIALIZATION_DELAY                    100 // ms
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F

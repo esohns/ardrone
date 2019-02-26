@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "ace/Synch.h"
 #include "ardrone_callbacks.h"
 
 #include <cmath>
@@ -323,7 +324,7 @@ stream_processing_function (void* arg_in)
   ACE_ASSERT (configuration_p);
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -884,7 +885,7 @@ idle_associated_SSID_cb (gpointer userData_in)
     configuration_p->WLANMonitorConfiguration.autoAssociate;
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -982,7 +983,7 @@ idle_disassociated_SSID_cb (gpointer userData_in)
     configuration_p->WLANMonitorConfiguration.autoAssociate;
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
       state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -1072,7 +1073,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     (cb_data_p->configuration->dispatchConfiguration.numberOfProactorThreads > 0);
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2278,7 +2279,7 @@ idle_finalize_ui_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   unsigned int num_messages = 0;
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
     num_messages = cb_data_base_p->messages.size ();
@@ -2324,7 +2325,7 @@ idle_session_end_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2432,7 +2433,7 @@ idle_session_start_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* data_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2500,7 +2501,7 @@ idle_reset_ui_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2597,7 +2598,7 @@ idle_update_info_display_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2674,7 +2675,7 @@ idle_update_info_display_cb (gpointer userData_in)
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
         ACE_ASSERT (drawing_area_p);
 
-        Common_UI_Resolution_t resolution_s;
+        Common_Image_Resolution_t resolution_s;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
         ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_video_streamconfiguration_iterator;
         ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_video_streamconfiguration_iterator;
@@ -2959,7 +2960,7 @@ idle_update_state_cb (gpointer userData_in)
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   ACE_ASSERT (data_p->controller);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -3008,7 +3009,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* data_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -3089,7 +3090,7 @@ idle_update_video_display_cb (gpointer userData_in)
   struct ARDrone_UI_CBData_Base* data_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -3438,7 +3439,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (configuration_p);
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
 
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
@@ -3537,9 +3538,9 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   GdkDisplay* display_p = NULL;
   int number_of_monitors = 0;
   int monitor_number = -1;
-//  int number_of_screens = 0;
+  int number_of_screens = 0;
   GdkScreen* screen_p = NULL;
-//  bool device_found = false;
+  bool device_found = false;
 #if GTK_CHECK_VERSION(2,30,0)
   GValue value = G_VALUE_INIT;
 #else
@@ -4004,7 +4005,7 @@ continue_:
            ++monitor_number)
       {
         if (!ACE_OS::strcmp (ACE_TEXT (gdk_screen_get_monitor_plug_name (screen_p, monitor_number)),
-                             ACE_TEXT ((*iterator_5).second.second.device.c_str ())))
+                             ACE_TEXT ((*iterator_5).second.second.display.device.c_str ())))
         {
           device_found = true;
           break;
@@ -4701,7 +4702,7 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (wlan_monitor_configuration_p);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
 
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
@@ -4853,7 +4854,7 @@ combobox_display_device_changed_cb (GtkComboBox* comboBox_in,
   struct ARDrone_UI_CBData_Base* cb_data_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -4888,7 +4889,7 @@ combobox_display_format_changed_cb (GtkComboBox* comboBox_in,
   struct ARDrone_UI_CBData_Base* cb_data_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   ACE_ASSERT (iterator != state_r.builders.end ());
@@ -5176,7 +5177,7 @@ glarea_realize_cb (GtkWidget* widget_in,
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   GLuint* model_list_id_p = NULL;
   struct Common_GL_Scene* gl_scene_p = NULL;
   GtkAllocation allocation;
@@ -6535,8 +6536,8 @@ glarea_expose_event_cb (GtkWidget* widget_in,
     }
   } // end SWITCH
 #else
-  struct ARDrone_GTK_CBData* data_p =
-    static_cast<struct ARDrone_GTK_CBData*> (userData_in);
+  struct ARDrone_UI_CBData* data_p =
+    static_cast<struct ARDrone_UI_CBData*> (userData_in);
   // sanity check(s)
   ACE_ASSERT (data_p);
   model_list_id_p = &data_p->openGLModelListId;
@@ -6889,7 +6890,7 @@ toggleaction_video_toggled_cb (GtkToggleAction* toggleAction_in,
   struct ARDrone_UI_CBData_Base* cb_data_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -6931,7 +6932,7 @@ toggleaction_fullscreen_toggled_cb (GtkToggleAction* toggleAction_in,
   struct ARDrone_UI_CBData_Base* cb_data_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -7066,7 +7067,7 @@ toggleaction_save_toggled_cb (GtkToggleAction* toggleAction_in,
 //  wlan_monitor_configuration_p = &configuration_p->WLANMonitorConfiguration;
 #endif // ACE_WIN32 || ACE_WIN64
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -7302,7 +7303,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
 #endif // ACE_WIN32 || ACE_WIN64
   ACE_ASSERT (wlan_monitor_configuration_p);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -7383,7 +7384,7 @@ drawingarea_video_size_allocate_cb (GtkWidget* widget_in,
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
       reinterpret_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -7781,7 +7782,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
       gdk_pixbuf_new (GDK_COLORSPACE_RGB,
                       TRUE,
                       8,
-                      (*iterator_2).second.second.area.width, (*iterator_2).second.second.area.height);
+                      (*iterator_3).second.second.area.width, (*iterator_3).second.second.area.height);
   if (!pixbuf_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -7790,8 +7791,8 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
   } // end IF
 #endif // GTK_CHECK_VERSION(3,0,0)
 
-  { ACE_ASSERT (&cb_data_p->lock == (*iterator_2).second.pixelBufferLock);
-    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->lock, TRUE);
+  { ACE_ASSERT (&cb_data_p->UIState->lock == (*iterator_3).second.second.pixelBufferLock);
+    ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, cb_data_p->UIState->lock, TRUE);
     if (cb_data_p->pixelBuffer)
     {
       g_object_unref (cb_data_p->pixelBuffer); cb_data_p->pixelBuffer = NULL;
@@ -7824,7 +7825,7 @@ drawingarea_video_configure_cb (GtkWidget* widget_in,
 #endif // GTK_CHECK_VERSION(3,0,0)
       return TRUE;
     } // end IF
-    (*iterator_2).second.pixelBuffer = cb_data_p->pixelBuffer;
+    (*iterator_3).second.second.pixelBuffer = cb_data_p->pixelBuffer;
 
 //    GHashTable* hash_table_p = gdk_pixbuf_get_options (cb_data_p->pixelBuffer);
 //    GHashTableIter iterator;
@@ -7856,7 +7857,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
   struct ARDrone_UI_CBData_Base* cb_data_p =
       reinterpret_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -7930,7 +7931,7 @@ key_cb (GtkWidget* widget_in,
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
       reinterpret_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -8228,7 +8229,7 @@ button_about_clicked_cb (GtkWidget* widget_in,
 //  struct ARDrone_UI_CBData_Base* cb_data_p =
 //      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   struct ARDrone_UI_GTK_State& state_r =
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)

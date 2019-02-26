@@ -212,11 +212,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #else
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_FileWriter_Module (this,
-<<<<<<< HEAD
                                                     ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
-=======
-                                                    ACE_TEXT_ALWAYS_CHAR (MODULE_FILE_SINK_DEFAULT_NAME_STRING)),
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
@@ -573,11 +569,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 //#endif
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_ControlDecoder_Module (this,
-<<<<<<< HEAD
                                                         ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
-=======
-                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
@@ -1092,11 +1084,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_NavDataDecoder_Module (this,
-<<<<<<< HEAD
                                                         ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
-=======
-                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);
@@ -2547,11 +2535,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   module_p = NULL;
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_MAVLinkDecoder_Module (this,
-<<<<<<< HEAD
                                                         ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
-=======
-                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
                   false);
   ACE_ASSERT (module_p);
   modules_out.push_back (module_p);

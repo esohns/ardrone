@@ -22,7 +22,8 @@
 
 #include "stream_macros.h"
 
-#include "ardrone_stream_common.h"
+#include "ardrone_tools.h"
+#include "ardrone_types.h"
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,

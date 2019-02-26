@@ -51,7 +51,6 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
 class ARDrone_Message
-<<<<<<< HEAD
  : public Stream_DataMessageBase_2<ARDrone_MessageData_t,
                                    struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
@@ -60,16 +59,6 @@ class ARDrone_Message
   typedef Stream_DataMessageBase_2<ARDrone_MessageData_t,
                                    struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
-=======
- : public Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
-                                   enum ARDrone_MessageType,
-                                   ARDrone_MessageData_t,
-                                   int>
-{
-  typedef Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
-                                   enum ARDrone_MessageType,
-                                   ARDrone_MessageData_t,
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
                                    int> inherited;
 
   // enable access to specific private ctors
@@ -92,7 +81,7 @@ class ARDrone_Message
   explicit ARDrone_Message (unsigned int); // requested size
   virtual ~ARDrone_Message ();
 
-  inline virtual int command () const { return 0; }; // return value: message type
+  inline virtual int command () const { return 0; } // return value: message type
   static std::string CommandTypeToString (int);
   static void MessageTypeToString (enum ARDrone_MessageType, // message type
                                    std::string&);            // corresp. string

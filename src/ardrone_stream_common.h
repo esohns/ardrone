@@ -88,18 +88,8 @@ extern "C"
 
 #include "ardrone_common.h"
 #include "ardrone_message.h"
+#include "ardrone_tools.h"
 #include "ardrone_types.h"
-
-// *IMPORTANT NOTE*: these are defined in ardrone_stream.cpp
-std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
-std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
-// *TODO*: use libav here
-void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
-<<<<<<< HEAD
-                                   Common_Image_Resolution_t&);
-=======
-                                   Common_UI_Resolution_t&);
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 
 // forward declarations
 //class ARDrone_Message;
@@ -508,6 +498,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , connection (NULL)
    , connectionConfigurations (NULL)
    , connectionManager (NULL)
+   , display ()
    , frameRate ()
 #if defined (GUI_SUPPORT)
    , fullScreen (false)
@@ -533,6 +524,7 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_IConnection_t*                        connection;               // net source/IO module
   ARDrone_Stream_ConnectionConfigurations_t*    connectionConfigurations; // net source/target modules
   ARDrone_IConnectionManager_t*                 connectionManager;        // IO module
+  struct Common_UI_DisplayDevice                display;
   struct AVRational                             frameRate;                // AVI encoder module
 #if defined (GUI_SUPPORT)
   bool                                          fullScreen;

@@ -75,11 +75,7 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (CBData_);
 #if defined (GTK_USE)
   struct ARDrone_UI_GTK_State& state_r =
-<<<<<<< HEAD
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-=======
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 #endif // GTK_USE
 #endif // GUI_SUPPORT
   ACE_ASSERT (sessionData_in.state);
@@ -133,11 +129,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 #if defined (GTK_USE)
   struct ARDrone_UI_GTK_State& state_r =
-<<<<<<< HEAD
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-=======
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -282,11 +274,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   ACE_ASSERT (CBData_);
 #if defined (GTK_USE)
   struct ARDrone_UI_GTK_State& state_r =
-<<<<<<< HEAD
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-=======
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -627,11 +615,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   ACE_ASSERT (CBData_);
 #if defined (GTK_USE)
   struct ARDrone_UI_GTK_State& state_r =
-<<<<<<< HEAD
     const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-=======
-    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
->>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
