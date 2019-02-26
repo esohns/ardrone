@@ -176,8 +176,8 @@ ARDrone_SignalHandler_T<ConfigurationType,
     if (inherited::configuration_->hasUI)
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-      ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
-                                                           false); // N/A
+      ARDRONE_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
+                                                        false); // N/A
 #endif // GTK_USE
 #else
       ;

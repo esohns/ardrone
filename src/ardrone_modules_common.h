@@ -635,7 +635,6 @@ typedef Stream_Module_Dump_T<ACE_MT_SYNCH,
                              ARDrone_ControlMessage_t,
                              ARDrone_Message,
                              ARDrone_SessionMessage,
-                             ARDrone_SessionData_t,
                              struct ARDrone_UserData> ARDrone_Module_Dump;
 #endif // ACE_WIN32 || ACE_WIN64
 #endif // _DEBUG
@@ -662,8 +661,7 @@ typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    struct ARDrone_ModuleHandlerConfiguration,
                                    ARDrone_ControlMessage_t,
                                    ARDrone_Message,
-                                   ARDrone_SessionMessage,
-                                   struct ARDrone_SessionData> ARDrone_Module_FileWriter;
+                                   ARDrone_SessionMessage> ARDrone_Module_FileWriter;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

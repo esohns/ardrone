@@ -51,14 +51,14 @@ typedef Stream_ControlMessage_T<enum Stream_ControlType,
                                 struct ARDrone_AllocatorConfiguration> ARDrone_ControlMessage_t;
 
 class ARDrone_Message
- : public Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
+ : public Stream_DataMessageBase_2<ARDrone_MessageData_t,
+                                   struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
-                                   ARDrone_MessageData_t,
                                    int>
 {
-  typedef Stream_DataMessageBase_2<struct ARDrone_AllocatorConfiguration,
+  typedef Stream_DataMessageBase_2<ARDrone_MessageData_t,
+                                   struct ARDrone_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
-                                   ARDrone_MessageData_t,
                                    int> inherited;
 
   // enable access to specific private ctors

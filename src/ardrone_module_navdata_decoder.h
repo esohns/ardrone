@@ -23,6 +23,7 @@
 
 #include "ace/Global_Macros.h"
 
+#include "common_ilock.h"
 #include "common_iscanner.h"
 #include "common_time_common.h"
 
@@ -49,6 +50,7 @@ template <ACE_SYNCH_DECL,
 class ARDrone_Module_NavDataDecoder_T
  : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
+                                 Common_ILock_T<ACE_SYNCH_USE>,
                                  ConfigurationType,
                                  ControlMessageType,
                                  DataMessageType,
@@ -63,6 +65,7 @@ class ARDrone_Module_NavDataDecoder_T
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
+                                 Common_ILock_T<ACE_SYNCH_USE>,
                                  ConfigurationType,
                                  ControlMessageType,
                                  DataMessageType,
