@@ -459,6 +459,7 @@ struct ARDrone_ThreadData
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
+<<<<<<< HEAD
 typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State> ARDrone_GtkBuilderDefinition_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
@@ -480,10 +481,27 @@ typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
                                 struct ARDrone_UI_CBData> ARDrone_UI_GTK_Manager_t;
 typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
                       ACE_MT_SYNCH::MUTEX> ARDRONE_GTK_MANAGER_SINGLETON;
+=======
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_DirectShow_UI_CBData> ARDrone_DirectShow_GtkBuilderDefinition_t;
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_MediaFoundation_UI_CBData> ARDrone_MediaFoundation_GtkBuilderDefinition_t;
+#else
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State,
+                                         struct ARDrone_UI_CBData> ARDrone_GtkBuilderDefinition_t;
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 #endif // ACE_WIN32 || ACE_WIN64
 
 //////////////////////////////////////////
 
+<<<<<<< HEAD
+=======
+typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+                                struct ARDrone_UI_GTK_State> ARDrone_UI_GTK_Manager_t;
+typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
+                      ACE_MT_SYNCH::MUTEX> ARDRONE_UI_GTK_MANAGER_SINGLETON;
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 
 #elif defined (WXWIDGETS_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

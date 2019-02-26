@@ -86,7 +86,11 @@ ARDroneVideoModeToString (const enum ARDrone_VideoMode mode_in)
 }
 void
 ARDroneVideoModeToResolution (const enum ARDrone_VideoMode mode_in,
+<<<<<<< HEAD
                               Common_Image_Resolution_t& resolution_out)
+=======
+                              Common_UI_Resolution_t& resolution_out)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 {
   ARDRONE_TRACE (ACE_TEXT ("::ARDroneVideoModeToResolution"));
 

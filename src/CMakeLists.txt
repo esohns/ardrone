@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 ﻿#if (UNIX)
 # option (NETLINK_SUPPORT "enable netlink support" ON)
 #endif (UNIX)
+=======
+﻿if (UNIX)
+ option (NETLINK_SUPPORT "enable netlink support" ON)
+endif (UNIX)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml/scripts/PreXMLImplementation.cmake)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml/scripts/SetXMLImplementation.cmake)
 
@@ -248,17 +254,29 @@ include (FindGettext)
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 if (UNIX)
  pkg_check_modules (PKG_LIBXML REQUIRED libxml-2.0)
+<<<<<<< HEAD
  pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libavformat libswscale)
  if (GUI_SUPPORT)
   if (GTK_USE)
    pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
    if (GTK3_USE)
+=======
+ if (GUI_SUPPORT)
+  if (GTK_USE)
+   pkg_check_modules (PKG_LIBPNG REQUIRED libpng)
+#  pkg_check_modules (PKG_FFMPEG REQUIRED libavcodec libavutil libavformat libswscale)
+   if (GTK3_SUPPORT)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
     pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
     if (GTKGL_SUPPORT)
      pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
      pkg_check_modules (PKG_ASSIMP REQUIRED assimp)
     endif (GTKGL_SUPPORT)
+<<<<<<< HEAD
    elseif (GTK2_USE)
+=======
+   elseif (GTK2_SUPPORT)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
     pkg_check_modules (PKG_GTK2 REQUIRED gmodule-2.0 gthread-2.0 gtk+-2.0)
     if (GTKGL_SUPPORT)
      pkg_check_modules (PKG_OPENGL REQUIRED gl glu)
@@ -419,6 +437,7 @@ if (UNIX)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/generated/include)
 
+<<<<<<< HEAD
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib)
  # *NOTE*: headers in Soft/Common include each other 'relatively' :-(
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common)
@@ -426,6 +445,15 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/linux)
+=======
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib)
+ # *NOTE*: headers in Soft/Common include each other 'relatively' :-(
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common)
+ # *NOTE*: headers in Soft/Common include headers in Soft/Lib :-(
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/linux)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACE)
 
@@ -737,12 +765,21 @@ if (UNIX)
    target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
   endif (GTK_USE)
  endif (GUI_SUPPORT)
+<<<<<<< HEAD
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
 
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/libavcodec.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/libavformat.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/libswresample.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/libswscale.a)
+=======
+ # target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
+
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/libavcodec.a)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/libavformat.a)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/libswresample.a)
+ target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/libswscale.a)
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 
  if (GUI_SUPPORT)
   if (GTK_USE)

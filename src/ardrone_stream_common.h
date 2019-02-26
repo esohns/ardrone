@@ -95,7 +95,11 @@ std::string ARDroneStreamTypeToString (const enum ARDrone_StreamType);
 std::string ARDroneVideoModeToString (const enum ARDrone_VideoMode);
 // *TODO*: use libav here
 void ARDroneVideoModeToResolution (const enum ARDrone_VideoMode,
+<<<<<<< HEAD
                                    Common_Image_Resolution_t&);
+=======
+                                   Common_UI_Resolution_t&);
+>>>>>>> 08a0ebaebe1264dab92c7d8bd230639371d2d643
 
 // forward declarations
 //class ARDrone_Message;
