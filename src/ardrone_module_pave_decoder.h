@@ -44,7 +44,7 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           ////////////////////////////////
-          typename SessionDataContainerType>
+          typename UserDataType>
 class ARDrone_Module_PaVEDecoder_T
  : public Stream_TaskBaseAsynch_T<ACE_SYNCH_USE,
                                   TimePolicyType,
@@ -55,7 +55,7 @@ class ARDrone_Module_PaVEDecoder_T
                                   Stream_SessionId_t,
                                   enum Stream_ControlType,
                                   enum Stream_SessionMessageType,
-                                  struct ARDrone_UserData>
+                                  UserDataType>
 {
   typedef Stream_TaskBaseAsynch_T<ACE_SYNCH_USE,
                                   TimePolicyType,
@@ -66,7 +66,7 @@ class ARDrone_Module_PaVEDecoder_T
                                   Stream_SessionId_t,
                                   enum Stream_ControlType,
                                   enum Stream_SessionMessageType,
-                                  struct ARDrone_UserData> inherited;
+                                  UserDataType> inherited;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile

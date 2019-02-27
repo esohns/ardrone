@@ -3817,15 +3817,19 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   media_framework_e      = STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (NL80211_SUPPORT)
+  Common_DBus_Tools::initialize ();
+  NET_WLAN_INETNL80211MONITOR_SINGLETON::instance ()->initialize (configuration.WLANMonitorConfiguration);
+#endif // NL80211_SUPPORT
   wlan_interface_identifier   =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-    Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
+      Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
 #else
-    Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+      Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
 #else
-    Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+      Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
 #endif // ACE_WIN32 || ACE_WIN64
   port_number            = ARDRONE_PORT_TCP_VIDEO;
   use_reactor            =

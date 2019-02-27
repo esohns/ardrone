@@ -204,6 +204,11 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
 
 ################################################################################
 
+add_subdirectory (test_u)
+#add_subdirectory (test_i)
+
+################################################################################
+
 # enable (unit/integration) tests
 #include (CTest)
 enable_testing ()
