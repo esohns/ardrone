@@ -68,11 +68,15 @@ struct Test_U_MediaFoundation_Configuration
 struct Test_U_Configuration
 {
   Test_U_Configuration ()
-   : connectionConfigurations ()
+   : allocatorConfiguration ()
+   , connectionConfigurations ()
+   , dispatchConfiguration ()
    , streamConfiguration ()
   {}
 
+  Stream_AllocatorConfiguration            allocatorConfiguration;
   Test_U_Stream_ConnectionConfigurations_t connectionConfigurations;
+  Common_EventDispatchConfiguration        dispatchConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t             streamConfiguration;
 

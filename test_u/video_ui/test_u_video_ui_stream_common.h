@@ -335,7 +335,7 @@ struct Test_U_ModuleHandlerConfiguration
   Test_U_ModuleHandlerConfiguration ()
    : Stream_ModuleHandlerConfiguration ()
    , codecFormat (AV_PIX_FMT_NONE)
-   , codecId (AV_CODEC_ID_NONE)
+   , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
    , connectionConfigurations (NULL)
    , connectionManager (NULL)

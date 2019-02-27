@@ -226,8 +226,7 @@ add_dependencies (${EXECUTABLE} ACENetwork)
 
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX)
-# target_link_libraries (${EXECUTABLE} libgobject-2.0.so libglib-2.0.so libgdk-3.so libgtk-3.so)
- target_link_libraries (${EXECUTABLE} ${PKG_V4L2_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} GL)
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
 
 # target_link_libraries (${EXECUTABLE} ${ACEXML_LIBRARY})
@@ -277,14 +276,17 @@ endif (UNIX)
 
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
-target_link_libraries (${EXECUTABLE} ACEStream_Device)
 target_link_libraries (${EXECUTABLE} ACEStream_File)
 target_link_libraries (${EXECUTABLE} ACEStream_MediaFramework)
+target_link_libraries (${EXECUTABLE} ACEStream_Device)
 target_link_libraries (${EXECUTABLE} ACEStream_Miscellaneous)
+target_link_libraries (${EXECUTABLE} ACEStream_Network)
 target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
-#target_link_libraries (${EXECUTABLE} ${PROJECT_NAME}_Test_U)
+target_link_libraries (${EXECUTABLE} ACENetwork)
+
+target_link_libraries (${EXECUTABLE} ${PROJECT_NAME})
 
 # add PCH
 set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")

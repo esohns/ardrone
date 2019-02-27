@@ -225,7 +225,7 @@ typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
                                  Test_U_ConnectionConfiguration_t,
                                  struct Test_U_ConnectionState,
                                  struct Test_U_StatisticData,
-                                 struct Test_U_UserData> Test_U_IConnectionManager_t;
+                                 struct Net_UserData> Test_U_IConnectionManager_t;
 struct Test_U_ConnectionConfiguration
  : Net_ConnectionConfiguration
 {

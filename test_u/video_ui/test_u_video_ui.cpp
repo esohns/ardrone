@@ -80,7 +80,7 @@
 #include "test_u_video_ui_session_message.h"
 #include "test_u_video_ui_stream.h"
 
-const char stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("CameraScreenStream");
+const char stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("Test_U_Stream");
 
 void
 do_print_usage (const std::string& programName_in)
@@ -830,6 +830,8 @@ do_work (const std::string& captureinterfaceIdentifier_in,
 #endif // GUI_SUPPORT
 #else
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
+  Test_U_ConnectionConfiguration_t connection_configuration;
+  Test_U_ConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -902,10 +904,10 @@ do_work (const std::string& captureinterfaceIdentifier_in,
   Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator_2;
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.streamConfiguration.allocatorConfiguration_;
+  modulehandler_configuration.connectionConfigurations =
+      &configuration_in.connectionConfigurations;
 //  // *TODO*: turn these into an option
 //  modulehandler_configuration.method = STREAM_DEV_CAM_V4L_DEFAULT_IO_METHOD;
-  modulehandler_configuration.outputFormat =
-      Stream_Device_Tools::convert (Stream_Device_Tools::defaultCaptureFormat (captureinterfaceIdentifier_in));
   modulehandler_configuration.subscriber = &ui_event_handler;
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -1018,7 +1020,8 @@ do_work (const std::string& captureinterfaceIdentifier_in,
       &message_allocator;
   configuration_in.streamConfiguration.configuration_.module = &message_handler;
   configuration_in.streamConfiguration.configuration_.renderer =
-    renderer_in;
+      STREAM_VISUALIZATION_VIDEORENDERER_X11;
+//      renderer_in;
 
   if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
   {
@@ -1124,6 +1127,44 @@ do_work (const std::string& captureinterfaceIdentifier_in,
   ACE_ASSERT (v4l_stream_iterator != configuration_in.streamConfiguration.end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
+  // connection configuration
+  connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
+  ACE_ASSERT (connection_manager_p);
+  connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  struct Net_UserData net_user_data;
+
+  connection_configuration.connectionManager =
+      TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
+//  connection_configuration.generateUniqueIOModuleNames = true;
+  connection_configuration.messageAllocator = &message_allocator;
+//  connection_configuration.PDUSize =
+//    std::max (bufferSize_in,
+//              static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
+      ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
+                                                                                                     1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
+    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
+//  connection_configuration.socketHandlerConfiguration.userData =
+//    cb_data_p->configuration->userData;
+//  connection_configuration.userData = cb_data_p->configuration->userData;
+
+  configuration_in.streamConfiguration.configuration_.module = NULL;
+  connection_configuration.initialize (configuration_in.allocatorConfiguration,
+                                       configuration_in.streamConfiguration);
+
+//  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                    connection_configuration));
+  Test_U_Stream_ConnectionConfigurationIterator_t connection_configurations_iterator =
+      configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
+  connection_manager_p->set ((*connection_configurations_iterator).second,
+                             &net_user_data); // passed to all handlers
+
   struct Common_TimerConfiguration timer_configuration;
   Common_Timer_Manager_t* timer_manager_p = NULL;
 
@@ -1134,6 +1175,24 @@ do_work (const std::string& captureinterfaceIdentifier_in,
   ACE_thread_t thread_id = 0;
   timer_manager_p->start (thread_id);
   ACE_UNUSED_ARG (thread_id);
+
+  // event dispatch
+  configuration_in.dispatchConfiguration.numberOfProactorThreads = 1;
+  if (!Common_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
+    return;
+  } // end IF
+
+  struct Common_EventDispatchState dispatch_state_s;
+  dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
+  if (!Common_Tools::startEventDispatch (dispatch_state_s))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to start event dispatch, returning\n")));
+    return;
+  } // end IF
 
   // step0f: (initialize) processing stream
 
@@ -1180,7 +1239,7 @@ do_work (const std::string& captureinterfaceIdentifier_in,
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize stream, returning\n")));
-    goto clean;
+    return;
   } // end IF
   stream_p = &stream;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -1197,8 +1256,13 @@ do_work (const std::string& captureinterfaceIdentifier_in,
   stream_p->wait (true, false, false);
 
   // step3: clean up
-clean:
   timer_manager_p->stop ();
+
+  connection_manager_p->stop ();
+  connection_manager_p->abort (true); // wait for completion ?
+  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
+                                       dispatch_state_s.reactorGroupId,
+                                       true); // wait ?
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (mediaFramework_in)
@@ -1420,7 +1484,7 @@ ACE_TMAIN (int argc_in,
     STREAM_LIB_DEFAULT_MEDIAFRAMEWORK;
 #endif // ACE_WIN32 || ACE_WIN64
   enum Stream_Visualization_VideoRenderer video_renderer_e =
-    STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW;
+      STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW;
   struct Common_UI_DisplayDevice display_device_s =
     Common_UI_Tools::getDefaultDisplay ();
   bool trace_information = false;
