@@ -186,6 +186,7 @@ target_include_directories (${PROJECT_NAME} PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib>)
 target_include_directories (${PROJECT_NAME} PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK>)
+
 if (UNIX)
 # include_directories (${PKG_CAP_INCLUDE_DIRS})
 # include_directories (${PKG_GETTEXT_INCLUDE_DIRS})
@@ -212,8 +213,8 @@ if (UNIX)
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/src/timer>)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/test_u)
 
-target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src>)
  target_include_directories (${PROJECT_NAME} PUBLIC
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src/modules/dec>)
  target_include_directories (${PROJECT_NAME} PUBLIC
@@ -242,47 +243,76 @@ target_include_directories (${PROJECT_NAME} PUBLIC
  target_include_directories (${PROJECT_NAME} PUBLIC
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACENetwork/src/wlan>)
 elseif (WIN32)
-# include_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY})
- include_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/baseclasses)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${DIRECTSHOW_BASECLASSES_DIRECTORY}/baseclasses>)
 
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../openssl/include)
+# target_include_directories (${PROJECT_NAME} PUBLIC
+#                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../openssl/include>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/win32)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDrone_SDK_2_0_1/Examples/Win32/VCProjects/ARDrone)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/win32>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/Examples/Win32/VCProjects/ARDrone>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ffmpeg>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ATCD/ACE)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ATCD/ACE>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/image)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/log)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/signal)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/timer)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/image>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/log>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/signal>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/timer>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml)
-# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/test_u)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml>)
+# target_include_directories (${PROJECT_NAME} PUBLIC
+#                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/test_u>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dec)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dev)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/file)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/lib)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/misc)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/net)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/stat)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/vis)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/test_u)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dec>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dev>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/file>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/lib>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/misc>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/net>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/stat>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/vis>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/test_u>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party/bison)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/client_server)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/wlan)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party/bison>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/client_server>)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/wlan>)
 
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/gettext)
+ target_include_directories (${PROJECT_NAME} PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/gettext>)
 endif ()
-include_directories (${CMAKE_CURRENT_BINARY_DIR}/..)
+target_include_directories (${PROJECT_NAME} PUBLIC
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>)
 
 ############## next target ################
 set (source_files

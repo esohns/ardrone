@@ -395,7 +395,7 @@ create_target_launcher (${EXECUTABLE}
                         ARGS ${ARGS}
 #                        FORWARD_ARGS
                         RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../test_u/camsave
+                        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../test_u/video_ui
                         ENVIRONMENT ${ENVIRONMENT})
 
 ##########################################
