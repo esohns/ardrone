@@ -21,3 +21,8 @@
 
 #include "ace/Synch.h"
 #include "ardrone_module_control_decoder.h"
+
+#include "ardrone_defines.h"
+
+const char ardrone_default_control_decoder_module_name_string[] =
+ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROL_DECODER_NAME_STRING);

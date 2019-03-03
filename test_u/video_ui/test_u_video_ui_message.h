@@ -70,7 +70,7 @@ class Test_U_Message_T
 
  public:
   Test_U_Message_T (unsigned int); // size
-  virtual ~Test_U_Message_T ();
+  inline virtual ~Test_U_Message_T () {}
 
   // overrides from ACE_Message_Block
   // *NOTE*: these use the allocator (if any)

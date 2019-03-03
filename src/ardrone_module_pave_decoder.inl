@@ -368,8 +368,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
-          Stream_MediaFramework_DirectShow_Tools::resize (format_s.resolution,
-                                                          session_data_r.formats.back ());
+          //Stream_MediaFramework_DirectShow_Tools::resize (format_s.resolution,
+          //                                                session_data_r.formats.back ());
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:

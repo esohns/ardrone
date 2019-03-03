@@ -21,3 +21,8 @@
 
 #include "ace/Synch.h"
 #include "ardrone_module_mavlink_decoder.h"
+
+#include "ardrone_defines.h"
+
+const char ardrone_default_mavlink_decoder_module_name_string[] =
+ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_MAVLINK_DECODER_NAME_STRING);

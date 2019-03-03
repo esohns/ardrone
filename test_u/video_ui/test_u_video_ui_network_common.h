@@ -57,49 +57,6 @@ struct Test_U_ConnectionState
   struct Test_U_Configuration* configuration;
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct Test_U_DirectShow_ConnectionConfiguration;
-struct Test_U_DirectShow_SocketHandlerConfiguration
- : Net_SocketHandlerConfiguration
-{
-  Test_U_DirectShow_SocketHandlerConfiguration ()
-   : Net_SocketHandlerConfiguration ()
-   , socketConfiguration_2 ()
-   , socketConfiguration_3 ()
-   , connectionConfiguration (NULL)
-   , userData (NULL)
-  {
-    socketConfiguration = &socketConfiguration_2;
-  }
-
-  struct Net_TCPSocketConfiguration                  socketConfiguration_2;
-  struct Net_UDPSocketConfiguration                  socketConfiguration_3;
-  struct Test_U_DirectShow_ConnectionConfiguration* connectionConfiguration;
-
-  struct Test_U_UserData*                           userData;
-};
-
-struct Test_U_MediaFoundation_ConnectionConfiguration;
-struct Test_U_MediaFoundation_SocketHandlerConfiguration
- : Net_SocketHandlerConfiguration
-{
-  Test_U_MediaFoundation_SocketHandlerConfiguration ()
-   : Net_SocketHandlerConfiguration ()
-   , socketConfiguration_2 ()
-   , socketConfiguration_3 ()
-   , connectionConfiguration (NULL)
-   , userData (NULL)
-  {
-    socketConfiguration = &socketConfiguration_2;
-  }
-
-  struct Net_TCPSocketConfiguration                       socketConfiguration_2;
-  struct Net_UDPSocketConfiguration                       socketConfiguration_3;
-  struct Test_U_MediaFoundation_ConnectionConfiguration* connectionConfiguration;
-
-  struct Test_U_UserData*                                userData;
-};
-#else
 struct Test_U_ConnectionConfiguration;
 struct Test_U_SocketHandlerConfiguration
  : Net_SocketHandlerConfiguration
@@ -117,21 +74,8 @@ struct Test_U_SocketHandlerConfiguration
   struct Net_UDPSocketConfiguration      socketConfiguration_3;
   struct Test_U_ConnectionConfiguration* connectionConfiguration;
 };
-#endif // ACE_WIN32 || ACE_WIN64
 
 //extern const char stream_name_string_[];
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef Stream_Configuration_T<//stream_name_string_,
-                               struct Test_U_AllocatorConfiguration,
-                               struct Test_U_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
-                               struct Test_U_DirectShow_ModuleHandlerConfiguration> Test_U_DirectShow_StreamConfiguration_t;
-typedef Stream_Configuration_T<//stream_name_string_,
-                               struct Test_U_AllocatorConfiguration,
-                               struct Test_U_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
-                               struct Test_U_MediaFoundation_ModuleHandlerConfiguration> Test_U_MediaFoundation_StreamConfiguration_t;
-#else
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
@@ -139,77 +83,7 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct Test_U_StreamConfiguration,
                                struct Stream_ModuleConfiguration,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
-#endif // ACE_WIN32 || ACE_WIN64
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef Net_ConnectionConfiguration_T<struct Test_U_DirectShow_ConnectionConfiguration,
-                                      struct Test_U_AllocatorConfiguration,
-                                      Test_U_DirectShow_StreamConfiguration_t> Test_U_DirectShow_ConnectionConfiguration_t;
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 Test_U_DirectShow_ConnectionConfiguration_t,
-                                 struct Test_U_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Test_U_UserData> Test_U_DirectShow_IConnectionManager_t;
-struct Test_U_DirectShow_ConnectionConfiguration
- : Net_ConnectionConfiguration
-{
-  Test_U_DirectShow_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration ()
-   , connectionManager (NULL)
-   , socketHandlerConfiguration ()
-   , userData (NULL)
-  {
-    PDUSize = Test_U_MESSAGE_BUFFER_SIZE;
-  }
-
-  Test_U_DirectShow_IConnectionManager_t*             connectionManager;
-  struct Test_U_DirectShow_SocketHandlerConfiguration socketHandlerConfiguration;
-
-  struct Test_U_UserData*                             userData;
-};
-
-typedef Net_ConnectionConfiguration_T<struct Test_U_MediaFoundation_ConnectionConfiguration,
-                                      struct Test_U_AllocatorConfiguration,
-                                      Test_U_MediaFoundation_StreamConfiguration_t> Test_U_MediaFoundation_ConnectionConfiguration_t;
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 Test_U_MediaFoundation_ConnectionConfiguration_t,
-                                 struct Test_U_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Test_U_UserData> Test_U_MediaFoundation_IConnectionManager_t;
-struct Test_U_MediaFoundation_ConnectionConfiguration
- : Net_ConnectionConfiguration
-{
-  Test_U_MediaFoundation_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration ()
-   , connectionManager (NULL)
-   , socketHandlerConfiguration ()
-   , userData (NULL)
-  {
-    PDUSize = Test_U_MESSAGE_BUFFER_SIZE;
-  }
-
-  Test_U_MediaFoundation_IConnectionManager_t*             connectionManager;
-  struct Test_U_MediaFoundation_SocketHandlerConfiguration socketHandlerConfiguration;
-
-  struct Test_U_UserData*                                  userData;
-};
-
-typedef std::unordered_map<std::string, // module name
-                           Test_U_DirectShow_ConnectionConfiguration_t> Test_U_DirectShow_Stream_ConnectionConfigurations_t;
-typedef Test_U_DirectShow_Stream_ConnectionConfigurations_t::iterator Test_U_DirectShow_Stream_ConnectionConfigurationIterator_t;
-typedef std::unordered_map<std::string, // stream name
-                           Test_U_DirectShow_Stream_ConnectionConfigurations_t> Test_U_DirectShow_ConnectionConfigurations_t;
-typedef Test_U_DirectShow_ConnectionConfigurations_t::iterator Test_U_DirectShow_ConnectionConfigurationIterator_t;
-
-typedef std::unordered_map<std::string, // module name
-                           Test_U_MediaFoundation_ConnectionConfiguration_t> Test_U_MediaFoundation_Stream_ConnectionConfigurations_t;
-typedef Test_U_MediaFoundation_Stream_ConnectionConfigurations_t::iterator Test_U_MediaFoundation_Stream_ConnectionConfigurationIterator_t;
-typedef std::unordered_map<std::string, // stream name
-                           Test_U_MediaFoundation_Stream_ConnectionConfigurations_t> Test_U_MediaFoundation_ConnectionConfigurations_t;
-typedef Test_U_MediaFoundation_ConnectionConfigurations_t::iterator Test_U_MediaFoundation_ConnectionConfigurationIterator_t;
-#else
 struct Test_U_ConnectionConfiguration;
 typedef Net_ConnectionConfiguration_T<struct Test_U_ConnectionConfiguration,
                                       struct Stream_AllocatorConfiguration,
@@ -246,6 +120,5 @@ typedef Test_U_Stream_ConnectionConfigurations_t::iterator Test_U_Stream_Connect
 typedef std::unordered_map<std::string, // stream name
                            Test_U_Stream_ConnectionConfigurations_t> Test_U_ConnectionConfigurations_t;
 typedef Test_U_ConnectionConfigurations_t::iterator Test_U_ConnectionConfigurationIterator_t;
-#endif // ACE_WIN32 || ACE_WIN64
 
 #endif // #ifndef Test_U_NETWORK_COMMON_H

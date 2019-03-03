@@ -29,42 +29,13 @@
 enum Test_U_ProgramMode
 {
   TEST_U_PROGRAMMODE_PRINT_VERSION = 0,
-  TEST_U_PROGRAMMODE_TEST_METHODS,
+  //TEST_U_PROGRAMMODE_TEST_METHODS,
   TEST_U_PROGRAMMODE_NORMAL,
   ////////////////////////////////////////
   TEST_U_PROGRAMMODE_MAX,
   TEST_U_PROGRAMMODE_INVALID
 };
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct Test_U_DirectShow_Configuration
- : Test_U_Configuration
-{
-  Test_U_DirectShow_Configuration ()
-   : Test_U_Configuration ()
-   , direct3DConfiguration ()
-   , streamConfiguration ()
-  {}
-
-  // **************************** stream data **********************************
-  struct Stream_MediaFramework_Direct3D_Configuration direct3DConfiguration;
-  Test_U_DirectShow_StreamConfiguration_t     streamConfiguration;
-};
-
-struct Test_U_MediaFoundation_Configuration
- : Test_U_Configuration
-{
-  Test_U_MediaFoundation_Configuration ()
-   : Test_U_Configuration ()
-   , direct3DConfiguration ()
-   , streamConfiguration ()
-  {}
-
-  // **************************** stream data **********************************
-  struct Stream_MediaFramework_Direct3D_Configuration  direct3DConfiguration;
-  Test_U_MediaFoundation_StreamConfiguration_t streamConfiguration;
-};
-#else
 struct Test_U_Configuration
 {
   Test_U_Configuration ()
@@ -79,9 +50,6 @@ struct Test_U_Configuration
   Common_EventDispatchConfiguration        dispatchConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t             streamConfiguration;
-
-
 };
-#endif // ACE_WIN32 || ACE_WIN64
 
 #endif

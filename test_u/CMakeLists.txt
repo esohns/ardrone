@@ -80,6 +80,7 @@ endif (GUI_SUPPORT)
 
 ##########################################
 
+add_subdirectory (mavlink_ui)
 add_subdirectory (video_ui)
 
 # phonies

@@ -1,3 +1,39 @@
+add_definitions (-DGUI_SUPPORT)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
+
+if (CURSES_USE)
+elseif (GTK_USE)
+ include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetGTKVersion.cmake)
+
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  add_definitions (-DG_ERRORCHECK_MUTEXES)
+ endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+elseif (WXWIDGETS_USE)
+ message (STATUS "wxWidgets_DEFINITIONS: ${wxWidgets_DEFINITIONS}")
+ message (STATUS "wxWidgets_DEFINITIONS_DEBUG: ${wxWidgets_DEFINITIONS_DEBUG}")
+ message (STATUS "wxWidgets_CXX_FLAGS: ${wxWidgets_CXX_FLAGS}")
+ message (STATUS "wxWidgets_USE_FILE: ${wxWidgets_USE_FILE}")
+ # *NOTE*: re-enable ANSI mode, iff available
+# add_definitions (-DwxUSE_UNICODE=0)
+ foreach (DEFINITION ${wxWidgets_DEFINITIONS})
+  add_definitions (-D${DEFINITION})
+ endforeach ()
+ if (WIN32)
+#  add_definitions (-D__WXMSW__)
+#  add_definitions (-DWXUSINGDLL)
+  if (MSVC)
+   add_definitions (-DwxMSVC_VERSION_AUTO)
+  endif (MSVC)
+ endif (WIN32)
+ add_definitions (-DwxUSE_GUI=1)
+ if (CMAKE_BUILD_TYPE STREQUAL Debug)
+  add_definitions (-D__WXDEBUG__)
+ endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+endif ()
+
+##########################################
+
 if (UNIX)
 # include (CheckLibraryExists)
 # check_library_exists (pthread pthread_create "" HAVE_LIB_PTHREAD)
@@ -110,13 +146,31 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACENetwork/src/wlan)
 elseif (WIN32)
  set (DIRECTSHOW_BASECLASSES_DIRECTORY
-      "D:/projects/DShowBaseClasses")
+      $ENV{LIB_ROOT}/DShowBaseClasses)
 #      "$ENV{PROGRAMFILES}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
 #      "$ENV{${_PF86}}/Microsoft SDKs/Windows/v7.0/Samples/multimedia/directshow/baseclasses")
 # message (STATUS "DirectShow baseclasses directory: \"${DIRECTSHOW_BASECLASSES_DIRECTORY}\"")
 
 # *TODO*: repair pkgconfig support
  include_directories ("${DIRECTSHOW_BASECLASSES_DIRECTORY}/baseclasses")
+
+ if (GTK_USE)
+  include_directories (${GTK_INCLUDE_DIRS})
+
+  if (OPENGL_SUPPORT AND GTKGLAREA_SUPPORT)
+# *NOTE*: check out the 'master' branch for gtk3-based applications
+# *NOTE*: check out the 'gtkglarea-2' branch for gtk2-based applications
+# *TODO*: verify automatically
+   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../gtkglarea)
+  endif (OPENGL_SUPPORT AND GTKGLAREA_SUPPORT)
+
+  if (LIBGLADE_SUPPORT)
+   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../libglade-2.6.4/include/libglade-2.0)
+  endif (LIBGLADE_SUPPORT)
+ elseif (WXWIDGETS_USE)
+  include_directories (${wxWidgets_INCLUDE_DIRS})
+ endif ()
+
 # libav
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
 

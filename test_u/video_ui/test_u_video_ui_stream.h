@@ -52,163 +52,6 @@ class Stream_IAllocator;
 
 extern const char stream_name_string_[];
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-class Test_U_DirectShow_Stream
- : public Stream_Base_T<ACE_MT_SYNCH,
-                        Common_TimePolicy_t,
-                        stream_name_string_,
-                        enum Stream_ControlType,
-                        enum Stream_SessionMessageType,
-                        enum Stream_StateMachine_ControlState,
-                        struct Test_U_DirectShow_StreamState,
-                        struct Test_U_DirectShow_StreamConfiguration,
-                        struct Test_U_StatisticData,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
-                        struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                        Test_U_DirectShow_SessionData,
-                        Test_U_DirectShow_SessionData_t,
-                        Stream_ControlMessage_t,
-                        Test_U_DirectShow_Message_t,
-                        Test_U_DirectShow_SessionMessage_t>
-{
-  typedef Stream_Base_T<ACE_MT_SYNCH,
-                        Common_TimePolicy_t,
-                        stream_name_string_,
-                        enum Stream_ControlType,
-                        enum Stream_SessionMessageType,
-                        enum Stream_StateMachine_ControlState,
-                        struct Test_U_DirectShow_StreamState,
-                        struct Test_U_DirectShow_StreamConfiguration,
-                        struct Test_U_StatisticData,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
-                        struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                        Test_U_DirectShow_SessionData,
-                        Test_U_DirectShow_SessionData_t,
-                        Stream_ControlMessage_t,
-                        Test_U_DirectShow_Message_t,
-                        Test_U_DirectShow_SessionMessage_t> inherited;
-
- public:
-  Test_U_DirectShow_Stream ();
-  virtual ~Test_U_DirectShow_Stream ();
-
-  // implement (part of) Stream_IStreamControlBase
-  virtual bool load (Stream_ModuleList_t&, // return value: module list
-                     bool&);               // return value: delete modules ?
-
-  // implement Common_IInitialize_T
-  virtual bool initialize (const inherited::CONFIGURATION_T&); // configuration
-
- private:
-  ACE_UNIMPLEMENTED_FUNC (Test_U_DirectShow_Stream (const Test_U_DirectShow_Stream&))
-  ACE_UNIMPLEMENTED_FUNC (Test_U_DirectShow_Stream& operator= (const Test_U_DirectShow_Stream&))
-
-  // modules
-  Test_U_DirectShow_Source_Module            source_;
-  Test_U_DirectShow_StatisticReport_Module   statisticReport_;
-#if defined (GUI_SUPPORT)
-  Test_U_DirectShow_Direct3DDisplay_Module   direct3DDisplay_;
-  Test_U_DirectShow_DirectShowDisplay_Module directShowDisplay_;
-#if defined (GTK_USE)
-  Test_U_DirectShow_GTKCairoDisplay_Module   GTKCairoDisplay_;
-#endif // GTK_USE
-#endif // GUI_SUPPORT
-  Test_U_DirectShow_AVIEncoder_Module        encoder_;
-  Test_U_DirectShow_FileWriter_Module        fileWriter_;
-};
-
-class Test_U_MediaFoundation_Stream
- : public Stream_Base_T<ACE_MT_SYNCH,
-                        Common_TimePolicy_t,
-                        stream_name_string_,
-                        enum Stream_ControlType,
-                        enum Stream_SessionMessageType,
-                        enum Stream_StateMachine_ControlState,
-                        struct Test_U_MediaFoundation_StreamState,
-                        struct Test_U_MediaFoundation_StreamConfiguration,
-                        struct Test_U_StatisticData,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
-                        struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                        Test_U_MediaFoundation_SessionData,
-                        Test_U_MediaFoundation_SessionData_t,
-                        Stream_ControlMessage_t,
-                        Test_U_MediaFoundation_Message_t,
-                        Test_U_MediaFoundation_SessionMessage_t>
- , public IMFAsyncCallback
-{
-  typedef Stream_Base_T<ACE_MT_SYNCH,
-                        Common_TimePolicy_t,
-                        stream_name_string_,
-                        enum Stream_ControlType,
-                        enum Stream_SessionMessageType,
-                        enum Stream_StateMachine_ControlState,
-                        struct Test_U_MediaFoundation_StreamState,
-                        struct Test_U_MediaFoundation_StreamConfiguration,
-                        struct Test_U_StatisticData,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
-                        struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                        Test_U_MediaFoundation_SessionData,
-                        Test_U_MediaFoundation_SessionData_t,
-                        Stream_ControlMessage_t,
-                        Test_U_MediaFoundation_Message_t,
-                        Test_U_MediaFoundation_SessionMessage_t> inherited;
-
- public:
-  Test_U_MediaFoundation_Stream ();
-  virtual ~Test_U_MediaFoundation_Stream ();
-
-  // override (part of) Stream_IStreamControl_T
-  virtual const Stream_Module_t* find (const std::string&) const; // module name
-  virtual void start ();
-  virtual void stop (bool = true,  // wait for completion ?
-                     bool = true,  // recurse upstream (if any) ?
-                     bool = true); // locked access ?
-
-  // implement IMFAsyncCallback
-  virtual STDMETHODIMP QueryInterface (const IID&,
-                                       void**);
-  virtual STDMETHODIMP_ (ULONG) AddRef ();
-  virtual STDMETHODIMP_ (ULONG) Release ();
-  virtual STDMETHODIMP GetParameters (DWORD*,  // return value: flags
-                                      DWORD*); // return value: queue handle
-  virtual STDMETHODIMP Invoke (IMFAsyncResult*); // asynchronous result handle
-
-  // implement (part of) Stream_IStreamControlBase
-  virtual bool load (Stream_ModuleList_t&, // return value: module list
-                     bool&);               // return value: delete modules ?
-
-  // implement Common_IInitialize_T
-  virtual bool initialize (const inherited::CONFIGURATION_T&); // configuration
-
- private:
-  ACE_UNIMPLEMENTED_FUNC (Test_U_MediaFoundation_Stream (const Test_U_MediaFoundation_Stream&))
-  ACE_UNIMPLEMENTED_FUNC (Test_U_MediaFoundation_Stream& operator= (const Test_U_MediaFoundation_Stream&))
-
-  // modules
-  Test_U_MediaFoundation_Source_Module                     source_;
-  Test_U_MediaFoundation_StatisticReport_Module            statisticReport_;
-  Test_U_MediaFoundation_MediaFoundationDisplay_Module     mediaFoundationDisplay_;
-  Test_U_MediaFoundation_MediaFoundationDisplayNull_Module mediaFoundationDisplayNull_;
-  Test_U_MediaFoundation_Direct3DDisplay_Module            direct3DDisplay_;
-#if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
-  Test_U_MediaFoundation_GTKCairoDisplay_Module            GTKCairoDisplay_;
-#endif // GTK_USE
-#endif // GUI_SUPPORT
-  Test_U_MediaFoundation_AVIEncoder_Module                 encoder_;
-  Test_U_MediaFoundation_FileWriter_Module                 fileWriter_;
-
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
-  // media session
-  IMFMediaSession*                                                 mediaSession_;
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
-  ULONG                                                            referenceCount_;
-};
-#else
 class Test_U_Stream
  : public Stream_Base_T<ACE_MT_SYNCH,
                         Common_TimePolicy_t,
@@ -251,8 +94,8 @@ class Test_U_Stream
   virtual ~Test_U_Stream ();
 
   // implement (part of) Stream_IStreamControlBase
-  virtual bool load (typename inherited::LAYOUT_T&, // return value: layout
-                     bool&);                        // return value: delete modules ?
+  virtual bool load (Stream_ILayout*, // return value: layout
+                     bool&);          // return value: delete modules ?
 
   // implement Common_IInitialize_T
   virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
@@ -268,9 +111,13 @@ class Test_U_Stream
   Test_U_StatisticReport_Module report_;
   Test_U_LibAVConvert_Module    convert_; // --> BGRA (Xlib)
   Test_U_LibAVResize_Module     resize_; // --> window size/fullscreen
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Test_U_DirectShow_Direct3DDisplay_Module   direct3DDisplay_;
+  Test_U_DirectShow_DirectShowDisplay_Module directShowDisplay_;
+#else
   Test_U_Display_Module         display_;
   Test_U_Display_2_Module       display_2_;
-};
 #endif // ACE_WIN32 || ACE_WIN64
+};
 
 #endif

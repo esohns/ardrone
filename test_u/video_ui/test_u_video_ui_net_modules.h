@@ -38,137 +38,6 @@
 #include "test_u_video_ui_stream_common.h"
 
 // declare module(s)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_DirectShow_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_DirectShow_ConnectionManager_t,
-                                    Test_U_DirectShow_TCPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_DirectShow_TCPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_DirectShow_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_DirectShow_ConnectionManager_t,
-                                    Test_U_DirectShow_AsynchTCPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_DirectShow_AsynchTCPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_DirectShow_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_DirectShow_ConnectionManager_t,
-                                    Test_U_DirectShow_UDPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_DirectShow_UDPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_DirectShow_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_DirectShow_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_DirectShow_ConnectionManager_t,
-                                    Test_U_DirectShow_AsynchUDPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_DirectShow_AsynchUDPSource;
-
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_MediaFoundation_ConnectionManager_t,
-                                    Test_U_MediaFoundation_TCPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_MediaFoundation_TCPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_MediaFoundation_ConnectionManager_t,
-                                    Test_U_MediaFoundation_AsynchTCPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_MediaFoundation_AsynchTCPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_MediaFoundation_ConnectionManager_t,
-                                    Test_U_MediaFoundation_UDPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_MediaFoundation_UDPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_DirectShow_SessionMessage,
-                                    struct Test_U_MediaFoundation_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_DirectShow_SessionData,
-                                    Test_U_DirectShow_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_MediaFoundation_Stream_ConnectionConfigurationIterator_t,
-                                    Test_U_MediaFoundation_ConnectionManager_t,
-                                    Test_U_MediaFoundation_AsynchUDPConnector_t,
-                                    struct Stream_UserData> Test_U_Module_MediaFoundation_AsynchUDPSource;
-#else
 //typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    Stream_ControlMessage_t,
 //                                    Test_U_Message_t,
@@ -233,24 +102,9 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Test_U_ConnectionManager_t,
                                     Test_U_AsynchUDPConnector_t,
                                     struct Stream_UserData> Test_U_AsynchUDPSource;
-#endif // ACE_WIN32 || ACE_WIN64
+
 //////////////////////////////////////////
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-DATASTREAM_MODULE_INPUT_ONLY (Test_U_DirectShow_SessionData,                // session data type
-                              enum Stream_SessionMessageType,                   // session event type
-                              struct Test_U_DirectShow_ModuleHandlerConfiguration, // module handler configuration type
-                              libacestream_default_net_source_module_name_string,
-                              Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_DirectShow_Source);                // writer type
-
-DATASTREAM_MODULE_INPUT_ONLY (Test_U_MediaFoundation_SessionData,                // session data type
-                              enum Stream_SessionMessageType,                   // session event type
-                              struct Test_U_MediaFoundation_ModuleHandlerConfiguration, // module handler configuration type
-                              libacestream_default_net_source_module_name_string,
-                              Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_MediaFoundation_Source);           // writer type
-#else
 DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
                               enum Stream_SessionMessageType,                   // session event type
                               struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
@@ -264,6 +118,5 @@ DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session d
                               libacestream_default_net_source_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
                               Test_U_AsynchUDPSource);                      // writer type
-#endif // ACE_WIN32 || ACE_WIN64
 
 #endif
