@@ -17,7 +17,27 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "stdafx.h"
 
-#include "ace/Synch.h"
-#include "test_u_session_message.h"
+#ifndef TEST_U_GTK_CALLBACKS_H
+#define TEST_U_GTK_CALLBACKS_H
+
+#include "gtk/gtk.h"
+
+ // idle routines
+gboolean idle_initialize_UI_cb (gpointer);
+gboolean idle_finalize_UI_cb (gpointer);
+//gboolean idle_update_progress_cb (gpointer);
+
+//////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+G_MODULE_EXPORT gint button_about_clicked_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint button_quit_clicked_cb (GtkWidget*, gpointer);
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif

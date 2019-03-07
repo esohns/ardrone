@@ -56,8 +56,7 @@ typedef ARDrone_Module_MAVLinkDecoder_T <ACE_MT_SYNCH,
                                          struct Test_U_ModuleHandlerConfiguration,
                                          Stream_ControlMessage_t,
                                          Test_U_Message_t,
-                                         Test_U_SessionMessage_t,
-                                         struct Stream_UserData> Test_U_MAVLinkDecoder;
+                                         Test_U_SessionMessage_t> Test_U_MAVLinkDecoder;
 
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,

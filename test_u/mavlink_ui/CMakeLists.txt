@@ -121,6 +121,8 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../mavlink/generated/include)
+ 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACE)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/include)
@@ -205,6 +207,8 @@ set (${EXECUTABLE}_EXE_SRCS
      test_u_eventhandler.cpp
      test_u_eventhandler.h
      test_u_eventhandler.inl
+     test_u_gtk_callbacks.cpp
+     test_u_gtk_callbacks.h
      test_u_message.cpp
      test_u_message.h
      test_u_message.inl
@@ -286,9 +290,9 @@ elseif (WIN32)
 
 # *TODO*: repair WIN32 pkgconfig support
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/libavformat.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/libavformat.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/libavcodec.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/libavcodec.a)
 endif ()
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 
@@ -332,7 +336,16 @@ target_link_libraries (${EXECUTABLE} ${PROJECT_NAME})
 set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")
 cotire (${EXECUTABLE})
 
-set (ui_definition_file ${EXECUTABLE}.gtk2)
+set (ui_definition_file "")
+if (GTK_USE)
+ if (GTK3_USE)
+  set (ui_definition_file ${EXECUTABLE}.gtk3)
+ elseif (GTK2_USE)
+  set (ui_definition_file ${EXECUTABLE}.gtk2)
+ endif ()
+elseif (WXWIDGETS_USE)
+endif (GUI_SUPPORT)
+
 install (TARGETS ${EXECUTABLE}
          EXPORT ${PROJECT_NAME}Targets
          RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT test_u)
@@ -420,7 +433,9 @@ elseif (WIN32)
  else ()
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ffmpeg/bin FFMPEG_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                           ${FFMPEG_PATH}
                            ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
 endif ()
 create_target_launcher (${EXECUTABLE}

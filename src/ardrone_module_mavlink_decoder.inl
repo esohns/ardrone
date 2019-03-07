@@ -32,18 +32,16 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
+                                SessionMessageType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
 #else
-                                SessionDataContainerType>::ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T* stream_in)
+                                SessionMessageType>::ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T* stream_in)
 #endif
  : inherited (stream_in,
               STREAM_MISC_PARSER_DEFAULT_LEX_TRACE,
@@ -58,16 +56,14 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 void
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::record (struct __mavlink_message*& record_inout)
+                                SessionMessageType>::record (struct __mavlink_message*& record_inout)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::record"));
 
@@ -86,7 +82,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
-  const typename SessionDataContainerType::DATA_T& session_data_r =
+  const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
     inherited::sessionData_->getR ();
 //  unsigned char byte_c = 0x00;
 //  ACE_UINT16 checksum_i = 0;
@@ -236,16 +232,14 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 void
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::error (const std::string& message_in)
+                                SessionMessageType>::error (const std::string& message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::error"));
 
@@ -267,16 +261,14 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 void
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::waitBuffer ()
+                                SessionMessageType>::waitBuffer ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::waitBuffer"));
 
@@ -288,7 +280,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   bool stop_processing = false;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
-  typename SessionDataContainerType::DATA_T* session_data_p = NULL;
+  typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
 
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
@@ -298,7 +290,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   //ACE_ASSERT (blockInParse_);
 
   session_data_p =
-    &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
+    &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
 
   // 1. wait for data
   do
@@ -428,17 +420,15 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 bool
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::begin (const char* data_in,
-                                                                  unsigned int length_in)
+                                SessionMessageType>::begin (const char* data_in,
+                                                            unsigned int length_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::begin"));
 
@@ -477,16 +467,14 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 void
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::end ()
+                                SessionMessageType>::end ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::end"));
 
@@ -504,16 +492,14 @@ template <ACE_SYNCH_DECL,
           typename ConfigurationType,
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 int
 ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::svc (void)
+                                SessionMessageType>::svc (void)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::svc"));
 

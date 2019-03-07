@@ -32,6 +32,7 @@
 #include "ace/Init_ACE.h"
 #endif // ACE_WIN32 || ACE_WIN64
 #include "ace/Log_Msg.h"
+#include "ace/OS.h"
 #include "ace/Profile_Timer.h"
 #include "ace/Sig_Handler.h"
 #include "ace/Signal.h"
@@ -55,6 +56,9 @@
 
 #include "common_ui_tools.h"
 
+#include "common_ui_gtk_builder_definition.h"
+#include "common_ui_gtk_manager_common.h"
+
 #if defined (HAVE_CONFIG_H)
 #include "ACEStream_config.h"
 #endif // HAVE_CONFIG_H
@@ -75,11 +79,9 @@
 
 #include "stream_vis_tools.h"
 
-//#include "test_u_common.h"
-//#include "test_u_defines.h"
-
 #include "test_u_defines.h"
 #include "test_u_eventhandler.h"
+#include "test_u_gtk_callbacks.h"
 #include "test_u_session_message.h"
 #include "test_u_stream.h"
 
@@ -104,25 +106,20 @@ do_print_usage (const std::string& programName_in)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("currently available options:")
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-2          : use Direct2D renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_2D)
-            << ACE_TEXT_ALWAYS_CHAR ("])")
-            << std::endl;
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-3          : use Direct3D renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_3D)
-            << ACE_TEXT_ALWAYS_CHAR ("])")
-            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-c          : show console [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
-#else
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-1          : use X11 renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_X11)
-            << ACE_TEXT_ALWAYS_CHAR ("])")
-            << std::endl;
 #endif // ACE_WIN32 || ACE_WIN64
-  std::string path = Common_File_Tools::getTempDirectory ();
+  std::string UI_file = configuration_path;
+  UI_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  UI_file += COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY;
+  UI_file += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  UI_file += ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_DEFINITION_FILE);
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-g[[STRING]]: UI file [\"")
+            << UI_file
+            << ACE_TEXT_ALWAYS_CHAR ("\"] {\"\" --> no GUI}")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-l          : log to a file [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -157,6 +154,7 @@ do_process_arguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                       bool& showConsole_out,
 #endif // ACE_WIN32 || ACE_WIN64
+                      std::string& UIDefinition_out,
                       bool& logToFile_out,
                       struct Common_UI_DisplayDevice& displayDevice_out,
                       bool& traceInformation_out,
@@ -171,6 +169,11 @@ do_process_arguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out = false;
 #endif // ACE_WIN32 || ACE_WIN64
+  UIDefinition_out = configuration_path;
+  UIDefinition_out += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  UIDefinition_out += COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY;
+  UIDefinition_out += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+  UIDefinition_out += ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_DEFINITION_FILE);
   logToFile_out = false;
   displayDevice_out = Common_UI_Tools::getDefaultDisplay ();
   traceInformation_out = false;
@@ -179,10 +182,10 @@ do_process_arguments (int argc_in,
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              ACE_TEXT ("clo:tv"),
+                              ACE_TEXT ("cg::lo:tv"),
 #else
-                              ACE_TEXT ("lo:tv"),
-#endif // ACE_WIN32 || ACE_WIN64
+                              ACE_TEXT ("g::lo:tv"),
+#endif // ACE_WIN32 || ACE_WIN64%
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -201,6 +204,15 @@ do_process_arguments (int argc_in,
         break;
       }
 #endif // ACE_WIN32 || ACE_WIN64
+      case 'g':
+      {
+        ACE_TCHAR* opt_arg = argumentParser.opt_arg ();
+        if (opt_arg)
+          UIDefinition_out = ACE_TEXT_ALWAYS_CHAR (opt_arg);
+        else
+          UIDefinition_out.clear ();
+        break;
+      }
       case 'l':
       {
         logToFile_out = true;
@@ -283,9 +295,9 @@ do_work (
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.streamConfiguration.allocatorConfiguration_;
   modulehandler_configuration.connectionConfigurations =
-      &configuration_in.connectionConfigurations;
-//  // *TODO*: turn these into an option
-//  modulehandler_configuration.method = STREAM_DEV_CAM_V4L_DEFAULT_IO_METHOD;
+    &configuration_in.connectionConfigurations;
+  modulehandler_configuration.parserConfiguration =
+    &configuration_in.parserConfiguration;
   modulehandler_configuration.subscriber = &ui_event_handler;
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
@@ -295,7 +307,7 @@ do_work (
                                                true);           // block ?
   Test_U_Stream stream;
   Test_U_MessageHandler_Module message_handler (&stream,
-                                                             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
+                                                ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
   configuration_in.streamConfiguration.configuration_.messageAllocator =
       &message_allocator;
@@ -331,20 +343,16 @@ do_work (
       TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
-//  connection_configuration.PDUSize =
-//    std::max (bufferSize_in,
-//              static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration =
+    &connection_configuration.socketHandlerConfiguration.socketConfiguration_3;
+    connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress =
       ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
-                                                                                                     1);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.bufferSize =
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
+                                                                                                           1);
+  connection_configuration.socketHandlerConfiguration.socketConfiguration_3.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
-//  connection_configuration.socketHandlerConfiguration.userData =
-//    cb_data_p->configuration->userData;
-//  connection_configuration.userData = cb_data_p->configuration->userData;
 
   configuration_in.streamConfiguration.configuration_.module = NULL;
   connection_configuration.initialize (configuration_in.allocatorConfiguration,
@@ -379,6 +387,10 @@ do_work (
     return;
   } // end IF
 
+  // event loop(s):
+  // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
+  // [- signal timer expiration to perform server queries] (see above)
+
   struct Common_EventDispatchState dispatch_state_s;
   dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
   if (!Common_Tools::startEventDispatch (dispatch_state_s))
@@ -388,12 +400,14 @@ do_work (
     return;
   } // end IF
 
+  // UI
+  //ACE_thread_t thread_id;
+  Common_UI_GTK_Manager_t* gtk_manager_p =
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
+  ACE_ASSERT (gtk_manager_p);
+  gtk_manager_p->start (thread_id);
+
   // step0f: (initialize) processing stream
-
-  // event loop(s):
-  // - catch SIGINT/SIGQUIT/SIGTERM/... signals (connect / perform orderly shutdown)
-  // [- signal timer expiration to perform server queries] (see above)
-
   Stream_IStreamControlBase* stream_p = NULL;
   if (!stream.initialize (configuration_in.streamConfiguration))
   {
@@ -469,6 +483,12 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     bool show_console = false;
 #endif // ACE_WIN32 || ACE_WIN64
+    std::string UI_definition_filename = configuration_path;
+    UI_definition_filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    UI_definition_filename += COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY;
+    UI_definition_filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    UI_definition_filename +=
+      ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_DEFINITION_FILE);
     bool log_to_file = false;
   struct Common_UI_DisplayDevice display_device_s =
     Common_UI_Tools::getDefaultDisplay ();
@@ -483,6 +503,7 @@ ACE_TMAIN (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                              show_console,
 #endif // ACE_WIN32 || ACE_WIN64
+                             UI_definition_filename,
                              log_to_file,
                              display_device_s,
                              trace_information,
@@ -507,7 +528,8 @@ ACE_TMAIN (int argc_in,
   if (0)
     ACE_DEBUG ((LM_WARNING,
                 ACE_TEXT ("limiting the number of message buffers could (!) lead to a deadlock --> ensure the streaming elements are sufficiently efficient in this regard\n")));
-  if (false)
+  if ((!UI_definition_filename.empty () &&
+       !Common_File_Tools::isReadable (UI_definition_filename)))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("invalid arguments, aborting\n")));
@@ -527,7 +549,7 @@ ACE_TMAIN (int argc_in,
   std::string log_file_name;
   if (log_to_file)
     log_file_name =
-        Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ACEStream_PACKAGE_NAME),
+        Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                           ACE::basename (argv_in[0]));
   if (!Common_Log_Tools::initializeLogging (ACE::basename (argv_in[0]),                   // program name
                                             log_file_name,                                // log file name
@@ -585,7 +607,31 @@ ACE_TMAIN (int argc_in,
     }
   } // end SWITCH
 
+  Common_UI_GtkBuilderDefinition_t gtk_ui_definition;
+  Common_UI_GTK_Manager_t* gtk_manager_p =
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
+  ACE_ASSERT (gtk_manager_p);
+  Common_UI_GTK_State_t& state_r =
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR_2 ());
+  state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
+    std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
+
   struct Test_U_Configuration configuration;
+  struct Test_U_UI_GTK_CBData ui_cb_data_s;
+  ui_cb_data_s.configuration = &configuration;
+  ui_cb_data_s.UIState = &state_r;
+
+  configuration.GTKConfiguration.argc = argc_in;
+  configuration.GTKConfiguration.argv = argv_in;
+  configuration.GTKConfiguration.CBData = &ui_cb_data_s;
+  configuration.GTKConfiguration.eventHooks.finiHook =
+    idle_finalize_UI_cb;
+  configuration.GTKConfiguration.eventHooks.initHook =
+    idle_initialize_UI_cb;
+  configuration.GTKConfiguration.definition = &gtk_ui_definition;
+
+  bool result_2 = gtk_manager_p->initialize (configuration.GTKConfiguration);
+  ACE_ASSERT (result_2);
 
   ACE_High_Res_Timer timer;
   timer.start ();

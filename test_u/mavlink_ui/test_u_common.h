@@ -21,7 +21,9 @@
 #ifndef TEST_U_COMMON_H
 #define TEST_U_COMMON_H
 
-#include "common_test_u_common.h"
+#include "common_ui_gtk_common.h"
+
+#include "stream_istreamcontrol.h"
 
 #include "test_u_network_common.h"
 #include "test_u_stream_common.h"
@@ -41,14 +43,33 @@ struct Test_U_Configuration
    : allocatorConfiguration ()
    , connectionConfigurations ()
    , dispatchConfiguration ()
+   , GTKConfiguration ()
+   , parserConfiguration ()
    , streamConfiguration ()
   {}
 
-  Stream_AllocatorConfiguration            allocatorConfiguration;
+  struct Stream_AllocatorConfiguration     allocatorConfiguration;
   Test_U_Stream_ConnectionConfigurations_t connectionConfigurations;
-  Common_EventDispatchConfiguration        dispatchConfiguration;
+  struct Common_EventDispatchConfiguration dispatchConfiguration;
+  struct Common_UI_GTK_Configuration       GTKConfiguration;
+  struct Common_ParserConfiguration        parserConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t             streamConfiguration;
+};
+
+//////////////////////////////////////////
+
+struct Test_U_UI_GTK_CBData
+ : Common_UI_GTK_CBData
+{
+  Test_U_UI_GTK_CBData ()
+   : Common_UI_GTK_CBData ()
+   , configuration (NULL)
+   , stream (NULL)
+  {}
+
+  struct Test_U_Configuration* configuration;
+  Stream_IStreamControlBase*   stream;
 };
 
 #endif

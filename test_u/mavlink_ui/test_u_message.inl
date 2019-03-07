@@ -34,7 +34,7 @@
 template <typename DataType,
           typename SessionDataType>
 Test_U_Message_T<DataType,
-                              SessionDataType>::Test_U_Message_T (unsigned int size_in)
+                 SessionDataType>::Test_U_Message_T (unsigned int size_in)
  : inherited (size_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::Test_U_Message_T"));
@@ -44,7 +44,7 @@ Test_U_Message_T<DataType,
 template <typename DataType,
           typename SessionDataType>
 Test_U_Message_T<DataType,
-                              SessionDataType>::Test_U_Message_T (const OWN_TYPE_T& message_in)
+                 SessionDataType>::Test_U_Message_T (const OWN_TYPE_T& message_in)
  : inherited (message_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::Test_U_Message_T"));
@@ -54,10 +54,10 @@ Test_U_Message_T<DataType,
 template <typename DataType,
           typename SessionDataType>
 Test_U_Message_T<DataType,
-                              SessionDataType>::Test_U_Message_T (Stream_SessionId_t sessionId_in,
-                                                                               ACE_Data_Block* dataBlock_in,
-                                                                               ACE_Allocator* messageAllocator_in,
-                                                                               bool incrementMessageCounter_in)
+                 SessionDataType>::Test_U_Message_T (Stream_SessionId_t sessionId_in,
+                                                     ACE_Data_Block* dataBlock_in,
+                                                     ACE_Allocator* messageAllocator_in,
+                                                     bool incrementMessageCounter_in)
  : inherited (sessionId_in,
               dataBlock_in,               // use (don't own (!) memory of-) this data block
               messageAllocator_in,        // message block allocator
@@ -70,29 +70,13 @@ Test_U_Message_T<DataType,
 template <typename DataType,
           typename SessionDataType>
 Test_U_Message_T<DataType,
-                              SessionDataType>::Test_U_Message_T (Stream_SessionId_t sessionId_in,
-                                                                               ACE_Allocator* messageAllocator_in)
+                 SessionDataType>::Test_U_Message_T (Stream_SessionId_t sessionId_in,
+                                                     ACE_Allocator* messageAllocator_in)
  : inherited (sessionId_in,
               messageAllocator_in) // message block allocator
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::Test_U_Message_T"));
 
-}
-
-template <typename DataType,
-          typename SessionDataType>
-Test_U_Message_T<DataType,
-                              SessionDataType>::~Test_U_Message_T ()
-{
-  ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::~Test_U_Message_T"));
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  // release media sample ?
-  if (inherited::data_.sample)
-  {
-    inherited::data_.sample->Release (); inherited::data_.sample = NULL;
-  } // end IF
-#endif // ACE_WIN32 || ACE_WIN64
 }
 
 template <typename DataType,

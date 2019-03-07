@@ -94,7 +94,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   Test_U_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct Test_U_ModuleHandlerConfiguration* configuration_p = NULL;
-  Test_U_AsynchTCPSource* source_impl_p = NULL;
+  Test_U_AsynchUDPSource* source_impl_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
@@ -125,7 +125,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // ---------------------------------------------------------------------------
 
   // ******************* Camera Source ************************
-  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
   ACE_ASSERT (source_impl_p);
   source_impl_p->setP (&(inherited::state_));
 

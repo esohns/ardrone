@@ -49,9 +49,7 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename ControlMessageType,
           typename DataMessageType,
-          typename SessionMessageType,
-          ////////////////////////////////
-          typename SessionDataContainerType>
+          typename SessionMessageType>
 class ARDrone_Module_MAVLinkDecoder_T
  : public Stream_Module_Parser_T<ACE_SYNCH_USE,
                                  TimePolicyType,

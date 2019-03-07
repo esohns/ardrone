@@ -23,6 +23,8 @@
 
 #include "ace/Synch_Traits.h"
 
+#include "mavlink/v2.0/mavlink_types.h"
+
 #include "common_isubscribe.h"
 #include "common_statistic_handler.h"
 #include "common_tools.h"
@@ -32,6 +34,7 @@
 #include "stream_common.h"
 #include "stream_configuration.h"
 #include "stream_control_message.h"
+#include "stream_data_base.h"
 #include "stream_inotify.h"
 #include "stream_isessionnotify.h"
 #include "stream_istreamcontrol.h"
@@ -57,6 +60,8 @@
 
 #include "net_connection_manager.h"
 
+#include "ardrone_types.h"
+
 //#include "test_u_network.h"
 #include "test_u_network_common.h"
 
@@ -70,11 +75,16 @@ class Test_U_EventHandler_T;
 struct Test_U_MessageData
 {
   Test_U_MessageData ()
-   : release (false)
+   : messageType (ARDRONE_MESSAGE_INVALID)
+   , MAVLinkData ()
   {}
+  inline void operator+= (struct Test_U_MessageData rhs_in) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
 
-  bool release;
+  enum ARDrone_MessageType messageType;
+
+  struct __mavlink_message MAVLinkData;
 };
+typedef Stream_DataBase_T<struct Test_U_MessageData> Test_U_MessageData_t;
 
 struct Test_U_StatisticData
  : Stream_Statistic
@@ -137,7 +147,7 @@ class Test_U_Message_T;
 template <typename DataMessageType,
           typename SessionDataType>
 class Test_U_SessionMessage_T;
-typedef Test_U_Message_T<struct Test_U_MessageData,
+typedef Test_U_Message_T<Test_U_MessageData_t,
                          Test_U_SessionData_t> Test_U_Message_t;
 typedef Test_U_SessionMessage_T<Test_U_Message_t,
                                 Test_U_SessionData_t> Test_U_SessionMessage_t;

@@ -48,12 +48,12 @@ class Test_U_SessionMessage_T;
 template <typename DataType,
           typename SessionDataType> // derives off Stream_SessionData_T
 class Test_U_Message_T
- : public Stream_DataMessageBase_T<DataType,
+ : public Stream_DataMessageBase_2<DataType,
                                    struct Stream_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
                                    int>
 {
-  typedef Stream_DataMessageBase_T<DataType,
+  typedef Stream_DataMessageBase_2<DataType,
                                    struct Stream_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
                                    int> inherited;
@@ -70,7 +70,7 @@ class Test_U_Message_T
 
  public:
   Test_U_Message_T (unsigned int); // size
-  virtual ~Test_U_Message_T ();
+  inline virtual ~Test_U_Message_T () {}
 
   // overrides from ACE_Message_Block
   // *NOTE*: these use the allocator (if any)

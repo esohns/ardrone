@@ -172,10 +172,12 @@ struct Test_U_ModuleHandlerConfiguration
    , connectionConfigurations (NULL)
    , connectionManager (NULL)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , deviceIdentifier ()
    , direct3DConfiguration (NULL)
    , direct3DDevice (NULL)
    , filterConfiguration (NULL)
    , filterCLSID (GUID_NULL)
+   , push (false)
    , windowController (NULL)
    , windowController2 (NULL)
 #endif // ACE_WIN32 || ACE_WIN64
@@ -208,10 +210,12 @@ struct Test_U_ModuleHandlerConfiguration
   Test_U_Stream_ConnectionConfigurations_t*     connectionConfigurations;
   Test_U_ConnectionManager_t*                   connectionManager;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct Stream_Device_Identifier               deviceIdentifier; // target module
   struct Stream_MediaFramework_Direct3D_Configuration* direct3DConfiguration;
   IDirect3DDevice9*                             direct3DDevice;
   struct Test_U_DirectShow_FilterConfiguration* filterConfiguration;
   CLSID                                         filterCLSID;
+  bool                                          push;
   IVideoWindow*                                 windowController;
   IMFVideoDisplayControl*                       windowController2;
 #endif // ACE_WIN32 || ACE_WIN64
