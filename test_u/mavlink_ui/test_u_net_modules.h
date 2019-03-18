@@ -53,7 +53,7 @@
 //                                    Test_U_Stream_ConnectionConfigurationIterator_t,
 //                                    Test_U_ConnectionManager_t,
 //                                    Test_U_TCPConnector_t,
-//                                    struct Stream_UserData> Test_U_TCPSource;
+//                                    struct Net_UserData> Test_U_TCPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Stream_ControlMessage_t,
                                     Test_U_Message_t,
@@ -69,7 +69,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Test_U_Stream_ConnectionConfigurationIterator_t,
                                     Test_U_ConnectionManager_t,
                                     Test_U_AsynchTCPConnector_t,
-                                    struct Stream_UserData> Test_U_AsynchTCPSource;
+                                    struct Net_UserData> Test_U_AsynchTCPSource;
 //typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    Stream_ControlMessage_t,
 //                                    Test_U_Message_t,
@@ -85,7 +85,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    Test_U_Stream_ConnectionConfigurationIterator_t,
 //                                    Test_U_ConnectionManager_t,
 //                                    Test_U_UDPConnector_t,
-//                                    struct Stream_UserData> Test_U_UDPSource;
+//                                    struct Net_UserData> Test_U_UDPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Stream_ControlMessage_t,
                                     Test_U_Message_t,
@@ -101,7 +101,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Test_U_Stream_ConnectionConfigurationIterator_t,
                                     Test_U_ConnectionManager_t,
                                     Test_U_AsynchUDPConnector_t,
-                                    struct Stream_UserData> Test_U_AsynchUDPSource;
+                                    struct Net_UserData> Test_U_AsynchUDPSource;
 
 //////////////////////////////////////////
 

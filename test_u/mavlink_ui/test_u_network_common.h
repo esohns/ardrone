@@ -45,36 +45,6 @@
 struct Test_U_Configuration;
 struct Test_U_UserData;
 
-struct Test_U_ConnectionState
- : Net_ConnectionState
-{
-  Test_U_ConnectionState ()
-   : Net_ConnectionState ()
-   , configuration (NULL)
-  {}
-
-  // *TODO*: consider making this a separate entity (i.e. a pointer)
-  struct Test_U_Configuration* configuration;
-};
-
-struct Test_U_ConnectionConfiguration;
-struct Test_U_SocketHandlerConfiguration
- : Net_SocketHandlerConfiguration
-{
-  Test_U_SocketHandlerConfiguration ()
-   : Net_SocketHandlerConfiguration ()
-   , socketConfiguration_2 ()
-   , socketConfiguration_3 ()
-   , connectionConfiguration (NULL)
-  {
-    socketConfiguration = &socketConfiguration_2;
-  }
-
-  struct Net_TCPSocketConfiguration      socketConfiguration_2;
-  struct Net_UDPSocketConfiguration      socketConfiguration_3;
-  struct Test_U_ConnectionConfiguration* connectionConfiguration;
-};
-
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;
@@ -84,41 +54,20 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct Stream_ModuleConfiguration,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
 
-struct Test_U_ConnectionConfiguration;
-typedef Net_ConnectionConfiguration_T<struct Test_U_ConnectionConfiguration,
-                                      struct Stream_AllocatorConfiguration,
-                                      Test_U_StreamConfiguration_t> Test_U_ConnectionConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
+                                      Test_U_StreamConfiguration_t,
+                                      NET_TRANSPORTLAYER_UDP> Test_U_ConnectionConfiguration_t;
 
 typedef Net_IConnection_T<ACE_INET_Addr,
                           Test_U_ConnectionConfiguration_t,
-                          struct Test_U_ConnectionState,
+                          struct Net_ConnectionState,
                           struct Test_U_StatisticData> Test_U_IConnection_t;
 
 typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_ConnectionConfiguration_t,
-                                 struct Test_U_ConnectionState,
+                                 struct Net_ConnectionState,
                                  struct Test_U_StatisticData,
                                  struct Net_UserData> Test_U_IConnectionManager_t;
-struct Test_U_ConnectionConfiguration
- : Net_ConnectionConfiguration
-{
-  Test_U_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration ()
-   , connectionManager (NULL)
-   , socketHandlerConfiguration ()
-  {
-//    PDUSize = TEST_U_MESSAGE_BUFFER_SIZE;
-  }
-
-  Test_U_IConnectionManager_t*             connectionManager;
-  struct Test_U_SocketHandlerConfiguration socketHandlerConfiguration;
-};
-typedef std::unordered_map<std::string, // module name
-                           Test_U_ConnectionConfiguration_t> Test_U_Stream_ConnectionConfigurations_t;
-typedef Test_U_Stream_ConnectionConfigurations_t::iterator Test_U_Stream_ConnectionConfigurationIterator_t;
-typedef std::unordered_map<std::string, // stream name
-                           Test_U_Stream_ConnectionConfigurations_t> Test_U_ConnectionConfigurations_t;
-typedef Test_U_ConnectionConfigurations_t::iterator Test_U_ConnectionConfigurationIterator_t;
 
 #endif // #ifndef Test_U_NETWORK_COMMON_H

@@ -112,7 +112,7 @@ class Test_U_SessionData
                                         struct Stream_MediaFramework_FFMPEG_MediaType,
                                         struct Test_U_StreamState,
                                         struct Test_U_StatisticData,
-                                        struct Stream_UserData>
+                                        struct Net_UserData>
 {
  public:
   Test_U_SessionData ()
@@ -120,7 +120,7 @@ class Test_U_SessionData
                                    struct Stream_MediaFramework_FFMPEG_MediaType,
                                    struct Test_U_StreamState,
                                    struct Test_U_StatisticData,
-                                   struct Stream_UserData> ()
+                                   struct Net_UserData> ()
   {}
 
 //  Test_U_SessionData& operator+= (const Test_U_SessionData& rhs_in)
@@ -130,7 +130,7 @@ class Test_U_SessionData
 //                                  struct Stream_MediaFramework_FFMPEG_MediaType,
 //                                  struct Test_U_StreamState,
 //                                  struct Test_U_StatisticData,
-//                                  struct Stream_UserData>::operator+= (rhs_in);
+//                                  struct Net_UserData>::operator+= (rhs_in);
 
 //    return *this;
 //  }

@@ -99,7 +99,7 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Test_U_SessionMessage_t,
                                       ACE_INET_Addr,
                                       Test_U_ConnectionManager_t,
-                                      struct Stream_UserData> Test_U_NetStream_t;
+                                      struct Net_UserData> Test_U_NetStream_t;
 
 typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  Test_U_ConnectionConfiguration_t,
