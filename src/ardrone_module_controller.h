@@ -59,7 +59,6 @@ template <ACE_SYNCH_DECL,
           typename SessionDataContainerType,
           ////////////////////////////////
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           ////////////////////////////////
@@ -72,7 +71,6 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
-                                     ConnectionConfigurationIteratorType,
                                      ConnectionManagerType,
                                      ConnectorType>
  , public ARDrone_StateMachine_NavData
@@ -85,7 +83,6 @@ class ARDrone_Module_Controller_T
                                      DataMessageType,
                                      SessionMessageType,
                                      SessionDataContainerType,
-                                     ConnectionConfigurationIteratorType,
                                      ConnectionManagerType,
                                      ConnectorType> inherited;
   typedef ARDrone_StateMachine_NavData inherited2;
@@ -141,7 +138,6 @@ class ARDrone_Module_Controller_T
                                       SessionMessageType,
                                       SessionDataContainerType,
                                       WLANMonitorType,
-                                      ConnectionConfigurationIteratorType,
                                       ConnectionManagerType,
                                       ConnectorType,
                                       CBDataType> OWN_TYPE_T;

@@ -47,7 +47,7 @@ class Test_U_SessionMessage_T
  : public Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
                                       SessionDataType,
-                                      struct Stream_UserData>
+                                      struct Net_UserData>
 {
   // grant access to specific private ctors
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -68,7 +68,7 @@ class Test_U_SessionMessage_T
   typedef Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
                                       SessionDataType,
-                                      struct Stream_UserData> inherited;
+                                      struct Net_UserData> inherited;
 
  public:
   // *NOTE*: assumes responsibility for the second argument !
@@ -76,7 +76,7 @@ class Test_U_SessionMessage_T
   Test_U_SessionMessage_T (Stream_SessionId_t,
                                         enum Stream_SessionMessageType,
                                         SessionDataType*&,   // session data container handle
-                                        struct Stream_UserData*);
+                                        struct Net_UserData*);
   inline virtual ~Test_U_SessionMessage_T () {}
 
   // overloaded from ACE_Message_Block

@@ -155,7 +155,7 @@ typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_ConnectionConfiguration_t,
-                                 struct Test_U_ConnectionState,
+                                 struct Net_ConnectionState,
                                  struct Test_U_StatisticData,
                                  struct Net_UserData> Test_U_ConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
@@ -207,7 +207,7 @@ struct Test_U_ModuleHandlerConfiguration
   enum AVPixelFormat                            codecFormat; // preferred output-
   enum AVCodecID                                codecId;
   Test_U_IConnection_t*                         connection;
-  Test_U_Stream_ConnectionConfigurations_t*     connectionConfigurations;
+  Net_ConnectionConfigurations_t*               connectionConfigurations;
   Test_U_ConnectionManager_t*                   connectionManager;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct Stream_Device_Identifier               deviceIdentifier; // target module
@@ -246,9 +246,12 @@ struct Test_U_StreamState
   Test_U_StreamState ()
    : Stream_State ()
    , sessionData (NULL)
+   , userData (NULL)
   {}
 
-  Test_U_SessionData* sessionData;
+  Test_U_SessionData*  sessionData;
+
+  struct Net_UserData* userData;
 };
 
 struct Test_U_StreamConfiguration

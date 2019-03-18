@@ -45,11 +45,11 @@ struct Test_U_Configuration
    , streamConfiguration ()
   {}
 
-  Stream_AllocatorConfiguration            allocatorConfiguration;
-  Test_U_Stream_ConnectionConfigurations_t connectionConfigurations;
-  Common_EventDispatchConfiguration        dispatchConfiguration;
+  Stream_AllocatorConfiguration     allocatorConfiguration;
+  Net_ConnectionConfigurations_t    connectionConfigurations;
+  Common_EventDispatchConfiguration dispatchConfiguration;
   // **************************** stream data **********************************
-  Test_U_StreamConfiguration_t             streamConfiguration;
+  Test_U_StreamConfiguration_t      streamConfiguration;
 };
 
 #endif

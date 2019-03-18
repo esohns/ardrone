@@ -364,26 +364,21 @@ do_work (
   connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connection_manager_p);
   connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
-  struct Net_UserData net_user_data;
+//  struct Net_UserData net_user_data;
 
-  connection_configuration.connectionManager =
-      TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
 //  connection_configuration.PDUSize =
 //    std::max (bufferSize_in,
 //              static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address =
+  connection_configuration.address =
       ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
+  connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
                                                                                                      1);
-  connection_configuration.socketHandlerConfiguration.socketConfiguration_2.bufferSize =
+  connection_configuration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  connection_configuration.socketHandlerConfiguration.statisticReportingInterval =
+  connection_configuration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
-//  connection_configuration.socketHandlerConfiguration.userData =
-//    cb_data_p->configuration->userData;
-//  connection_configuration.userData = cb_data_p->configuration->userData;
 
   configuration_in.streamConfiguration.configuration_.module = NULL;
   connection_configuration.initialize (configuration_in.allocatorConfiguration,
@@ -391,12 +386,12 @@ do_work (
 
 //  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                    connection_configuration));
-  Test_U_Stream_ConnectionConfigurationIterator_t connection_configurations_iterator =
+                                                                    &connection_configuration));
+  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
       configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set ((*connection_configurations_iterator).second,
-                             &net_user_data); // passed to all handlers
+  connection_manager_p->set (*dynamic_cast<Test_U_ConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
+                             NULL); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;
   Common_Timer_Manager_t* timer_manager_p = NULL;

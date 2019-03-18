@@ -43,7 +43,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -56,7 +55,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::currentNavDataMessageId = 1;
@@ -69,7 +67,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -81,7 +78,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -111,7 +107,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -124,7 +119,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::initialize (const ConfigurationType& configuration_in,
@@ -156,7 +150,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -169,7 +162,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::handleDataMessage (DataMessageType*& message_inout,
@@ -269,7 +261,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -282,7 +273,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::handleSessionMessage (SessionMessageType*& message_inout,
@@ -339,7 +329,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -352,7 +341,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::onChange (enum ARDRone_NavDataState newState_in)
@@ -372,8 +360,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
       //const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
       //  inherited::sessionData_->getR ();
-      ConnectionConfigurationIteratorType iterator, iterator_2;
-      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL, *socket_configuration_2 =
+      Net_ConnectionConfigurationsIterator_t iterator, iterator_2;
+      Net_UDPSocketConfiguration_t* socket_configuration_p = NULL, *socket_configuration_2 =
           NULL;
       ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -399,17 +387,15 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
       // sanity check(s)
       ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
-      ACE_ASSERT ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
-        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator).second.socketHandlerConfiguration.socketConfiguration);
+        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator).second);
       ACE_ASSERT (socket_configuration_p);
       iterator_2 =
         inherited::configuration_->connectionConfigurations->find (Stream_Tools::sanitizeUniqueName (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ())));
       // sanity check(s)
       ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
-      ACE_ASSERT ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_2 =
-        dynamic_cast<struct Net_UDPSocketConfiguration*> ((*iterator_2).second.socketHandlerConfiguration.socketConfiguration);
+        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator_2).second);
       ACE_ASSERT (socket_configuration_2);
       interface_identifier =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -760,7 +746,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -773,7 +758,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::resetACKFlag ()
@@ -817,7 +801,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -830,7 +813,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::sendATCommand (const std::string& commandString_in)
@@ -899,7 +881,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -912,12 +893,11 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::ids (const std::string& sessionId_in,
-                                                 const std::string& userId_in,
-                                                 const std::string& applicationId_in)
+                                              const std::string& userId_in,
+                                              const std::string& applicationId_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ids"));
 
@@ -953,7 +933,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -966,7 +945,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::resetWatchdog ()
@@ -999,7 +977,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1012,7 +989,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::trim ()
@@ -1046,7 +1022,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1059,7 +1034,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::calibrate ()
@@ -1078,7 +1052,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1091,7 +1064,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::dump ()
@@ -1134,7 +1106,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1147,7 +1118,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::takeoff ()
@@ -1166,7 +1136,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1179,7 +1148,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::land ()
@@ -1198,7 +1166,6 @@ template <ACE_SYNCH_DECL,
           typename SessionMessageType,
           typename SessionDataContainerType,
           typename WLANMonitorType,
-          typename ConnectionConfigurationIteratorType,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
@@ -1211,7 +1178,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             SessionMessageType,
                             SessionDataContainerType,
                             WLANMonitorType,
-                            ConnectionConfigurationIteratorType,
                             ConnectionManagerType,
                             ConnectorType,
                             CBDataType>::set (enum ARDrone_VideoMode videoMode_in)
