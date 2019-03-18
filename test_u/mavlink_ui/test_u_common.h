@@ -49,7 +49,7 @@ struct Test_U_Configuration
   {}
 
   struct Stream_AllocatorConfiguration     allocatorConfiguration;
-  Test_U_Stream_ConnectionConfigurations_t connectionConfigurations;
+  Net_ConnectionConfigurations_t           connectionConfigurations;
   struct Common_EventDispatchConfiguration dispatchConfiguration;
   struct Common_UI_GTK_Configuration       GTKConfiguration;
   struct Common_ParserConfiguration        parserConfiguration;

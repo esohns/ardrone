@@ -162,7 +162,7 @@ typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_ConnectionConfiguration_t,
-                                 struct Test_U_ConnectionState,
+                                 struct Net_ConnectionState,
                                  struct Test_U_StatisticData,
                                  struct Net_UserData> Test_U_ConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
@@ -172,7 +172,6 @@ struct Test_U_ModuleHandlerConfiguration
    : Stream_ModuleHandlerConfiguration ()
    , connection (NULL)
    , connectionConfigurations (NULL)
-   , connectionManager (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
   {
@@ -184,11 +183,10 @@ struct Test_U_ModuleHandlerConfiguration
     hasHeader = true;
   }
 
-  Test_U_IConnection_t*                         connection;
-  Test_U_Stream_ConnectionConfigurations_t*     connectionConfigurations;
-  Test_U_ConnectionManager_t*                   connectionManager;
-  Test_U_ISessionNotify_t*                      subscriber;
-  Test_U_Subscribers_t*                         subscribers;
+  Test_U_IConnection_t*           connection;
+  Net_ConnectionConfigurations_t* connectionConfigurations;
+  Test_U_ISessionNotify_t*        subscriber;
+  Test_U_Subscribers_t*           subscribers;
 };
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;
@@ -205,9 +203,12 @@ struct Test_U_StreamState
   Test_U_StreamState ()
    : Stream_State ()
    , sessionData (NULL)
+   , userData (NULL)
   {}
 
-  Test_U_SessionData* sessionData;
+  Test_U_SessionData*  sessionData;
+
+  struct Net_UserData* userData;
 };
 
 struct Test_U_StreamConfiguration
@@ -215,9 +216,12 @@ struct Test_U_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
+   , userData (NULL)
   {
     printFinalReport = true;
   }
+
+  struct Net_UserData* userData;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,
                                 enum Stream_SessionMessageType,
