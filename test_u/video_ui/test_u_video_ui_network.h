@@ -45,6 +45,7 @@
 #include "net_connection_manager.h"
 #include "net_iconnector.h"
 #include "net_itransportlayer.h"
+#include "net_socket_common.h"
 #include "net_stream_asynch_tcpsocket_base.h"
 #include "net_stream_asynch_udpsocket_base.h"
 #include "net_stream_tcpsocket_base.h"
@@ -110,16 +111,6 @@ typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  Test_U_NetStream_t,
                                  enum Stream_StateMachine_ControlState> Test_U_IStreamConnection_t;
 
-typedef Net_TCPSocketHandler_T<ACE_NULL_SYNCH,
-                               ACE_SOCK_STREAM,
-                               Net_TCPSocketConfiguration_t> Test_U_TCPSocketHandler_t;
-typedef Net_AsynchTCPSocketHandler_T<Net_TCPSocketConfiguration_t> Test_U_AsynchTCPSocketHandler_t;
-typedef Net_UDPSocketHandler_T<ACE_NULL_SYNCH,
-                               Net_SOCK_Dgram,
-                               Net_UDPSocketConfiguration_t> Test_U_UDPSocketHandler_t;
-typedef Net_AsynchUDPSocketHandler_T<Net_SOCK_Dgram,
-                                     Net_UDPSocketConfiguration_t> Test_U_AsynchUDPSocketHandler_t;
-
 typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                Net_TCPConnectionBase_T<ACE_NULL_SYNCH,
                                                        Test_U_TCPSocketHandler_t,
@@ -127,7 +118,6 @@ typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                                        struct Net_ConnectionState,
                                                        struct Test_U_StatisticData,
                                                        Net_TCPSocketConfiguration_t,
-                                                       Net_TCPListenerConfiguration_t,
                                                        Test_U_NetStream_t,
                                                        Common_Timer_Manager_t,
                                                        struct Net_UserData>,
@@ -165,7 +155,6 @@ typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<Test_U_Asynch
                                                                    struct Net_ConnectionState,
                                                                    struct Test_U_StatisticData,
                                                                    Net_TCPSocketConfiguration_t,
-                                                                   Net_TCPListenerConfiguration_t,
                                                                    Test_U_NetStream_t,
                                                                    Common_Timer_Manager_t,
                                                                    struct Net_UserData>,

@@ -344,7 +344,7 @@ if (GTK_USE)
   set (ui_definition_file ${EXECUTABLE}.gtk2)
  endif ()
 elseif (WXWIDGETS_USE)
-endif (GUI_SUPPORT)
+endif ()
 
 install (TARGETS ${EXECUTABLE}
          EXPORT ${PROJECT_NAME}Targets
