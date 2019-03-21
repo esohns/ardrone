@@ -610,20 +610,20 @@ ACE_TMAIN (int argc_in,
                   program_mode_e));
 
       // *PORTABILITY*: on Windows, finalize ACE...
-  #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
       result = ACE::fini ();
       if (result == -1)
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-  #endif // ACE_WIN32 || ACE_WIN64
+#endif // ACE_WIN32 || ACE_WIN64
       return EXIT_FAILURE;
     }
   } // end SWITCH
 
   struct Test_U_Configuration configuration;
 
-  if (video_renderer_e == STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-    Common_UI_GTK_Tools::initialize (argc_in, argv_in);
+//  if (video_renderer_e == STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
+//    Common_UI_GTK_Tools::initialize (argc_in, argv_in);
 
   ACE_High_Res_Timer timer;
   timer.start ();

@@ -325,10 +325,6 @@ do_work (
                                                    modulehandler_configuration,
                                                    configuration_in.streamConfiguration.allocatorConfiguration_,
                                                    configuration_in.streamConfiguration.configuration_);
-  // *IMPORTANT NOTE*: i have not found a way to feed RGB24 data to Xlib;
-  //                   XCreateImage() only 'likes' 32-bit data, regardless of
-  //                   what 'depth' values are set (in fact, it requires BGRA on
-  //                   little-endian platforms) --> convert
   stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
@@ -337,7 +333,6 @@ do_work (
   connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connection_manager_p);
   connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
-//  struct Net_UserData net_user_data;
 
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
@@ -360,7 +355,7 @@ do_work (
   connection_configuration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
 
-  configuration_in.streamConfiguration.configuration_.module = NULL;
+//  configuration_in.streamConfiguration.configuration_.module = NULL;
   connection_configuration.initialize (configuration_in.allocatorConfiguration,
                                        configuration_in.streamConfiguration);
 
