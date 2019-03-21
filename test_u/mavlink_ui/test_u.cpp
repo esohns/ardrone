@@ -290,8 +290,8 @@ do_work (
   Test_U_ConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
-  Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator;
-  Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator_2;
+  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator;
+  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator_2;
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.streamConfiguration.allocatorConfiguration_;
   modulehandler_configuration.connectionConfigurations =
@@ -329,9 +329,9 @@ do_work (
   //                   XCreateImage() only 'likes' 32-bit data, regardless of
   //                   what 'depth' values are set (in fact, it requires BGRA on
   //                   little-endian platforms) --> convert
-  v4l_stream_iterator =
+  stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (v4l_stream_iterator != configuration_in.streamConfiguration.end ());
+  ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
 
   // connection configuration
   connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
@@ -341,10 +341,20 @@ do_work (
 
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
-    connection_configuration.listenAddress =
-      ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
+
+  std::string default_interface_identifier_string =
+      Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
+  ACE_ASSERT (!default_interface_identifier_string.empty ());
+  ACE_INET_Addr gateway_address;
+  Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
+                                          connection_configuration.listenAddress,
+                                          gateway_address);
   connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
                                                           1);
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("listening to %s\n"),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.listenAddress).c_str ())));
+
   connection_configuration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   connection_configuration.statisticReportingInterval =
@@ -398,10 +408,14 @@ do_work (
 
   // UI
   //ACE_thread_t thread_id;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   gtk_manager_p->start (thread_id);
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   // step0f: (initialize) processing stream
   Stream_IStreamControlBase* stream_p = NULL;
@@ -603,6 +617,10 @@ ACE_TMAIN (int argc_in,
     }
   } // end SWITCH
 
+  struct Test_U_Configuration configuration;
+
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   Common_UI_GtkBuilderDefinition_t gtk_ui_definition;
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
@@ -612,7 +630,6 @@ ACE_TMAIN (int argc_in,
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
 
-  struct Test_U_Configuration configuration;
   struct Test_U_UI_GTK_CBData ui_cb_data_s;
   ui_cb_data_s.configuration = &configuration;
   ui_cb_data_s.UIState = &state_r;
@@ -628,6 +645,8 @@ ACE_TMAIN (int argc_in,
 
   bool result_2 = gtk_manager_p->initialize (configuration.GTKConfiguration);
   ACE_ASSERT (result_2);
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   ACE_High_Res_Timer timer;
   timer.start ();

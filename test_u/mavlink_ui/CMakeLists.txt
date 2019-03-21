@@ -1,4 +1,4 @@
-add_definitions (-DGUI_SUPPORT)
+#add_definitions (-DGUI_SUPPORT)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
 
@@ -9,27 +9,23 @@ elseif (GTK_USE)
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   add_definitions (-DG_ERRORCHECK_MUTEXES)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+elseif (QT_USE)
+ # Find includes in corresponding build directories
+ set(CMAKE_INCLUDE_CURRENT_DIR ON)
+ # Instruct CMake to run moc automatically when needed
+ set(CMAKE_AUTOMOC ON)
+ # Create code from a list of Qt designer ui files
+ set(CMAKE_AUTOUIC ON)
+
+ if (UNIX)
+  add_compile_options (-fPIC)
+ endif (UNIX)
+
+ include_directories (${Qt5Widgets_INCLUDE_DIRS})
+
+ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/ui)
+ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/ui/qt)
 elseif (WXWIDGETS_USE)
- message (STATUS "wxWidgets_DEFINITIONS: ${wxWidgets_DEFINITIONS}")
- message (STATUS "wxWidgets_DEFINITIONS_DEBUG: ${wxWidgets_DEFINITIONS_DEBUG}")
- message (STATUS "wxWidgets_CXX_FLAGS: ${wxWidgets_CXX_FLAGS}")
- message (STATUS "wxWidgets_USE_FILE: ${wxWidgets_USE_FILE}")
- # *NOTE*: re-enable ANSI mode, iff available
-# add_definitions (-DwxUSE_UNICODE=0)
- foreach (DEFINITION ${wxWidgets_DEFINITIONS})
-  add_definitions (-D${DEFINITION})
- endforeach ()
- if (WIN32)
-#  add_definitions (-D__WXMSW__)
-#  add_definitions (-DWXUSINGDLL)
-  if (MSVC)
-   add_definitions (-DwxMSVC_VERSION_AUTO)
-  endif (MSVC)
- endif (WIN32)
- add_definitions (-DwxUSE_GUI=1)
- if (CMAKE_BUILD_TYPE STREQUAL Debug)
-  add_definitions (-D__WXDEBUG__)
- endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 endif ()
 
 ##########################################
@@ -40,25 +36,6 @@ if (UNIX)
  set (CMAKE_THREAD_PREFER_PTHREAD ON)
  find_package (Threads)
 endif ()
-
-include (FindPkgConfig)
-if (UNIX)
-# *NOTE*: Common requires libcap
- pkg_check_modules (PKG_CAP REQUIRED libcap)
- pkg_check_modules (PKG_V4L2 REQUIRED libv4l2)
- pkg_check_modules (PKG_FFMPEG REQUIRED libswscale libavutil libavformat libavcodec)
-# if (GUI_SUPPORT)
-#  if (GTK_SUPPORT)
-#   if (GTK3_SUPPORT)
-#    pkg_check_modules (PKG_GTK3 REQUIRED gtk+-3.0)
-#   elseif (GTK2_SUPPORT)
-# pkg_check_modules (PKG_GTK_GLADE REQUIRED libpng gmodule-2.0 gthread-2.0 gtk+-2.0 libglade-2.0)
-#    pkg_check_modules (PKG_GTK2 REQUIRED libpng gmodule-2.0 gthread-2.0 gtk+-2.0)
-#   endif ()
-#  endif (GTK_SUPPORT)
-# endif (GUI_SUPPORT)
-endif (UNIX)
-# *TODO*: repair WIN32 pkgconfig support
 
 get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/../.. REALPATH DIRECTORY)
 get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
@@ -111,7 +88,6 @@ add_definitions (-DHAVE_CONFIG_H)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 if (UNIX)
-# include_directories (${PKG_CAP_INCLUDE_DIRS})
  include_directories (${PKG_FFMPEG_INCLUDE_DIRS})
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ARDrone_SDK_2_0_1/ARDroneLib)
@@ -207,8 +183,6 @@ set (${EXECUTABLE}_EXE_SRCS
      test_u_eventhandler.cpp
      test_u_eventhandler.h
      test_u_eventhandler.inl
-     test_u_gtk_callbacks.cpp
-     test_u_gtk_callbacks.h
      test_u_message.cpp
      test_u_message.h
      test_u_message.inl
@@ -221,6 +195,23 @@ set (${EXECUTABLE}_EXE_SRCS
      test_u_stream.cpp
      test_u_stream.h
      test_u_stream_common.h)
+if (GTK_USE)
+ set (${EXECUTABLE}_EXE_SRCS
+      ${${EXECUTABLE}_EXE_SRCS}
+      test_u_gtk_callbacks.cpp
+      test_u_gtk_callbacks.h
+)
+elseif (QT_USE)
+ set (${EXECUTABLE}_EXE_SRCS
+      ${${EXECUTABLE}_EXE_SRCS}
+      mainwindow.cpp
+      mainwindow.h
+      mainwindow.ui
+      mainwindow_2.cpp
+      mainwindow_2.h
+      mainwindow_2.inl
+)
+endif ()
 
 if (UNIX)
  add_definitions (-D_GLIBCXX_INCLUDE_NEXT_C_HEADERS)
@@ -273,7 +264,9 @@ if (UNIX)
  target_link_libraries (${EXECUTABLE} GL)
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
 
-# target_link_libraries (${EXECUTABLE} ${ACEXML_LIBRARY})
+ if (QT_USE)
+  target_link_libraries(${EXECUTABLE} Qt5::Widgets)
+ endif (QT_USE)
 elseif (WIN32)
  if (MSVC)
   set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"libcmt.lib\"")
@@ -339,10 +332,11 @@ cotire (${EXECUTABLE})
 set (ui_definition_file "")
 if (GTK_USE)
  if (GTK3_USE)
-  set (ui_definition_file ${EXECUTABLE}.gtk3)
+  set (ui_definition_file etc/${EXECUTABLE}.gtk3)
  elseif (GTK2_USE)
-  set (ui_definition_file ${EXECUTABLE}.gtk2)
+  set (ui_definition_file etc/${EXECUTABLE}.gtk2)
  endif ()
+elseif (QT_USE)
 elseif (WXWIDGETS_USE)
 endif ()
 
@@ -350,7 +344,7 @@ install (TARGETS ${EXECUTABLE}
          EXPORT ${PROJECT_NAME}Targets
          RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT test_u)
 if (UNIX)
- install (FILES etc/${ui_definition_file}
+ install (FILES ${ui_definition_file}
           DESTINATION "${INSTALL_SHARE_DIR}/${PROJECT_NAME}/${EXECUTABLE}" COMPONENT config)
 elseif (WIN32)
  get_filename_component (ACE_LIB_PATH ${ACE_LIBRARY}

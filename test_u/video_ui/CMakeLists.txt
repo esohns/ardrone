@@ -130,6 +130,8 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/signal)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/timer)
 
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/ui/qt)
+
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/ACEStream/include)
@@ -319,6 +321,8 @@ if (GUI_SUPPORT)
  target_link_libraries (${EXECUTABLE} CommonUI)
  if (GTK_USE)
   target_link_libraries (${EXECUTABLE} CommonUI_GTK)
+ elseif (QT_USE)
+  target_link_libraries (${EXECUTABLE} CommonUI_Qt)
  elseif (WXWIDGETS_USE)
   target_link_libraries (${EXECUTABLE} CommonUI_wxWidgets)
  endif ()

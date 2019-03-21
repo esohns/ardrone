@@ -54,21 +54,6 @@
 //                                    Test_U_ConnectionManager_t,
 //                                    Test_U_TCPConnector_t,
 //                                    struct Net_UserData> Test_U_TCPSource;
-typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
-                                    Stream_ControlMessage_t,
-                                    Test_U_Message_t,
-                                    Test_U_SessionMessage_t,
-                                    struct Test_U_ModuleHandlerConfiguration,
-                                    enum Stream_ControlType,
-                                    enum Stream_SessionMessageType,
-                                    struct Test_U_StreamState,
-                                    Test_U_SessionData,
-                                    Test_U_SessionData_t,
-                                    struct Test_U_StatisticData,
-                                    Common_Timer_Manager_t,
-                                    Test_U_ConnectionManager_t,
-                                    Test_U_AsynchTCPConnector_t,
-                                    struct Net_UserData> Test_U_AsynchTCPSource;
 //typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    Stream_ControlMessage_t,
 //                                    Test_U_Message_t,
@@ -77,13 +62,28 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    enum Stream_ControlType,
 //                                    enum Stream_SessionMessageType,
 //                                    struct Test_U_StreamState,
-//                                    struct Test_U_SessionData,
+//                                    Test_U_SessionData,
 //                                    Test_U_SessionData_t,
 //                                    struct Test_U_StatisticData,
 //                                    Common_Timer_Manager_t,
 //                                    Test_U_ConnectionManager_t,
-//                                    Test_U_UDPConnector_t,
-//                                    struct Net_UserData> Test_U_UDPSource;
+//                                    Test_U_AsynchTCPConnector_t,
+//                                    struct Net_UserData> Test_U_AsynchTCPSource;
+typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
+                                    Stream_ControlMessage_t,
+                                    Test_U_Message_t,
+                                    Test_U_SessionMessage_t,
+                                    struct Test_U_ModuleHandlerConfiguration,
+                                    enum Stream_ControlType,
+                                    enum Stream_SessionMessageType,
+                                    struct Test_U_StreamState,
+                                    struct Test_U_SessionData,
+                                    Test_U_SessionData_t,
+                                    struct Test_U_StatisticData,
+                                    Common_Timer_Manager_t,
+                                    Test_U_ConnectionManager_t,
+                                    Test_U_UDPConnector_t,
+                                    struct Net_UserData> Test_U_UDPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Stream_ControlMessage_t,
                                     Test_U_Message_t,
@@ -107,13 +107,13 @@ DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session d
                               struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_net_source_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_AsynchTCPSource);                       // writer type
+                              Test_U_UDPSource);                                // writer type
 
 DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
                               enum Stream_SessionMessageType,                   // session event type
                               struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_net_source_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_AsynchUDPSource);                      // writer type
+                              Test_U_AsynchUDPSource);                          // writer type
 
 #endif
