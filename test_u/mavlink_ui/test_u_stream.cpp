@@ -28,11 +28,8 @@
 #include "stream_macros.h"
 
 #include "stream_dec_defines.h"
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dec_tools.h"
 
-#include "stream_dev_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
+#include "stream_misc_defines.h"
 
 #include "stream_stat_defines.h"
 
@@ -52,6 +49,8 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_MAVLINK_DECODER_NAME_STRING))
  , report_ (this,
             ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+ , handler_ (this,
+             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
 
@@ -77,6 +76,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
   layout_inout->append (&report_, NULL, 0);
+  layout_inout->append (&handler_, NULL, 0);
 
   return true;
 }
@@ -124,7 +124,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
 
   // ---------------------------------------------------------------------------
 
-  // ******************* Camera Source ************************
+  // ******************* Source ************************
   source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
   ACE_ASSERT (source_impl_p);
   source_impl_p->setP (&(inherited::state_));
@@ -144,6 +144,15 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
     } // end IF
 
   // -------------------------------------------------------------
+
+  ACE_ASSERT (configuration_in.configuration_.initializeMAVLink);
+  if (!configuration_in.configuration_.initializeMAVLink->initialize (this))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
+                ACE_TEXT (stream_name_string_)));
+    goto error;
+  } // end IF
 
   inherited::isInitialized_ = true;
 

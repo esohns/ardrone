@@ -25,6 +25,7 @@
 
 #include "mavlink/v2.0/mavlink_types.h"
 
+#include "common_iinitialize.h"
 #include "common_isubscribe.h"
 #include "common_statistic_handler.h"
 #include "common_tools.h"
@@ -60,6 +61,7 @@
 
 #include "net_connection_manager.h"
 
+#include "ardrone_common.h"
 #include "ardrone_types.h"
 
 //#include "test_u_network.h"
@@ -216,12 +218,14 @@ struct Test_U_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
+   , initializeMAVLink (NULL)
    , userData (NULL)
   {
     printFinalReport = true;
   }
 
-  struct Net_UserData* userData;
+  Common_IInitializeP_T<ARDrone_IMAVLinkNotify>* initializeMAVLink;
+  struct Net_UserData*                           userData;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,
                                 enum Stream_SessionMessageType,

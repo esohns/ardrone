@@ -41,6 +41,8 @@
 #include "stream_base.h"
 #include "stream_common.h"
 
+#include "ardrone_common.h"
+
 #include "test_u_common.h"
 #include "test_u_common_modules.h"
 #include "test_u_net_modules.h"
@@ -113,6 +115,7 @@ class Test_U_Stream
   Test_U_AsynchUDPSource_Module source_;
   Test_U_MAVLinkDecoder_Module  decode_;
   Test_U_StatisticReport_Module report_;
+  Test_U_MessageHandler_Module handler_;
 };
 
 #endif

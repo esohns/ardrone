@@ -311,7 +311,9 @@ do_work (
 
   configuration_in.streamConfiguration.configuration_.messageAllocator =
       &message_allocator;
-  configuration_in.streamConfiguration.configuration_.module = &message_handler;
+//  configuration_in.streamConfiguration.configuration_.module = &message_handler;
+  configuration_in.streamConfiguration.configuration_.initializeMAVLink =
+      &ui_event_handler;
 
   if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
   {

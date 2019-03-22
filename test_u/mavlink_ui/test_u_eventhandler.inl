@@ -32,7 +32,8 @@ template <typename NotificationType,
 Test_U_EventHandler_T<NotificationType,
                                    DataMessageType,
                                    SessionMessageType>::Test_U_EventHandler_T ()
- : sessionData_ (NULL)
+ : MAVLinkNotify_ (NULL)
+ , sessionData_ (NULL)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::Test_U_EventHandler_T"));
 
@@ -104,6 +105,20 @@ Test_U_EventHandler_T<NotificationType,
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::notify"));
 
   ACE_UNUSED_ARG (sessionId_in);
+
+  const typename DataMessageType::DATA_T& data_container_r = message_in.getR ();
+  const typename DataMessageType::DATA_T::DATA_T& data_r =
+      data_container_r.getR ();
+
+  ACE_ASSERT (MAVLinkNotify_);
+  try {
+    // *TODO*: remove type inference
+    MAVLinkNotify_->messageCB (data_r.MAVLinkData,
+                               message_in.rd_ptr ());
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IMAVLinkNotify::messageCB(), returning\n")));
+  }
 }
 
 template <typename NotificationType,

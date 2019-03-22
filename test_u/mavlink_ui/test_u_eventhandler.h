@@ -23,7 +23,11 @@
 
 #include "ace/Global_Macros.h"
 
+#include "common_iinitialize.h"
+
 #include "stream_common.h"
+
+#include "ardrone_common.h"
 
 // forward declarations
 #if defined (GUI_SUPPORT)
@@ -35,6 +39,7 @@ template <typename NotificationType,
           typename SessionMessageType>
 class Test_U_EventHandler_T
  : public NotificationType
+ , public Common_IInitializeP_T<ARDrone_IMAVLinkNotify>
 {
  public:
   Test_U_EventHandler_T ();
@@ -51,11 +56,15 @@ class Test_U_EventHandler_T
   virtual void notify (Stream_SessionId_t,
                        const SessionMessageType&);
 
+  // implement Common_IInitializeP_T
+  inline bool initialize (const ARDrone_IMAVLinkNotify* notify_in) { MAVLinkNotify_ = const_cast<ARDrone_IMAVLinkNotify*> (notify_in); return true; }
+
  private:
 //  ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T ())
   ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T (const Test_U_EventHandler_T&))
   ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T& operator= (const Test_U_EventHandler_T&))
 
+  ARDrone_IMAVLinkNotify*                      MAVLinkNotify_;
   typename SessionMessageType::DATA_T::DATA_T* sessionData_;
 };
 
