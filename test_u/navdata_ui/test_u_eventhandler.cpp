@@ -20,9 +20,4 @@
 #include "stdafx.h"
 
 #include "ace/Synch.h"
-#include "ardrone_module_controller.h"
-
-#include "ardrone_defines.h"
-
-const char ardrone_default_controller_module_name_string[] =
-  ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING);
+#include "test_u_eventhandler.h"

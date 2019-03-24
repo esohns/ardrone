@@ -1,0 +1,458 @@
+﻿/***************************************************************************
+ *   Copyright (C) 2009 by Erik Sohns   *
+ *   erik.sohns@web.de   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+#include "stdafx.h"
+
+#include "ace/Synch.h"
+#include "test_u_session_message.h"
+#include "test_u_stream.h"
+
+#include "ace/Log_Msg.h"
+
+#include "stream_macros.h"
+
+#include "stream_dec_defines.h"
+
+#include "stream_misc_defines.h"
+
+#include "stream_stat_defines.h"
+
+#include "stream_vis_defines.h"
+#include "stream_vis_tools.h"
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "stream_lib_directshow_tools.h"
+#include "stream_lib_mediafoundation_tools.h"
+#endif // ACE_WIN32 || ACE_WIN64
+
+Test_U_Stream::Test_U_Stream ()
+ : inherited ()
+ , source_ (this,
+            ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
+ , decode_ (this,
+            ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_NAVDATA_DECODER_NAME_STRING))
+ , report_ (this,
+            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+ , controller_ (this,
+                ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING))
+ , handler_ (this,
+             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
+{
+  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
+
+}
+
+Test_U_Stream::~Test_U_Stream ()
+{
+  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::~Test_U_Stream"));
+
+  // *NOTE*: this implements an ordered shutdown on destruction...
+  inherited::shutdown ();
+}
+
+bool
+Test_U_Stream::load (Stream_ILayout* layout_inout,
+                     bool& delete_out)
+{
+  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::load"));
+
+  // initialize return value(s)
+  delete_out = false;
+
+  layout_inout->append (&source_, NULL, 0);
+  layout_inout->append (&decode_, NULL, 0);
+  layout_inout->append (&report_, NULL, 0);
+  layout_inout->append (&controller_, NULL, 0);
+  layout_inout->append (&handler_, NULL, 0);
+
+  return true;
+}
+
+bool
+Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
+{
+  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::initialize"));
+
+  // sanity check(s)
+  ACE_ASSERT (!isRunning ());
+
+  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool reset_setup_pipeline = false;
+  Test_U_SessionData* session_data_p = NULL;
+  typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
+  struct Test_U_ModuleHandlerConfiguration* configuration_p = NULL;
+  Test_U_AsynchUDPSource* source_impl_p = NULL;
+
+  // allocate a new session state, reset stream
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    false;
+  reset_setup_pipeline = true;
+  if (!inherited::initialize (configuration_in))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
+                ACE_TEXT (stream_name_string_)));
+    goto error;
+  } // end IF
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    setup_pipeline;
+  reset_setup_pipeline = false;
+
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
+  session_data_p =
+    &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+  iterator =
+      const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.end ());
+  configuration_p =
+      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> (&(*iterator).second.second);
+  ACE_ASSERT (configuration_p);
+
+  // ---------------------------------------------------------------------------
+
+  // ******************* Source ************************
+  source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
+  ACE_ASSERT (source_impl_p);
+  source_impl_p->setP (&(inherited::state_));
+
+  // *NOTE*: push()ing the module will open() it
+  //         --> set the argument that is passed along (head module expects a
+  //             handle to the session data)
+  source_.arg (inherited::sessionData_);
+
+  if (configuration_in.configuration_.setupPipeline)
+    if (!inherited::setup (NULL))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
+                  ACE_TEXT (stream_name_string_)));
+      goto error;
+    } // end IF
+
+  // -------------------------------------------------------------
+
+  ACE_ASSERT (configuration_in.configuration_.initializeNavData);
+  if (!configuration_in.configuration_.initializeNavData->initialize (this))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
+                ACE_TEXT (stream_name_string_)));
+    goto error;
+  } // end IF
+
+  inherited::isInitialized_ = true;
+
+  return true;
+
+error:
+  if (reset_setup_pipeline)
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+      setup_pipeline;
+
+  return false;
+}
+
+void
+Test_U_Stream::messageCB (const struct _navdata_t& record_in,
+                          const ARDrone_NavDataOptionOffsets_t& offsets_in,
+                          void* payload_in)
+{
+  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::messageCB"));
+
+  //#if defined (_DEBUG)
+  //  // dump state
+  //  ACE_DEBUG ((LM_DEBUG,
+  //              ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
+  //              ((record_in.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_VIDEO_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_VISION_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_CONTROL_MASK) ? ACE_TEXT ("euler angles") : ACE_TEXT ("angular speed")),
+  //              ((record_in.ardrone_state & ARDRONE_ALTITUDE_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_USER_FEEDBACK_START) ? ACE_TEXT ("on") : ACE_TEXT ("off")),
+  //              ((record_in.ardrone_state & ARDRONE_COMMAND_MASK) ? ACE_TEXT ("ACK") : ACE_TEXT ("not set")),
+  //              ((record_in.ardrone_state & ARDRONE_CAMERA_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_TRAVELLING_MASK) ? ACE_TEXT ("enabled") : ACE_TEXT ("disabled")),
+  //              ((record_in.ardrone_state & ARDRONE_USB_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_NAVDATA_DEMO_MASK) ? ACE_TEXT ("demo only") : ACE_TEXT ("all")),
+  //              ((record_in.ardrone_state & ARDRONE_NAVDATA_BOOTSTRAP) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_MOTORS_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_COM_LOST_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_SOFTWARE_FAULT) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_VBAT_LOW) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_USER_EL) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_TIMER_ELAPSED) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_MAGNETO_NEEDS_CALIB) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_ANGLES_OUT_OF_RANGE) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_WIND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_ULTRASOUND_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_CUTOUT_MASK) ? ACE_TEXT ("detected") : ACE_TEXT ("not detected")),
+  //              ((record_in.ardrone_state & ARDRONE_PIC_VERSION_MASK) ? ACE_TEXT ("OK") : ACE_TEXT ("error")),
+  //              ((record_in.ardrone_state & ARDRONE_ATCODEC_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_NAVDATA_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_VIDEO_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_ACQ_THREAD_ON) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
+  //              ((record_in.ardrone_state & ARDRONE_CTRL_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_ADC_WATCHDOG_MASK) ? ACE_TEXT ("delayed >5ms") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_COM_WATCHDOG_MASK) ? ACE_TEXT ("error") : ACE_TEXT ("OK")),
+  //              ((record_in.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
+
+  //  // *TODO*: dump options
+  //#endif
+
+  struct _navdata_option_t* option_p = NULL;
+  for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
+       iterator != offsets_in.end ();
+       ++iterator)
+  {
+    option_p =
+        reinterpret_cast<struct _navdata_option_t*> (static_cast<char*> (payload_in) + *iterator);
+    switch (option_p->tag)
+    {
+      case NAVDATA_DEMO_TAG: // 0
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_demo_t));
+        struct _navdata_demo_t* option_2 =
+            reinterpret_cast<struct _navdata_demo_t*> (option_p);
+        ACE_ASSERT (option_2);
+
+#if defined (GUI_SUPPORT)
+//        ACE_ASSERT (inherited::state_.CBData);
+        //struct ARDrone_UI_GTK_State& state_r =
+        //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
+        //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
+        inherited::state_.CBData->openGLScene.orientation.x =
+            option_2->phi; // roll (--> rotation along x)
+        inherited::state_.CBData->openGLScene.orientation.y =
+            option_2->psi; // yaw (--> rotation along y)
+        inherited::state_.CBData->openGLScene.orientation.z =
+            option_2->theta; // pitch (--> rotation along z)
+#endif
+        //} // end lock scope
+#endif // GUI_SUPPORT
+
+        break;
+      }
+      case NAVDATA_TIME_TAG: // 1
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_time_t));
+        struct _navdata_time_t* option_2 =
+            reinterpret_cast<struct _navdata_time_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_RAW_MEASURES_TAG: // 2
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_raw_measures_t));
+        struct _navdata_raw_measures_t* option_2 =
+            reinterpret_cast<struct _navdata_raw_measures_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PHYS_MEASURES_TAG: // 3
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_phys_measures_t));
+        struct _navdata_phys_measures_t* option_2 =
+            reinterpret_cast<struct _navdata_phys_measures_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_GYROS_OFFSETS_TAG: // 4
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_gyros_offsets_t));
+        struct _navdata_gyros_offsets_t* option_2 =
+            reinterpret_cast<struct _navdata_gyros_offsets_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_EULER_ANGLES_TAG: // 5
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_euler_angles_t));
+        struct _navdata_euler_angles_t* option_2 =
+            reinterpret_cast<struct _navdata_euler_angles_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_REFERENCES_TAG: // 6
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_references_t));
+        struct _navdata_references_t* option_2 =
+            reinterpret_cast<struct _navdata_references_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_TRIMS_TAG: // 7
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_trims_t));
+        struct _navdata_trims_t* option_2 =
+            reinterpret_cast<struct _navdata_trims_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_RC_REFERENCES_TAG: // 8
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_rc_references_t));
+        struct _navdata_rc_references_t* option_2 =
+            reinterpret_cast<struct _navdata_rc_references_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PWM_TAG: // 9
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_pwm_t));
+        struct _navdata_pwm_t* option_2 =
+            reinterpret_cast<struct _navdata_pwm_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ALTITUDE_TAG: // 10
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_altitude_t));
+        struct _navdata_altitude_t* option_2 =
+            reinterpret_cast<struct _navdata_altitude_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_RAW_TAG: // 11
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_raw_t));
+        struct _navdata_vision_raw_t* option_2 =
+            reinterpret_cast<struct _navdata_vision_raw_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_OF_TAG: // 12
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_of_t));
+        struct _navdata_vision_of_t* option_2 =
+            reinterpret_cast<struct _navdata_vision_of_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_TAG: // 13
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_t));
+        struct _navdata_vision_t* option_2 =
+            reinterpret_cast<struct _navdata_vision_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_PERF_TAG: // 14
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_perf_t));
+        struct _navdata_vision_perf_t* option_2 =
+            reinterpret_cast<struct _navdata_vision_perf_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_TRACKERS_SEND_TAG: // 15
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_trackers_send_t));
+        struct _navdata_trackers_send_t* option_2 =
+            reinterpret_cast<struct _navdata_trackers_send_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VISION_DETECT_TAG: // 16
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_vision_detect_t));
+        struct _navdata_vision_detect_t* option_2 =
+            reinterpret_cast<struct _navdata_vision_detect_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_WATCHDOG_TAG: // 17
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_watchdog_t));
+        struct _navdata_watchdog_t* option_2 =
+            reinterpret_cast<struct _navdata_watchdog_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ADC_DATA_FRAME_TAG: // 18
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_adc_data_frame_t));
+        struct _navdata_adc_data_frame_t* option_2 =
+            reinterpret_cast<struct _navdata_adc_data_frame_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_VIDEO_STREAM_TAG: // 19
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_video_stream_t));
+        struct _navdata_video_stream_t* option_2 =
+            reinterpret_cast<struct _navdata_video_stream_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_GAMES_TAG: // 20
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_games_t));
+        struct _navdata_games_t* option_2 =
+            reinterpret_cast<struct _navdata_games_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_PRESSURE_RAW_TAG: // 21
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_pressure_raw_t));
+        struct _navdata_pressure_raw_t* option_2 =
+            reinterpret_cast<struct _navdata_pressure_raw_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_MAGNETO_TAG: // 22
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_magneto_t));
+        struct _navdata_magneto_t* option_2 =
+            reinterpret_cast<struct _navdata_magneto_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+        }
+      case NAVDATA_WIND_TAG: // 23
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_wind_speed_t));
+        struct _navdata_wind_speed_t* option_2 =
+            reinterpret_cast<struct _navdata_wind_speed_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_KALMAN_PRESSURE_TAG: // 24
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_kalman_pressure_t));
+        struct _navdata_kalman_pressure_t* option_2 =
+            reinterpret_cast<struct _navdata_kalman_pressure_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_HDVIDEO_STREAM_TAG: // 25
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_hdvideo_stream_t));
+        struct _navdata_hdvideo_stream_t* option_2 =
+            reinterpret_cast<struct _navdata_hdvideo_stream_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_WIFI_TAG: // 26
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_wifi_t));
+        struct _navdata_wifi_t* option_2 =
+            reinterpret_cast<struct _navdata_wifi_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_ZIMMU_3000_TAG: // 27
+      { //ACE_ASSERT (option_p->size == sizeof (struct _navdata_zimmu_3000_t));
+        struct _navdata_zimmu_3000_t* option_2 =
+            reinterpret_cast<struct _navdata_zimmu_3000_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      case NAVDATA_CKS_TAG: // 65535
+      { ACE_ASSERT (option_p->size == sizeof (struct _navdata_cks_t));
+        struct _navdata_cks_t* option_2 =
+            reinterpret_cast<struct _navdata_cks_t*> (option_p);
+        ACE_UNUSED_ARG (option_2);
+        break;
+      }
+      default:
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
+                    ACE_TEXT (stream_name_string_),
+                    option_p->tag));
+        break;
+      }
+    } // end SWITCH
+  } // end FOR
+}

@@ -45,7 +45,7 @@
 // forward declaration(s)
 class Stream_IAllocator;
 
-//extern const char ardrone_default_controller_module_name_string[];
+extern const char ardrone_default_controller_module_name_string[];
 
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,

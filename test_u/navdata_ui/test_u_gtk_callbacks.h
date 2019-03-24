@@ -17,12 +17,27 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "stdafx.h"
 
-#include "ace/Synch.h"
-#include "ardrone_module_controller.h"
+#ifndef TEST_U_GTK_CALLBACKS_H
+#define TEST_U_GTK_CALLBACKS_H
 
-#include "ardrone_defines.h"
+#include "gtk/gtk.h"
 
-const char ardrone_default_controller_module_name_string[] =
-  ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING);
+ // idle routines
+gboolean idle_initialize_UI_cb (gpointer);
+gboolean idle_finalize_UI_cb (gpointer);
+//gboolean idle_update_progress_cb (gpointer);
+
+//////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+G_MODULE_EXPORT gint button_about_clicked_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint button_quit_clicked_cb (GtkWidget*, gpointer);
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif

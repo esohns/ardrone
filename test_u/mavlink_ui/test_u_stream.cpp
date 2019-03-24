@@ -167,10 +167,70 @@ error:
 }
 
 void
-Test_U_Stream::messageCB (const struct __mavlink_message& message_in,
+Test_U_Stream::messageCB (const struct __mavlink_message& record_in,
                           void* payload_in)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_Stream::messageCB"));
 
-  ACE_ASSERT (false); // *TODO*
+  switch (record_in.msgid)
+  {
+    case MAVLINK_MSG_ID_HEARTBEAT: // 0
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_heartbeat_t));
+      struct __mavlink_heartbeat_t* message_p =
+          reinterpret_cast<struct __mavlink_heartbeat_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_SYS_STATUS: // 1
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_sys_status_t));
+      struct __mavlink_sys_status_t* message_p =
+          reinterpret_cast<struct __mavlink_sys_status_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_PARAM_VALUE: // 22
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_param_value_t));
+      struct __mavlink_param_value_t* message_p =
+          reinterpret_cast<struct __mavlink_param_value_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
+    { //ACE_ASSERT (record_in.len == sizeof (struct __mavlink_gps_raw_int_t));
+      ACE_ASSERT ((record_in.len == MAVLINK_MSG_ID_GPS_RAW_INT_MIN_LEN) || (record_in.len == MAVLINK_MSG_ID_GPS_RAW_INT_LEN));
+      struct __mavlink_gps_raw_int_t* message_p =
+          reinterpret_cast<struct __mavlink_gps_raw_int_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_ATTITUDE: // 30
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
+      struct __mavlink_attitude_t* message_p =
+          reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_global_position_int_t));
+      struct __mavlink_global_position_int_t* message_p =
+          reinterpret_cast<struct __mavlink_global_position_int_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    case MAVLINK_MSG_ID_MISSION_CURRENT: // 42
+    { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_mission_current_t));
+      struct __mavlink_mission_current_t* message_p =
+          reinterpret_cast<struct __mavlink_mission_current_t*> (payload_in);
+      ACE_UNUSED_ARG (message_p);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: invalid/unknown MAVLink message id (was: %u), continuing\n"),
+                  ACE_TEXT (stream_name_string_),
+                  record_in.msgid));
+      break;
+    }
+  } // end SWITCH}
 }

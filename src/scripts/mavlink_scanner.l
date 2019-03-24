@@ -125,6 +125,15 @@ V09_START_CODE         \x55
 
                                     BEGIN (data); }
 } // end <message_id>
+/* MAVLink Version 2 */
+/*{OCTET}{3}                        { ACE_ASSERT (message_p);
+                                    ACE_ASSERT (yyleng == 3 * sizeof (uint8_t));
+                                    message_p->msgid =
+                                      ((*reinterpret_cast<uint8_t*> (yytext[0])       |
+                                       (*reinterpret_cast<uint8_t*> (yytext[1]) << 1) |
+                                       (*reinterpret_cast<uint8_t*> (yytext[2]) << 2));
+
+                                    BEGIN (data); } */
 <data>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     yyless (0);

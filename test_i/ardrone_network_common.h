@@ -222,56 +222,12 @@ typedef std::unordered_map<std::string, // stream name
                            ARDrone_MediaFoundation_Stream_ConnectionConfigurations_t> ARDrone_MediaFoundation_ConnectionConfigurations_t;
 typedef ARDrone_MediaFoundation_ConnectionConfigurations_t::iterator ARDrone_MediaFoundation_ConnectionConfigurationIterator_t;
 #else
-typedef Net_ConnectionConfiguration_T<struct ARDrone_ConnectionConfiguration,
-                                      struct ARDrone_AllocatorConfiguration,
-                                      ARDrone_StreamConfiguration_t> ARDrone_ConnectionConfiguration_t;
-
-typedef Net_IConnection_T<ACE_INET_Addr,
-                          ARDrone_ConnectionConfiguration_t,
-                          struct ARDrone_ConnectionState,
-                          struct ARDrone_Statistic> ARDrone_IConnection_t;
-
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 ARDrone_ConnectionConfiguration_t,
-                                 struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
-                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
-struct ARDrone_ConnectionConfiguration
- : Net_ConnectionConfiguration
-{
-  ARDrone_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration ()
-   , connectionManager (NULL)
-   , socketHandlerConfiguration ()
-   , userData (NULL)
-  {
-    PDUSize = ARDRONE_MESSAGE_BUFFER_SIZE;
-  }
-
-  ARDrone_IConnectionManager_t*             connectionManager;
-  struct ARDrone_SocketHandlerConfiguration socketHandlerConfiguration;
-
-  struct ARDrone_UserData*                  userData;
-};
-typedef std::unordered_map<std::string, // module name
-                           ARDrone_ConnectionConfiguration_t> ARDrone_Stream_ConnectionConfigurations_t;
-typedef ARDrone_Stream_ConnectionConfigurations_t::iterator ARDrone_Stream_ConnectionConfigurationIterator_t;
+typedef Net_ConnectionConfiguration_T<struct ARDrone_AllocatorConfiguration,
+                                      ARDrone_StreamConfiguration_t,
+                                      NET_TRANSPORTLAYER_UDP> ARDrone_ConnectionConfiguration_t;
 typedef std::unordered_map<std::string, // stream name
-                           ARDrone_Stream_ConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
+                           Net_ConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
 typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 #endif // ACE_WIN32 || ACE_WIN64
-
-//typedef Net_WLAN_InetMonitor_T<struct Net_WLAN_MonitorConfiguration,
-typedef Net_WLAN_Monitor_T<ACE_INET_Addr,
-                           struct Net_WLAN_MonitorConfiguration,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                           NET_WLAN_MONITOR_API_WLANAPI,
-#else
-                           ACE_MT_SYNCH,
-                           Common_TimePolicy_t,
-                           NET_WLAN_MONITOR_API_NL80211,
-#endif // ACE_WIN32 || ACE_WIN64
-                           struct Net_UserData> ARDrone_WLANMonitor_t;
 
 #endif // #ifndef ARDRONE_NETWORK_COMMON_H

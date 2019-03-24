@@ -157,11 +157,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 //                ACE_TEXT ("%s: invalid checksum (message id: %u), continuing\n"),
 //                inherited::mod_->name (),
 //                buffer_->id ()));
-
-//    // clean up
-//    buffer_->release ();
-//    buffer_ = NULL;
-
+//    buffer_->release (); buffer_ = NULL;
 //    goto error;
 //  } // end IF
 

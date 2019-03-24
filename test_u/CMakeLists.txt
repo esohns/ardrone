@@ -81,12 +81,13 @@ endif (GUI_SUPPORT)
 ##########################################
 
 add_subdirectory (mavlink_ui)
+add_subdirectory (navdata_ui)
 add_subdirectory (video_ui)
 
 # phonies
 add_custom_target (test_u ALL
                    COMMENT "building test_u...")
-add_dependencies (test_u mavlink_ui video_ui)
+add_dependencies (test_u mavlink_ui navdata_ui video_ui)
 
 if (NOT BUILD_TEST_U)
  set_target_properties (test_u PROPERTIES EXCLUDE_FROM_ALL 1)
