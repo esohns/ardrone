@@ -40,8 +40,8 @@ idle_initialize_UI_cb (gpointer userData_in)
   STREAM_TRACE (ACE_TEXT ("::idle_initialize_UI_cb"));
 
   // sanity check(s)
-  struct Test_U_UI_GTK_CBData* ui_cb_data_p =
-    static_cast<struct Test_U_UI_GTK_CBData*> (userData_in);
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
   ACE_ASSERT (ui_cb_data_p);
   Common_UI_GTK_BuildersIterator_t iterator =
     ui_cb_data_p->UIState->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
@@ -156,8 +156,8 @@ button_about_clicked_cb (GtkWidget* widget_in,
 
   ACE_UNUSED_ARG (widget_in);
   // sanity check(s)
-  struct Test_U_UI_GTK_CBData* ui_cb_data_p =
-    static_cast<struct Test_U_UI_GTK_CBData*> (userData_in);
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
   ACE_ASSERT (ui_cb_data_p);
 
   Common_UI_GTK_BuildersIterator_t iterator =
@@ -193,8 +193,8 @@ button_quit_clicked_cb (GtkWidget* widget_in,
 
   ACE_UNUSED_ARG (widget_in);
   // sanity check(s)
-  struct Test_U_UI_GTK_CBData* ui_cb_data_p =
-    static_cast<struct Test_U_UI_GTK_CBData*> (userData_in);
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
   ACE_ASSERT (ui_cb_data_p);
   ACE_ASSERT (ui_cb_data_p->stream);
 

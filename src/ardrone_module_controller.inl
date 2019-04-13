@@ -28,7 +28,7 @@
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-#include "ardrone_callbacks.h"
+//#include "ardrone_callbacks.h"
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 //#include "ardrone_configuration.h"

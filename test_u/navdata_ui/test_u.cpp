@@ -623,6 +623,8 @@ ACE_TMAIN (int argc_in,
   struct Test_U_Configuration configuration;
 
 #if defined (GUI_SUPPORT)
+  struct Test_U_UI_CBData ui_cb_data_s;
+  ui_cb_data_s.configuration = &configuration;
 #if defined (GTK_USE)
   Common_UI_GtkBuilderDefinition_t gtk_ui_definition;
   Common_UI_GTK_Manager_t* gtk_manager_p =
@@ -633,8 +635,6 @@ ACE_TMAIN (int argc_in,
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
 
-  struct Test_U_UI_GTK_CBData ui_cb_data_s;
-  ui_cb_data_s.configuration = &configuration;
   ui_cb_data_s.UIState = &state_r;
 
   configuration.GTKConfiguration.argc = argc_in;
@@ -648,6 +648,7 @@ ACE_TMAIN (int argc_in,
 
   bool result_2 = gtk_manager_p->initialize (configuration.GTKConfiguration);
   ACE_ASSERT (result_2);
+#elif defined (QT_USE)
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 

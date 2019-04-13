@@ -21,7 +21,13 @@
 #ifndef TEST_U_COMMON_H
 #define TEST_U_COMMON_H
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+#include "common_ui_gtk_common.h"
+#elif defined (QT_USE)
 #include "common_ui_qt_common.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #include "stream_istreamcontrol.h"
 
@@ -43,7 +49,11 @@ struct Test_U_Configuration
    : allocatorConfiguration ()
    , connectionConfigurations ()
    , dispatchConfiguration ()
-//   , GTKConfiguration ()
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+   , GTKConfiguration ()
+#endif // GTK_USE
+#endif // GUI_SUPPORT
    , parserConfiguration ()
    , streamConfiguration ()
   {}
@@ -51,7 +61,11 @@ struct Test_U_Configuration
   struct Stream_AllocatorConfiguration     allocatorConfiguration;
   Net_ConnectionConfigurations_t           connectionConfigurations;
   struct Common_EventDispatchConfiguration dispatchConfiguration;
-//  struct Common_UI_GTK_Configuration       GTKConfiguration;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+  struct Common_UI_GTK_Configuration       GTKConfiguration;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   struct Common_ParserConfiguration        parserConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t             streamConfiguration;
@@ -59,11 +73,20 @@ struct Test_U_Configuration
 
 //////////////////////////////////////////
 
+#if defined (GUI_SUPPORT)
 struct Test_U_UI_CBData
+#if defined (GTK_USE)
+ : Common_UI_GTK_CBData
+#elif defined (QT_USE)
  : Common_UI_Qt_CBData
+#endif
 {
   Test_U_UI_CBData ()
+#if defined (GTK_USE)
+   : Common_UI_GTK_CBData ()
+#elif defined (QT_USE)
    : Common_UI_Qt_CBData ()
+#endif
    , configuration (NULL)
    , stream (NULL)
    , videoMode (ARDRONE_VIDEOMODE_360P)
@@ -73,5 +96,6 @@ struct Test_U_UI_CBData
   Stream_IStreamControlBase*   stream;
   enum ARDrone_VideoMode       videoMode;
 };
+#endif // GUI_SUPPORT
 
 #endif

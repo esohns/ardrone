@@ -107,6 +107,8 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/log)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/signal)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/timer)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/ui)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/ui/qt)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/test_u)
 

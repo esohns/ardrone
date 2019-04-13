@@ -236,14 +236,14 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
         //struct ARDrone_UI_GTK_State& state_r =
         //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
         //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
-#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
-        inherited::state_.CBData->openGLScene.orientation.x =
-            option_2->phi; // roll (--> rotation along x)
-        inherited::state_.CBData->openGLScene.orientation.y =
-            option_2->psi; // yaw (--> rotation along y)
-        inherited::state_.CBData->openGLScene.orientation.z =
-            option_2->theta; // pitch (--> rotation along z)
-#endif
+//#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
+//        inherited::state_.CBData->openGLScene.orientation.x =
+//            option_2->phi; // roll (--> rotation along x)
+//        inherited::state_.CBData->openGLScene.orientation.y =
+//            option_2->psi; // yaw (--> rotation along y)
+//        inherited::state_.CBData->openGLScene.orientation.z =
+//            option_2->theta; // pitch (--> rotation along z)
+//#endif
         //} // end lock scope
 #endif // GUI_SUPPORT
 
