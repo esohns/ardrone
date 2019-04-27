@@ -95,7 +95,7 @@ typedef ARDrone_Module_Controller_T<ACE_MT_SYNCH,
                                     Test_U_SessionMessage_t,
                                     Test_U_SessionData_t,
                                     Net_WLANMonitor_t,
-                                    Test_U_ConnectionManager_t,
+                                    Test_U_UDPConnectionManager_t,
                                     Test_U_AsynchUDPConnector_t,
                                     struct Test_U_UI_CBData> Test_U_AsynchController;
 

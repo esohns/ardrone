@@ -476,12 +476,12 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
- , resize_ (this,
-            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
+// , resize_ (this,
+//            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , display_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_X11_WINDOW_DEFAULT_NAME_STRING))
- , display_2_ (this,
-               ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_WINDOW_DEFAULT_NAME_STRING))
+// , display_2_ (this,
+//               ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_WINDOW_DEFAULT_NAME_STRING))
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
 
@@ -506,25 +506,19 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 
   // sanity check(s)
   ACE_ASSERT (configuration_);
-  ACE_ASSERT (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_INVALID);
-  typename inherited::CONFIGURATION_T::ITERATOR_T iterator =
-      configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator != configuration_->end ());
-  typename inherited::CONFIGURATION_T::ITERATOR_T iterator_2 =
-      configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (iterator_2 != configuration_->end ());
+//  ACE_ASSERT (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_INVALID);
 
   layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
   layout_inout->append (&decode_2, NULL, 0);
   //  layout_inout.append (&report_, NULL, 0);
-  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
+//  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
     layout_inout->append (&convert_, NULL, 0);
 //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
-  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
+//  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
    layout_inout->append (&display_, NULL, 0);
-  else
-    layout_inout->append (&display_2_, NULL, 0);
+//  else
+//    layout_inout->append (&display_2_, NULL, 0);
 
   return true;
 }

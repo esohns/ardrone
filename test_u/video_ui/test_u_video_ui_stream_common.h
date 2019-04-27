@@ -262,14 +262,14 @@ struct Test_U_StreamConfiguration
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
    , format ()
-   , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
+//   , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
    , userData (NULL)
   {
     printFinalReport = true;
   }
 
   struct Stream_MediaFramework_FFMPEG_MediaType format; // session data-
-  enum Stream_Visualization_VideoRenderer       renderer;
+//  enum Stream_Visualization_VideoRenderer       renderer;
 
   struct Net_UserData*                          userData;
 };

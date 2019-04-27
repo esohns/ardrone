@@ -161,12 +161,12 @@ typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
                                     Test_U_SessionMessage_t> Test_U_ISessionNotify_t;
 typedef std::list<Test_U_ISessionNotify_t*> Test_U_Subscribers_t;
 typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
-typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_ConnectionManager_t;
+//typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
+//                                 ACE_INET_Addr,
+//                                 Test_U_ConnectionConfiguration_t,
+//                                 struct Net_ConnectionState,
+//                                 struct Test_U_StatisticData,
+//                                 struct Net_UserData> Test_U_ConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {
@@ -187,7 +187,7 @@ struct Test_U_ModuleHandlerConfiguration
   }
 
   struct Test_U_UI_CBData*        CBData;
-  Test_U_IConnection_t*           connection;
+  Test_U_IUDPConnection_t*        connection;
   Net_ConnectionConfigurations_t* connectionConfigurations;
   Test_U_ISessionNotify_t*        subscriber;
   Test_U_Subscribers_t*           subscribers;

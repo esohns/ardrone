@@ -21,29 +21,20 @@
 #ifndef TEST_U_NETWORK_COMMON_H
 #define TEST_U_NETWORK_COMMON_H
 
-#include <string>
-#include <unordered_map>
-
 #include "ace/Global_Macros.h"
 #include "ace/INET_Addr.h"
+#include "ace/Singleton.h"
 #include "ace/Synch_Traits.h"
 
-#include "common_time_common.h"
+//#include "common_time_common.h"
 
 #include "stream_common.h"
 #include "stream_configuration.h"
 
 #include "net_common.h"
 #include "net_configuration.h"
-#include "net_iconnectionmanager.h"
-
-//#include "test_u_defines.h"
-//#include "test_u_stream_common.h"
-//#include "test_u_types.h"
-
-// forward declarations
-struct Test_U_Configuration;
-struct Test_U_UserData;
+#include "net_iconnection.h"
+#include "net_connection_manager.h"
 
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;
@@ -56,18 +47,43 @@ typedef Stream_Configuration_T<//stream_name_string_,
 
 typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
                                       Test_U_StreamConfiguration_t,
-                                      NET_TRANSPORTLAYER_UDP> Test_U_ConnectionConfiguration_t;
+                                      NET_TRANSPORTLAYER_UDP> Test_U_UDPConnectionConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
+                                      Test_U_StreamConfiguration_t,
+                                      NET_TRANSPORTLAYER_TCP> Test_U_TCPConnectionConfiguration_t;
 
 typedef Net_IConnection_T<ACE_INET_Addr,
-                          Test_U_ConnectionConfiguration_t,
+                          Test_U_UDPConnectionConfiguration_t,
                           struct Net_ConnectionState,
-                          struct Test_U_StatisticData> Test_U_IConnection_t;
+                          struct Test_U_StatisticData> Test_U_IUDPConnection_t;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          Test_U_TCPConnectionConfiguration_t,
+                          struct Net_ConnectionState,
+                          struct Test_U_StatisticData> Test_U_ITCPConnection_t;
 
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+//typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+//                                 ACE_INET_Addr,
+//                                 Test_U_ConnectionConfiguration_t,
+//                                 struct Net_ConnectionState,
+//                                 struct Test_U_StatisticData,
+//                                 struct Net_UserData> Test_U_IConnectionManager_t;
+
+typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
+                                 Test_U_TCPConnectionConfiguration_t,
                                  struct Net_ConnectionState,
                                  struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_IConnectionManager_t;
+                                 struct Net_UserData> Test_U_TCPConnectionManager_t;
+typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
+                                 ACE_INET_Addr,
+                                 Test_U_UDPConnectionConfiguration_t,
+                                 struct Net_ConnectionState,
+                                 struct Test_U_StatisticData,
+                                 struct Net_UserData> Test_U_UDPConnectionManager_t;
+
+typedef ACE_Singleton<Test_U_UDPConnectionManager_t,
+                      ACE_SYNCH_MUTEX> TEST_U_UDP_CONNECTIONMANAGER_SINGLETON;
+typedef ACE_Singleton<Test_U_TCPConnectionManager_t,
+                      ACE_SYNCH_MUTEX> TEST_U_TCP_CONNECTIONMANAGER_SINGLETON;
 
 #endif // #ifndef Test_U_NETWORK_COMMON_H

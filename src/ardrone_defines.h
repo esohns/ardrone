@@ -172,7 +172,7 @@
 //         the port the subscription originated from
 //         --> setting the source port to 5556 (see above) will give the nice
 //             impression of a 'bidirectional' NavData communication 'channel'
-#define ARDRONE_PORT_UDP_NAVDATA                           5554  // UDP (drone <-- client)
+#define ARDRONE_PORT_UDP_NAVDATA_SUBSCRIBE                 5554  // UDP (drone <-- client)
 
 //#define ARDRONE_SOCKET_RECEIVE_BUFFER_SIZE                 NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE
 

@@ -286,8 +286,10 @@ do_work (
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
-  Test_U_ConnectionConfiguration_t connection_configuration;
-  Test_U_ConnectionManager_t* connection_manager_p = NULL;
+  Test_U_TCPConnectionConfiguration_t tcp_connection_configuration;
+  Test_U_UDPConnectionConfiguration_t udp_connection_configuration, udp_connection_configuration_2;
+  Test_U_TCPConnectionManager_t* tcp_connection_manager_p = NULL;
+  Test_U_UDPConnectionManager_t* udp_connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
   Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator;
@@ -332,49 +334,70 @@ do_work (
   ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
 
   // connection configuration
-  connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
-  ACE_ASSERT (connection_manager_p);
-  connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  tcp_connection_manager_p =
+      TEST_U_TCP_CONNECTIONMANAGER_SINGLETON::instance ();
+  ACE_ASSERT (tcp_connection_manager_p);
+  tcp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  udp_connection_manager_p =
+      TEST_U_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
+  ACE_ASSERT (udp_connection_manager_p);
+  udp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
 
-//  connection_configuration.generateUniqueIOModuleNames = true;
-  connection_configuration.messageAllocator = &message_allocator;
+  tcp_connection_configuration.messageAllocator = &message_allocator;
+  tcp_connection_configuration.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  udp_connection_configuration.messageAllocator = &message_allocator;
+  udp_connection_configuration.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  udp_connection_configuration_2.messageAllocator = &message_allocator;
+  udp_connection_configuration_2.bufferSize =
+    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+  //  connection_configuration.statisticReportingInterval =
+  //    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
 
   std::string default_interface_identifier_string =
       Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
   ACE_ASSERT (!default_interface_identifier_string.empty ());
-  ACE_INET_Addr gateway_address;
+  ACE_INET_Addr ip_address, gateway_address;
   Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
-                                          connection_configuration.listenAddress,
+                                          ip_address,
                                           gateway_address);
-  connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
-                                                          1);
-  ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("listening to %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.listenAddress).c_str ())));
-  connection_configuration.peerAddress = gateway_address;
-  connection_configuration.peerAddress.set_port_number (ARDRONE_PORT_TCP_CONTROL,
+  udp_connection_configuration.listenAddress = ip_address;
+  udp_connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
+                                                              1);
+
+  tcp_connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                         1);
+
+  tcp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
+                                           configuration_in.streamConfiguration);
+  udp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
+                                           configuration_in.streamConfiguration);
+  udp_connection_configuration_2.initialize (configuration_in.allocatorConfiguration,
+                                             configuration_in.streamConfiguration);
+
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+                                                                    &udp_connection_configuration));
+
+  udp_connection_configuration_2.peerAddress = gateway_address;
+  udp_connection_configuration_2.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
+                                                              1);
+  udp_connection_configuration_2.connect = true;
+  udp_connection_configuration_2.writeOnly = true;
   ACE_DEBUG ((LM_DEBUG,
-              ACE_TEXT ("navdata peer: %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.peerAddress).c_str ())));
-
-  connection_configuration.bufferSize =
-    NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-  connection_configuration.statisticReportingInterval =
-    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
-
-//  configuration_in.streamConfiguration.configuration_.module = NULL;
-  connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                       configuration_in.streamConfiguration);
-
-//  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
-  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-                                                                    &connection_configuration));
-  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
-      configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set (*dynamic_cast<Test_U_ConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
-                             NULL); // passed to all handlers
+              ACE_TEXT ("control peer: %s\n"),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.peerAddress).c_str ())));
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
+                                                                    &udp_connection_configuration_2));
+//  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+//                                                                    &connection_configuration));
+//  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
+//      configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
+//  ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
+  tcp_connection_manager_p->set (tcp_connection_configuration,
+                                 NULL); // passed to all handlers
+  udp_connection_manager_p->set (udp_connection_configuration,
+                                 NULL); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;
   Common_Timer_Manager_t* timer_manager_p = NULL;
@@ -444,8 +467,10 @@ do_work (
   // step3: clean up
   timer_manager_p->stop ();
 
-  connection_manager_p->stop ();
-  connection_manager_p->abort (true); // wait for completion ?
+  tcp_connection_manager_p->stop ();
+  udp_connection_manager_p->stop ();
+  tcp_connection_manager_p->abort (true); // wait for completion ?
+  udp_connection_manager_p->abort (true); // wait for completion ?
   Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
                                        dispatch_state_s.reactorGroupId,
                                        true); // wait ?

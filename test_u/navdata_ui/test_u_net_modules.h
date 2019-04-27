@@ -81,7 +81,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Test_U_SessionData_t,
                                     struct Test_U_StatisticData,
                                     Common_Timer_Manager_t,
-                                    Test_U_ConnectionManager_t,
+                                    Test_U_UDPConnectionManager_t,
                                     Test_U_UDPConnector_t,
                                     struct Net_UserData> Test_U_UDPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
@@ -96,7 +96,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Test_U_SessionData_t,
                                     struct Test_U_StatisticData,
                                     Common_Timer_Manager_t,
-                                    Test_U_ConnectionManager_t,
+                                    Test_U_UDPConnectionManager_t,
                                     Test_U_AsynchUDPConnector_t,
                                     struct Net_UserData> Test_U_AsynchUDPSource;
 

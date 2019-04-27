@@ -65,18 +65,27 @@
 #include "test_u_network_common.h"
 #include "test_u_stream_common.h"
 
-// forward declarations
-//class Test_U_Message_t;
-//class Test_U_SessionMessage_t;
-//struct Net_UserData;
-
-typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_ConnectionManager_t;
-
+//typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
+//                                      Common_TimePolicy_t,
+//                                      libacestream_default_net_stream_name_string,
+//                                      enum Stream_ControlType,
+//                                      enum Stream_SessionMessageType,
+//                                      enum Stream_StateMachine_ControlState,
+//                                      struct Test_U_StreamState,
+//                                      struct Test_U_StreamConfiguration,
+//                                      struct Test_U_StatisticData,
+//                                      Common_Timer_Manager_t,
+//                                      struct Stream_AllocatorConfiguration,
+//                                      struct Stream_ModuleConfiguration,
+//                                      struct Test_U_ModuleHandlerConfiguration,
+//                                      Test_U_SessionData,
+//                                      Test_U_SessionData_t,
+//                                      Stream_ControlMessage_t,
+//                                      Test_U_Message_t,
+//                                      Test_U_SessionMessage_t,
+//                                      ACE_INET_Addr,
+//                                      Test_U_TCPConnectionManager_t,
+//                                      struct Net_UserData> Test_U_NetTCPStream_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
                                       libacestream_default_net_stream_name_string,
@@ -96,17 +105,25 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Test_U_Message_t,
                                       Test_U_SessionMessage_t,
                                       ACE_INET_Addr,
-                                      Test_U_ConnectionManager_t,
-                                      struct Net_UserData> Test_U_NetStream_t;
+                                      Test_U_UDPConnectionManager_t,
+                                      struct Net_UserData> Test_U_NetUDPStream_t;
 
-typedef Net_IStreamConnection_T<ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 Net_UDPSocketConfiguration_t,
-                                 Net_UDPSocketConfiguration_t,
-                                 Test_U_NetStream_t,
-                                 enum Stream_StateMachine_ControlState> Test_U_IStreamConnection_t;
+//typedef Net_IStreamConnection_T<ACE_INET_Addr,
+//                                Test_U_TCPConnectionConfiguration_t,
+//                                struct Net_ConnectionState,
+//                                struct Test_U_StatisticData,
+//                                Net_UDPSocketConfiguration_t,
+//                                Net_UDPSocketConfiguration_t,
+//                                Test_U_NetTCPStream_t,
+//                                enum Stream_StateMachine_ControlState> Test_U_ITCPStreamConnection_t;
+//typedef Net_IStreamConnection_T<ACE_INET_Addr,
+//                                Test_U_UDPConnectionConfiguration_t,
+//                                 struct Net_ConnectionState,
+//                                 struct Test_U_StatisticData,
+//                                 Net_UDPSocketConfiguration_t,
+//                                 Net_UDPSocketConfiguration_t,
+//                                 Test_U_NetUDPStream_t,
+//                                 enum Stream_StateMachine_ControlState> Test_U_IUDPStreamConnection_t;
 
 //typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
 //                               Net_TCPConnectionBase_T<ACE_NULL_SYNCH,
@@ -131,20 +148,20 @@ typedef Net_IStreamConnection_T<ACE_INET_Addr,
 typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                Net_UDPConnectionBase_T<ACE_NULL_SYNCH,
                                                        Net_UDPSocketHandler_t,
-                                                       Test_U_ConnectionConfiguration_t,
+                                                       Test_U_UDPConnectionConfiguration_t,
                                                        struct Net_ConnectionState,
                                                        struct Test_U_StatisticData,
-                                                       Test_U_NetStream_t,
+                                                       Test_U_NetUDPStream_t,
                                                        Common_Timer_Manager_t,
                                                        struct Net_UserData>,
                                ACE_SOCK_CONNECTOR,
                                ACE_INET_Addr,
-                               Test_U_ConnectionConfiguration_t,
+                               Test_U_UDPConnectionConfiguration_t,
                                struct Net_ConnectionState,
                                struct Test_U_StatisticData,
                                Net_UDPSocketConfiguration_t,
                                Net_UDPSocketConfiguration_t,
-                               Test_U_NetStream_t,
+                               Test_U_NetUDPStream_t,
                                struct Net_UserData> Test_U_UDPConnector_t;
 
 //typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<Test_U_AsynchTCPSocketHandler_t,
@@ -165,22 +182,19 @@ typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
 //                                     Test_U_NetStream_t,
 //                                     struct Net_UserData> Test_U_AsynchTCPConnector_t;
 typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<Net_AsynchUDPSocketHandler_t,
-                                                                   Test_U_ConnectionConfiguration_t,
+                                                                   Test_U_UDPConnectionConfiguration_t,
                                                                    struct Net_ConnectionState,
                                                                    struct Test_U_StatisticData,
-                                                                   Test_U_NetStream_t,
+                                                                   Test_U_NetUDPStream_t,
                                                                    Common_Timer_Manager_t,
                                                                    struct Net_UserData>,
                                      ACE_INET_Addr,
-                                     Test_U_ConnectionConfiguration_t,
+                                     Test_U_UDPConnectionConfiguration_t,
                                      struct Net_ConnectionState,
                                      struct Test_U_StatisticData,
                                      Net_UDPSocketConfiguration_t,
                                      Net_UDPSocketConfiguration_t,
-                                     Test_U_NetStream_t,
+                                     Test_U_NetUDPStream_t,
                                      struct Net_UserData> Test_U_AsynchUDPConnector_t;
-
-typedef ACE_Singleton<Test_U_ConnectionManager_t,
-                      ACE_SYNCH_MUTEX> TEST_U_CONNECTIONMANAGER_SINGLETON;
 
 #endif // #ifndef Test_U_NETWORK_H

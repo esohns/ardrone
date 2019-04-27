@@ -114,10 +114,10 @@ do_print_usage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
 #else
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-1          : use X11 renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_X11)
-            << ACE_TEXT_ALWAYS_CHAR ("])")
-            << std::endl;
+//  std::cout << ACE_TEXT_ALWAYS_CHAR ("-1          : use X11 renderer [")
+//            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_X11)
+//            << ACE_TEXT_ALWAYS_CHAR ("])")
+//            << std::endl;
 #endif // ACE_WIN32 || ACE_WIN64
   std::string path = Common_File_Tools::getTempDirectory ();
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-l          : log to a file [")
@@ -322,8 +322,8 @@ do_work (
   configuration_in.streamConfiguration.configuration_.messageAllocator =
       &message_allocator;
   configuration_in.streamConfiguration.configuration_.module = &message_handler;
-  configuration_in.streamConfiguration.configuration_.renderer =
-      renderer_in;
+//  configuration_in.streamConfiguration.configuration_.renderer =
+//      renderer_in;
 
   if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
   {
@@ -332,7 +332,11 @@ do_work (
     return;
   } // end IF
 
-  modulehandler_configuration.outputFormat.format = AV_PIX_FMT_RGB24;
+  // *IMPORTANT NOTE*: is there a way to feed RGB24 data to Xlib;
+  //                   XCreateImage() only 'likes' 32-bit data, regardless of
+  //                   what 'depth' values are set (in fact, it requires BGRA on
+  //                   little-endian platforms) --> convert
+  modulehandler_configuration.outputFormat.format = AV_PIX_FMT_RGB32;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   modulehandler_configuration.outputFormat.resolution.cx = 640;
   modulehandler_configuration.outputFormat.resolution.cy = 480;
@@ -348,11 +352,6 @@ do_work (
                                                    modulehandler_configuration,
                                                    configuration_in.streamConfiguration.allocatorConfiguration_,
                                                    configuration_in.streamConfiguration.configuration_);
-  // *IMPORTANT NOTE*: i have not found a way to feed RGB24 data to Xlib;
-  //                   XCreateImage() only 'likes' 32-bit data, regardless of
-  //                   what 'depth' values are set (in fact, it requires BGRA on
-  //                   little-endian platforms) --> convert
-  modulehandler_configuration.outputFormat.format = AV_PIX_FMT_RGB32;
   configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING),
                                                                std::make_pair (module_configuration,
                                                                                modulehandler_configuration)));

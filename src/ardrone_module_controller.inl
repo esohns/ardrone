@@ -353,6 +353,8 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   switch (newState_in)
   {
+    case NAVDATA_STATE_INVALID:
+      break; // --> session end ?
     case NAVDATA_STATE_INITIAL:
     {
       //// sanity check(s)
@@ -458,7 +460,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       local_SAP.set_port_number (socket_configuration_p->listenAddress.get_port_number (),
                                  1);
       remote_SAP = socket_configuration_2->peerAddress;
-      remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
+      remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA_SUBSCRIBE, 1);
 
       // 'subscribe' to the NavData stream
       message_block_p = inherited::allocateMessage (sizeof (ACE_UINT32));
@@ -496,6 +498,13 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     sizeof (ACE_UINT32)));
         goto error;
       } // end IF
+//#if defined (_DEBUG)
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("%s: subscribed to NavData (local: %s; peer: %s)\n"),
+//                  inherited::mod_->name (),
+//                  ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+//                  ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ())));
+//#endif // _DEBUG
 
 error:
       if (likely (message_block_p))
