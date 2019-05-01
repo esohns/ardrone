@@ -85,8 +85,6 @@
 #include "test_u_session_message.h"
 #include "test_u_stream.h"
 
-const char stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("Test_U_Stream");
-
 void
 do_print_usage (const std::string& programName_in)
 {
@@ -308,6 +306,7 @@ do_work (
                                                &heap_allocator, // heap allocator handle
                                                true);           // block ?
   Test_U_Stream stream;
+  Test_U_ControlStream control_stream;
   Test_U_MessageHandler_Module message_handler (&stream,
                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
@@ -332,6 +331,13 @@ do_work (
   stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
+
+  modulehandler_configuration.connectionConfigurations =
+    &configuration_in.connectionConfigurations_2;
+  configuration_in.streamConfiguration_2.initialize (module_configuration,
+                                                     modulehandler_configuration,
+                                                     configuration_in.streamConfiguration.allocatorConfiguration_,
+                                                     configuration_in.streamConfiguration.configuration_);
 
   // connection configuration
   tcp_connection_manager_p =
@@ -363,18 +369,22 @@ do_work (
                                           ip_address,
                                           gateway_address);
   udp_connection_configuration.listenAddress = ip_address;
-  udp_connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
+  udp_connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                                               1);
 
+  tcp_connection_configuration.address = gateway_address;
   tcp_connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                         1);
 
   tcp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                           configuration_in.streamConfiguration);
+                                           configuration_in.streamConfiguration_2);
   udp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
                                            configuration_in.streamConfiguration);
   udp_connection_configuration_2.initialize (configuration_in.allocatorConfiguration,
                                              configuration_in.streamConfiguration);
+
+  configuration_in.connectionConfigurations_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
+                                                                      &tcp_connection_configuration));
 
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                     &udp_connection_configuration));
@@ -389,8 +399,6 @@ do_work (
               ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.peerAddress).c_str ())));
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
                                                                     &udp_connection_configuration_2));
-//  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
-//                                                                    &connection_configuration));
 //  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
 //      configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
 //  ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
@@ -448,12 +456,29 @@ do_work (
   if (!stream.initialize (configuration_in.streamConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to initialize stream, returning\n")));
+                ACE_TEXT ("failed to initialize navdata stream, returning\n")));
     return;
   } // end IF
+  Stream_Module_t* module_p =
+      const_cast<Stream_Module_t*> (stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
+  ACE_ASSERT (module_p);
+  configuration_in.streamConfiguration_2.configuration_.deviceConfiguration =
+    dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
+  ACE_ASSERT (configuration_in.streamConfiguration_2.configuration_.deviceConfiguration);
+  configuration_in.streamConfiguration_2.configuration_.initializeControl =
+      &ui_event_handler;
+  if (!control_stream.initialize (configuration_in.streamConfiguration_2))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to initialize control stream, returning\n")));
+    return;
+  } // end IF
+  stream_p = &control_stream;
+  ACE_ASSERT (stream_p);
+  stream_p->start ();
+
   stream_p = &stream;
   ACE_ASSERT (stream_p);
-    // *NOTE*: this will block until the file has been copied...
   stream_p->start ();
 //    if (!stream_p->isRunning ())
 //    {
@@ -462,6 +487,7 @@ do_work (
 //      //timer_manager_p->stop ();
 //      return;
 //    } // end IF
+//  control_stream.wait (true, false, false);
   stream_p->wait (true, false, false);
 
   // step3: clean up

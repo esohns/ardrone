@@ -36,10 +36,17 @@
 #include "stream_vis_defines.h"
 #include "stream_vis_tools.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_lib_directshow_tools.h"
-#include "stream_lib_mediafoundation_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//#include "stream_lib_directshow_tools.h"
+//#include "stream_lib_mediafoundation_tools.h"
+//#endif // ACE_WIN32 || ACE_WIN64
+
+const char stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING);
+const char control_stream_name_string_[] =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING);
+
+//////////////////////////////////////////
 
 Test_U_Stream::Test_U_Stream ()
  : inherited ()
@@ -54,23 +61,15 @@ Test_U_Stream::Test_U_Stream ()
  , handler_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
 {
-  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
 
-}
-
-Test_U_Stream::~Test_U_Stream ()
-{
-  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::~Test_U_Stream"));
-
-  // *NOTE*: this implements an ordered shutdown on destruction...
-  inherited::shutdown ();
 }
 
 bool
 Test_U_Stream::load (Stream_ILayout* layout_inout,
                      bool& delete_out)
 {
-  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::load"));
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::load"));
 
   // initialize return value(s)
   delete_out = false;
@@ -87,7 +86,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 bool
 Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
 {
-  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::initialize"));
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::initialize"));
 
   // sanity check(s)
   ACE_ASSERT (!isRunning ());
@@ -174,7 +173,7 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
                           const ARDrone_NavDataOptionOffsets_t& offsets_in,
                           void* payload_in)
 {
-  STREAM_TRACE (ACE_TEXT ("Test_U_Stream::messageCB"));
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::messageCB"));
 
   //#if defined (_DEBUG)
   //  // dump state
@@ -455,4 +454,173 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
       }
     } // end SWITCH
   } // end FOR
+}
+
+//////////////////////////////////////////
+
+Test_U_ControlStream::Test_U_ControlStream ()
+ : inherited ()
+ , source_ (this,
+            ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
+ , decode_ (this,
+            ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROL_DECODER_NAME_STRING))
+ , report_ (this,
+            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+ , handler_ (this,
+             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
+ , configuration_ (NULL)
+{
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_ControlStream::Test_U_ControlStream"));
+
+}
+
+bool
+Test_U_ControlStream::load (Stream_ILayout* layout_inout,
+                            bool& delete_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_ControlStream::load"));
+
+  // initialize return value(s)
+  delete_out = false;
+
+  layout_inout->append (&source_, NULL, 0);
+  layout_inout->append (&decode_, NULL, 0);
+  layout_inout->append (&report_, NULL, 0);
+//  layout_inout->append (&handler_, NULL, 0);
+
+  return true;
+}
+
+bool
+Test_U_ControlStream::initialize (const typename inherited::CONFIGURATION_T& configuration_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_ControlStream::initialize"));
+
+  // sanity check(s)
+  ACE_ASSERT (!isRunning ());
+
+  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool reset_setup_pipeline = false;
+  Test_U_SessionData* session_data_p = NULL;
+  typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
+  struct Test_U_ModuleHandlerConfiguration* configuration_p = NULL;
+  Test_U_AsynchTCPSource* source_impl_p = NULL;
+
+  // allocate a new session state, reset stream
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    false;
+  reset_setup_pipeline = true;
+  if (!inherited::initialize (configuration_in))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to Stream_Base_T::initialize(), aborting\n"),
+                ACE_TEXT (control_stream_name_string_)));
+    goto error;
+  } // end IF
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    setup_pipeline;
+  reset_setup_pipeline = false;
+
+  // sanity check(s)
+  ACE_ASSERT (inherited::sessionData_);
+  session_data_p =
+    &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+  iterator =
+      const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != configuration_in.end ());
+  configuration_p =
+      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> (&(*iterator).second.second);
+  ACE_ASSERT (configuration_p);
+
+  // sanity check(s)
+  ACE_ASSERT (configuration_in.configuration_.deviceConfiguration);
+
+  configuration_ = configuration_in.configuration_.deviceConfiguration;
+
+  ACE_ASSERT (configuration_in.configuration_.initializeControl);
+  if (!configuration_in.configuration_.initializeControl->initialize (this))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
+                ACE_TEXT (control_stream_name_string_)));
+    goto error;
+  } // end IF
+
+  // ---------------------------------------------------------------------------
+
+  // ******************* Source ************************
+  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  ACE_ASSERT (source_impl_p);
+  source_impl_p->setP (&(inherited::state_));
+
+  // *NOTE*: push()ing the module will open() it
+  //         --> set the argument that is passed along (head module expects a
+  //             handle to the session data)
+  source_.arg (inherited::sessionData_);
+
+  if (configuration_in.configuration_.setupPipeline)
+    if (!inherited::setup (NULL))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to set up pipeline, aborting\n"),
+                  ACE_TEXT (control_stream_name_string_)));
+      goto error;
+    } // end IF
+
+  // -------------------------------------------------------------
+
+  inherited::isInitialized_ = true;
+
+  return true;
+
+error:
+  if (reset_setup_pipeline)
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+      setup_pipeline;
+
+  return false;
+}
+
+void
+Test_U_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceConfiguration_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("Test_U_ControlStream::messageCB"));
+
+  // sanity check(s)
+  ACE_ASSERT (configuration_);
+
+  try {
+    configuration_->setP (&const_cast<ARDrone_DeviceConfiguration_t&> (deviceConfiguration_in));
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: caught exception in ARDrone_IDeviceConfiguration::setP(), continuing\n"),
+                ACE_TEXT (control_stream_name_string_)));
+  }
+
+//#if defined (_DEBUG)
+//  // debug info
+//  unsigned int number_of_settings = 0;
+//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+//       iterator != deviceConfiguration_in.end ();
+//       ++iterator)
+//    number_of_settings += (*iterator).second.size ();
+//  ACE_DEBUG ((LM_DEBUG,
+//              ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+//              number_of_settings, deviceConfiguration_in.size ()));
+//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+//       iterator != deviceConfiguration_in.end ();
+//       ++iterator)
+//  {
+//    ACE_DEBUG ((LM_DEBUG,
+//                ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
+//                ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
+//    for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
+//         iterator_2 != (*iterator).second.end ();
+//         ++iterator_2)
+//      ACE_DEBUG ((LM_DEBUG,
+//                  ACE_TEXT ("\t%s:\t%s\n"),
+//                  ACE_TEXT ((*iterator_2).first.c_str ()),
+//                  ACE_TEXT ((*iterator_2).second.c_str ())));
+//  } // end FOR
+//#endif
 }

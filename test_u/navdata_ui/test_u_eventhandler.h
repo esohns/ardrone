@@ -40,6 +40,7 @@ template <typename NotificationType,
 class Test_U_EventHandler_T
  : public NotificationType
  , public Common_IInitializeP_T<ARDrone_INavDataNotify>
+ , public Common_IInitializeP_T<ARDrone_IControlNotify>
 {
  public:
   Test_U_EventHandler_T ();
@@ -58,6 +59,7 @@ class Test_U_EventHandler_T
 
   // implement Common_IInitializeP_T
   inline bool initialize (const ARDrone_INavDataNotify* notify_in) { notify_ = const_cast<ARDrone_INavDataNotify*> (notify_in); return true; }
+  inline bool initialize (const ARDrone_IControlNotify* notify_in) { notify_2_ = const_cast<ARDrone_IControlNotify*> (notify_in); return true; }
 
  private:
 //  ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T ())
@@ -65,6 +67,7 @@ class Test_U_EventHandler_T
   ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T& operator= (const Test_U_EventHandler_T&))
 
   ARDrone_INavDataNotify*                      notify_;
+  ARDrone_IControlNotify*                      notify_2_;
   typename SessionMessageType::DATA_T::DATA_T* sessionData_;
 };
 

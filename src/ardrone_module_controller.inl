@@ -385,13 +385,13 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
       ACE_ASSERT (inherited::configuration_->connectionConfigurations);
-      iterator =
-        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
-      // sanity check(s)
-      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
-      socket_configuration_p =
-        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator).second);
-      ACE_ASSERT (socket_configuration_p);
+//      iterator =
+//        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+//      // sanity check(s)
+//      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
+//      socket_configuration_p =
+//        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator).second);
+//      ACE_ASSERT (socket_configuration_p);
       iterator_2 =
         inherited::configuration_->connectionConfigurations->find (Stream_Tools::sanitizeUniqueName (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ())));
       // sanity check(s)
@@ -457,10 +457,10 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 #endif
         goto error;
       } // end IF
-      local_SAP.set_port_number (socket_configuration_p->listenAddress.get_port_number (),
+      local_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                  1);
       remote_SAP = socket_configuration_2->peerAddress;
-      remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA_SUBSCRIBE, 1);
+      remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
 
       // 'subscribe' to the NavData stream
       message_block_p = inherited::allocateMessage (sizeof (ACE_UINT32));
@@ -844,8 +844,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
-  message_p->initialize (session_data_r.sessionId,
-                         NULL);
+  message_p->set (session_data_r.sessionId);
   message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
   int result = message_p->copy (commandString_in.c_str (),
                                 commandString_in.size ());

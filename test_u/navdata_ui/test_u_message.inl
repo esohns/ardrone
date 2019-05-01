@@ -20,13 +20,6 @@
 
 #include "ace/Malloc_Base.h"
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#include <DShow.h>
-#else
-#include "libv4l2.h"
-#include "linux/videodev2.h"
-#endif
-
 #include "stream_control_message.h"
 
 #include "ardrone_macros.h"
@@ -180,23 +173,6 @@ Test_U_Message_T<DataType,
 
   // *NOTE*: if 'this' is initialized, so is the "clone"
 
-//  // *NOTE*: the new fragment chain is already 'crunch'ed, i.e. aligned to base_
-//  // *TODO*: consider defragment()ing the chain before padding
-//
-//  // step2: 'pad' the fragment(s)
-//  unsigned int padding_bytes =
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    AV_INPUT_BUFFER_PADDING_SIZE;
-//#else
-//    FF_INPUT_BUFFER_PADDING_SIZE;
-//#endif
-//  for (ACE_Message_Block* message_block_p = result_p;
-//       message_block_p;
-//       message_block_p = message_block_p->cont ())
-//  { ACE_ASSERT ((message_block_p->capacity () - message_block_p->size ()) >= padding_bytes);
-//    ACE_OS::memset (message_block_p->wr_ptr (), 0, padding_bytes);
-//  } // end FOR
-
   return result_p;
 }
 
@@ -204,7 +180,7 @@ template <typename DataType,
           typename SessionDataType>
 ACE_Message_Block*
 Test_U_Message_T<DataType,
-                              SessionDataType>::duplicate (void) const
+                 SessionDataType>::duplicate (void) const
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::duplicate"));
 
@@ -252,11 +228,6 @@ Test_U_Message_T<DataType,
   } // end IF
 
   // *NOTE*: if "this" is initialized, so is the "clone" (and vice-versa)...
-
-//  // *NOTE*: duplicates may reuse the device buffer memory, but only the
-//  //         original message will requeue it (see release() below)
-//  DataType& data_r = const_cast<DataType&> (message_p->getR ());
-//  data_r.device = -1;
 
   return message_p;
 }

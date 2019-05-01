@@ -56,13 +56,13 @@ extern "C"
 #include "ardrone_statemachine_navdata.h"
 #include "ardrone_types.h"
 
-struct ARDrone_UserData
- : Net_UserData
-{
-  ARDrone_UserData ()
-   : Net_UserData ()
-  {}
-};
+//struct ARDrone_UserData
+// : Net_UserData
+//{
+//  ARDrone_UserData ()
+//   : Net_UserData ()
+//  {}
+//};
 
 struct ARDrone_NavData
 {

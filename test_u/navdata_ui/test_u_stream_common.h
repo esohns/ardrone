@@ -78,13 +78,15 @@ struct Test_U_MessageData
 {
   Test_U_MessageData ()
    : messageType (ARDRONE_MESSAGE_INVALID)
+   , controlData ()
    , NavData ()
   {}
   inline void operator+= (struct Test_U_MessageData rhs_in) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
 
-  enum ARDrone_MessageType messageType;
+  enum ARDrone_MessageType      messageType;
 
-  struct ARDrone_NavData   NavData;
+  ARDrone_DeviceConfiguration_t controlData;
+  struct ARDrone_NavData        NavData;
 };
 typedef Stream_DataBase_T<struct Test_U_MessageData> Test_U_MessageData_t;
 
@@ -93,18 +95,14 @@ struct Test_U_StatisticData
 {
   Test_U_StatisticData ()
    : Stream_Statistic ()
-   , capturedFrames (0)
   {}
 
   struct Test_U_StatisticData operator+= (const struct Test_U_StatisticData& rhs_in)
   {
     Stream_Statistic::operator+= (rhs_in);
-    capturedFrames += rhs_in.capturedFrames;
 
     return *this;
   }
-
-  unsigned int capturedFrames;
 };
 typedef Common_StatisticHandler_T<struct Test_U_StatisticData> Test_U_StatisticHandler_t;
 
@@ -220,13 +218,18 @@ struct Test_U_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
+   , deviceConfiguration (NULL)
+   , initializeControl (NULL)
    , initializeNavData (NULL)
    , userData (NULL)
   {
     printFinalReport = true;
   }
 
+  ARDrone_IDeviceConfiguration*                  deviceConfiguration;
+  Common_IInitializeP_T<ARDrone_IControlNotify>* initializeControl;
   Common_IInitializeP_T<ARDrone_INavDataNotify>* initializeNavData;
+
   struct Net_UserData*                           userData;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,

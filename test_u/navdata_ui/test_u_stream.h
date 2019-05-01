@@ -53,6 +53,7 @@
 class Stream_IAllocator;
 
 extern const char stream_name_string_[];
+extern const char control_stream_name_string_[];
 
 class Test_U_Stream
  : public Stream_Base_T<ACE_MT_SYNCH,
@@ -94,7 +95,7 @@ class Test_U_Stream
 
  public:
   Test_U_Stream ();
-  virtual ~Test_U_Stream ();
+  inline virtual ~Test_U_Stream () { inherited::shutdown (); }
 
   // implement (part of) Stream_IStreamControlBase
   virtual bool load (Stream_ILayout*, // layout
@@ -118,6 +119,73 @@ class Test_U_Stream
   Test_U_StatisticReport_Module report_;
   Test_U_AsynchController_Module controller_;
   Test_U_MessageHandler_Module handler_;
+};
+
+//////////////////////////////////////////
+
+class Test_U_ControlStream
+ : public Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        control_stream_name_string_,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct Test_U_StreamState,
+                        struct Test_U_StreamConfiguration,
+                        struct Test_U_StatisticData,
+                        struct Stream_AllocatorConfiguration,
+                        struct Stream_ModuleConfiguration,
+                        struct Test_U_ModuleHandlerConfiguration,
+                        Test_U_SessionData,
+                        Test_U_SessionData_t,
+                        Stream_ControlMessage_t,
+                        Test_U_Message_t,
+                        Test_U_SessionMessage_t>
+ , public ARDrone_IControlNotify
+{
+  typedef Stream_Base_T<ACE_MT_SYNCH,
+                        Common_TimePolicy_t,
+                        control_stream_name_string_,
+                        enum Stream_ControlType,
+                        enum Stream_SessionMessageType,
+                        enum Stream_StateMachine_ControlState,
+                        struct Test_U_StreamState,
+                        struct Test_U_StreamConfiguration,
+                        struct Test_U_StatisticData,
+                        struct Stream_AllocatorConfiguration,
+                        struct Stream_ModuleConfiguration,
+                        struct Test_U_ModuleHandlerConfiguration,
+                        Test_U_SessionData,
+                        Test_U_SessionData_t,
+                        Stream_ControlMessage_t,
+                        Test_U_Message_t,
+                        Test_U_SessionMessage_t> inherited;
+
+ public:
+  Test_U_ControlStream ();
+  inline virtual ~Test_U_ControlStream () { inherited::shutdown (); }
+
+  // implement (part of) Stream_IStreamControlBase
+  virtual bool load (Stream_ILayout*, // layout
+                     bool&);          // return value: delete modules ?
+
+  // implement Common_IInitialize_T
+  virtual bool initialize (const typename inherited::CONFIGURATION_T&); // configuration
+
+  // implement ARDrone_IControlNotify
+  virtual void messageCB (const ARDrone_DeviceConfiguration_t&); // device configuration
+
+ private:
+  ACE_UNIMPLEMENTED_FUNC (Test_U_ControlStream (const Test_U_ControlStream&))
+  ACE_UNIMPLEMENTED_FUNC (Test_U_ControlStream& operator= (const Test_U_ControlStream&))
+
+  // modules
+  Test_U_AsynchTCPSource_Module source_;
+  Test_U_ControlDecoder_Module  decode_;
+  Test_U_StatisticReport_Module report_;
+  Test_U_MessageHandler_Module  handler_;
+
+  ARDrone_IDeviceConfiguration* configuration_;
 };
 
 #endif

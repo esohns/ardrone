@@ -47,6 +47,7 @@
 
 #include "net_wlan_monitor_common.h"
 
+#include "ardrone_module_control_decoder.h"
 #include "ardrone_module_controller.h"
 #include "ardrone_module_navdata_decoder.h"
 
@@ -63,6 +64,13 @@ typedef ARDrone_Module_NavDataDecoder_T <ACE_MT_SYNCH,
                                          Test_U_Message_t,
                                          Test_U_SessionMessage_t,
                                          Test_U_SessionData_t> Test_U_NavDataDecoder;
+typedef ARDrone_Module_ControlDecoder_T <ACE_MT_SYNCH,
+                                         Common_TimePolicy_t,
+                                         struct Test_U_ModuleHandlerConfiguration,
+                                         Stream_ControlMessage_t,
+                                         Test_U_Message_t,
+                                         Test_U_SessionMessage_t,
+                                         Test_U_SessionData_t> Test_U_ControlDecoder;
 
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,
@@ -117,6 +125,12 @@ DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session d
                               ardrone_default_navdata_decoder_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
                               Test_U_NavDataDecoder);                       // writer type
+DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
+                              enum Stream_SessionMessageType,                   // session event type
+                              struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
+                              ardrone_default_control_decoder_module_name_string,
+                              Stream_INotify_t,                                 // stream notification interface type
+                              Test_U_ControlDecoder);                       // writer type
 
 DATASTREAM_MODULE_DUPLEX (Test_U_SessionData,                // session data type
                           enum Stream_SessionMessageType,                   // session event type

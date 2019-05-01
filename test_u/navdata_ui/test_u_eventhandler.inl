@@ -33,6 +33,7 @@ Test_U_EventHandler_T<NotificationType,
                       DataMessageType,
                       SessionMessageType>::Test_U_EventHandler_T ()
  : notify_ (NULL)
+ , notify_2_ (NULL)
  , sessionData_ (NULL)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::Test_U_EventHandler_T"));
@@ -105,21 +106,44 @@ Test_U_EventHandler_T<NotificationType,
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::notify"));
 
   ACE_UNUSED_ARG (sessionId_in);
+  if (message_in.type () == ARDRONE_MESSAGE_ATCOMMAND)
+    return; // --> outbound
 
   const typename DataMessageType::DATA_T& data_container_r = message_in.getR ();
   const typename DataMessageType::DATA_T::DATA_T& data_r =
       data_container_r.getR ();
 
-  ACE_ASSERT (notify_);
-  try {
-    // *TODO*: remove type inference
-    notify_->messageCB (data_r.NavData.NavData,
-                        data_r.NavData.NavDataOptionOffsets,
-                        message_in.rd_ptr ());
-  } catch (...) {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("caught exception in ARDrone_INavDataNotify::messageCB(), returning\n")));
-  }
+  switch (message_in.type ())
+  {
+    case ARDRONE_MESSAGE_NAVDATA:
+    {
+      ACE_ASSERT (notify_);
+      try {
+        // *TODO*: remove type inference
+        notify_->messageCB (data_r.NavData.NavData,
+                            data_r.NavData.NavDataOptionOffsets,
+                            message_in.rd_ptr ());
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in ARDrone_INavDataNotify::messageCB(), returning\n")));
+      }
+      break;
+    }
+    case ARDRONE_MESSAGE_CONTROL:
+    {
+      ACE_ASSERT (notify_2_);
+      try {
+        // *TODO*: remove type inference
+        notify_2_->messageCB (data_r.controlData);
+      } catch (...) {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("caught exception in ARDrone_IControlNotify::messageCB(), returning\n")));
+      }
+      break;
+    }
+    default:
+      break;
+  } // end SWITCH
 }
 
 template <typename NotificationType,
