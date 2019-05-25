@@ -90,28 +90,28 @@ struct Test_U_MessageData
 };
 typedef Stream_DataBase_T<struct Test_U_MessageData> Test_U_MessageData_t;
 
-struct Test_U_StatisticData
- : Stream_Statistic
-{
-  Test_U_StatisticData ()
-   : Stream_Statistic ()
-  {}
-
-  struct Test_U_StatisticData operator+= (const struct Test_U_StatisticData& rhs_in)
-  {
-    Stream_Statistic::operator+= (rhs_in);
-
-    return *this;
-  }
-};
-typedef Common_StatisticHandler_T<struct Test_U_StatisticData> Test_U_StatisticHandler_t;
+//struct Stream_Statistic
+// : Stream_Statistic
+//{
+//  Stream_Statistic ()
+//   : Stream_Statistic ()
+//  {}
+//
+//  struct Stream_Statistic operator+= (const struct Stream_Statistic& rhs_in)
+//  {
+//    Stream_Statistic::operator+= (rhs_in);
+//
+//    return *this;
+//  }
+//};
+//typedef Common_StatisticHandler_T<struct Stream_Statistic> Test_U_StatisticHandler_t;
 
 struct Test_U_StreamState;
 class Test_U_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct Stream_MediaFramework_FFMPEG_MediaType,
                                         struct Test_U_StreamState,
-                                        struct Test_U_StatisticData,
+                                        struct Stream_Statistic,
                                         struct Net_UserData>
 {
  public:
@@ -119,7 +119,7 @@ class Test_U_SessionData
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct Stream_MediaFramework_FFMPEG_MediaType,
                                    struct Test_U_StreamState,
-                                   struct Test_U_StatisticData,
+                                   struct Stream_Statistic,
                                    struct Net_UserData> ()
   {}
 
@@ -129,7 +129,7 @@ class Test_U_SessionData
 //    Stream_SessionDataMediaBase_T<struct Test_U_SessionData,
 //                                  struct Stream_MediaFramework_FFMPEG_MediaType,
 //                                  struct Test_U_StreamState,
-//                                  struct Test_U_StatisticData,
+//                                  struct Stream_Statistic,
 //                                  struct Net_UserData>::operator+= (rhs_in);
 
 //    return *this;
@@ -162,8 +162,8 @@ typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
 //typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
 //                                 ACE_INET_Addr,
 //                                 Test_U_ConnectionConfiguration_t,
-//                                 struct Net_ConnectionState,
-//                                 struct Test_U_StatisticData,
+//                                 struct Net_StreamConnectionState,
+//                                 Net_StreamStatistic_t,
 //                                 struct Net_UserData> Test_U_ConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration

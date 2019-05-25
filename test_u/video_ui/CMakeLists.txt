@@ -440,14 +440,19 @@ elseif (WIN32)
  else ()
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
+#file (TO_CMAKE_PATH $ENV{LIB_ROOT}/libpng/cmake/${CMAKE_BUILD_TYPE} LIBPNG_PATH)
+file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ffmpeg/bin FFMPEG_PATH)
+file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ImageMagick IMAGEMAGICK_PATH)
+file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_PATH)
+file (TO_CMAKE_PATH $ENV{LIB_ROOT}/assimp/cmake/code/${CMAKE_BUILD_TYPE} ASSIMP_PATH)
+file (TO_CMAKE_PATH $ENV{PRJ_ROOT}/ACE_TAO/ACE/lib ACE_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                            ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
-                           ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
-                           ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
+                           ${FFMPEG_PATH}
+                           ${IMAGEMAGICK_PATH}
+                           ${SSL_PATH}
+                           ${ASSIMP_PATH}
+                           ${ACE_PATH})
 endif ()
 create_target_launcher (${EXECUTABLE}
                         ARGS ${ARGS}

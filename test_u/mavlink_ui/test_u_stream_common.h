@@ -88,32 +88,12 @@ struct Test_U_MessageData
 };
 typedef Stream_DataBase_T<struct Test_U_MessageData> Test_U_MessageData_t;
 
-struct Test_U_StatisticData
- : Stream_Statistic
-{
-  Test_U_StatisticData ()
-   : Stream_Statistic ()
-   , capturedFrames (0)
-  {}
-
-  struct Test_U_StatisticData operator+= (const struct Test_U_StatisticData& rhs_in)
-  {
-    Stream_Statistic::operator+= (rhs_in);
-    capturedFrames += rhs_in.capturedFrames;
-
-    return *this;
-  }
-
-  unsigned int capturedFrames;
-};
-typedef Common_StatisticHandler_T<struct Test_U_StatisticData> Test_U_StatisticHandler_t;
-
 struct Test_U_StreamState;
 class Test_U_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct Stream_MediaFramework_FFMPEG_MediaType,
                                         struct Test_U_StreamState,
-                                        struct Test_U_StatisticData,
+                                        struct Stream_Statistic,
                                         struct Net_UserData>
 {
  public:
@@ -121,7 +101,7 @@ class Test_U_SessionData
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct Stream_MediaFramework_FFMPEG_MediaType,
                                    struct Test_U_StreamState,
-                                   struct Test_U_StatisticData,
+                                   struct Stream_Statistic,
                                    struct Net_UserData> ()
   {}
 
@@ -131,7 +111,7 @@ class Test_U_SessionData
 //    Stream_SessionDataMediaBase_T<struct Test_U_SessionData,
 //                                  struct Stream_MediaFramework_FFMPEG_MediaType,
 //                                  struct Test_U_StreamState,
-//                                  struct Test_U_StatisticData,
+//                                  Net_StreamStatistic_t,
 //                                  struct Net_UserData>::operator+= (rhs_in);
 
 //    return *this;
@@ -163,10 +143,10 @@ typedef std::list<Test_U_ISessionNotify_t*> Test_U_Subscribers_t;
 typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_ConnectionManager_t;
+                                 Test_U_UDPConnectionConfiguration_t,
+                                 struct Net_StreamConnectionState,
+                                 Net_StreamStatistic_t,
+                                 struct Net_UserData> Test_U_UDPConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {
@@ -185,7 +165,7 @@ struct Test_U_ModuleHandlerConfiguration
     hasHeader = true;
   }
 
-  Test_U_IConnection_t*           connection;
+  Test_U_IUDPConnection_t*        connection;
   Net_ConnectionConfigurations_t* connectionConfigurations;
   Test_U_ISessionNotify_t*        subscriber;
   Test_U_Subscribers_t*           subscribers;

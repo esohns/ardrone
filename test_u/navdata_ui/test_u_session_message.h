@@ -72,9 +72,9 @@ class Test_U_SessionMessage_T
   // *NOTE*: assumes responsibility for the second argument !
   // *TODO*: (using gcc) cannot pass reference to pointer for some reason
   Test_U_SessionMessage_T (Stream_SessionId_t,
-                                        enum Stream_SessionMessageType,
-                                        SessionDataType*&,   // session data container handle
-                                        struct Net_UserData*);
+                           enum Stream_SessionMessageType,
+                           SessionDataType*&,   // session data container handle
+                           struct Net_UserData*);
   inline virtual ~Test_U_SessionMessage_T () {}
 
   // overloaded from ACE_Message_Block

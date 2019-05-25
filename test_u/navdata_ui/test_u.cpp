@@ -343,11 +343,13 @@ do_work (
   tcp_connection_manager_p =
       TEST_U_TCP_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (tcp_connection_manager_p);
-  tcp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  tcp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max (),
+                                        ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
   udp_connection_manager_p =
       TEST_U_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (udp_connection_manager_p);
-  udp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  udp_connection_manager_p->initialize (std::numeric_limits<unsigned int>::max (),
+                                        ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
 
   tcp_connection_configuration.messageAllocator = &message_allocator;
   tcp_connection_configuration.bufferSize =

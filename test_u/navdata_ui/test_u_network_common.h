@@ -54,31 +54,31 @@ typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
 
 typedef Net_IConnection_T<ACE_INET_Addr,
                           Test_U_UDPConnectionConfiguration_t,
-                          struct Net_ConnectionState,
-                          struct Test_U_StatisticData> Test_U_IUDPConnection_t;
+                          struct Net_StreamConnectionState,
+                          Net_StreamStatistic_t> Test_U_IUDPConnection_t;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           Test_U_TCPConnectionConfiguration_t,
-                          struct Net_ConnectionState,
-                          struct Test_U_StatisticData> Test_U_ITCPConnection_t;
+                          struct Net_StreamConnectionState,
+                          Net_StreamStatistic_t> Test_U_ITCPConnection_t;
 
 //typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
 //                                 ACE_INET_Addr,
 //                                 Test_U_ConnectionConfiguration_t,
-//                                 struct Net_ConnectionState,
-//                                 struct Test_U_StatisticData,
+//                                 struct Net_StreamConnectionState,
+//                                 Net_StreamStatistic_t,
 //                                 struct Net_UserData> Test_U_IConnectionManager_t;
 
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_TCPConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
+                                 struct Net_StreamConnectionState,
+                                 Net_StreamStatistic_t,
                                  struct Net_UserData> Test_U_TCPConnectionManager_t;
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_UDPConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
+                                 struct Net_StreamConnectionState,
+                                 Net_StreamStatistic_t,
                                  struct Net_UserData> Test_U_UDPConnectionManager_t;
 
 typedef ACE_Singleton<Test_U_UDPConnectionManager_t,

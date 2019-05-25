@@ -286,7 +286,7 @@ do_work (
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
-  Test_U_ConnectionConfiguration_t connection_configuration;
+  Test_U_UDPConnectionConfiguration_t connection_configuration;
   Test_U_ConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
@@ -335,7 +335,7 @@ do_work (
   connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connection_manager_p);
   connection_manager_p->initialize (std::numeric_limits<unsigned int>::max (),
-                                    ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000);
+                                    ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
 
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
@@ -368,7 +368,7 @@ do_work (
   Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
       configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set (*dynamic_cast<Test_U_ConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
+  connection_manager_p->set (*dynamic_cast<Test_U_UDPConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
                              NULL); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;
