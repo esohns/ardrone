@@ -58,8 +58,8 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
- , resize_ (this,
-            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
+ //, resize_ (this,
+ //           ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , direct3DDisplay_ (this,
                      ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_DIRECT3D_DEFAULT_NAME_STRING))
  , directShowDisplay_ (this,
@@ -92,7 +92,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 
   // sanity check(s)
   ACE_ASSERT (configuration_);
-  ACE_ASSERT (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_INVALID);
+  //ACE_ASSERT (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_INVALID);
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator =
     configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_->end ());
@@ -104,27 +104,27 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&decode_, NULL, 0);
   layout_inout->append (&decode_2, NULL, 0);
   //  layout_inout.append (&report_, NULL, 0);
-  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-    layout_inout->append (&convert_, NULL, 0);
+  //if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
+    //layout_inout->append (&convert_, NULL, 0);
   //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
 
   // *NOTE*: one problem is that any module that was NOT enqueued onto the
   //         stream (e.g. because initialize() failed) needs to be explicitly
   //         close()d
 #if defined (GUI_SUPPORT)
-  switch (inherited::configuration_->configuration_.renderer)
-  {
-    case STREAM_VISUALIZATION_VIDEORENDERER_NULL:
-      break;
-    //case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_2D:
-    //  modules_out.push_back (&direct2DDisplay_);
-    //  break;
-    case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_3D:
+  //switch (inherited::configuration_->configuration_.renderer)
+  //{
+  //  case STREAM_VISUALIZATION_VIDEORENDERER_NULL:
+  //    break;
+  //  //case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_2D:
+  //  //  modules_out.push_back (&direct2DDisplay_);
+  //  //  break;
+  //  case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_3D:
       layout_inout->append (&direct3DDisplay_, NULL, 0);
-      break;
-    case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTSHOW:
-      layout_inout->append (&directShowDisplay_, NULL, 0);
-      break;
+    //  break;
+    //case STREAM_VISUALIZATION_VIDEORENDERER_DIRECTSHOW:
+    //  layout_inout->append (&directShowDisplay_, NULL, 0);
+    //  break;
     //case STREAM_VISUALIZATION_VIDEORENDERER_MEDIAFOUNDATION:
     //  modules_out.push_back (&mediaFoundationDisplay_);
     //  break;
@@ -133,15 +133,15 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 //      modules_out.push_back (&GTKCairoDisplay_);
 //      break;
 //#endif // GTK_USE
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: invalid/unknown video renderer (was: %d), aborting\n"),
-                  ACE_TEXT (stream_name_string_),
-                  inherited::configuration_->configuration_.renderer));
-      return false;
-    }
-  } // end SWITCH
+  //  default:
+  //  {
+  //    ACE_DEBUG ((LM_ERROR,
+  //                ACE_TEXT ("%s: invalid/unknown video renderer (was: %d), aborting\n"),
+  //                ACE_TEXT (stream_name_string_),
+  //                inherited::configuration_->configuration_.renderer));
+  //    return false;
+  //  }
+  //} // end SWITCH
 #endif // GUI_SUPPORT
 
   return true;
@@ -178,11 +178,11 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
 
   iterator =
     const_cast<inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
-  iterator_2 =
-    const_cast<inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (Stream_Visualization_Tools::rendererToModuleName (configuration_in.configuration_.renderer).c_str ()));
+  //iterator_2 =
+  //  const_cast<inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (Stream_Visualization_Tools::rendererToModuleName (configuration_in.configuration_.renderer).c_str ()));
   // sanity check(s)
   ACE_ASSERT (iterator != const_cast<inherited::CONFIGURATION_T&> (configuration_in).end ());
-  ACE_ASSERT (iterator_2 != const_cast<inherited::CONFIGURATION_T&> (configuration_in).end ());
+  //ACE_ASSERT (iterator_2 != const_cast<inherited::CONFIGURATION_T&> (configuration_in).end ());
 
   // ---------------------------------------------------------------------------
   // step1: set up directshow filter graph

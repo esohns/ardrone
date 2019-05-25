@@ -79,32 +79,32 @@ struct Test_U_MessageData
   bool release;
 };
 
-struct Test_U_StatisticData
- : Stream_Statistic
-{
-  Test_U_StatisticData ()
-   : Stream_Statistic ()
-   , capturedFrames (0)
-  {}
-
-  struct Test_U_StatisticData operator+= (const struct Test_U_StatisticData& rhs_in)
-  {
-    Stream_Statistic::operator+= (rhs_in);
-    capturedFrames += rhs_in.capturedFrames;
-
-    return *this;
-  }
-
-  unsigned int capturedFrames;
-};
-typedef Common_StatisticHandler_T<struct Test_U_StatisticData> Test_U_StatisticHandler_t;
+//struct Test_U_StatisticData
+// : Stream_Statistic
+//{
+//  Test_U_StatisticData ()
+//   : Stream_Statistic ()
+//   , capturedFrames (0)
+//  {}
+//
+//  struct Test_U_StatisticData operator+= (const struct Test_U_StatisticData& rhs_in)
+//  {
+//    Stream_Statistic::operator+= (rhs_in);
+//    capturedFrames += rhs_in.capturedFrames;
+//
+//    return *this;
+//  }
+//
+//  unsigned int capturedFrames;
+//};
+//typedef Common_StatisticHandler_T<struct Test_U_StatisticData> Test_U_StatisticHandler_t;
 
 struct Test_U_StreamState;
 class Test_U_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct Stream_MediaFramework_FFMPEG_MediaType,
                                         struct Test_U_StreamState,
-                                        struct Test_U_StatisticData,
+                                        struct Stream_Statistic,
                                         struct Net_UserData>
 {
  public:
@@ -112,7 +112,7 @@ class Test_U_SessionData
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct Stream_MediaFramework_FFMPEG_MediaType,
                                    struct Test_U_StreamState,
-                                   struct Test_U_StatisticData,
+                                   struct Stream_Statistic,
                                    struct Net_UserData> ()
   {}
 
@@ -122,7 +122,7 @@ class Test_U_SessionData
 //    Stream_SessionDataMediaBase_T<struct Test_U_SessionData,
 //                                  struct Stream_MediaFramework_FFMPEG_MediaType,
 //                                  struct Test_U_StreamState,
-//                                  struct Test_U_StatisticData,
+//                                  struct Stream_Statistic,
 //                                  struct Net_UserData>::operator+= (rhs_in);
 
 //    return *this;
@@ -154,10 +154,10 @@ typedef std::list<Test_U_ISessionNotify_t*> Test_U_Subscribers_t;
 typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_ConnectionManager_t;
+                                 Test_U_TCPConnectionConfiguration_t,
+                                 struct Net_StreamConnectionState,
+                                 Net_StreamStatistic_t,
+                                 struct Net_UserData> Test_U_TCPConnectionManager_t;
 struct Test_U_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
 {
@@ -207,9 +207,9 @@ struct Test_U_ModuleHandlerConfiguration
 #endif // ACE_WIN32 || ACE_WIN64
   enum AVPixelFormat                            codecFormat; // preferred output-
   enum AVCodecID                                codecId;
-  Test_U_IConnection_t*                         connection;
+  Test_U_ITCPConnection_t*                      connection;
   Net_ConnectionConfigurations_t*               connectionConfigurations;
-  Test_U_ConnectionManager_t*                   connectionManager;
+  Test_U_TCPConnectionManager_t*                connectionManager;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct Stream_Device_Identifier               deviceIdentifier; // target module
   struct Stream_MediaFramework_Direct3D_Configuration* direct3DConfiguration;

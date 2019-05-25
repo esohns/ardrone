@@ -130,7 +130,7 @@ get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
 find_package (Common
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES Common/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${Common_DIR})
@@ -145,7 +145,7 @@ endif ()
 find_package (ACEStream
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES ACEStream/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACEStream_DIR})
@@ -158,7 +158,7 @@ add_definitions (-DSTREAM_DEC_HAS_DLL)
 find_package (ACENetwork
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules ${CMAKE_CURRENT_SOURCE_DIR}/../..
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES ACENetwork/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACENetwork_DIR})
@@ -173,19 +173,19 @@ add_definitions (-DHAVE_CONFIG_H)
 add_library (${PROJECT_NAME} STATIC "")
 
 target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/generated/include>)
+                            $<BUILD_INTERFACE:$ENV{LIB_ROOT}/mavlink/generated/include>)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mavlink/cmake/include/common)
 
 target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib>)
+                            $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib>)
 # *NOTE*: headers in Soft/Common include each other 'relatively' :-(
 target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common>)
+                            $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Common>)
 # *NOTE*: headers in Soft/Common include headers in Soft/Lib :-(
 target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib>)
+                            $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib/Soft/Lib>)
 target_include_directories (${PROJECT_NAME} PUBLIC
-                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK>)
+                            $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK>)
 
 if (UNIX)
 # include_directories (${PKG_CAP_INCLUDE_DIRS})
@@ -196,7 +196,7 @@ if (UNIX)
 # include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/linux>)
+                             $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/linux>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACE>)
@@ -250,63 +250,63 @@ elseif (WIN32)
 #                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../openssl/include>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/win32>)
+                             $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/ARDroneLib/VP_SDK/VP_Os/win32>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ARDrone_SDK_2_0_1/Examples/Win32/VCProjects/ARDrone>)
+                             $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ARDrone_SDK_2_0_1/Examples/Win32/VCProjects/ARDrone>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
                              $<BUILD_INTERFACE:$ENV{LIB_ROOT}/ffmpeg>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ATCD/ACE>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACE_TAO/ACE>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/image>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src/image>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/log>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src/log>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/signal>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src/signal>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/timer>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src/timer>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/xml>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/src/xml>)
 # target_include_directories (${PROJECT_NAME} PUBLIC
-#                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../Common/test_u>)
+#                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/Common/test_u>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dec>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/dec>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/dev>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/dev>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/file>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/file>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/lib>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/lib>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/misc>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/misc>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/net>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/net>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/stat>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/stat>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/src/modules/vis>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/src/modules/vis>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACEStream/test_u>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACEStream/test_u>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACENetwork/3rd_party>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/3rd_party/bison>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACENetwork/3rd_party/bison>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACENetwork/src>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/client_server>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACENetwork/src/client_server>)
  target_include_directories (${PROJECT_NAME} PUBLIC
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ACENetwork/src/wlan>)
+                             $<BUILD_INTERFACE:$ENV{PRJ_ROOT}/ACENetwork/src/wlan>)
 
  target_include_directories (${PROJECT_NAME} PUBLIC
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/gettext>)

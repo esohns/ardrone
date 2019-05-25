@@ -5,7 +5,7 @@ option (BUILD_TEST_U "build test_u" OFF)
 set (ACE_LIB_FILE libACE.so)
 if (UNIX)
  find_library (ACE_LIBRARY ${ACE_LIB_FILE}
-               PATHS ${CMAKE_CURRENT_BINARY_DIR}/../../../ATCD/ACE /usr/local
+               PATHS $ENV{PRJ_ROOT}/ACE_TAO/ACE /usr/local
     #           HINTS ENV ACE_ROOT
                PATH_SUFFIXES lib
                DOC "searching for ${ACE_LIB_FILE}"
@@ -39,11 +39,11 @@ add_definitions (-DACE_HAS_DLL)
 option (GUI_SUPPORT "enable graphical user interface support" ON)
 if (GUI_SUPPORT)
  add_definitions (-DGUI_SUPPORT)
- include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/ui/scripts/PreUIFramework.cmake)
- include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/ui/scripts/SetUIFramework.cmake)
+ include ($ENV{PRJ_ROOT}/Common/src/ui/scripts/PreUIFramework.cmake)
+ include ($ENV{PRJ_ROOT}/Common/src/ui/scripts/SetUIFramework.cmake)
 
  if (GTK_USE)
-  include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/src/ui/scripts/SetGTKVersion.cmake)
+  include ($ENV{PRJ_ROOT}/Common/src/ui/scripts/SetGTKVersion.cmake)
   CMAKE_DEPENDENT_OPTION (GTKGL_SUPPORT "enable GTK OpenGL support" ON
                           "GUI_SUPPORT" OFF)
 # *IMPORTANT NOTE*: to use gtkglarea on gtk2, check out the 'gtkglarea-2' branch

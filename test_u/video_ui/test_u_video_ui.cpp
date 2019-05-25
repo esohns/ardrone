@@ -102,11 +102,11 @@ do_print_usage (const std::string& programName_in)
             << std::endl;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-2          : use Direct2D renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_2D)
+            << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-3          : use Direct3D renderer [")
-            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_DIRECTDRAW_3D)
+            << true
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-c          : show console [")
@@ -296,8 +296,8 @@ do_work (
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
-  Test_U_ConnectionConfiguration_t connection_configuration;
-  Test_U_ConnectionManager_t* connection_manager_p = NULL;
+  Test_U_TCPConnectionConfiguration_t connection_configuration;
+  Test_U_TCPConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
   Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator;
@@ -360,9 +360,10 @@ do_work (
   ACE_ASSERT (v4l_stream_iterator != configuration_in.streamConfiguration.end ());
 
   // connection configuration
-  connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
+  connection_manager_p = TEST_U_TCP_CONNECTIONMANAGER_SINGLETON::instance ();
   ACE_ASSERT (connection_manager_p);
-  connection_manager_p->initialize (std::numeric_limits<unsigned int>::max ());
+  connection_manager_p->initialize (std::numeric_limits<unsigned int>::max (),
+                                    ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
 //  struct Net_UserData net_user_data;
 
 //  connection_configuration.generateUniqueIOModuleNames = true;
@@ -373,11 +374,11 @@ do_work (
   connection_configuration.address =
       ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
   connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
-                                                                                                     1);
+                                                    1);
   connection_configuration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   connection_configuration.statisticReportingInterval =
-    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
+    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
 
   configuration_in.streamConfiguration.configuration_.module = NULL;
   connection_configuration.initialize (configuration_in.allocatorConfiguration,
@@ -389,7 +390,7 @@ do_work (
   Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
       configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set (*dynamic_cast<Test_U_ConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
+  connection_manager_p->set (*dynamic_cast<Test_U_TCPConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
                              NULL); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;

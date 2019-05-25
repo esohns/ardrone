@@ -1,14 +1,14 @@
 #add_definitions (-DGUI_SUPPORT)
-include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
-include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
+#include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
+#include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
 
 if (CURSES_USE)
 elseif (GTK_USE)
- include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetGTKVersion.cmake)
+# include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetGTKVersion.cmake)
 
- if (CMAKE_BUILD_TYPE STREQUAL Debug)
-  add_definitions (-DG_ERRORCHECK_MUTEXES)
- endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+# if (CMAKE_BUILD_TYPE STREQUAL Debug)
+#  add_definitions (-DG_ERRORCHECK_MUTEXES)
+# endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 elseif (QT_USE)
  # Find includes in corresponding build directories
  set(CMAKE_INCLUDE_CURRENT_DIR ON)

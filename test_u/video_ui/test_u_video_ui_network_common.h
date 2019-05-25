@@ -39,7 +39,7 @@
 #include "net_iconnectionmanager.h"
 
 // forward declarations
-struct Test_U_StatisticData;
+Net_StreamStatistic_t;
 
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;
@@ -51,18 +51,25 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
 typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
                                       Test_U_StreamConfiguration_t,
-                                      NET_TRANSPORTLAYER_TCP> Test_U_ConnectionConfiguration_t;
+                                      NET_TRANSPORTLAYER_TCP> Test_U_TCPConnectionConfiguration_t;
+typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
+                                      Test_U_StreamConfiguration_t,
+                                      NET_TRANSPORTLAYER_UDP> Test_U_UDPConnectionConfiguration_t;
 
 typedef Net_IConnection_T<ACE_INET_Addr,
-                          Test_U_ConnectionConfiguration_t,
-                          struct Net_ConnectionState,
-                          struct Test_U_StatisticData> Test_U_IConnection_t;
+                          Test_U_TCPConnectionConfiguration_t,
+                          struct Net_StreamConnectionState,
+                          Net_StreamStatistic_t> Test_U_ITCPConnection_t;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          Test_U_UDPConnectionConfiguration_t,
+                          struct Net_StreamConnectionState,
+                          Net_StreamStatistic_t> Test_U_IUDPConnection_t;
 
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 Test_U_ConnectionConfiguration_t,
-                                 struct Net_ConnectionState,
-                                 struct Test_U_StatisticData,
-                                 struct Net_UserData> Test_U_IConnectionManager_t;
+//typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
+//                                 ACE_INET_Addr,
+//                                 Test_U_ConnectionConfiguration_t,
+//                                 struct Net_StreamConnectionState,
+//                                 Net_StreamStatistic_t,
+//                                 struct Net_UserData> Test_U_IConnectionManager_t;
 
 #endif // #ifndef Test_U_NETWORK_COMMON_H

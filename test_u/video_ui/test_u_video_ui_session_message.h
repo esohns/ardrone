@@ -63,7 +63,7 @@ class Test_U_SessionMessage_T
                                                  Stream_ControlMessage_t,
                                                  DataMessageType,
                                                  Test_U_SessionMessage_T<DataMessageType,
-                                                                                      SessionDataType> >;
+                                                                         SessionDataType> >;
 
   typedef Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
                                       enum Stream_SessionMessageType,
@@ -74,9 +74,9 @@ class Test_U_SessionMessage_T
   // *NOTE*: assumes responsibility for the second argument !
   // *TODO*: (using gcc) cannot pass reference to pointer for some reason
   Test_U_SessionMessage_T (Stream_SessionId_t,
-                                        enum Stream_SessionMessageType,
-                                        SessionDataType*&,   // session data container handle
-                                        struct Net_UserData*);
+                           enum Stream_SessionMessageType,
+                           SessionDataType*&,   // session data container handle
+                           struct Net_UserData*);
   inline virtual ~Test_U_SessionMessage_T () {}
 
   // overloaded from ACE_Message_Block
