@@ -436,9 +436,12 @@ elseif (WIN32)
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
  file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ffmpeg/bin FFMPEG_PATH)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_PATH)
+ file (TO_CMAKE_PATH $ENV{PRJ_ROOT}/ACE_TAO/ACE/lib ACE_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                            ${FFMPEG_PATH}
-                           ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
+                           ${SSL_PATH}
+                           ${ACE_PATH})
 endif ()
 create_target_launcher (${EXECUTABLE}
                         ARGS ${ARGS}
