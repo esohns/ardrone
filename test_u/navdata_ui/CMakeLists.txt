@@ -283,6 +283,12 @@ elseif (WIN32)
 #  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Release/strmbase.lib)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 
+ target_link_libraries (${EXECUTABLE} OpenGL32.lib)
+ if (GTKGLAREA_SUPPORT)
+  target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/libepoxy/lib/epoxy.lib)
+  target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/gtkglarea/cmake/${CMAKE_BUILD_TYPE}/gtkglarea.lib)
+ endif (GTKGLAREA_SUPPORT)
+
 # *TODO*: repair WIN32 pkgconfig support
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/libavformat.a)

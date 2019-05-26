@@ -105,12 +105,12 @@ class Test_U_Stream
   ACE_UNIMPLEMENTED_FUNC (Test_U_Stream& operator= (const Test_U_Stream&))
 
   // modules
-  Test_U_AsynchTCPSource_Module source_;
-  Test_U_PaVEDecoder_Module     decode_;
-  Test_U_H264Decoder_Module     decode_2;
-  Test_U_StatisticReport_Module report_;
-  Test_U_LibAVConvert_Module    convert_; // --> BGRA (Xlib)
-//  Test_U_LibAVResize_Module     resize_; // --> window size/fullscreen
+  Test_U_AsynchTCPSource_Module              source_;
+  Test_U_PaVEDecoder_Module                  decode_;
+  Test_U_H264Decoder_Module                  decode_2;
+  //Test_U_StatisticReport_Module              report_;
+  Test_U_LibAVConvert_Module                 convert_; // --> BGRA (Xlib)
+  Test_U_LibAVResize_Module                  resize_; // --> window size/fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Test_U_DirectShow_Direct3DDisplay_Module   direct3DDisplay_;
   Test_U_DirectShow_DirectShowDisplay_Module directShowDisplay_;

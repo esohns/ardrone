@@ -27,6 +27,8 @@
 
 #include "stream_task_base_synch.h"
 
+#include "stream_lib_mediatype_converter.h"
+
 #include "ardrone_types.h"
 
 // forward declaration(s)
@@ -44,6 +46,8 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           ////////////////////////////////
+          typename MediaType,
+          ////////////////////////////////
           typename UserDataType>
 class ARDrone_Module_PaVEDecoder_T
  : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
@@ -57,6 +61,7 @@ class ARDrone_Module_PaVEDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  UserDataType>
+ , public Stream_MediaFramework_MediaTypeConverter_T<MediaType>
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -69,6 +74,7 @@ class ARDrone_Module_PaVEDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  UserDataType> inherited;
+ typedef Stream_MediaFramework_MediaTypeConverter_T<MediaType> inherited2;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile

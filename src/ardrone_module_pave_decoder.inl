@@ -31,17 +31,19 @@ template <ACE_SYNCH_DECL,
           typename ControlMessageType,
           typename DataMessageType,
           typename SessionMessageType,
+          typename MediaType,
           typename UserDataType>
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
-                              TimePolicyType,
-                              ConfigurationType,
-                              ControlMessageType,
-                              DataMessageType,
-                              SessionMessageType,
+                             TimePolicyType,
+                             ConfigurationType,
+                             ControlMessageType,
+                             DataMessageType,
+                             SessionMessageType,
+                             MediaType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              UserDataType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+                             UserDataType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
 #else
-                              UserDataType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
+                             UserDataType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
 #endif // ACE_WIN32 || ACE_WIN64
  : inherited (stream_in)
  , buffer_ (NULL)
@@ -60,6 +62,7 @@ template <ACE_SYNCH_DECL,
           typename ControlMessageType,
           typename DataMessageType,
           typename SessionMessageType,
+          typename MediaType,
           typename UserDataType>
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              TimePolicyType,
@@ -67,6 +70,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
+                             MediaType,
                              UserDataType>::~ARDrone_Module_PaVEDecoder_T ()
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::~ARDrone_Module_PaVEDecoder_T"));
@@ -82,6 +86,7 @@ template <ACE_SYNCH_DECL,
           typename ControlMessageType,
           typename DataMessageType,
           typename SessionMessageType,
+          typename MediaType,
           typename UserDataType>
 bool
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
@@ -90,8 +95,9 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
+                             MediaType,
                              UserDataType>::initialize (const ConfigurationType& configuration_in,
-                                                                    Stream_IAllocator* allocator_in)
+                                                        Stream_IAllocator* allocator_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::initialize"));
 
@@ -114,6 +120,7 @@ template <ACE_SYNCH_DECL,
           typename ControlMessageType,
           typename DataMessageType,
           typename SessionMessageType,
+          typename MediaType,
           typename UserDataType>
 void
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
@@ -122,8 +129,9 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
+                             MediaType,
                              UserDataType>::handleDataMessage (DataMessageType*& message_inout,
-                                                                           bool& passMessageDownstream_out)
+                                                               bool& passMessageDownstream_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::handleDataMessage"));
 
@@ -329,6 +337,7 @@ template <ACE_SYNCH_DECL,
           typename ControlMessageType,
           typename DataMessageType,
           typename SessionMessageType,
+          typename MediaType,
           typename UserDataType>
 void
 ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
@@ -337,8 +346,9 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              ControlMessageType,
                              DataMessageType,
                              SessionMessageType,
+                             MediaType,
                              UserDataType>::handleSessionMessage (SessionMessageType*& message_inout,
-                                                                              bool& passMessageDownstream_out)
+                                                                  bool& passMessageDownstream_out)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_Module_PaVEDecoder_T::handleSessionMessage"));
 
@@ -350,6 +360,29 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
   switch (message_inout->type ())
   {
+    case STREAM_SESSION_MESSAGE_BEGIN:
+    {
+      // update session data
+      ACE_ASSERT (inherited::sessionData_);
+
+      typename SessionMessageType::DATA_T::DATA_T& session_data_r =
+          const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
+      // sanity check(s)
+      // *NOTE*: the stream usually ought to initialize the format stack
+      if (session_data_r.formats.empty ())
+      {
+        struct Stream_MediaFramework_FFMPEG_MediaType format_s;
+        format_s.format = AV_PIX_FMT_NONE; // video is header- + H.264-encoded
+        ARDroneVideoModeToResolution (videoMode_,
+                                      format_s.resolution);
+        MediaType media_type_s;
+        inherited2::getMediaType (format_s,
+                                  media_type_s);
+         session_data_r.formats.push_back (media_type_s);
+      } // end IF
+
+      break;
+    }
     case STREAM_SESSION_MESSAGE_RESIZE:
     {
       // update session data
@@ -359,36 +392,10 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
           const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
       // sanity check(s)
       ACE_ASSERT (!session_data_r.formats.empty ());
-      struct Stream_MediaFramework_FFMPEG_MediaType format_s =
-         session_data_r.formats.back ();
+      MediaType& format_r =
+        const_cast<MediaType&> (session_data_r.formats.back ());
       ARDroneVideoModeToResolution (videoMode_,
-                                    format_s.resolution);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (session_data_r.mediaFramework)
-      {
-        case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-        {
-          //Stream_MediaFramework_DirectShow_Tools::resize (format_s.resolution,
-          //                                                session_data_r.formats.back ());
-          break;
-        }
-        case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-        {
-          ACE_ASSERT (false); // *TODO*
-          break;
-        }
-        default:
-        {
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: invalid/unknown media framework (was: %d), continuing\n"),
-                      inherited::mod_->name (),
-                      session_data_r.mediaFramework));
-          break;
-        }
-      } // end SWITCH
-#else
-      session_data_r.formats.back () = format_s;
-#endif // ACE_WIN32 || ACE_WIN64
+                                    format_r.resolution);
       break;
     }
     default:

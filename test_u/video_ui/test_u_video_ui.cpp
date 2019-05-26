@@ -306,9 +306,17 @@ do_work (
     &configuration_in.streamConfiguration.allocatorConfiguration_;
   modulehandler_configuration.connectionConfigurations =
       &configuration_in.connectionConfigurations;
-//  // *TODO*: turn these into an option
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  modulehandler_configuration.direct3DConfiguration =
+    &configuration_in.direct3DConfiguration;
+#endif // ACE_WIN32 || ACE_WIN64
+  //  // *TODO*: turn these into an option
 //  modulehandler_configuration.method = STREAM_DEV_CAM_V4L_DEFAULT_IO_METHOD;
   modulehandler_configuration.subscriber = &ui_event_handler;
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Stream_MediaFramework_DirectDraw_Tools::initialize (true);
+#endif // ACE_WIN32 || ACE_WIN64
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct Stream_AllocatorConfiguration> heap_allocator;
@@ -344,6 +352,7 @@ do_work (
   modulehandler_configuration.outputFormat.resolution.width = 640;
   modulehandler_configuration.outputFormat.resolution.height = 480;
 #endif // ACE_WIN32 || ACE_WIN64
+  modulehandler_configuration.outputFormat.frameRate.num = 30;
   configuration_in.streamConfiguration.configuration_.format =
       modulehandler_configuration.outputFormat;
 
@@ -404,15 +413,6 @@ do_work (
   timer_manager_p->start (thread_id);
   ACE_UNUSED_ARG (thread_id);
 
-  // event dispatch
-  configuration_in.dispatchConfiguration.numberOfProactorThreads = 1;
-  if (!Common_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
-    return;
-  } // end IF
-
   struct Common_EventDispatchState dispatch_state_s;
   dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
   if (!Common_Tools::startEventDispatch (dispatch_state_s))
@@ -456,6 +456,10 @@ do_work (
   Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
                                        dispatch_state_s.reactorGroupId,
                                        true); // wait ?
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Stream_MediaFramework_DirectDraw_Tools::finalize (true);
+#endif // ACE_WIN32 || ACE_WIN64
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -622,6 +626,22 @@ ACE_TMAIN (int argc_in,
 
   struct Test_U_Configuration configuration;
 
+  // event dispatch
+  configuration.dispatchConfiguration.numberOfProactorThreads = 1;
+  if (!Common_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
+
+    // *PORTABILITY*: on Windows, finalize ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif // ACE_WIN32 || ACE_WIN64
+    return EXIT_FAILURE;
+  } // end IF
 //  if (video_renderer_e == STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
 //    Common_UI_GTK_Tools::initialize (argc_in, argv_in);
 

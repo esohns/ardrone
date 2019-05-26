@@ -43,6 +43,9 @@ struct Test_U_Configuration
    , connectionConfigurations ()
    , dispatchConfiguration ()
    , streamConfiguration ()
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+   , direct3DConfiguration ()
+#endif // ACE_WIN32 || ACE_WIN64
   {}
 
   Stream_AllocatorConfiguration     allocatorConfiguration;
@@ -50,6 +53,9 @@ struct Test_U_Configuration
   Common_EventDispatchConfiguration dispatchConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t      streamConfiguration;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct Stream_MediaFramework_Direct3D_Configuration direct3DConfiguration;
+#endif // ACE_WIN32 || ACE_WIN64
 };
 
 #endif

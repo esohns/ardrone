@@ -38,9 +38,6 @@
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
-// forward declarations
-Net_StreamStatistic_t;
-
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;

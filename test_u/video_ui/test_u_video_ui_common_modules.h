@@ -65,6 +65,7 @@ typedef ARDrone_Module_PaVEDecoder_T<ACE_MT_SYNCH,
                                      Stream_ControlMessage_t,
                                      Test_U_Message_t,
                                      Test_U_SessionMessage_t,
+                                     struct Stream_MediaFramework_FFMPEG_MediaType,
                                      struct Net_UserData> Test_U_PaVEDecoder;
 
 typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,

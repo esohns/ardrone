@@ -54,12 +54,12 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING))
  , decode_2 (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING))
- , report_ (this,
-            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+ //, report_ (this,
+ //           ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
- //, resize_ (this,
- //           ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
+ , resize_ (this,
+            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , direct3DDisplay_ (this,
                      ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_DIRECT3D_DEFAULT_NAME_STRING))
  , directShowDisplay_ (this,
@@ -105,8 +105,8 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&decode_2, NULL, 0);
   //  layout_inout.append (&report_, NULL, 0);
   //if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-    //layout_inout->append (&convert_, NULL, 0);
-  //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
+  layout_inout->append (&convert_, NULL, 0);
+  layout_inout->append (&resize_, NULL, 0); // output is window size/fullscreen
 
   // *NOTE*: one problem is that any module that was NOT enqueued onto the
   //         stream (e.g. because initialize() failed) needs to be explicitly
@@ -161,18 +161,6 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   Test_U_SessionData* session_data_p = NULL;
   inherited::CONFIGURATION_T::ITERATOR_T iterator, iterator_2;
   Test_U_AsynchTCPSource* source_impl_p = NULL;
-  struct _AllocatorProperties allocator_properties;
-  IAMBufferNegotiation* buffer_negotiation_p = NULL;
-  bool COM_initialized = false;
-  HRESULT result_2 = E_FAIL;
-  ULONG reference_count = 0;
-  IAMStreamConfig* stream_config_p = NULL;
-  IMediaFilter* media_filter_p = NULL;
-  Stream_MediaFramework_DirectShow_Graph_t graph_layout;
-  Stream_MediaFramework_DirectShow_GraphConfiguration_t graph_configuration;
-  struct Stream_MediaFramework_DirectShow_GraphConfigurationEntry graph_entry;
-  IBaseFilter* filter_p = NULL;
-  std::string log_file_name;
   struct _AMMediaType media_type_s;
   struct _AMMediaType* media_type_p = NULL, *media_type_2 = NULL;
 
@@ -183,173 +171,6 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   // sanity check(s)
   ACE_ASSERT (iterator != const_cast<inherited::CONFIGURATION_T&> (configuration_in).end ());
   //ACE_ASSERT (iterator_2 != const_cast<inherited::CONFIGURATION_T&> (configuration_in).end ());
-
-  // ---------------------------------------------------------------------------
-  // step1: set up directshow filter graph
-  result_2 = CoInitializeEx (NULL,
-                             (COINIT_MULTITHREADED     |
-                              COINIT_DISABLE_OLE1DDE   |
-                              COINIT_SPEED_OVER_MEMORY));
-  if (FAILED (result_2))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to CoInitializeEx(): \"%s\", aborting\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT (Common_Error_Tools::errorToString (result_2).c_str ())));
-    return false;
-  } // end IF
-  COM_initialized = true;
-
-  if ((*iterator).second.second.builder)
-  {
-    // *NOTE*: Stream_Device_Tools::loadRendererGraph() resets the graph
-    //         (see below)
-    if (!Stream_MediaFramework_DirectShow_Tools::reset ((*iterator).second.second.builder,
-                                                        CLSID_VideoInputDeviceCategory))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to Stream_MediaFramework_DirectShow_Tools::reset(), aborting\n"),
-                  ACE_TEXT (stream_name_string_)));
-      goto error;
-    } // end IF
-
-    if (!Stream_MediaFramework_DirectShow_Tools::getBufferNegotiation ((*iterator).second.second.builder,
-                                                                       STREAM_DEV_CAM_DIRECTSHOW_FILTER_NAME_CAPTURE_VIDEO,
-                                                                       buffer_negotiation_p))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to Stream_MediaFramework_DirectShow_Tools::getBufferNegotiation(), aborting\n"),
-                  ACE_TEXT (stream_name_string_)));
-      goto error;
-    } // end IF
-    ACE_ASSERT (buffer_negotiation_p);
-  } // end IF
-
-  media_type_p =
-    Stream_MediaFramework_DirectShow_Tools::to (configuration_in.configuration_.format);
-  ACE_ASSERT (media_type_p);
-  media_type_2 =
-    Stream_MediaFramework_DirectShow_Tools::to ((*iterator).second.second.outputFormat);
-  ACE_ASSERT (media_type_2);
-  if (!Stream_Module_Decoder_Tools::loadVideoRendererGraph (CLSID_VideoInputDeviceCategory,
-                                                            *media_type_p,
-                                                            *media_type_2,
-                                                            NULL,
-                                                            (*iterator).second.second.builder,
-                                                            graph_configuration))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Stream_Module_Decoder_Tools::loadVideoRendererGraph(), aborting\n")));
-    Stream_MediaFramework_DirectShow_Tools::delete_ (media_type_p);
-    Stream_MediaFramework_DirectShow_Tools::delete_ (media_type_2);
-    goto error;
-  } // end IF
-  Stream_MediaFramework_DirectShow_Tools::delete_ (media_type_p);
-  Stream_MediaFramework_DirectShow_Tools::delete_ (media_type_2);
-  ACE_ASSERT ((*iterator).second.second.builder);
-
-  ACE_ASSERT (buffer_negotiation_p);
-  ACE_OS::memset (&allocator_properties, 0, sizeof (allocator_properties));
-  // *TODO*: IMemAllocator::SetProperties returns VFW_E_BADALIGN (0x8004020e)
-  //         if this is -1/0 (why ?)
-  allocator_properties.cbAlign = 1;
-  allocator_properties.cbBuffer =
-    configuration_in.allocatorConfiguration_.defaultBufferSize;
-  allocator_properties.cbPrefix = -1; // <-- use default
-  allocator_properties.cBuffers =
-    STREAM_DEV_CAM_DIRECTSHOW_DEFAULT_DEVICE_BUFFERS;
-  result_2 =
-      buffer_negotiation_p->SuggestAllocatorProperties (&allocator_properties);
-  if (FAILED (result_2)) // E_UNEXPECTED: 0x8000FFFF --> graph already connected
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to IAMBufferNegotiation::SuggestAllocatorProperties(): \"%s\", aborting\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT (Common_Error_Tools::errorToString (result_2, true).c_str ())));
-    goto error;
-  } // end IF
-
-  if (!Stream_MediaFramework_DirectShow_Tools::connect ((*iterator).second.second.builder,
-                                                        graph_configuration))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to Stream_MediaFramework_DirectShow_Tools::connect(), aborting\n"),
-                ACE_TEXT (stream_name_string_)));
-    goto error;
-  } // end IF
-  // *NOTE*: for some (unknown) reason, connect()ing the sample grabber to the
-  //         null renderer 'breaks' the connection between the AVI decompressor
-  //         and the sample grabber (go ahead, try it in with graphedit.exe)
-  //         --> reconnect the AVI decompressor to the (connected) sample
-  //             grabber; this seems to work
-  if (!Stream_MediaFramework_DirectShow_Tools::connected ((*iterator).second.second.builder,
-                                                          STREAM_DEV_CAM_DIRECTSHOW_FILTER_NAME_CAPTURE_VIDEO))
-  {
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: reconnecting...\n"),
-                ACE_TEXT (stream_name_string_)));
-
-    if (!Stream_MediaFramework_DirectShow_Tools::connectFirst ((*iterator).second.second.builder,
-                                                               STREAM_DEV_CAM_DIRECTSHOW_FILTER_NAME_CAPTURE_VIDEO))
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to Stream_MediaFramework_DirectShow_Tools::connectFirst(), aborting\n"),
-                  ACE_TEXT (stream_name_string_)));
-      goto error;
-    } // end IF
-  } // end IF
-  ACE_ASSERT (Stream_MediaFramework_DirectShow_Tools::connected ((*iterator).second.second.builder,
-                                                                 STREAM_DEV_CAM_DIRECTSHOW_FILTER_NAME_CAPTURE_VIDEO));
-
-#if defined (_DEBUG)
-  ACE_OS::memset (&allocator_properties, 0, sizeof (allocator_properties));
-  result_2 =
-      buffer_negotiation_p->GetAllocatorProperties (&allocator_properties);
-  if (FAILED (result_2)) // E_FAIL (0x80004005)
-  {
-    ACE_DEBUG ((LM_WARNING,
-                ACE_TEXT ("%s/%s: failed to IAMBufferNegotiation::GetAllocatorProperties(): \"%s\", continuing\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT_WCHAR_TO_TCHAR (STREAM_DEV_CAM_DIRECTSHOW_FILTER_NAME_CAPTURE_VIDEO),
-                ACE_TEXT (Common_Error_Tools::errorToString (result_2, true).c_str ())));
-    //goto error;
-  } // end IF
-  else
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: negotiated allocator properties (buffers/size/alignment/prefix): %d/%d/%d/%d\n"),
-                ACE_TEXT (stream_name_string_),
-                allocator_properties.cBuffers,
-                allocator_properties.cbBuffer,
-                allocator_properties.cbAlign,
-                allocator_properties.cbPrefix));
-#endif // _DEBUG
-  buffer_negotiation_p->Release (); buffer_negotiation_p = NULL;
-
-  result_2 =
-    (*iterator).second.second.builder->QueryInterface (IID_PPV_ARGS (&media_filter_p));
-  if (FAILED (result_2))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to IGraphBuilder::QueryInterface(IID_IMediaFilter): \"%s\", aborting\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT (Common_Error_Tools::errorToString (result_2).c_str ())));
-    goto error;
-  } // end IF
-  ACE_ASSERT (media_filter_p);
-  result_2 = media_filter_p->SetSyncSource (NULL);
-  if (FAILED (result_2))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to IMediaFilter::SetSyncSource(): \"%s\", aborting\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT (Common_Error_Tools::errorToString (result_2).c_str ())));
-    goto error;
-  } // end IF
-  media_filter_p->Release (); media_filter_p = NULL;
-
-  // ---------------------------------------------------------------------------
-  // step2: update stream module configuration(s)
-  (*iterator_2).second.second = (*iterator).second.second;
 
   // ---------------------------------------------------------------------------
   // step3: allocate a new session state, reset stream
@@ -384,9 +205,8 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   // ---------------------------------------------------------------------------
   // step4: initialize module(s)
 
-  // ******************* Camera Source ************************
-  source_impl_p =
-    dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  // ******************* Queue Source ************************
+  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
   if (!source_impl_p)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -398,18 +218,6 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   // ---------------------------------------------------------------------------
   // step5: update session data
   session_data_p->formats.push_back (configuration_in.configuration_.format);
-  ACE_OS::memset (&media_type_s, 0, sizeof (struct _AMMediaType));
-  if (!Stream_MediaFramework_DirectShow_Tools::getOutputFormat ((*iterator).second.second.builder,
-                                                                STREAM_LIB_DIRECTSHOW_FILTER_NAME_GRAB,
-                                                                media_type_s))
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to Stream_MediaFramework_DirectShow_Tools::getOutputFormat(\"%s\"), aborting\n"),
-                ACE_TEXT (stream_name_string_),
-                ACE_TEXT_WCHAR_TO_TCHAR (STREAM_LIB_DIRECTSHOW_FILTER_NAME_GRAB)));
-    goto error;
-  } // end IF
-  //ACE_ASSERT (Stream_MediaFramework_DirectShow_Tools::matchMediaType (*session_data_p->sourceFormat, *(*iterator).second.second.sourceFormat));
 
   // ---------------------------------------------------------------------------
   // step6: initialize head module
@@ -457,9 +265,6 @@ error:
     //Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
     //session_data_p->resetToken = 0;
   } // end IF
-
-  if (COM_initialized)
-    CoUninitialize ();
 
   return false;
 }
