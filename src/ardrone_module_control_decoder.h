@@ -94,6 +94,9 @@ class ARDrone_Module_ControlDecoder_T
 #endif
   inline virtual ~ARDrone_Module_ControlDecoder_T () {};
 
+  virtual bool initialize (const ConfigurationType&,
+                           Stream_IAllocator* = NULL);
+
   // implement (part of) Stream_IYaccRecordParser_T
 //  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
   inline virtual void dump_state () const {};
@@ -133,6 +136,7 @@ class ARDrone_Module_ControlDecoder_T
   int svc (void);
 
   ARDrone_DeviceConfiguration_t configuration_;
+  ARDrone_IDeviceConfiguration* subscriber_;
 };
 
 // include template definition

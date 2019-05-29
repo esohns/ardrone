@@ -54,12 +54,13 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_NAVDATA_DECODER_NAME_STRING))
- , report_ (this,
-            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+// , report_ (this,
+//            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , controller_ (this,
                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING))
  , handler_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
+ , CBData_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
 
@@ -76,7 +77,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 
   layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
-  layout_inout->append (&report_, NULL, 0);
+//  layout_inout->append (&report_, NULL, 0);
   layout_inout->append (&controller_, NULL, 0);
   layout_inout->append (&handler_, NULL, 0);
 
@@ -123,6 +124,8 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   configuration_p =
       dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> (&(*iterator).second.second);
   ACE_ASSERT (configuration_p);
+
+  CBData_ = configuration_in.configuration_.CBData;
 
   // ---------------------------------------------------------------------------
 
@@ -231,19 +234,19 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
         ACE_ASSERT (option_2);
 
 #if defined (GUI_SUPPORT)
-//        ACE_ASSERT (inherited::state_.CBData);
-        //struct ARDrone_UI_GTK_State& state_r =
-        //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-        //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
-//#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
-//        inherited::state_.CBData->openGLScene.orientation.x =
-//            option_2->phi; // roll (--> rotation along x)
-//        inherited::state_.CBData->openGLScene.orientation.y =
-//            option_2->psi; // yaw (--> rotation along y)
-//        inherited::state_.CBData->openGLScene.orientation.z =
-//            option_2->theta; // pitch (--> rotation along z)
-//#endif
-        //} // end lock scope
+#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
+        CBData_->openGLScene.orientation.x =
+            option_2->phi; // roll (--> rotation along x)
+        CBData_->openGLScene.orientation.y =
+            option_2->psi; // yaw (--> rotation along y)
+        CBData_->openGLScene.orientation.z =
+            option_2->theta; // pitch (--> rotation along z)
+#if defined (_DEBUG)
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n\n"),
+                    option_2->phi, option_2->psi, option_2->theta));
+#endif // _DEBUG
+#endif
 #endif // GUI_SUPPORT
 
         break;

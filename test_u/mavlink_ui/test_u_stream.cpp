@@ -47,8 +47,8 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_MAVLINK_DECODER_NAME_STRING))
- , report_ (this,
-            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
+// , report_ (this,
+//            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , handler_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
 {
@@ -75,7 +75,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
 
   layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
-  layout_inout->append (&report_, NULL, 0);
+//  layout_inout->append (&report_, NULL, 0);
   layout_inout->append (&handler_, NULL, 0);
 
   return true;
@@ -207,7 +207,11 @@ Test_U_Stream::messageCB (const struct __mavlink_message& record_in,
     { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
       struct __mavlink_attitude_t* message_p =
           reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
-      ACE_UNUSED_ARG (message_p);
+#if defined (_DEBUG)
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n\n"),
+                    message_p->roll, message_p->pitch, message_p->yaw));
+#endif // _DEBUG
       break;
     }
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33

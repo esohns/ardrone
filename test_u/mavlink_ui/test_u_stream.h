@@ -114,7 +114,7 @@ class Test_U_Stream
   // modules
   Test_U_AsynchUDPSource_Module source_;
   Test_U_MAVLinkDecoder_Module  decode_;
-  Test_U_StatisticReport_Module report_;
+//  Test_U_StatisticReport_Module report_;
   Test_U_MessageHandler_Module handler_;
 };
 

@@ -59,6 +59,33 @@ template <ACE_SYNCH_DECL,
           typename DataMessageType,
           typename SessionMessageType,
           typename SessionDataContainerType>
+bool
+ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
+                                TimePolicyType,
+                                ConfigurationType,
+                                ControlMessageType,
+                                DataMessageType,
+                                SessionMessageType,
+                                SessionDataContainerType>::initialize (const ConfigurationType& configuration_in,
+                                                                       Stream_IAllocator* allocator_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::initialize"));
+
+  ACE_ASSERT (configuration_in.deviceConfiguration);
+
+  subscriber_ = configuration_in.deviceConfiguration;
+
+  return inherited::initialize (configuration_in,
+                                allocator_in);
+}
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType>
 void
 ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                                 TimePolicyType,
@@ -85,6 +112,9 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
 
   message_data_r.controlData = configuration_;
+
+  if (subscriber_)
+    subscriber_->setP (&configuration_);
 
   result = inherited::put_next (inherited::fragment_, NULL);
   if (result == -1)

@@ -173,6 +173,7 @@ struct Test_U_ModuleHandlerConfiguration
    , CBData (NULL)
    , connection (NULL)
    , connectionConfigurations (NULL)
+   , deviceConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
   {
@@ -187,6 +188,7 @@ struct Test_U_ModuleHandlerConfiguration
   struct Test_U_UI_CBData*        CBData;
   Test_U_IUDPConnection_t*        connection;
   Net_ConnectionConfigurations_t* connectionConfigurations;
+  ARDrone_IDeviceConfiguration*   deviceConfiguration;
   Test_U_ISessionNotify_t*        subscriber;
   Test_U_Subscribers_t*           subscribers;
 };
@@ -218,6 +220,7 @@ struct Test_U_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
+   , CBData (NULL)
    , deviceConfiguration (NULL)
    , initializeControl (NULL)
    , initializeNavData (NULL)
@@ -226,6 +229,7 @@ struct Test_U_StreamConfiguration
     printFinalReport = true;
   }
 
+  struct Test_U_UI_CBData*                       CBData;
   ARDrone_IDeviceConfiguration*                  deviceConfiguration;
   Common_IInitializeP_T<ARDrone_IControlNotify>* initializeControl;
   Common_IInitializeP_T<ARDrone_INavDataNotify>* initializeNavData;

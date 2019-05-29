@@ -277,7 +277,11 @@ do_work (
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
          const struct Common_UI_DisplayDevice& displayDevice_in,
-         struct Test_U_Configuration& configuration_in)
+         struct Test_U_Configuration& configuration_in
+#if defined (GUI_SUPPORT)
+         ,struct Test_U_UI_CBData& CBData_in
+#endif // GUI_SUPPORT
+        )
 {
   STREAM_TRACE (ACE_TEXT ("::do_work"));
 
@@ -323,6 +327,11 @@ do_work (
     return;
   } // end IF
 
+  configuration_in.streamConfiguration.configuration_.CBData = &CBData_in;
+
+  modulehandler_configuration.concurrency =
+      STREAM_HEADMODULECONCURRENCY_CONCURRENT;
+  modulehandler_configuration.CBData = &CBData_in;
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
@@ -338,6 +347,9 @@ do_work (
                                                      modulehandler_configuration,
                                                      configuration_in.streamConfiguration.allocatorConfiguration_,
                                                      configuration_in.streamConfiguration.configuration_);
+  stream_iterator_2 =
+    configuration_in.streamConfiguration_2.find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (stream_iterator_2 != configuration_in.streamConfiguration_2.end ());
 
   // connection configuration
   tcp_connection_manager_p =
@@ -421,7 +433,8 @@ do_work (
   ACE_UNUSED_ARG (thread_id);
 
   // event dispatch
-  configuration_in.dispatchConfiguration.numberOfProactorThreads = 1;
+  configuration_in.dispatchConfiguration.numberOfProactorThreads =
+      NET_CLIENT_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
   if (!Common_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -445,6 +458,7 @@ do_work (
   // UI
   //ACE_thread_t thread_id;
 #if defined (GUI_SUPPORT)
+  CBData_in.stream = &stream;
 #if defined (GTK_USE)
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
@@ -467,14 +481,22 @@ do_work (
   configuration_in.streamConfiguration_2.configuration_.deviceConfiguration =
     dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
   ACE_ASSERT (configuration_in.streamConfiguration_2.configuration_.deviceConfiguration);
+//  (*stream_iterator).second.second.deviceConfiguration =
+//      dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
+//  ACE_ASSERT ((*stream_iterator).second.second.deviceConfiguration);
+
   configuration_in.streamConfiguration_2.configuration_.initializeControl =
       &ui_event_handler;
+  (*stream_iterator_2).second.second.deviceConfiguration =
+      dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
+  ACE_ASSERT ((*stream_iterator_2).second.second.deviceConfiguration);
   if (!control_stream.initialize (configuration_in.streamConfiguration_2))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize control stream, returning\n")));
     return;
   } // end IF
+
   stream_p = &control_stream;
   ACE_ASSERT (stream_p);
   stream_p->start ();
@@ -713,7 +735,11 @@ ACE_TMAIN (int argc_in,
            show_console,
 #endif // ACE_WIN32 || ACE_WIN64
            display_device_s,
-           configuration);
+           configuration
+#if defined (GUI_SUPPORT)
+           ,ui_cb_data_s
+#endif // GUI_SUPPORT
+          );
   timer.stop ();
 
   // debug info

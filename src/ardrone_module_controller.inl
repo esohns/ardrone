@@ -137,6 +137,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   } // end IF
 
   CBData_ = configuration_in.CBData;
+  ACE_ASSERT (CBData_);
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
@@ -627,10 +628,11 @@ error:
       break;
     }
     case NAVDATA_STATE_SET_VIDEO:
-    { ACE_ASSERT (!deviceConfiguration_.empty ());
+    {
       ARDrone_DeviceConfigurationConstIterator_t iterator =
         deviceConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_VIDEO_STRING));
-      ACE_ASSERT (iterator != deviceConfiguration_.end ());
+      if (iterator == deviceConfiguration_.end ())
+        break; // wait for configuration (should be on its way)
       ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 =
         (*iterator).second.begin ();
       for (;

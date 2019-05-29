@@ -114,11 +114,13 @@ class Test_U_Stream
   ACE_UNIMPLEMENTED_FUNC (Test_U_Stream& operator= (const Test_U_Stream&))
 
   // modules
-  Test_U_AsynchUDPSource_Module source_;
-  Test_U_NavDataDecoder_Module  decode_;
-  Test_U_StatisticReport_Module report_;
+  Test_U_AsynchUDPSource_Module  source_;
+  Test_U_NavDataDecoder_Module   decode_;
+//  Test_U_StatisticReport_Module  report_;
   Test_U_AsynchController_Module controller_;
-  Test_U_MessageHandler_Module handler_;
+  Test_U_MessageHandler_Module   handler_;
+
+  struct Test_U_UI_CBData*       CBData_;
 };
 
 //////////////////////////////////////////

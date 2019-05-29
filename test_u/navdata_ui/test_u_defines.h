@@ -21,7 +21,7 @@
 #ifndef TEST_U_DEFINES_H
 #define TEST_U_DEFINES_H
 
-#define TEST_U_UI_DEFINITION_FILE                     "navdata_ui.gtk3"
+#define TEST_U_UI_DEFINITION_FILE                     "navdata_ui.gtk2"
 
 #define TEST_U_UI_GTK_DIALOG_ABOUT_NAME               "dialog_about"
 #define TEST_U_UI_GTK_DIALOG_MAIN_NAME                "dialog_main"
@@ -30,6 +30,9 @@
 
 #define TEST_U_UI_GTK_PROGRESSBAR_NAME                "progressbar"
 
+#define TEST_U_UI_GTK_LABEL_ROLL_NAME                 "label_roll"
+#define TEST_U_UI_GTK_LABEL_PITCH_NAME                "label_pitch"
+#define TEST_U_UI_GTK_LABEL_YAW_NAME                  "label_yaw"
 #define TEST_U_UI_GTK_SPINBUTTON_DATA_NAME            "spinbutton_data"
 #define TEST_U_UI_GTK_SPINBUTTON_DATAMESSAGES_NAME    "spinbutton_data_messages"
 #define TEST_U_UI_GTK_SPINBUTTON_SESSIONMESSAGES_NAME "spinbutton_session_messages"
