@@ -34,6 +34,9 @@
 
 #include "test_u_gtk_callbacks.h"
 
+// global variables
+bool un_toggling_start = false;
+
 gboolean
 idle_initialize_UI_cb (gpointer userData_in)
 {
@@ -303,11 +306,145 @@ idle_update_info_display_cb (gpointer userData_in)
 
 //////////////////////////////////////////
 
+void
+togglebutton_start_land_toggled_cb (GtkToggleButton* toggleButton_in,
+                                    gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::togglebutton_start_land_toggled_cb"));
+
+  // handle untoggle --> PLAY
+  if (un_toggling_start)
+  {
+    un_toggling_start = false;
+    return; // done
+  } // end IF
+
+  // sanity check(s)
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
+  ACE_ASSERT (ui_cb_data_p);
+  ACE_ASSERT (ui_cb_data_p->controller);
+
+  Common_UI_GTK_BuildersIterator_t iterator =
+    ui_cb_data_p->UIState->builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
+  // sanity check(s)
+  ACE_ASSERT (iterator != ui_cb_data_p->UIState->builders.end ());
+
+  bool is_active_b = gtk_toggle_button_get_active (toggleButton_in);
+
+  if (!is_active_b)
+  {
+    // --> user pressed pause/stop
+
+    try {
+      ui_cb_data_p->controller->land ();
+    } catch (...) {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in ARDrone_IController::land(), continuing\n")));
+    }
+
+    return;
+  } // end IF
+
+  // --> user pressed play
+
+  try {
+    ui_cb_data_p->controller->takeoff ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::takeoff(), continuing\n")));
+  }
+}
+
+gint
+button_trim_clicked_cb (GtkWidget* widget_in,
+                        gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::button_trim_clicked_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  // sanity check(s)
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
+  ACE_ASSERT (ui_cb_data_p);
+  ACE_ASSERT (ui_cb_data_p->controller);
+
+  try {
+    ui_cb_data_p->controller->trim ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::trim(), continuing\n")));
+  }
+}
+
+gint
+button_calibrate_clicked_cb (GtkWidget* widget_in,
+                             gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::button_calibrate_clicked_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  // sanity check(s)
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
+  ACE_ASSERT (ui_cb_data_p);
+  ACE_ASSERT (ui_cb_data_p->controller);
+
+  try {
+    ui_cb_data_p->controller->calibrate ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::calibrate(), continuing\n")));
+  }
+}
+
+gint
+button_leds_clicked_cb (GtkWidget* widget_in,
+                        gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::button_leds_clicked_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  // sanity check(s)
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
+  ACE_ASSERT (ui_cb_data_p);
+  ACE_ASSERT (ui_cb_data_p->controller);
+
+  try {
+    ui_cb_data_p->controller->leds ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::leds(), continuing\n")));
+  }
+}
+
+gint
+button_reset_clicked_cb (GtkWidget* widget_in,
+                         gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::button_reset_clicked_cb"));
+
+  ACE_UNUSED_ARG (widget_in);
+  // sanity check(s)
+  struct Test_U_UI_CBData* ui_cb_data_p =
+    static_cast<struct Test_U_UI_CBData*> (userData_in);
+  ACE_ASSERT (ui_cb_data_p);
+  ACE_ASSERT (ui_cb_data_p->controller);
+
+  try {
+    ui_cb_data_p->controller->reset ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::reset(), continuing\n")));
+  }
+}
+
 gint
 button_about_clicked_cb (GtkWidget* widget_in,
                          gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::button_about_clicked_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::button_about_clicked_cb"));
 
   ACE_UNUSED_ARG (widget_in);
   // sanity check(s)
@@ -344,7 +481,7 @@ gint
 button_quit_clicked_cb (GtkWidget* widget_in,
                         gpointer userData_in)
 {
-  STREAM_TRACE (ACE_TEXT ("::button_quit_clicked_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::button_quit_clicked_cb"));
 
   ACE_UNUSED_ARG (widget_in);
   // sanity check(s)

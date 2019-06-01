@@ -34,6 +34,8 @@
 //#include "ardrone_configuration.h"
 #include "ardrone_macros.h"
 
+#include "ardrone_api.h"
+
 // initialize statics
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
@@ -1010,7 +1012,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
   std::string command_string =
     ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
   command_string +=
-    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_STRING);
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_FTRIM_ACCEL_STRING);
   command_string += ACE_TEXT_ALWAYS_CHAR ("=");
   converter << OWN_TYPE_T::currentNavDataMessageId.value ();
   OWN_TYPE_T::currentNavDataMessageId++;
@@ -1050,10 +1052,97 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::calibrate"));
 
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CALIBRATE_MAG_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
+  command_string += converter.str ();
+  command_string += ',';
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << ARDRONE_CALIBRATION_DEVICE_MAGNETOMETER;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\r");
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
 }
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename WLANMonitorType,
+          typename ConnectionManagerType,
+          typename ConnectorType,
+          typename CBDataType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            WLANMonitorType,
+                            ConnectionManagerType,
+                            ConnectorType,
+                            CBDataType>::leds ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::leds"));
+
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CONFIG_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR (",\"");
+  command_string +=
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_CATEGORY_LEDS_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR (":");
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_SETTING_LEDS_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\",\"");
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << BLINK_ORANGE;
+  command_string += converter.str ();
+  command_string += ',';
+  float frequency = 2.0F; // frequency (Hz)
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << *reinterpret_cast<unsigned int*> (&frequency);
+  command_string += converter.str ();
+  command_string += ',';
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << 5; // duration (sec)
+  command_string += converter.str ();
+  command_string += ACE_TEXT_ALWAYS_CHAR ("\"\r");
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+}
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,
@@ -1108,6 +1197,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 inherited::mod_->name (),
                 ACE_TEXT (command_string.c_str ())));
 }
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,
@@ -1134,10 +1224,32 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::takeoff"));
 
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_REF_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
+  command_string += converter.str ();
+  command_string += ',';
+  ACE_UINT32 bitfield_i = 0;
+  bitfield_i |= 1 << 9; // takeoff
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << bitfield_i;
+  command_string += converter.str ();
+  command_string += '\r';
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
 }
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,
@@ -1164,10 +1276,84 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::land"));
 
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-  ACE_NOTREACHED (return;)
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_REF_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
+  command_string += converter.str ();
+  command_string += ',';
+  ACE_UINT32 bitfield_i = 0;
+  bitfield_i |= 0 << 9; // land
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << bitfield_i;
+  command_string += converter.str ();
+  command_string += '\r';
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
 }
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType,
+          typename WLANMonitorType,
+          typename ConnectionManagerType,
+          typename ConnectorType,
+          typename CBDataType>
+void
+ARDrone_Module_Controller_T<ACE_SYNCH_USE,
+                            TimePolicyType,
+                            ConfigurationType,
+                            ControlMessageType,
+                            DataMessageType,
+                            SessionMessageType,
+                            SessionDataContainerType,
+                            WLANMonitorType,
+                            ConnectionManagerType,
+                            ConnectorType,
+                            CBDataType>::reset ()
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::reset"));
+
+  std::ostringstream converter;
+
+  std::string command_string =
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_PREFIX_STRING);
+  command_string +=
+    ACE_TEXT_ALWAYS_CHAR (ARDRONE_PROTOCOL_AT_COMMAND_REF_STRING);
+  command_string += ACE_TEXT_ALWAYS_CHAR ("=");
+  converter << OWN_TYPE_T::currentNavDataMessageId.value ();
+  OWN_TYPE_T::currentNavDataMessageId++;
+  command_string += converter.str ();
+  command_string += ',';
+  ACE_UINT32 bitfield_i = 0;
+  bitfield_i |= 1 << 8; // reset emergency mode
+  converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+  converter.clear ();
+  converter << bitfield_i;
+  command_string += converter.str ();
+  command_string += '\r';
+
+  if (!sendATCommand (command_string))
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to ARDrone_Module_Controller_T::sendATCommand(\"%s\"), continuing\n"),
+                inherited::mod_->name (),
+                ACE_TEXT (command_string.c_str ())));
+}
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           typename ConfigurationType,

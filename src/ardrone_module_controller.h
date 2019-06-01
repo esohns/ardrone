@@ -110,10 +110,13 @@ class ARDrone_Module_Controller_T
   inline virtual void setP (ARDrone_DeviceConfiguration_t* configuration_in) { ACE_ASSERT (configuration_in); deviceConfiguration_ = *configuration_in; }
   inline virtual const uint32_t get () const { return deviceState_; }
   inline virtual const struct _navdata_demo_t get_2 () const { return deviceState_2; }
+  virtual void trim ();
   virtual void calibrate ();
+  virtual void leds ();
   virtual void dump ();
   virtual void takeoff ();
   virtual void land ();
+  virtual void reset ();
   virtual void set (enum ARDrone_VideoMode); // video mode
 
   inline bool wait (const ACE_Time_Value* timeout_in = NULL) { return inherited2::wait (NAVDATA_STATE_READY, timeout_in); }
@@ -126,7 +129,6 @@ class ARDrone_Module_Controller_T
   inline virtual void init () { inherited2::change (NAVDATA_STATE_INITIAL); }
   inline virtual void start () { inherited2::change (NAVDATA_STATE_GET_CONFIGURATION); }
   virtual void resetWatchdog ();
-  virtual void trim ();
 
  private:
   // convenient types

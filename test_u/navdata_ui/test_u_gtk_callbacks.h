@@ -35,6 +35,11 @@ gboolean idle_update_info_display_cb (gpointer);
 extern "C"
 {
 #endif /* __cplusplus */
+G_MODULE_EXPORT void togglebutton_start_land_toggled_cb (GtkToggleButton*, gpointer);
+G_MODULE_EXPORT gint button_trim_clicked_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint button_calibrate_clicked_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint button_leds_clicked_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT gint button_reset_clicked_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gint button_about_clicked_cb (GtkWidget*, gpointer);
 G_MODULE_EXPORT gint button_quit_clicked_cb (GtkWidget*, gpointer);
 #ifdef __cplusplus

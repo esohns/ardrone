@@ -93,16 +93,101 @@
           <object class="GtkVBox" id="vbox1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
             <child>
               <object class="GtkHBox" id="hbox3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
+                  <object class="GtkVBox" id="vbox2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkToggleButton" id="togglebutton_start_land">
+                        <property name="label">gtk-media-play</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="toggled" handler="togglebutton_start_land_toggled_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_trim">
+                        <property name="label" translatable="yes">_Trim</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="button_trim_clicked_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_calibrate">
+                        <property name="label" translatable="yes">_Calibrate</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="button_calibrate_clicked_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_leds">
+                        <property name="label" translatable="yes">_LED</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="button_leds_clicked_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_reset">
+                        <property name="label" translatable="yes">_Reset</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="focus_on_click">False</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="button_reset_clicked_cb" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkVBox" id="vbox4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkTable" id="grid1">
                         <property name="visible">True</property>
@@ -117,7 +202,6 @@
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">0</property>
                           </packing>
                         </child>
                         <child>
@@ -152,10 +236,6 @@
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">data</property>
                           </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">0</property>
-                          </packing>
                         </child>
                         <child>
                           <object class="GtkLabel" id="label2">
@@ -164,7 +244,6 @@
                             <property name="label" translatable="yes">session</property>
                           </object>
                           <packing>
-                            <property name="left_attach">0</property>
                             <property name="top_attach">1</property>
                           </packing>
                         </child>
@@ -174,7 +253,6 @@
                             <property name="can_focus">False</property>
                           </object>
                           <packing>
-                            <property name="left_attach">0</property>
                             <property name="top_attach">2</property>
                           </packing>
                         </child>
@@ -189,18 +267,12 @@
                       <object class="GtkTable" id="grid2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="row_homogeneous">True</property>
-                        <property name="column_homogeneous">True</property>
                         <child>
                           <object class="GtkLabel" id="label4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">roll</property>
                           </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">0</property>
-                          </packing>
                         </child>
                         <child>
                           <object class="GtkLabel" id="label5">
@@ -209,7 +281,6 @@
                             <property name="label" translatable="yes">pitch</property>
                           </object>
                           <packing>
-                            <property name="left_attach">0</property>
                             <property name="top_attach">1</property>
                           </packing>
                         </child>
@@ -220,7 +291,6 @@
                             <property name="label" translatable="yes">yaw</property>
                           </object>
                           <packing>
-                            <property name="left_attach">0</property>
                             <property name="top_attach">2</property>
                           </packing>
                         </child>
@@ -232,7 +302,6 @@
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">0</property>
                           </packing>
                         </child>
                         <child>
@@ -268,7 +337,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">0</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
                 <child>
@@ -281,7 +350,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>

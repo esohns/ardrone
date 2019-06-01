@@ -94,12 +94,14 @@ struct Test_U_UI_CBData
    : Common_UI_Qt_CBData ()
 #endif
    , configuration (NULL)
+   , controller (NULL)
    , openGLScene ()
    , stream (NULL)
    , videoMode (ARDRONE_VIDEOMODE_360P)
   {}
 
   struct Test_U_Configuration* configuration;
+  ARDrone_IController*         controller;
   struct Common_GL_Scene       openGLScene;
   Stream_IStreamControlBase*   stream;
   enum ARDrone_VideoMode       videoMode;

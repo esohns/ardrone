@@ -484,7 +484,9 @@ do_work (
 //  (*stream_iterator).second.second.deviceConfiguration =
 //      dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
 //  ACE_ASSERT ((*stream_iterator).second.second.deviceConfiguration);
-
+  CBData_in.controller =
+    dynamic_cast<ARDrone_IController*> (module_p->writer ());
+  ACE_ASSERT (CBData_in.controller);
   configuration_in.streamConfiguration_2.configuration_.initializeControl =
       &ui_event_handler;
   (*stream_iterator_2).second.second.deviceConfiguration =

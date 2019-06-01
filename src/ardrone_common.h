@@ -214,13 +214,19 @@ class ARDrone_IController
  , public Common_IGet_2_T<struct _navdata_demo_t>
 {
  public:
+  // *NOTE*: calibrate accelerometer (only when not (!) airborne)
+  virtual void trim () = 0;
   // *NOTE*: calibrate gyroscope (only when airborne)
   virtual void calibrate () = 0;
+
+  virtual void leds () = 0;
+
   // *NOTE*: dump device configuration
   virtual void dump () = 0;
 
   virtual void takeoff () = 0;
   virtual void land () = 0;
+  virtual void reset () = 0;
 
   virtual void set (enum ARDrone_VideoMode) = 0;
 
@@ -231,9 +237,6 @@ class ARDrone_IController
   virtual void init () = 0; // send initial packet
   virtual void start () = 0; // switch from 'bootstrap' to 'demo' mode
   virtual void resetWatchdog () = 0; // reset com watchdog (every 50ms)
-
-  // *NOTE*: calibrate accelerometer (only when not (!) airborne)
-  virtual void trim () = 0;
 };
 
 typedef Common_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
