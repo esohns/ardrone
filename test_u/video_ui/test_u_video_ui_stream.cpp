@@ -281,6 +281,8 @@ Test_U_Stream::Test_U_Stream ()
 //            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
+ , detect_ (this,
+            ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_OPENCV_DECODER_DEFAULT_NAME_STRING))
  , resize_ (this,
             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , display_ (this,
@@ -318,10 +320,11 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&decode_2, NULL, 0);
   //  layout_inout.append (&report_, NULL, 0);
 //  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-    layout_inout->append (&convert_, NULL, 0);
+  layout_inout->append (&convert_, NULL, 0);
+  layout_inout->append (&detect_, NULL, 0);
 //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
 //  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-   layout_inout->append (&display_, NULL, 0);
+//   layout_inout->append (&display_, NULL, 0);
 //  else
 //    layout_inout->append (&display_2_, NULL, 0);
 

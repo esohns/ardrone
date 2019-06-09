@@ -31,6 +31,7 @@
 
 #include "stream_dec_libav_converter.h"
 #include "stream_dec_libav_decoder.h"
+#include "stream_dec_opencv_decoder.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_lib_directshow_asynch_source_filter.h"
@@ -85,6 +86,15 @@ typedef Stream_Decoder_LibAVConverter_T<ACE_MT_SYNCH,
                                         Test_U_SessionMessage_t,
                                         Test_U_SessionData_t,
                                         struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_LibAVConvert;
+
+typedef Stream_Decoder_OpenCVDecoder_T<ACE_MT_SYNCH,
+                                       Common_TimePolicy_t,
+                                       struct Test_U_ModuleHandlerConfiguration,
+                                       Stream_ControlMessage_t,
+                                       Test_U_Message_t,
+                                       Test_U_SessionMessage_t,
+                                       Test_U_SessionData_t,
+                                       struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_OpenCVDecoder;
 
 typedef Stream_Visualization_LibAVResize_T<ACE_MT_SYNCH,
                                            Common_TimePolicy_t,
@@ -214,6 +224,13 @@ DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session d
                               libacestream_default_dec_libav_converter_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
                               Test_U_LibAVConvert);                      // writer type
+
+DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
+                              enum Stream_SessionMessageType,                   // session event type
+                              struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
+                              libacestream_default_dec_opencv_decoder_module_name_string,
+                              Stream_INotify_t,                                 // stream notification interface type
+                              Test_U_OpenCVDecoder);                      // writer type
 
 DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
                               enum Stream_SessionMessageType,                   // session event type

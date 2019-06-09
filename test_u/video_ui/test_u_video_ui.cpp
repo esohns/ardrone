@@ -78,6 +78,7 @@
 #include "test_u_video_ui_defines.h"
 #include "test_u_video_ui_eventhandler.h"
 #include "test_u_video_ui_session_message.h"
+#include "test_u_video_ui_signalhandler.h"
 #include "test_u_video_ui_stream.h"
 
 const char stream_name_string_[] = ACE_TEXT_ALWAYS_CHAR ("Test_U_Stream");
@@ -280,6 +281,81 @@ do_process_arguments (int argc_in,
   } // end WHILE
 
   return true;
+}
+
+void
+do_initializeSignals (bool allowUserRuntimeConnect_in,
+                      ACE_Sig_Set& signals_out,
+                      ACE_Sig_Set& ignoredSignals_out)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::do_initializeSignals"));
+
+  int result = -1;
+
+  // initialize return value(s)
+  result = signals_out.empty_set ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", returning\n")));
+    return;
+  } // end IF
+  result = ignoredSignals_out.empty_set ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::empty_set(): \"%m\", returning\n")));
+    return;
+  } // end IF
+
+  // *PORTABILITY*: on Windows(TM) platforms most signals are not defined, and
+  //                ACE_Sig_Set::fill_set() doesn't really work as specified
+  // --> add valid signals (see <signal.h>)...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  signals_out.sig_add (SIGINT);            // 2       /* interrupt */
+  signals_out.sig_add (SIGILL);            // 4       /* illegal instruction - invalid function image */
+  signals_out.sig_add (SIGFPE);            // 8       /* floating point exception */
+  //  signals_out.sig_add (SIGSEGV);           // 11      /* segment violation */
+  signals_out.sig_add (SIGTERM);           // 15      /* Software termination signal from kill */
+  if (allowUserRuntimeConnect_in)
+  {
+    signals_out.sig_add (SIGBREAK);        // 21      /* Ctrl-Break sequence */
+    ignoredSignals_out.sig_add (SIGBREAK); // 21      /* Ctrl-Break sequence */
+  } // end IF
+  signals_out.sig_add (SIGABRT);           // 22      /* abnormal termination triggered by abort call */
+  signals_out.sig_add (SIGABRT_COMPAT);    // 6       /* SIGABRT compatible with other platforms, same as SIGABRT */
+#else
+  result = signals_out.fill_set ();
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_Sig_Set::fill_set(): \"%m\", returning\n")));
+    return;
+  } // end IF
+#if defined (DEBUG_DEBUGGER)
+  signals_out.sig_del (SIGTRAP);           // 5       /* Trace trap (POSIX) */
+#endif
+  // *NOTE*: cannot handle some signals --> registration fails for these...
+  signals_out.sig_del (SIGKILL);           // 9       /* Kill signal */
+  signals_out.sig_del (SIGSTOP);           // 19      /* Stop process */
+  // ---------------------------------------------------------------------------
+  if (!allowUserRuntimeConnect_in)
+  {
+    signals_out.sig_del (SIGUSR1);         // 10      /* User-defined signal 1 */
+    ignoredSignals_out.sig_add (SIGUSR1);  // 10      /* User-defined signal 1 */
+  } // end IF
+  // *NOTE* core dump on SIGSEGV
+  signals_out.sig_del (SIGSEGV);           // 11      /* Segmentation fault: Invalid memory reference */
+  // *NOTE* don't care about SIGPIPE
+  signals_out.sig_del (SIGPIPE);           // 12      /* Broken pipe: write to pipe with no readers */
+
+#ifdef ENABLE_VALGRIND_SUPPORT
+  // *NOTE*: valgrind uses SIGRT32 (--> SIGRTMAX ?) and apparently will not work
+  // if the application installs its own handler (see documentation)
+  if (RUNNING_ON_VALGRIND)
+    signals_out.sig_del (SIGRTMAX);        // 64
+#endif
+#endif
 }
 
 void
@@ -613,6 +689,7 @@ ACE_TMAIN (int argc_in,
                   ACE_TEXT ("invalid/unknown program mode (was: %d), aborting\n"),
                   program_mode_e));
 
+      Common_Log_Tools::finalizeLogging ();
       // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       result = ACE::fini ();
@@ -624,10 +701,58 @@ ACE_TMAIN (int argc_in,
     }
   } // end SWITCH
 
+  // step1e: pre-initialize signal handling
+  ACE_Sig_Set signal_set (0);
+  ACE_Sig_Set ignored_signal_set (0);
+  do_initializeSignals (false, // handle SIGUSR1/SIGBREAK ?
+                        signal_set,
+                        ignored_signal_set);
+  Common_SignalActions_t previous_signal_actions;
+  sigset_t previous_signal_mask;
+  int result = ACE_OS::sigemptyset (&previous_signal_mask);
+  if (result == -1)
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
+
+    Common_Log_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, finalize ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif // ACE_WIN32 || ACE_WIN64
+    return EXIT_FAILURE;
+  } // end IF
+  if (!Common_Signal_Tools::preInitialize (signal_set,
+                                           (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR),
+                                           previous_signal_actions,
+                                           previous_signal_mask))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Common_Signal_Tools::preInitialize(), aborting\n")));
+
+    Common_Log_Tools::finalizeLogging ();
+    // *PORTABILITY*: on Windows, finalize ACE...
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    result = ACE::fini ();
+    if (result == -1)
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
+#endif // ACE_WIN32 || ACE_WIN64
+    return EXIT_FAILURE;
+  } // end IF
+  ACE_SYNCH_RECURSIVE_MUTEX* lock_2 = NULL;
+  Test_U_SignalHandler_t signal_handler (COMMON_SIGNAL_DISPATCH_SIGNAL,
+                                         lock_2);
+
   struct Test_U_Configuration configuration;
 
   // event dispatch
-  configuration.dispatchConfiguration.numberOfProactorThreads = 1;
+  configuration.dispatchConfiguration.numberOfProactorThreads = 3;
+  configuration.dispatchConfiguration.proactorType =
+      COMMON_PROACTOR_POSIX_AIOCB;
   if (!Common_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,

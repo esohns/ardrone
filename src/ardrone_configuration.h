@@ -87,9 +87,9 @@
 #include "net_wlan_configuration.h"
 
 #include "ardrone_defines.h"
-#include "ardrone_network_common.h"
+//#include "ardrone_network_common.h"
 //#include "ardrone_stream.h"
-#include "ardrone_stream_common.h"
+//#include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
 // forward declarations

@@ -44,9 +44,10 @@ endif ()
 include (FindPkgConfig)
 if (UNIX)
 # *NOTE*: Common requires libcap
- pkg_check_modules (PKG_CAP REQUIRED libcap)
- pkg_check_modules (PKG_V4L2 REQUIRED libv4l2)
+# pkg_check_modules (PKG_CAP REQUIRED libcap)
+# pkg_check_modules (PKG_V4L2 REQUIRED libv4l2)
  pkg_check_modules (PKG_FFMPEG REQUIRED libswscale libavutil libavformat libavcodec)
+ pkg_check_modules (PKG_OPENCV REQUIRED opencv)
 # if (GUI_SUPPORT)
 #  if (GTK_SUPPORT)
 #   if (GTK3_SUPPORT)
@@ -84,6 +85,7 @@ if (NOT EXISTS ${ACEStream_DIR})
 endif ()
 add_definitions (-DSTREAM_HAS_DLL)
 #add_definitions (-DSTREAM_DEC_HAS_DLL)
+add_definitions (-DOPENCV_SUPPORT)
 
 find_package (ACENetwork
               REQUIRED
@@ -125,6 +127,7 @@ if (UNIX)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/include)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src)
+ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/gl)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/image)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/log)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/signal)
@@ -230,6 +233,9 @@ set (${EXECUTABLE}_EXE_SRCS
      test_u_video_ui_session_message.cpp
      test_u_video_ui_session_message.h
      test_u_video_ui_session_message.inl
+     test_u_video_ui_signalhandler.cpp
+     test_u_video_ui_signalhandler.h
+     test_u_video_ui_signalhandler.inl
      test_u_video_ui_stream.cpp
      test_u_video_ui_stream.h
      test_u_video_ui_stream_common.h)
@@ -282,8 +288,9 @@ add_dependencies (${EXECUTABLE} ACENetwork)
 
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX)
- target_link_libraries (${EXECUTABLE} GL)
+# target_link_libraries (${EXECUTABLE} GL)
  target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${PKG_OPENCV_LIBRARIES})
 
 # target_link_libraries (${EXECUTABLE} ${ACEXML_LIBRARY})
 elseif (WIN32)
