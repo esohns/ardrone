@@ -416,6 +416,16 @@ do_work (
     return;
   } // end IF
 
+  modulehandler_configuration.cascadeFile =
+      Common_File_Tools::getWorkingDirectory ();
+  modulehandler_configuration.cascadeFile +=
+      ACE_DIRECTORY_SEPARATOR_STR;
+  modulehandler_configuration.cascadeFile +=
+      ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
+  modulehandler_configuration.cascadeFile +=
+      ACE_DIRECTORY_SEPARATOR_STR;
+  modulehandler_configuration.cascadeFile +=
+    ACE_TEXT_ALWAYS_CHAR ("haarcascade_frontalface_default.xml");
   // *IMPORTANT NOTE*: is there a way to feed RGB24 data to Xlib;
   //                   XCreateImage() only 'likes' 32-bit data, regardless of
   //                   what 'depth' values are set (in fact, it requires BGRA on

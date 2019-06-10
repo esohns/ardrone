@@ -166,6 +166,7 @@ struct Test_U_ModuleHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , builder (NULL)
 #endif // ACE_WIN32 || ACE_WIN64
+   , cascadeFile ()
    , codecFormat (AV_PIX_FMT_NONE)
    , codecId (AV_CODEC_ID_H264)
    , connection (NULL)
@@ -205,6 +206,7 @@ struct Test_U_ModuleHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IGraphBuilder*                                builder;
 #endif // ACE_WIN32 || ACE_WIN64
+  std::string                                   cascadeFile;
   enum AVPixelFormat                            codecFormat; // preferred output-
   enum AVCodecID                                codecId;
   Test_U_ITCPConnection_t*                      connection;

@@ -391,11 +391,11 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
       typename SessionMessageType::DATA_T::DATA_T& session_data_r =
           const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
       // sanity check(s)
-      ACE_ASSERT (!session_data_r.formats.empty ());
-      MediaType& format_r =
-        const_cast<MediaType&> (session_data_r.formats.back ());
-      ARDroneVideoModeToResolution (videoMode_,
-                                    format_r.resolution);
+//      ACE_ASSERT (!session_data_r.formats.empty ());
+//      MediaType& format_r =
+//        const_cast<MediaType&> (session_data_r.formats.back ());
+//      ARDroneVideoModeToResolution (videoMode_,
+//                                    format_r.resolution);
       break;
     }
     default:

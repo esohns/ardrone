@@ -110,7 +110,7 @@ class Test_U_Stream
   Test_U_H264Decoder_Module                  decode_2;
   //Test_U_StatisticReport_Module              report_;
   Test_U_LibAVConvert_Module                 convert_; // --> BGRA (Xlib)
-  Test_U_OpenCVDecoder_Module                detect_;
+  Test_U_OpenCVClassifier_Module             detect_;
   Test_U_LibAVResize_Module                  resize_; // --> window size/fullscreen
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Test_U_DirectShow_Direct3DDisplay_Module   direct3DDisplay_;
