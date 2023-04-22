@@ -37,8 +37,8 @@ if (UNIX)
  find_package (Threads)
 endif ()
 
-get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/../.. REALPATH DIRECTORY)
-get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
+string (REPLACE ${CMAKE_SOURCE_DIR} "" BUILD_PATH_SUFFIX ${CMAKE_BINARY_DIR})
+string (SUBSTRING ${BUILD_PATH_SUFFIX} 1 -1 BUILD_PATH_SUFFIX)
 find_package (Common
               REQUIRED
               CONFIG
@@ -332,8 +332,8 @@ target_link_libraries (${EXECUTABLE} ACENetwork)
 target_link_libraries (${EXECUTABLE} ${PROJECT_NAME})
 
 # add PCH
-set_target_properties (${EXECUTABLE} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")
-cotire (${EXECUTABLE})
+target_precompile_headers (${EXECUTABLE}
+                           PRIVATE stdafx.h)
 
 set (ui_definition_file "")
 if (GTK_USE)

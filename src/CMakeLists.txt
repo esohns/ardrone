@@ -77,8 +77,8 @@ if (WIN32)
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 endif (WIN32)
 
-get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/.. REALPATH DIRECTORY)
-get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
+string (REPLACE ${CMAKE_SOURCE_DIR} "" BUILD_PATH_SUFFIX ${CMAKE_BINARY_DIR})
+string (SUBSTRING ${BUILD_PATH_SUFFIX} 1 -1 BUILD_PATH_SUFFIX)
 #find_package (Common 0.0.1 EXACT
 find_package (Common
               REQUIRED
@@ -412,8 +412,8 @@ if (UNIX)
 endif (UNIX)
 
 # add PCH
-set_target_properties (${PROJECT_NAME} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")
-cotire (${PROJECT_NAME})
+target_precompile_headers (${PROJECT_NAME}
+                           PRIVATE stdafx.h)
 
 #if (UNIX)
 # add_custom_command (TARGET ${PROJECT_NAME}

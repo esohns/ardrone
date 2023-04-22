@@ -1,12 +1,12 @@
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+#include "common_iscanner.h"
+
 // forward declarations
 typedef void* yyscan_t;
+
 class ARDrone_NavData_IParser;
 struct Common_ScannerState;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
 #endif

@@ -12,7 +12,7 @@ template <typename ConfigurationType,
 class Stream_IYaccStreamParser_T;
 struct Common_ParserConfiguration;
 struct __mavlink_message;
-typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
 struct Common_ScannerState;
 template <typename ScannerStateType,

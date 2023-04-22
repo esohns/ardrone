@@ -13,7 +13,7 @@ template <typename ConfigurationType,
           typename RecordType>
 class Stream_IYaccRecordParser_T;
 struct Common_ParserConfiguration;
-typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 template <typename ScannerStateType,
           typename ParserInterfaceType>

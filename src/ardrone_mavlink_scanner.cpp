@@ -1,19 +1,17 @@
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
+#include "common_iscanner.h"
+
 // forward declarations
 typedef void* yyscan_t;
 
 template <typename ConfigurationType,
           typename RecordType>
-class Stream_IYaccStreamParser_T;
+class Common_IYaccStreamParser_T;
 struct Common_ParserConfiguration;
 struct __mavlink_message;
-typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
-struct Common_ScannerState;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
 #endif

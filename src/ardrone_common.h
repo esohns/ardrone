@@ -47,9 +47,10 @@ extern "C"
 #include "common.h"
 #include "common_statistic_handler.h"
 
+#include "common_iparser.h"
+
 #include "stream_configuration.h"
 #include "stream_data_base.h"
-#include "stream_iparser.h"
 
 #include "net_wlan_imonitor.h"
 
@@ -164,7 +165,7 @@ struct ARDrone_MessageData
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
-typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
@@ -174,7 +175,7 @@ class ARDrone_IControlNotify
   virtual void messageCB (const ARDrone_DeviceConfiguration_t&) = 0; // device configuration
 };
 
-typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                    struct __mavlink_message> ARDrone_MAVLink_IParser_t;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
@@ -186,7 +187,7 @@ class ARDrone_IMAVLinkNotify
 };
 
 class ARDrone_NavData_IParser
- : public Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+ : public Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                      struct _navdata_t>
 {
  public:

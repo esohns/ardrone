@@ -3,19 +3,18 @@
 
 #include "ace/Synch.h"
 
+#include "common_iscanner.h"
+
 #include "ardrone_types.h"
 
 // forward declarations
 typedef void* yyscan_t;
 template <typename ConfigurationType,
           typename RecordType>
-class Stream_IYaccRecordParser_T;
+class Common_IYaccRecordParser_T;
 struct Common_ParserConfiguration;
-typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
 struct Common_ScannerState;
 typedef Common_ILexScanner_T<struct Common_ScannerState,
                              ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;

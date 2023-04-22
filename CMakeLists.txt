@@ -138,14 +138,15 @@ endif (MSVC)
 
 ################################################################################
 
-list (APPEND CMAKE_MODULE_PATH "$ENV{LIB_ROOT}/cotire/CMake")
 #list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
-include (cotire)
-set_directory_properties (PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
 
 ################################################################################
 
-list (APPEND CMAKE_MODULE_PATH "$ENV{LIB_ROOT}/cmake-modules")
+file (TO_NATIVE_PATH $ENV{LIB_ROOT} LIB_ROOT)
+if (WIN32)
+ string (REPLACE "\\" "\\\\" LIB_ROOT ${LIB_ROOT})
+endif (WIN32)
+list (APPEND CMAKE_MODULE_PATH "${LIB_ROOT}/cmake-modules")
 include (UseBackportedModules)
 cmake_policy (SET CMP0026 OLD)
 cmake_policy (SET CMP0053 OLD)

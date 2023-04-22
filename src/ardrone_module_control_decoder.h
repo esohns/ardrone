@@ -26,8 +26,6 @@
 #include "common.h"
 #include "common_time_common.h"
 
-#include "stream_iparser.h"
-
 #include "stream_misc_parser.h"
 
 #include "ardrone_common.h"
@@ -57,13 +55,8 @@ class ARDrone_Module_ControlDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 struct Common_ScannerState,
                                  Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                                             ARDrone_DeviceConfiguration_t>,
-                                 struct Common_ParserConfiguration,
-                                 Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
-                                                            ARDrone_DeviceConfiguration_t>,
-                                 enum Stream_SessionMessageType,
                                  struct ARDrone_UserData>
 {
   typedef Stream_Module_Parser_T<ACE_SYNCH_USE,
@@ -72,13 +65,8 @@ class ARDrone_Module_ControlDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 struct Common_ScannerState,
                                  Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                                             ARDrone_DeviceConfiguration_t>,
-                                 struct Common_ParserConfiguration,
-                                 Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
-                                                            ARDrone_DeviceConfiguration_t>,
-                                 enum Stream_SessionMessageType,
                                  struct ARDrone_UserData> inherited;
 
  public:
