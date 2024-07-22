@@ -55,6 +55,8 @@
 #include "stream_dev_common.h"
 #include "stream_dev_defines.h"
 
+#include "stream_net_common.h"
+
 #include "stream_vis_common.h"
 #include "stream_vis_defines.h"
 
@@ -102,35 +104,57 @@ struct Test_U_MessageData
 struct Test_U_StreamState;
 class Test_U_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                        struct Stream_MediaFramework_FFMPEG_MediaType,
+                                        struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                         struct Test_U_StreamState,
                                         struct Stream_Statistic,
-                                        struct Net_UserData>
+                                        struct Stream_UserData>
 {
  public:
   Test_U_SessionData ()
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                   struct Stream_MediaFramework_FFMPEG_MediaType,
+                                   struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                    struct Test_U_StreamState,
                                    struct Stream_Statistic,
-                                   struct Net_UserData> ()
+                                   struct Stream_UserData> ()
+   , connection (NULL)
+   , connectionStates ()
   {}
 
-//  Test_U_SessionData& operator+= (const Test_U_SessionData& rhs_in)
-//  {
-//    // *NOTE*: the idea is to 'merge' the data
-//    Stream_SessionDataMediaBase_T<struct Test_U_SessionData,
-//                                  struct Stream_MediaFramework_FFMPEG_MediaType,
-//                                  struct Test_U_StreamState,
-//                                  struct Stream_Statistic,
-//                                  struct Net_UserData>::operator+= (rhs_in);
+  Test_U_SessionData& operator= (const Test_U_SessionData& rhs_in)
+  {
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  struct Stream_MediaFramework_FFMPEG_VideoMediaType,
+                                  struct Test_U_StreamState,
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator= (rhs_in);
 
-//    return *this;
-//  }
+    connection = rhs_in.connection;
+    connectionStates = rhs_in.connectionStates;
+
+    return *this;
+  }
+
+  Test_U_SessionData& operator+= (const Test_U_SessionData& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  struct Stream_MediaFramework_FFMPEG_VideoMediaType,
+                                  struct Test_U_StreamState,
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator+= (rhs_in);
+
+    connection = rhs_in.connection;
+    connectionStates = rhs_in.connectionStates;
+
+    return *this;
+  }
+
+  Test_U_IConnection_t*         connection;
+  Stream_Net_ConnectionStates_t connectionStates;
 
  private:
 //  ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData (const Test_U_SessionData&))
-  ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData& operator= (const Test_U_SessionData&))
+  //ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData& operator= (const Test_U_SessionData&))
 };
 typedef Stream_SessionData_T<Test_U_SessionData> Test_U_SessionData_t;
 
@@ -145,13 +169,13 @@ typedef Test_U_Message_T<struct Test_U_MessageData,
 typedef Test_U_SessionMessage_T<Test_U_Message_t,
                                 Test_U_SessionData_t> Test_U_SessionMessage_t;
 
-typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
-                                    Test_U_SessionData,
+typedef Stream_ISessionDataNotify_T<Test_U_SessionData,
                                     enum Stream_SessionMessageType,
                                     Test_U_Message_t,
                                     Test_U_SessionMessage_t> Test_U_ISessionNotify_t;
 typedef std::list<Test_U_ISessionNotify_t*> Test_U_Subscribers_t;
 typedef Test_U_Subscribers_t::iterator Test_U_SubscribersIterator_t;
+
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_TCPConnectionConfiguration_t,
@@ -167,8 +191,9 @@ struct Test_U_ModuleHandlerConfiguration
    , builder (NULL)
 #endif // ACE_WIN32 || ACE_WIN64
    , cascadeFile ()
-   , codecFormat (AV_PIX_FMT_NONE)
-   , codecId (AV_CODEC_ID_H264)
+#if defined (FFMPEG_SUPPORT)
+   , codecConfiguration (NULL)
+#endif // FFMPEG_SUPPORT
    , connection (NULL)
    , connectionConfigurations (NULL)
    , connectionManager (NULL)
@@ -200,16 +225,16 @@ struct Test_U_ModuleHandlerConfiguration
 #else
     concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
 #endif // ACE_WIN32 || ACE_WIN64
-    hasHeader = true;
   }
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   IGraphBuilder*                                builder;
 #endif // ACE_WIN32 || ACE_WIN64
   std::string                                   cascadeFile;
-  enum AVPixelFormat                            codecFormat; // preferred output-
-  enum AVCodecID                                codecId;
-  Test_U_ITCPConnection_t*                      connection;
+#if defined (FFMPEG_SUPPORT)
+  struct Stream_MediaFramework_FFMPEG_CodecConfiguration* codecConfiguration;
+#endif // FFMPEG_SUPPORT
+  Test_U_IConnection_t*                         connection;
   Net_ConnectionConfigurations_t*               connectionConfigurations;
   Test_U_TCPConnectionManager_t*                connectionManager;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -225,7 +250,7 @@ struct Test_U_ModuleHandlerConfiguration
   struct Common_UI_DisplayDevice                display; // display module
   struct Common_UI_Display                      display_2; // display module
   bool                                          fullScreen;
-  struct Stream_MediaFramework_FFMPEG_MediaType outputFormat;
+  struct Stream_MediaFramework_FFMPEG_VideoMediaType outputFormat;
   Test_U_ISessionNotify_t*                      subscriber;
   Test_U_Subscribers_t*                         subscribers;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -239,9 +264,7 @@ struct Test_U_ModuleHandlerConfiguration
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
-                               struct Stream_AllocatorConfiguration,
                                struct Test_U_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
 
 struct Test_U_StreamState
@@ -253,9 +276,9 @@ struct Test_U_StreamState
    , userData (NULL)
   {}
 
-  Test_U_SessionData*  sessionData;
+  Test_U_SessionData*     sessionData;
 
-  struct Net_UserData* userData;
+  struct Stream_UserData* userData;
 };
 
 struct Test_U_StreamConfiguration
@@ -270,10 +293,10 @@ struct Test_U_StreamConfiguration
     printFinalReport = true;
   }
 
-  struct Stream_MediaFramework_FFMPEG_MediaType format; // session data-
+  struct Stream_MediaFramework_FFMPEG_VideoMediaType format; // session data-
 //  enum Stream_Visualization_VideoRenderer       renderer;
 
-  struct Net_UserData*                          userData;
+  struct Stream_UserData*                            userData;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,
                                 enum Stream_SessionMessageType,

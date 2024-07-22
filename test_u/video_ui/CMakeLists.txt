@@ -1,3 +1,5 @@
+include ($ENV{PRJ_ROOT}/Common/scripts/ffmpeg.cmake)
+
 add_definitions (-DGUI_SUPPORT)
 include ($ENV{PRJ_ROOT}/Common/src/ui/scripts/PreUIFramework.cmake)
 include ($ENV{PRJ_ROOT}/Common/src/ui/scripts/SetUIFramework.cmake)
@@ -31,6 +33,8 @@ elseif (WXWIDGETS_USE)
   add_definitions (-D__WXDEBUG__)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 endif ()
+
+include ($ENV{PRJ_ROOT}/Common/scripts/ACE.cmake)
 
 ##########################################
 
@@ -73,6 +77,7 @@ if (NOT EXISTS ${Common_DIR})
  message (FATAL_ERROR "could not find package \"Common\", aborting")
 endif ()
 add_definitions (-DCOMMON_HAS_DLL)
+add_definitions (-DFFMPEG_SUPPORT)
 
 find_package (ACEStream
               REQUIRED
@@ -96,7 +101,7 @@ find_package (ACENetwork
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
 endif ()
-add_definitions (-DNET_HAS_DLL)
+#add_definitions (-DNET_HAS_DLL)
 
 find_package (${PROJECT_NAME}
               REQUIRED
@@ -104,10 +109,10 @@ find_package (${PROJECT_NAME}
               PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../..
               PATH_SUFFIXES ${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
-if (NOT EXISTS ${ACENetwork_DIR})
- message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
+if (NOT EXISTS ${${PROJECT_NAME}_DIR})
+ message (FATAL_ERROR "could not find package \"${PROJECT_NAME}\", aborting")
 endif ()
-add_definitions (-DNET_HAS_DLL)
+add_definitions (-DARDRONE_HAS_DLL)
 
 add_definitions (-DHAVE_CONFIG_H)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
@@ -177,12 +182,12 @@ elseif (WIN32)
  endif ()
 
 # libav
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg)
+ include_directories (${ffmpeg_INCLUDE_DIRS})
 
  if (DEFINED ENV{ACE_ROOT})
   include_directories ($ENV{ACE_ROOT})
  else ()
-  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
+#  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ATCD/ACE)
  endif (DEFINED ENV{ACE_ROOT})
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../3rd_party/msvc)
@@ -303,19 +308,22 @@ elseif (WIN32)
 
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
 #  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Debug/strmbasd.lib)
+  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/build/msvc/baseclasses/Debug/BaseClassesd.lib)
  else ()
 #  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Release/strmbase.lib)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 
 # *TODO*: repair WIN32 pkgconfig support
+ target_link_libraries (${EXECUTABLE} ${ffmpeg_LIBRARIES})
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
- target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avformat.lib)
+# target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avformat.lib)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
- target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avcodec.lib)
+# target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avcodec.lib)
 endif ()
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 
 target_link_libraries (${EXECUTABLE} Common)
+target_link_libraries (${EXECUTABLE} CommonEvent)
 target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonLog)
 target_link_libraries (${EXECUTABLE} CommonSignal)

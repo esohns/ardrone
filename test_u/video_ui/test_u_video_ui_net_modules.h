@@ -32,7 +32,7 @@
 #include "stream_net_source.h"
 
 #include "test_u_video_ui_message.h"
-//#include "test_u_video_ui_session_message.h"
+#include "test_u_video_ui_session_message.h"
 #include "test_u_video_ui_network.h"
 #include "test_u_video_ui_network_common.h"
 #include "test_u_video_ui_stream_common.h"
@@ -46,13 +46,10 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_ControlType,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
-                                    Test_U_SessionData,
-                                    Test_U_SessionData_t,
                                     struct Stream_Statistic,
                                     Common_Timer_Manager_t,
-                                    Test_U_TCPConnectionManager_t,
                                     Test_U_TCPConnector_t,
-                                    struct Net_UserData> Test_U_TCPSource;
+                                    struct Stream_UserData> Test_U_TCPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Stream_ControlMessage_t,
                                     Test_U_Message_t,
@@ -61,13 +58,10 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_ControlType,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
-                                    Test_U_SessionData,
-                                    Test_U_SessionData_t,
                                     struct Stream_Statistic,
                                     Common_Timer_Manager_t,
-                                    Test_U_TCPConnectionManager_t,
                                     Test_U_AsynchTCPConnector_t,
-                                    struct Net_UserData> Test_U_AsynchTCPSource;
+                                    struct Stream_UserData> Test_U_AsynchTCPSource;
 //typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
 //                                    Stream_ControlMessage_t,
 //                                    Test_U_Message_t,

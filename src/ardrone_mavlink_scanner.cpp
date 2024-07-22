@@ -2043,8 +2043,9 @@ YY_DECL
   ARDrone_MAVLink_IScanner_t* iscanner_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
   ACE_ASSERT (iscanner_p);
-  ARDrone_MAVLink_IParser_t* iparser_p =
-    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_p->getP_2 ());
+  ARDrone_MAVLink_IParser_t* iparser_p = NULL;
+    //const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_p->getP_2 ());
+  ACE_ASSERT (false); // *TODO*: pass parser (not scanner) as extra data (yes, it's uglier)
   ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;

@@ -19,5 +19,4 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "test_u_video_ui_session_message.h"

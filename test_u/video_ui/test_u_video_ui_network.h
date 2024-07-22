@@ -73,6 +73,8 @@
 //class Test_U_SessionMessage_t;
 //struct Net_UserData;
 
+typedef Common_StatisticHandler_T<struct Stream_Statistic> Test_U_StreamStatisticHandler_t;
+
 typedef Net_Connection_Manager_T<ACE_MT_SYNCH,
                                  ACE_INET_Addr,
                                  Test_U_TCPConnectionConfiguration_t,
@@ -90,8 +92,6 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct Test_U_StreamConfiguration,
                                       struct Stream_Statistic,
                                       Common_Timer_Manager_t,
-                                      struct Stream_AllocatorConfiguration,
-                                      struct Stream_ModuleConfiguration,
                                       struct Test_U_ModuleHandlerConfiguration,
                                       Test_U_SessionData,
                                       Test_U_SessionData_t,
@@ -100,16 +100,15 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Test_U_SessionMessage_t,
                                       ACE_INET_Addr,
                                       Test_U_TCPConnectionManager_t,
-                                      struct Net_UserData> Test_U_NetStream_t;
+                                      struct Stream_UserData> Test_U_NetStream_t;
 
 typedef Net_IStreamConnection_T<ACE_INET_Addr,
-                                 Test_U_TCPConnectionConfiguration_t,
-                                 struct Net_StreamConnectionState,
-                                 Net_StreamStatistic_t,
-                                 Net_TCPSocketConfiguration_t,
-                                 Net_TCPSocketConfiguration_t,
-                                 Test_U_NetStream_t,
-                                 enum Stream_StateMachine_ControlState> Test_U_IStreamConnection_t;
+                                Test_U_TCPConnectionConfiguration_t,
+                                struct Net_StreamConnectionState,
+                                Net_StreamStatistic_t,
+                                Net_TCPSocketConfiguration_t,
+                                Test_U_NetStream_t,
+                                enum Stream_StateMachine_ControlState> Test_U_IStreamConnection_t;
 
 typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                Net_TCPConnectionBase_T<ACE_NULL_SYNCH,
@@ -124,7 +123,6 @@ typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                Test_U_TCPConnectionConfiguration_t,
                                struct Net_StreamConnectionState,
                                Net_StreamStatistic_t,
-                               Net_TCPSocketConfiguration_t,
                                Net_TCPSocketConfiguration_t,
                                Test_U_NetStream_t,
                                struct Net_UserData> Test_U_TCPConnector_t;
@@ -156,7 +154,6 @@ typedef Net_Client_AsynchConnector_T<Net_AsynchTCPConnectionBase_T<Net_AsynchTCP
                                      Test_U_TCPConnectionConfiguration_t,
                                      struct Net_StreamConnectionState,
                                      Net_StreamStatistic_t,
-                                     Net_TCPSocketConfiguration_t,
                                      Net_TCPSocketConfiguration_t,
                                      Test_U_NetStream_t,
                                      struct Net_UserData> Test_U_AsynchTCPConnector_t;

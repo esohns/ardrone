@@ -82,11 +82,11 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionManagerType,
                             ConnectorType,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                            CBDataType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
-#else
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//                            CBDataType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
+//#else
                             CBDataType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
-#endif
+//#endif
  : inherited (stream_in)
  , inherited2 ()
  , CBData_ (NULL)

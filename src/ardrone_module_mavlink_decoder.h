@@ -74,12 +74,12 @@ class ARDrone_Module_MAVLinkDecoder_T
   typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
                                      struct __mavlink_message> IPARSER_T;
 
-  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T*); // stream handle
-#else
+//  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T*); // stream handle
+//#else
   ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T*); // stream handle
-#endif
+//#endif
   inline virtual ~ARDrone_Module_MAVLinkDecoder_T () {}
 
   // implement/override (part of) Stream_IYaccStreamParser_T

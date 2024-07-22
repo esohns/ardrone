@@ -38,6 +38,7 @@
 #endif // ACE_WIN32 || ACE_WIN64
 #undef FFMPEG_SUPPORT
 #include "VLIB/video_codec.h"
+#define FFMPEG_SUPPORT 1
 
 #include "ace/Containers_T.h"
 #include "ace/Message_Block.h"

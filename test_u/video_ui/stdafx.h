@@ -11,10 +11,9 @@
 // *NOTE*: work around quirky MSVC...
 #define NOMINMAX
 
-//#include "targetver.h"
+#include "targetver.h"
 
 // Windows Header Files
-#include "ace/config-lite.h"
 #include <windows.h>
 
 #include <strmif.h>
@@ -71,10 +70,6 @@
 #include "net_common.h"
 #include "net_macros.h"
 
-//#if defined (_MSC_VER)
-//#include "targetver.h"
-//#endif
-
 // *TODO*: reference additional headers your program requires here
 
 // Local Header Files
@@ -82,5 +77,7 @@
 #include "ardrone_config.h"
 #endif // HAVE_CONFIG_H
 #include "ardrone_macros.h"
+
+#include "test_u_video_ui_common.h"
 
 #endif // __STDAFX__

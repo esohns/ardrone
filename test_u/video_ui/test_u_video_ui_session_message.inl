@@ -25,14 +25,16 @@
 template <typename DataMessageType,
           typename SessionDataType>
 Test_U_SessionMessage_T<DataMessageType,
-                                     SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
-                                                                                             enum Stream_SessionMessageType messageType_in,
-                                                                                             SessionDataType*& sessionData_in,
-                                                                                             struct Net_UserData* userData_in)
+                        SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
+                                                                   enum Stream_SessionMessageType messageType_in,
+                                                                   SessionDataType*& sessionData_in,
+                                                                   struct Stream_UserData* userData_in,
+                                                                   bool expedited_in)
  : inherited (sessionId_in,
               messageType_in,
               sessionData_in,
-              userData_in)
+              userData_in,
+              expedited_in)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_SessionMessage_T::Test_U_SessionMessage_T"));
 
@@ -41,8 +43,8 @@ Test_U_SessionMessage_T<DataMessageType,
 template <typename DataMessageType,
           typename SessionDataType>
 Test_U_SessionMessage_T<DataMessageType,
-                                     SessionDataType>::Test_U_SessionMessage_T (const Test_U_SessionMessage_T<DataMessageType,
-                                                                                                                                        SessionDataType>& message_in)
+                        SessionDataType>::Test_U_SessionMessage_T (const Test_U_SessionMessage_T<DataMessageType,
+                                                                   SessionDataType>& message_in)
  : inherited (message_in)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_SessionMessage_T::Test_U_SessionMessage_T"));
@@ -52,8 +54,8 @@ Test_U_SessionMessage_T<DataMessageType,
 template <typename DataMessageType,
           typename SessionDataType>
 Test_U_SessionMessage_T<DataMessageType,
-                                     SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
-                                                                                             ACE_Allocator* messageAllocator_in)
+                        SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
+                                                                   ACE_Allocator* messageAllocator_in)
  : inherited (sessionId_in,
               messageAllocator_in) // message block allocator
 {
@@ -64,9 +66,9 @@ Test_U_SessionMessage_T<DataMessageType,
 template <typename DataMessageType,
           typename SessionDataType>
 Test_U_SessionMessage_T<DataMessageType,
-                                     SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
-                                                                                             ACE_Data_Block* dataBlock_in,
-                                                                                             ACE_Allocator* messageAllocator_in)
+                        SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
+                                                                   ACE_Data_Block* dataBlock_in,
+                                                                   ACE_Allocator* messageAllocator_in)
  : inherited (sessionId_in,
               dataBlock_in,        // use (don't own (!) memory of-) this data block
               messageAllocator_in) // message block allocator
@@ -79,7 +81,7 @@ template <typename DataMessageType,
           typename SessionDataType>
 ACE_Message_Block*
 Test_U_SessionMessage_T<DataMessageType,
-                                     SessionDataType>::duplicate (void) const
+                        SessionDataType>::duplicate (void) const
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_SessionMessage_T::duplicate"));
 

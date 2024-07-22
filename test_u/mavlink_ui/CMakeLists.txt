@@ -28,6 +28,8 @@ elseif (QT_USE)
 elseif (WXWIDGETS_USE)
 endif ()
 
+include ($ENV{PRJ_ROOT}/Common/scripts/ACE.cmake)
+
 ##########################################
 
 if (UNIX)

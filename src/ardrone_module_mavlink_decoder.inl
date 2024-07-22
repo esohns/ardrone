@@ -38,11 +38,11 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
                                 ConfigurationType,
                                 ControlMessageType,
                                 DataMessageType,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                                SessionMessageType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
-#else
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//                                SessionMessageType>::ARDrone_Module_MAVLinkDecoder_T (ISTREAM_T* stream_in)
+//#else
                                 SessionMessageType>::ARDrone_Module_MAVLinkDecoder_T (typename inherited::ISTREAM_T* stream_in)
-#endif
+//#endif
  : inherited (stream_in,
               STREAM_MISC_PARSER_DEFAULT_LEX_TRACE,
               STREAM_MISC_PARSER_DEFAULT_YACC_TRACE)

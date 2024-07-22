@@ -2148,10 +2148,11 @@ YY_RULE_SETUP
                   ACE_ASSERT (yyscanner);
 
                   ARDrone_Control_IScanner_t* iscanner_p =
-                      ARDrone_Control_Scanner_get_extra (yyscanner);
+                    ARDrone_Control_Scanner_get_extra (yyscanner);
                   ACE_ASSERT (iscanner_p);
-                  ARDrone_Control_IParser_t* iparser_p =
-                      const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ARDrone_Control_IParser_t* iparser_p = NULL;
+                    //const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ACE_ASSERT (false); // *TODO*: pass parser (not scanner) as extra data (yes, it's uglier)
                   ACE_ASSERT (iparser_p);
                   ARDrone_DeviceConfiguration_t* configuration_p =
                       &iparser_p->current ();
@@ -2209,8 +2210,9 @@ YY_RULE_SETUP
                   ARDrone_Control_IScanner_t* iscanner_p =
                     ARDrone_Control_Scanner_get_extra (yyscanner);
                   ACE_ASSERT (iscanner_p);
-                  ARDrone_Control_IParser_t* iparser_p =
-                    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ARDrone_Control_IParser_t* iparser_p = NULL;
+                  //const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
+                  ACE_ASSERT (false); // *TODO*: pass parser (not scanner) as extra data (yes, it's uglier)
                   ACE_ASSERT (iparser_p);
                   ARDrone_DeviceConfiguration_t& configuration_r =
                     iparser_p->current ();

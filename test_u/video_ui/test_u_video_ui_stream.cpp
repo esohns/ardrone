@@ -19,8 +19,8 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "test_u_video_ui_session_message.h"
+
 #include "test_u_video_ui_stream.h"
 
 #include "ace/Log_Msg.h"
@@ -58,6 +58,8 @@ Test_U_Stream::Test_U_Stream ()
  //           ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
+ , detect_ (this,
+            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_OPENCV_CLASSIFIER_DEFAULT_NAME_STRING))
  , resize_ (this,
             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , direct3DDisplay_ (this,
@@ -156,7 +158,7 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   ACE_ASSERT (!isRunning ());
 
   bool result = false;
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
   Test_U_SessionData* session_data_p = NULL;
   inherited::CONFIGURATION_T::ITERATOR_T iterator, iterator_2;
@@ -174,7 +176,7 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
 
   // ---------------------------------------------------------------------------
   // step3: allocate a new session state, reset stream
-  const_cast<inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -184,7 +186,7 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
                 ACE_TEXT (stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
@@ -217,19 +219,19 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
 
   // ---------------------------------------------------------------------------
   // step5: update session data
-  session_data_p->formats.push_back (configuration_in.configuration_.format);
+  session_data_p->formats.push_back (configuration_in.configuration_->format);
 
   // ---------------------------------------------------------------------------
   // step6: initialize head module
-  source_impl_p->setP (&(inherited::state_));
-  //fileReader_impl_p->reset ();
-  // *NOTE*: push()ing the module will open() it
-  //         --> set the argument that is passed along (head module expects a
-  //             handle to the session data)
-  source_.arg (inherited::sessionData_);
+  //source_impl_p->setP (&(inherited::state_));
+  ////fileReader_impl_p->reset ();
+  //// *NOTE*: push()ing the module will open() it
+  ////         --> set the argument that is passed along (head module expects a
+  ////             handle to the session data)
+  //source_.arg (inherited::sessionData_);
 
   // step7: assemble stream
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -252,9 +254,9 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   return true;
 
 error:
-  if ((*iterator).second.second.builder)
+  if ((*iterator).second.second->builder)
   {
-    (*iterator).second.second.builder->Release (); (*iterator).second.second.builder = NULL;
+    (*iterator).second.second->builder->Release (); (*iterator).second.second->builder = NULL;
   } // end IF
   if (session_data_p)
   {

@@ -2357,8 +2357,9 @@ YY_DECL
   ARDrone_NavData_IScanner_t* iscanner_p =
     ARDrone_NavData_Scanner_get_extra (yyscanner);
   ACE_ASSERT (iscanner_p);
-  ARDrone_NavData_IParser* iparser_p =
-    const_cast<ARDrone_NavData_IParser*> (iscanner_p->getP_2 ());
+  ARDrone_NavData_IParser* iparser_p = NULL;
+    //const_cast<ARDrone_NavData_IParser*> (iscanner_p->getP_2 ());
+  ACE_ASSERT (false); // *TODO*: pass parser (not scanner) as extra data (yes, it's uglier)
   ACE_ASSERT (iparser_p);
 
   struct _navdata_t& message_r = iparser_p->current ();

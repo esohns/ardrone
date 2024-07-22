@@ -19,7 +19,6 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "ardrone_module_navdata_decoder.h"
 
 #include "ardrone_defines.h"

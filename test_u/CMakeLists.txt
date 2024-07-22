@@ -32,7 +32,7 @@ if (NOT ACE_LIBRARY)
 else ()
  #message (STATUS "Found ACE library \"${ACE_LIBRARY}\"")
 endif ()
-add_definitions (-DACE_HAS_DLL)
+#add_definitions (-DACE_HAS_DLL)
 #pkg_check_modules (PKG_ACE REQUIRED ACE)
 
 # user interface
@@ -105,4 +105,3 @@ endif ()
 # enable (unit/integration) tests
 #include (CTest)
 enable_testing ()
-

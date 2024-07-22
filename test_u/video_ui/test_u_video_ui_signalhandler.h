@@ -57,10 +57,8 @@ class Test_U_SignalHandler_T
 //////////////////////////////////////////
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef ARDrone_SignalHandler_T<struct ARDrone_DirectShow_SignalConfiguration,
-                                ARDrone_DirectShow_IConnector_t> ARDrone_DirectShow_SignalHandler_t;
-typedef ARDrone_SignalHandler_T<struct ARDrone_MediaFoundation_SignalConfiguration,
-                                ARDrone_MediaFoundation_IConnector_t> ARDrone_MediaFoundation_SignalHandler_t;
+typedef Test_U_SignalHandler_T<struct ARDrone_DirectShow_SignalConfiguration> ARDrone_DirectShow_SignalHandler_t;
+typedef Test_U_SignalHandler_T<struct ARDrone_MediaFoundation_SignalConfiguration> ARDrone_MediaFoundation_SignalHandler_t;
 #else
 typedef Test_U_SignalHandler_T<struct Stream_SignalHandlerConfiguration> Test_U_SignalHandler_t;
 #endif // ACE_WIN32 || ACE_WIN64

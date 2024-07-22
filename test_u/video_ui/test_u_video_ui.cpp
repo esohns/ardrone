@@ -45,7 +45,7 @@
 #include "common_tools.h"
 
 #include "common_log_tools.h"
-#include "common_logger.h"
+//#include "common_logger.h"
 
 #include "common_signal_tools.h"
 
@@ -59,6 +59,8 @@
 #include "stream_allocatorheap.h"
 #include "stream_control_message.h"
 #include "stream_macros.h"
+
+#include "stream_dec_defines.h"
 
 #include "stream_dev_defines.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -364,7 +366,7 @@ do_work (
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
          const struct Common_UI_DisplayDevice& displayDevice_in,
-         struct Test_U_Configuration& configuration_in,
+         struct Test_U_VideoUI_Configuration& configuration_in,
          enum Stream_Visualization_VideoRenderer renderer_in)
 {
   STREAM_TRACE (ACE_TEXT ("::do_work"));
@@ -372,6 +374,7 @@ do_work (
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
+  struct Test_U_StreamConfiguration stream_configuration;
   Test_U_TCPConnectionConfiguration_t connection_configuration;
   Test_U_TCPConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
@@ -379,7 +382,7 @@ do_work (
   Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator;
   Test_U_StreamConfiguration_t::ITERATOR_T v4l_stream_iterator_2;
   modulehandler_configuration.allocatorConfiguration =
-    &configuration_in.streamConfiguration.allocatorConfiguration_;
+    &configuration_in.allocatorConfiguration;
   modulehandler_configuration.connectionConfigurations =
       &configuration_in.connectionConfigurations;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -391,7 +394,7 @@ do_work (
   modulehandler_configuration.subscriber = &ui_event_handler;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Stream_MediaFramework_DirectDraw_Tools::initialize (true);
+  Stream_MediaFramework_DirectDraw_Tools::initialize ();
 #endif // ACE_WIN32 || ACE_WIN64
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
@@ -403,13 +406,13 @@ do_work (
   Test_U_MessageHandler_Module message_handler (&stream,
                                                              ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
-  configuration_in.streamConfiguration.configuration_.messageAllocator =
+  configuration_in.streamConfiguration.configuration_->messageAllocator =
       &message_allocator;
-  configuration_in.streamConfiguration.configuration_.module = &message_handler;
+  configuration_in.streamConfiguration.configuration_->module = &message_handler;
 //  configuration_in.streamConfiguration.configuration_.renderer =
 //      renderer_in;
 
-  if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
+  if (!heap_allocator.initialize (configuration_in.allocatorConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize heap allocator, returning\n")));
@@ -439,17 +442,16 @@ do_work (
   modulehandler_configuration.outputFormat.resolution.height = 480;
 #endif // ACE_WIN32 || ACE_WIN64
   modulehandler_configuration.outputFormat.frameRate.num = 30;
-  configuration_in.streamConfiguration.configuration_.format =
+  configuration_in.streamConfiguration.configuration_->format =
       modulehandler_configuration.outputFormat;
 
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
-                                                   configuration_in.streamConfiguration.allocatorConfiguration_,
-                                                   configuration_in.streamConfiguration.configuration_);
+                                                   stream_configuration);
   configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING),
-                                                               std::make_pair (module_configuration,
-                                                                               modulehandler_configuration)));
+                                                               std::make_pair (&module_configuration,
+                                                                               &modulehandler_configuration)));
   v4l_stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (v4l_stream_iterator != configuration_in.streamConfiguration.end ());
@@ -466,18 +468,17 @@ do_work (
 //  connection_configuration.PDUSize =
 //    std::max (bufferSize_in,
 //              static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
-  connection_configuration.address =
+  connection_configuration.socketConfiguration.address =
       ACE_INET_Addr (ACE_TEXT_ALWAYS_CHAR ("192.168.1.1:0"), AF_INET);
-  connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
-                                                    1);
-  connection_configuration.bufferSize =
+  connection_configuration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
+                                                                        1);
+  connection_configuration.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   connection_configuration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
 
-  configuration_in.streamConfiguration.configuration_.module = NULL;
-  connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                       configuration_in.streamConfiguration);
+  configuration_in.streamConfiguration.configuration_->module = NULL;
+  connection_configuration.streamConfiguration = &configuration_in.streamConfiguration;
 
 //  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
@@ -485,8 +486,9 @@ do_work (
   Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
       configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set (*dynamic_cast<Test_U_TCPConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
-                             NULL); // passed to all handlers
+  struct Net_UserData user_data_s;
+  connection_manager_p->set (connection_configuration,
+                             &user_data_s); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;
   Common_Timer_Manager_t* timer_manager_p = NULL;
@@ -495,13 +497,11 @@ do_work (
   timer_manager_p = COMMON_TIMERMANAGER_SINGLETON::instance ();
   ACE_ASSERT (timer_manager_p);
   timer_manager_p->initialize (timer_configuration);
-  ACE_thread_t thread_id = 0;
-  timer_manager_p->start (thread_id);
-  ACE_UNUSED_ARG (thread_id);
+  timer_manager_p->start (NULL);
 
   struct Common_EventDispatchState dispatch_state_s;
   dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
-  if (!Common_Tools::startEventDispatch (dispatch_state_s))
+  if (!Common_Event_Tools::startEventDispatch (dispatch_state_s))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start event dispatch, returning\n")));
@@ -539,12 +539,12 @@ do_work (
 
   connection_manager_p->stop ();
   connection_manager_p->abort (true); // wait for completion ?
-  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
-                                       dispatch_state_s.reactorGroupId,
-                                       true); // wait ?
+  Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
+                                             true,  // wait ?
+                                             true); // release singleton pro/reactors ?
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Stream_MediaFramework_DirectDraw_Tools::finalize (true);
+  Stream_MediaFramework_DirectDraw_Tools::finalize ();
 #endif // ACE_WIN32 || ACE_WIN64
 
   ACE_DEBUG ((LM_DEBUG,
@@ -584,7 +584,12 @@ ACE_TMAIN (int argc_in,
     Common_File_Tools::getWorkingDirectory ();
 
   // initialize framework(s)
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_Tools::initialize (false,  // initialize COM ?
+                            false); // initialize random number generator ?
+#else
   Common_Tools::initialize (false); // initialize random number generator ?
+#endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -712,31 +717,17 @@ ACE_TMAIN (int argc_in,
   } // end SWITCH
 
   // step1e: pre-initialize signal handling
-  ACE_Sig_Set signal_set (0);
-  ACE_Sig_Set ignored_signal_set (0);
+  ACE_Sig_Set signal_set (false);
+  ACE_Sig_Set ignored_signal_set (false);
   do_initializeSignals (false, // handle SIGUSR1/SIGBREAK ?
                         signal_set,
                         ignored_signal_set);
   Common_SignalActions_t previous_signal_actions;
-  sigset_t previous_signal_mask;
-  int result = ACE_OS::sigemptyset (&previous_signal_mask);
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE_OS::sigemptyset(): \"%m\", aborting\n")));
-
-    Common_Log_Tools::finalizeLogging ();
-    // *PORTABILITY*: on Windows, finalize ACE...
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    result = ACE::fini ();
-    if (result == -1)
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to ACE::fini(): \"%m\", continuing\n")));
-#endif // ACE_WIN32 || ACE_WIN64
-    return EXIT_FAILURE;
-  } // end IF
+  ACE_Sig_Set previous_signal_mask (false);
   if (!Common_Signal_Tools::preInitialize (signal_set,
-                                           (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR),
+                                           (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR) ? COMMON_SIGNAL_DISPATCH_PROACTOR : COMMON_SIGNAL_DISPATCH_REACTOR,
+                                           true,
+                                           false,
                                            previous_signal_actions,
                                            previous_signal_mask))
   {
@@ -754,16 +745,19 @@ ACE_TMAIN (int argc_in,
     return EXIT_FAILURE;
   } // end IF
   ACE_SYNCH_RECURSIVE_MUTEX* lock_2 = NULL;
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
   Test_U_SignalHandler_t signal_handler (COMMON_SIGNAL_DISPATCH_SIGNAL,
                                          lock_2);
+#endif // ACE_WIN32 || ACE_WIN64
 
-  struct Test_U_Configuration configuration;
+  struct Test_U_VideoUI_Configuration configuration;
 
   // event dispatch
   configuration.dispatchConfiguration.numberOfProactorThreads = 3;
   configuration.dispatchConfiguration.proactorType =
-      COMMON_PROACTOR_POSIX_AIOCB;
-  if (!Common_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
+    COMMON_EVENT_PROACTOR_DEFAULT_TYPE;
+  if (!Common_Event_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));

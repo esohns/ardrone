@@ -74,12 +74,12 @@ class ARDrone_Module_ControlDecoder_T
   typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
                                      ARDrone_DeviceConfiguration_t> IPARSER_T;
 
-  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_Module_ControlDecoder_T (ISTREAM_T*); // stream handle
-#else
+//  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  ARDrone_Module_ControlDecoder_T (ISTREAM_T*); // stream handle
+//#else
   ARDrone_Module_ControlDecoder_T (typename inherited::ISTREAM_T*); // stream handle
-#endif
+//#endif
   inline virtual ~ARDrone_Module_ControlDecoder_T () {};
 
   virtual bool initialize (const ConfigurationType&,

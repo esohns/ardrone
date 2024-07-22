@@ -45,9 +45,10 @@ extern "C"
 #include "ace/OS.h"
 
 #include "common.h"
+#include "common_iparser.h"
 #include "common_statistic_handler.h"
 
-#include "common_iparser.h"
+#include "common_parser_defines.h"
 
 #include "stream_configuration.h"
 #include "stream_data_base.h"

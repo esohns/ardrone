@@ -32,6 +32,7 @@
 #include "stream_dec_libav_converter.h"
 #include "stream_dec_libav_decoder.h"
 
+#include "stream_lib_ffmpeg_common.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_lib_directshow_asynch_source_filter.h"
 #include "stream_lib_directshow_source_filter.h"
@@ -66,8 +67,8 @@ typedef ARDrone_Module_PaVEDecoder_T<ACE_MT_SYNCH,
                                      Stream_ControlMessage_t,
                                      Test_U_Message_t,
                                      Test_U_SessionMessage_t,
-                                     struct Stream_MediaFramework_FFMPEG_MediaType,
-                                     struct Net_UserData> Test_U_PaVEDecoder;
+                                     struct Stream_MediaFramework_FFMPEG_VideoMediaType,
+                                     struct Stream_UserData> Test_U_PaVEDecoder;
 
 typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,
                                      Common_TimePolicy_t,
@@ -76,16 +77,29 @@ typedef Stream_Decoder_LibAVDecoder_T<ACE_MT_SYNCH,
                                      Test_U_Message_t,
                                      Test_U_SessionMessage_t,
                                      Test_U_SessionData_t,
-                                     struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_H264Decoder;
+                                     struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_H264Decoder;
 
-typedef Stream_Decoder_LibAVConverter_T<ACE_MT_SYNCH,
-                                        Common_TimePolicy_t,
-                                        struct Test_U_ModuleHandlerConfiguration,
-                                        Stream_ControlMessage_t,
-                                        Test_U_Message_t,
-                                        Test_U_SessionMessage_t,
-                                        Test_U_SessionData_t,
-                                        struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_LibAVConvert;
+typedef Stream_TaskBaseSynch_T<ACE_MT_SYNCH,
+                               Common_TimePolicy_t,
+                               struct Test_U_ModuleHandlerConfiguration,
+                               Stream_ControlMessage_t,
+                               Test_U_Message_t,
+                               Test_U_SessionMessage_t,
+                               enum Stream_ControlType,
+                               enum Stream_SessionMessageType,
+                               struct Stream_UserData> Test_U_TaskBaseSynch_t;
+typedef Stream_TaskBaseAsynch_T<ACE_MT_SYNCH,
+                                Common_TimePolicy_t,
+                                struct Test_U_ModuleHandlerConfiguration,
+                                Stream_ControlMessage_t,
+                                Test_U_Message_t,
+                                Test_U_SessionMessage_t,
+                                enum Stream_ControlType,
+                                enum Stream_SessionMessageType,
+                                struct Stream_UserData> Test_U_TaskBaseAsynch_t;
+
+typedef Stream_Decoder_LibAVConverter_T<Test_U_TaskBaseSynch_t,
+                                        struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_LibAVConvert;
 
 typedef Stream_Visualization_OpenCVClassifier_T<ACE_MT_SYNCH,
                                                 Common_TimePolicy_t,
@@ -94,16 +108,10 @@ typedef Stream_Visualization_OpenCVClassifier_T<ACE_MT_SYNCH,
                                                 Test_U_Message_t,
                                                 Test_U_SessionMessage_t,
                                                 Test_U_SessionData_t,
-                                                struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_OpenCVClassifier;
+                                                struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_OpenCVClassifier;
 
-typedef Stream_Visualization_LibAVResize_T<ACE_MT_SYNCH,
-                                           Common_TimePolicy_t,
-                                           struct Test_U_ModuleHandlerConfiguration,
-                                           Stream_ControlMessage_t,
-                                           Test_U_Message_t,
-                                           Test_U_SessionMessage_t,
-                                           Test_U_SessionData_t,
-                                           struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_LibAVResize;
+typedef Stream_Visualization_LibAVResize_T<Test_U_TaskBaseSynch_t,
+                                           struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_LibAVResize;
 
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,
@@ -151,18 +159,12 @@ struct Test_U_DirectShow_FilterConfiguration
   Stream_Module_t*                                                module; // handle
   struct Stream_MediaFramework_DirectShow_FilterPinConfiguration* pinConfiguration; // handle
 };
-typedef Stream_MediaFramework_DirectShow_Source_Filter_T<Common_TimePolicy_t,
-                                                         Test_U_SessionMessage_t,
-                                                         Test_U_Message_t,
+typedef Stream_MediaFramework_DirectShow_Source_Filter_T<Test_U_Message_t,
                                                          struct Test_U_DirectShow_FilterConfiguration,
-                                                         struct Stream_MediaFramework_DirectShow_FilterPinConfiguration,
-                                                         struct _AMMediaType> Test_U_DirectShowFilter_t;
-typedef Stream_MediaFramework_DirectShow_Asynch_Source_Filter_T<Common_TimePolicy_t,
-                                                                Test_U_SessionMessage_t,
-                                                                Test_U_Message_t,
+                                                         struct Stream_MediaFramework_DirectShow_FilterPinConfiguration> Test_U_DirectShowFilter_t;
+typedef Stream_MediaFramework_DirectShow_Asynch_Source_Filter_T<Test_U_Message_t,
                                                                 struct Test_U_DirectShow_FilterConfiguration,
-                                                                struct Stream_MediaFramework_DirectShow_FilterPinConfiguration,
-                                                                struct _AMMediaType> Test_U_AsynchDirectShowFilter_t;
+                                                                struct Stream_MediaFramework_DirectShow_FilterPinConfiguration> Test_U_AsynchDirectShowFilter_t;
 typedef Stream_Vis_Target_DirectShow_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct Test_U_ModuleHandlerConfiguration,
@@ -173,7 +175,8 @@ typedef Stream_Vis_Target_DirectShow_T<ACE_MT_SYNCH,
                                        Test_U_SessionData,
                                        struct Test_U_DirectShow_FilterConfiguration,
                                        struct Test_U_DirectShow_PinConfiguration,
-                                       Test_U_DirectShowFilter_t> Test_U_DirectShow_DirectShowDisplay;
+                                       Test_U_DirectShowFilter_t,
+                                       struct _AMMediaType> Test_U_DirectShow_DirectShowDisplay;
 #else
 typedef Stream_Module_Vis_GTK_Window_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
@@ -181,7 +184,7 @@ typedef Stream_Module_Vis_GTK_Window_T<ACE_MT_SYNCH,
                                        Stream_ControlMessage_t,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
-                                       struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_Display_2;
+                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_Display_2;
 typedef Stream_Module_Vis_X11_Window_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct Test_U_ModuleHandlerConfiguration,
@@ -189,7 +192,7 @@ typedef Stream_Module_Vis_X11_Window_T<ACE_MT_SYNCH,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
                                        Test_U_SessionData_t,
-                                       struct Stream_MediaFramework_FFMPEG_MediaType> Test_U_Display;
+                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_Display;
 #endif // ACE_WIN32 || ACE_WIN64
 
 typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
@@ -198,9 +201,8 @@ typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
                                        Stream_ControlMessage_t,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
-                                       Stream_SessionId_t,
                                        Test_U_SessionData,
-                                       struct Net_UserData> Test_U_MessageHandler;
+                                       struct Stream_UserData> Test_U_MessageHandler;
 
 //////////////////////////////////////////
 

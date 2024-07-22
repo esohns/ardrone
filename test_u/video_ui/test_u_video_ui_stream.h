@@ -45,7 +45,6 @@
 #include "test_u_video_ui_common_modules.h"
 #include "test_u_video_ui_net_modules.h"
 #include "test_u_video_ui_message.h"
-#include "test_u_video_ui_session_message.h"
 
 // forward declarations
 class Stream_IAllocator;
@@ -62,8 +61,6 @@ class Test_U_Stream
                         struct Test_U_StreamState,
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
                         struct Test_U_ModuleHandlerConfiguration,
                         Test_U_SessionData,
                         Test_U_SessionData_t,
@@ -80,8 +77,6 @@ class Test_U_Stream
                         struct Test_U_StreamState,
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
-                        struct Stream_AllocatorConfiguration,
-                        struct Stream_ModuleConfiguration,
                         struct Test_U_ModuleHandlerConfiguration,
                         Test_U_SessionData,
                         Test_U_SessionData_t,

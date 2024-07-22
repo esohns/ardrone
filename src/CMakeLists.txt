@@ -2,6 +2,8 @@
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ACE.cmake)
 
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ffmpeg.cmake)
+
 set (ACE_XML_LIB_FILE libACEXML.so)
 if (UNIX)
 # message ("CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
@@ -354,16 +356,16 @@ elseif (WIN32)
 
 # target_link_libraries (${PROJECT_NAME} ntdll.lib)
  #link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE})
- target_link_libraries (${PROJECT_NAME} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/${CMAKE_BUILD_TYPE}/BaseClassesd.lib)
+ target_link_libraries (${PROJECT_NAME} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/build/msvc/baseclasses/${CMAKE_BUILD_TYPE}/BaseClassesd.lib)
 
 # target_link_libraries (${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/avcodec.lib)
- target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/avcodec.lib)
+# target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/avcodec.lib)
 # target_link_libraries (${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/avformat.lib)
- target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/avformat.lib)
+# target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/avformat.lib)
 # target_link_libraries (${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/swresample.lib)
- target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/swresample.lib)
+# target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/swresample.lib)
 # target_link_libraries (${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/swscale.lib)
- target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/swscale.lib)
+# target_link_libraries (${PROJECT_NAME} $ENV{LIB_ROOT}/ffmpeg/lib/swscale.lib)
 
 # if (MSXML_USE)
   target_link_libraries (${PROJECT_NAME} msxml2.lib)

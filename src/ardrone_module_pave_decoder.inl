@@ -22,6 +22,9 @@
 
 #include "stream_macros.h"
 
+#include "stream_lib_common.h"
+#include "stream_lib_ffmpeg_common.h"
+
 #include "ardrone_tools.h"
 #include "ardrone_types.h"
 
@@ -40,11 +43,11 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              DataMessageType,
                              SessionMessageType,
                              MediaType,
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-                             UserDataType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
-#else
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//                             UserDataType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
+//#else
                              UserDataType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
-#endif // ACE_WIN32 || ACE_WIN64
+//#endif // ACE_WIN32 || ACE_WIN64
  : inherited (stream_in)
  , buffer_ (NULL)
  , header_ ()
@@ -232,7 +235,8 @@ next:
         session_data_container_p->increase ();
       if (!inherited::putSessionMessage (STREAM_SESSION_MESSAGE_RESIZE,
                                          session_data_container_p,
-                                         NULL))
+                                         NULL,
+                                         false)) // expedited ?
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Stream_TaskBase_T::putSessionMessage(%d), continuing\n"),
                     inherited::mod_->name (),
@@ -371,12 +375,13 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
       // *NOTE*: the stream usually ought to initialize the format stack
       if (session_data_r.formats.empty ())
       {
-        struct Stream_MediaFramework_FFMPEG_MediaType format_s;
+        struct Stream_MediaFramework_FFMPEG_VideoMediaType format_s;
         format_s.format = AV_PIX_FMT_NONE; // video is header- + H.264-encoded
         ARDroneVideoModeToResolution (videoMode_,
                                       format_s.resolution);
         MediaType media_type_s;
         inherited2::getMediaType (format_s,
+                                  STREAM_MEDIATYPE_VIDEO,
                                   media_type_s);
          session_data_r.formats.push_back (media_type_s);
       } // end IF

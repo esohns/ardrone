@@ -36,9 +36,9 @@ enum Test_U_ProgramMode
   TEST_U_PROGRAMMODE_INVALID
 };
 
-struct Test_U_Configuration
+struct Test_U_VideoUI_Configuration
 {
-  Test_U_Configuration ()
+  Test_U_VideoUI_Configuration ()
    : allocatorConfiguration ()
    , connectionConfigurations ()
    , dispatchConfiguration ()
@@ -48,11 +48,11 @@ struct Test_U_Configuration
 #endif // ACE_WIN32 || ACE_WIN64
   {}
 
-  Stream_AllocatorConfiguration     allocatorConfiguration;
-  Net_ConnectionConfigurations_t    connectionConfigurations;
-  Common_EventDispatchConfiguration dispatchConfiguration;
+  struct Stream_AllocatorConfiguration                allocatorConfiguration;
+  Net_ConnectionConfigurations_t                      connectionConfigurations;
+  Common_EventDispatchConfiguration                   dispatchConfiguration;
   // **************************** stream data **********************************
-  Test_U_StreamConfiguration_t      streamConfiguration;
+  Test_U_StreamConfiguration_t                        streamConfiguration;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct Stream_MediaFramework_Direct3D_Configuration direct3DConfiguration;
 #endif // ACE_WIN32 || ACE_WIN64

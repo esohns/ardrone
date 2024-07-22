@@ -34,8 +34,10 @@
 template <typename DataType,
           typename SessionDataType>
 Test_U_Message_T<DataType,
-                 SessionDataType>::Test_U_Message_T (unsigned int size_in)
- : inherited (size_in)
+                 SessionDataType>::Test_U_Message_T (Stream_SessionId_t sessionId_in,
+                                                     size_t size_in)
+ : inherited (sessionId_in,
+              size_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Message_T::Test_U_Message_T"));
 
