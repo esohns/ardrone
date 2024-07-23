@@ -46,8 +46,10 @@ extern "C"
 
 #include "common.h"
 #include "common_iparser.h"
+#include "common_iscanner.h"
 #include "common_statistic_handler.h"
 
+#include "common_parser_common.h"
 #include "common_parser_defines.h"
 
 #include "stream_configuration.h"
@@ -166,10 +168,10 @@ struct ARDrone_MessageData
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
-typedef Common_IYaccRecordParser_T<struct Common_ParserConfiguration,
+typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
                                    ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+typedef Common_ILexScanner_T<struct Common_FlexScannerState,
+                             void> ARDrone_Control_IScanner_t;
 class ARDrone_IControlNotify
 {
  public:
@@ -187,15 +189,15 @@ class ARDrone_IMAVLinkNotify
                           void*) = 0;                      // payload handle
 };
 
-class ARDrone_NavData_IParser
- : public Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
-                                     struct _navdata_t>
-{
- public:
-  virtual void addOption (unsigned int) = 0; // offset
-};
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
+//class ARDrone_NavData_IParser
+// : public Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
+//                                     struct _navdata_t>
+//{
+// public:
+//  virtual void addOption (unsigned int) = 0; // offset
+//};
+//typedef Common_ILexScanner_T<struct Common_ScannerState,
+//                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
 class ARDrone_INavDataNotify
 {
  public:

@@ -1,16 +1,16 @@
 %top{
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+
+#define YY_STRUCT_YY_BUFFER_STATE
+#include "ardrone_navdata_scanner.h"
+#undef YY_STRUCT_YY_BUFFER_STATE
+
+#endif
+
 // forward declarations
 typedef void* yyscan_t;
 class ARDrone_NavData_IParser;
-struct Common_ScannerState;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_NavData_IParser> ARDrone_NavData_IScanner_t;
-#endif
 
 #define YY_DECL int ARDrone_NavData_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
@@ -29,9 +29,10 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 #include "ace/Log_Msg.h"
 #include "ace/OS.h"
 
-#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
+
+#include "ardrone_module_navdata_decoder.h"
 %}
 
 %option header-file="ardrone_navdata_scanner.h" outfile="ardrone_navdata_scanner.cpp"
@@ -49,7 +50,7 @@ void ARDrone_NavData_Scanner_set_column (int, yyscan_t);
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="ARDrone_NavData_IScanner_t*"
+%option extra-type="ARDrone_NavData_IParser*"
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
@@ -69,11 +70,8 @@ HEADER                 \x88\x77\x66\x55
   // sanity check(s)
   ACE_ASSERT (yyscanner);
 
-  ARDrone_NavData_IScanner_t* iscanner_p =
-    ARDrone_NavData_Scanner_get_extra (yyscanner);
-  ACE_ASSERT (iscanner_p);
   ARDrone_NavData_IParser* iparser_p =
-    const_cast<ARDrone_NavData_IParser*> (iscanner_p->getP_2 ());
+    ARDrone_NavData_Scanner_get_extra (yyscanner);
   ACE_ASSERT (iparser_p);
 
   struct _navdata_t& message_r = iparser_p->current ();
@@ -213,12 +211,11 @@ ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner)
   ACE_ASSERT (yyscanner);
 //  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
 //  ACE_UNUSED_ARG (yyg);
-  ARDrone_NavData_IScanner_t* iscanner_p =
+  ARDrone_NavData_IParser* iparser_p =
     ARDrone_NavData_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iparser_p);
 
-  // sanity check(s)
-  ACE_ASSERT (iscanner_p);
-  if (!iscanner_p->isBlocking ())
+  if (!iparser_p->isBlocking ())
     return 1; // not enough data, cannot proceed
 
   // *NOTE*: there is more data
@@ -242,7 +239,7 @@ ARDrone_NavData_Scanner_wrap (yyscan_t yyscanner)
   //              the_rest.size ()));
 
   // step2
-  if (!iscanner_p->switchBuffer ())
+  if (!iparser_p->switchBuffer ())
   {
     // *NOTE*: most probable reason: received session end message
     ACE_DEBUG ((LM_DEBUG,

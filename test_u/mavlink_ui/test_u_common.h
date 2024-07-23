@@ -51,7 +51,7 @@ struct Test_U_Configuration
   struct Stream_AllocatorConfiguration     allocatorConfiguration;
   Net_ConnectionConfigurations_t           connectionConfigurations;
   struct Common_EventDispatchConfiguration dispatchConfiguration;
-  struct Common_UI_GTK_Configuration       GTKConfiguration;
+  Common_UI_GTK_Configuration_t            GTKConfiguration;
   struct Common_ParserConfiguration        parserConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t             streamConfiguration;

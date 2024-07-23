@@ -38,6 +38,36 @@ class Stream_IAllocator;
 
 extern const char ardrone_default_control_decoder_module_name_string[];
 
+class ARDrone_Control_IParser
+ : public Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     ARDrone_DeviceConfiguration_t>
+ , virtual public Common_ILexScanner_T<struct Common_FlexScannerState,
+                                       void>
+{
+ public:
+  // convenient types
+  typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     ARDrone_DeviceConfiguration_t> IPARSER_T;
+  typedef Common_ILexScanner_T<struct Common_FlexScannerState,
+                               void> ISCANNER_T;
+
+  using IPARSER_T::initialize;
+  //using IPARSER_T::error;
+
+  inline virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
+  inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
+  inline virtual const struct Common_FlexScannerState& getR () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
+  //  using Common_IScanner::error;
+
+  ARDrone_Control_IParser ()
+   : finished_ (false)
+  {}
+
+  bool finished_;
+};
+
+////////////////////////////////////////////
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           ////////////////////////////////
@@ -55,9 +85,8 @@ class ARDrone_Module_ControlDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
-                                                            ARDrone_DeviceConfiguration_t>,
-                                 struct ARDrone_UserData>
+                                 ARDrone_Control_IParser,
+                                 struct Stream_UserData>
 {
   typedef Stream_Module_Parser_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -65,13 +94,12 @@ class ARDrone_Module_ControlDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
-                                                            ARDrone_DeviceConfiguration_t>,
-                                 struct ARDrone_UserData> inherited;
+                                 ARDrone_Control_IParser,
+                                 struct Stream_UserData> inherited;
 
  public:
   // convenient types
-  typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
+  typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
                                      ARDrone_DeviceConfiguration_t> IPARSER_T;
 
 //  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -80,40 +108,41 @@ class ARDrone_Module_ControlDecoder_T
 //#else
   ARDrone_Module_ControlDecoder_T (typename inherited::ISTREAM_T*); // stream handle
 //#endif
-  inline virtual ~ARDrone_Module_ControlDecoder_T () {};
+  inline virtual ~ARDrone_Module_ControlDecoder_T () {}
 
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
 
-  // implement (part of) Stream_IYaccRecordParser_T
-//  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; };
-  inline virtual void dump_state () const {};
-//  inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) };
-  inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); };
-  inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; };
+  // implement (part of) ARDrone_Control_IParser
+  inline virtual void dump_state () const {}
+  inline virtual void error (const struct YYLTYPE& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
+  inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
+  inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; }
   virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
-  inline virtual bool hasFinished () const { return !configuration_.empty (); };
+  inline virtual bool hasFinished () const { return !configuration_.empty (); }
 
   // implement (part of) Common_ILexScanner_T
-//  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) };
-//  inline virtual const IPARSER_T* const getP_2 () const { return this; };
-//  inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-//  inline virtual ACE_Message_Block* buffer () { return buffer_; };
-//  inline virtual bool debug () const { return ARDrone_Control_Scanner_get_debug (scannerState_); };
-//  inline virtual bool isBlocking () const { return true; };
-  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, inherited::state_); };
-  inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (inherited::state_); };
+//  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) }
+//  inline virtual const IPARSER_T* const getP_2 () const { return this; }
+//  inline virtual void setP (IPARSER_T*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
+  inline virtual ACE_Message_Block* buffer () { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
+  inline virtual bool debug () const { return ARDrone_Control_Scanner_get_debug (state_); }
+  inline virtual bool isBlocking () const { return true; }
+  inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (state_); }
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
+  inline virtual bool switchBuffer (bool = false) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
   virtual void waitBuffer ();
+  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, state_); }
   virtual void error (const std::string&);
-  inline virtual void debug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_Control_Scanner_set_debug ((debug_in ? 1 : 0), state_in); };
-  inline virtual bool initialize (yyscan_t& state_in, struct Common_ScannerState* state2_in) { return (ARDrone_Control_Scanner_lex_init_extra (this, &state_in) == 0); };
-  inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) };
-  inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
-  inline virtual bool lex () { return (ARDrone_Control_Scanner_lex (inherited::state_) == 0); };
+  inline virtual void setDebug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_Control_Scanner_set_debug ((debug_in ? 1 : 0), state_in); }
+  inline virtual void reset () { ARDrone_Control_Scanner_set_lineno (1, state_); ARDrone_Control_Scanner_set_column (1, state_); }
+  inline virtual bool initialize (yyscan_t& state_in, void*) { return (ARDrone_Control_Scanner_lex_init_extra (this, &state_in) == 0); }
+  inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
+  inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
+  inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
+  //inline virtual bool lex () { return (ARDrone_Control_Scanner_lex (inherited::state_) == 0); }
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T ())
@@ -123,8 +152,12 @@ class ARDrone_Module_ControlDecoder_T
   // override some ACE_Task_T methods
   int svc (void);
 
+  YY_BUFFER_STATE               buffer_;
   ARDrone_DeviceConfiguration_t configuration_;
+  DataMessageType*              fragment_;
+  bool                          isFirst_;
   ARDrone_IDeviceConfiguration* subscriber_;
+  yyscan_t                      state_;
 };
 
 // include template definition

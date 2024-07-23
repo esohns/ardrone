@@ -87,9 +87,8 @@ typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
                                        Stream_ControlMessage_t,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
-                                       Stream_SessionId_t,
                                        Test_U_SessionData,
-                                       struct Net_UserData> Test_U_MessageHandler;
+                                       struct Stream_UserData> Test_U_MessageHandler;
 
 //////////////////////////////////////////
 

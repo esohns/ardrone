@@ -40,6 +40,23 @@ class Stream_IAllocator;
 
 extern const char ardrone_default_mavlink_decoder_module_name_string[];
 
+class ARDrone_MAVLink_IParser
+ : public Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct __mavlink_message>
+ , virtual public Common_ILexScanner_T<struct Common_FlexScannerState,
+                                       void>
+{
+ public:
+  // convenient types
+  typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct __mavlink_message> IPARSER_T;
+  typedef Common_ILexScanner_T<struct Common_FlexScannerState,
+                               void> ISCANNER_T;
+
+  //using IPARSER_T::error;
+//  using Common_IScanner::error;
+};
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           ////////////////////////////////
@@ -55,9 +72,8 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
-                                                            struct __mavlink_message>,
-                                 struct ARDrone_UserData>
+                                 ARDrone_MAVLink_IParser,
+                                 struct Stream_UserData>
 {
   typedef Stream_Module_Parser_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -65,13 +81,12 @@ class ARDrone_Module_MAVLinkDecoder_T
                                  ControlMessageType,
                                  DataMessageType,
                                  SessionMessageType,
-                                 Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
-                                                            struct __mavlink_message>,
-                                 struct ARDrone_UserData> inherited;
+                                 ARDrone_MAVLink_IParser,
+                                 struct Stream_UserData> inherited;
 
  public:
   // convenient types
-  typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
+  typedef Common_IYaccStreamParser_T<struct Common_FlexBisonParserConfiguration,
                                      struct __mavlink_message> IPARSER_T;
 
 //  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile

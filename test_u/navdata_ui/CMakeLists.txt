@@ -287,10 +287,10 @@ elseif (WIN32)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 
  target_link_libraries (${EXECUTABLE} OpenGL32.lib)
- if (GTKGLAREA_SUPPORT)
-  target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/libepoxy/lib/epoxy.lib)
-  target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/gtkglarea/cmake/${CMAKE_BUILD_TYPE}/gtkglarea.lib)
- endif (GTKGLAREA_SUPPORT)
+ #if (GTKGLAREA_SUPPORT)
+ # target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/libepoxy/lib/epoxy.lib)
+ # target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/gtkglarea/cmake/${CMAKE_BUILD_TYPE}/gtkglarea.lib)
+ #endif (GTKGLAREA_SUPPORT)
 
 # *TODO*: repair WIN32 pkgconfig support
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
@@ -301,6 +301,7 @@ endif ()
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 
 target_link_libraries (${EXECUTABLE} Common)
+target_link_libraries (${EXECUTABLE} CommonEvent)
 target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonLog)
 target_link_libraries (${EXECUTABLE} CommonSignal)

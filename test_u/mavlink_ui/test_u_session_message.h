@@ -42,10 +42,9 @@ class Stream_MessageAllocatorHeapBase_T;
 template <typename DataMessageType,
           typename SessionDataType> // derives off Stream_SessionData_T
 class Test_U_SessionMessage_T
- : public Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
-                                      enum Stream_SessionMessageType,
+ : public Stream_SessionMessageBase_T<enum Stream_SessionMessageType,
                                       SessionDataType,
-                                      struct Net_UserData>
+                                      struct Stream_UserData>
 {
   // grant access to specific private ctors
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -61,12 +60,11 @@ class Test_U_SessionMessage_T
                                                  Stream_ControlMessage_t,
                                                  DataMessageType,
                                                  Test_U_SessionMessage_T<DataMessageType,
-                                                                                      SessionDataType> >;
+                                                                         SessionDataType> >;
 
-  typedef Stream_SessionMessageBase_T<struct Stream_AllocatorConfiguration,
-                                      enum Stream_SessionMessageType,
+  typedef Stream_SessionMessageBase_T<enum Stream_SessionMessageType,
                                       SessionDataType,
-                                      struct Net_UserData> inherited;
+                                      struct Stream_UserData> inherited;
 
  public:
   // *NOTE*: assumes responsibility for the second argument !
@@ -74,7 +72,7 @@ class Test_U_SessionMessage_T
   Test_U_SessionMessage_T (Stream_SessionId_t,
                            enum Stream_SessionMessageType,
                            SessionDataType*&,   // session data container handle
-                           struct Net_UserData*);
+                           struct Stream_UserData*);
   inline virtual ~Test_U_SessionMessage_T () {}
 
   // overloaded from ACE_Message_Block

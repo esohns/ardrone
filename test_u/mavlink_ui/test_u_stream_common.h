@@ -134,8 +134,7 @@ typedef Test_U_Message_T<Test_U_MessageData_t,
 typedef Test_U_SessionMessage_T<Test_U_Message_t,
                                 Test_U_SessionData_t> Test_U_SessionMessage_t;
 
-typedef Stream_ISessionDataNotify_T<Stream_SessionId_t,
-                                    Test_U_SessionData,
+typedef Stream_ISessionDataNotify_T<Test_U_SessionData,
                                     enum Stream_SessionMessageType,
                                     Test_U_Message_t,
                                     Test_U_SessionMessage_t> Test_U_ISessionNotify_t;
@@ -162,10 +161,9 @@ struct Test_U_ModuleHandlerConfiguration
 #else
     concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
 #endif // ACE_WIN32 || ACE_WIN64
-    hasHeader = true;
   }
 
-  Test_U_IUDPConnection_t*        connection;
+  Test_U_IConnection_t*           connection;
   Net_ConnectionConfigurations_t* connectionConfigurations;
   Test_U_ISessionNotify_t*        subscriber;
   Test_U_Subscribers_t*           subscribers;
@@ -174,9 +172,7 @@ struct Test_U_ModuleHandlerConfiguration
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
-                               struct Stream_AllocatorConfiguration,
                                struct Test_U_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
 
 struct Test_U_StreamState

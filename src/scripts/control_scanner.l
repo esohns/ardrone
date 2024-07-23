@@ -2,25 +2,16 @@
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 
-#include "ace/Synch.h"
-
 #include "ardrone_types.h"
 
-// forward declarations
-typedef void* yyscan_t;
-template <typename ConfigurationType,
-          typename RecordType>
-class Stream_IYaccRecordParser_T;
-struct Common_ParserConfiguration;
-typedef Stream_IYaccRecordParser_T<struct Common_ParserConfiguration,
-                                   ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
-struct Common_ScannerState;
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
+#define YY_STRUCT_YY_BUFFER_STATE
+#include "ardrone_control_scanner.h"
+#undef YY_STRUCT_YY_BUFFER_STATE
 #endif
+
+// forward declarations
+class ARDrone_Control_IParser;
+typedef void* yyscan_t;
 
 #define YY_DECL int ARDrone_Control_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
@@ -37,10 +28,10 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 
 #include "ace/Log_Msg.h"
 
-#include "ace/Synch.h"
 #include "common_string_tools.h"
 
 #include "ardrone_common.h"
+#include "ardrone_module_control_decoder.h"
 #include "ardrone_macros.h"
 %}
 
@@ -59,7 +50,7 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="ARDrone_Control_IScanner_t*"
+%option extra-type="ARDrone_Control_IParser*"
 %option nounistd nounput noyymore
 
 /* *IMPORTANT NOTE*: "...A negated character class such as the example "[^A-Z]"
@@ -101,11 +92,8 @@ OCTET                  [\x00-\xFF]
 {DOT}           { // sanity check(s)
                   ACE_ASSERT (yyscanner);
 
-                  ARDrone_Control_IScanner_t* iscanner_p =
+                  ARDrone_Control_IParser* iparser_p =
                       ARDrone_Control_Scanner_get_extra (yyscanner);
-                  ACE_ASSERT (iscanner_p);
-                  ARDrone_Control_IParser_t* iparser_p =
-                      const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
                   ACE_ASSERT (iparser_p);
                   ARDrone_DeviceConfiguration_t* configuration_p =
                       &iparser_p->current ();
@@ -126,7 +114,7 @@ OCTET                  [\x00-\xFF]
 <key>{
 {KEY}*          { current_key_value.first = yytext;
                   current_key_value.first =
-                    Common_Tools::strip (current_key_value.first);
+                    Common_String_Tools::strip (current_key_value.first);
                   BEGIN (delimiter_2); }
 } // end <key>
 <delimiter_2>{
@@ -140,11 +128,8 @@ OCTET                  [\x00-\xFF]
                   // sanity check(s)
                   ACE_ASSERT (yyscanner);
 
-                  ARDrone_Control_IScanner_t* iscanner_p =
+                  ARDrone_Control_IParser* iparser_p =
                     ARDrone_Control_Scanner_get_extra (yyscanner);
-                  ACE_ASSERT (iscanner_p);
-                  ARDrone_Control_IParser_t* iparser_p =
-                    const_cast<ARDrone_Control_IParser_t*> (iscanner_p->getP_2 ());
                   ACE_ASSERT (iparser_p);
                   ARDrone_DeviceConfiguration_t& configuration_r =
                     iparser_p->current ();
@@ -188,14 +173,11 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   // sanity check(s)
   ACE_ASSERT (yyscanner);
 //  struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  ARDrone_Control_IScanner_t* iscanner_p =
+  ARDrone_Control_IParser* iparser_p =
     ARDrone_Control_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iparser_p);
 
-  // sanity check(s)
-//  ACE_UNUSED_ARG (yyg);
-  ACE_ASSERT (iscanner_p);
-
-  if (!iscanner_p->isBlocking ())
+  if (!iparser_p->isBlocking ())
     return 1; // not enough data, cannot proceed
 
   // *NOTE*: there is more data
@@ -219,7 +201,7 @@ ARDrone_Control_Scanner_wrap (yyscan_t yyscanner)
   //              the_rest.size ()));
 
   // step2
-  if (!iscanner_p->switchBuffer ())
+  if (!iparser_p->switchBuffer ())
   {
     // *NOTE*: most probable reason: received session end message
 //    ACE_DEBUG ((LM_DEBUG,

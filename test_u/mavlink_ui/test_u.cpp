@@ -47,7 +47,7 @@
 #include "common_file_tools.h"
 
 #include "common_log_tools.h"
-#include "common_logger.h"
+//#include "common_logger.h"
 
 #include "common_signal_tools.h"
 
@@ -284,16 +284,15 @@ do_work (
   STREAM_TRACE (ACE_TEXT ("::do_work"));
 
   // ********************** module configuration data **************************
+  struct Test_U_StreamConfiguration stream_configuration;
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
   Test_U_UDPConnectionConfiguration_t connection_configuration;
   Test_U_ConnectionManager_t* connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
-  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator;
-  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator_2;
   modulehandler_configuration.allocatorConfiguration =
-    &configuration_in.streamConfiguration.allocatorConfiguration_;
+    &configuration_in.allocatorConfiguration;
   modulehandler_configuration.connectionConfigurations =
     &configuration_in.connectionConfigurations;
   modulehandler_configuration.parserConfiguration =
@@ -309,13 +308,11 @@ do_work (
   Test_U_MessageHandler_Module message_handler (&stream,
                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
-  configuration_in.streamConfiguration.configuration_.messageAllocator =
-      &message_allocator;
+  stream_configuration.messageAllocator = &message_allocator;
 //  configuration_in.streamConfiguration.configuration_.module = &message_handler;
-  configuration_in.streamConfiguration.configuration_.initializeMAVLink =
-      &ui_event_handler;
+  stream_configuration.initializeMAVLink = &ui_event_handler;
 
-  if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
+  if (!heap_allocator.initialize (configuration_in.allocatorConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize heap allocator, returning\n")));
@@ -325,11 +322,7 @@ do_work (
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
-                                                   configuration_in.streamConfiguration.allocatorConfiguration_,
-                                                   configuration_in.streamConfiguration.configuration_);
-  stream_iterator =
-    configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
+                                                   stream_configuration);
 
   // connection configuration
   connection_manager_p = TEST_U_CONNECTIONMANAGER_SINGLETON::instance ();
@@ -345,22 +338,22 @@ do_work (
   ACE_ASSERT (!default_interface_identifier_string.empty ());
   ACE_INET_Addr gateway_address;
   Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
-                                          connection_configuration.listenAddress,
+                                          connection_configuration.socketConfiguration.listenAddress,
                                           gateway_address);
-  connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
-                                                          1);
+  connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
+                                                                              1);
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("listening to %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.listenAddress).c_str ())));
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.socketConfiguration.listenAddress).c_str ())));
 
-  connection_configuration.bufferSize =
+  connection_configuration.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   connection_configuration.statisticReportingInterval =
     ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
 
 //  configuration_in.streamConfiguration.configuration_.module = NULL;
-  connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                       configuration_in.streamConfiguration);
+  connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
+  connection_configuration.streamConfiguration = &configuration_in.streamConfiguration;
 
 //  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
@@ -368,7 +361,7 @@ do_work (
   Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
       configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (connection_configurations_iterator != configuration_in.connectionConfigurations.end ());
-  connection_manager_p->set (*dynamic_cast<Test_U_UDPConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
+  connection_manager_p->set (*static_cast<Test_U_UDPConnectionConfiguration_t*> ((*connection_configurations_iterator).second),
                              NULL); // passed to all handlers
 
   struct Common_TimerConfiguration timer_configuration;
@@ -378,13 +371,11 @@ do_work (
   timer_manager_p = COMMON_TIMERMANAGER_SINGLETON::instance ();
   ACE_ASSERT (timer_manager_p);
   timer_manager_p->initialize (timer_configuration);
-  ACE_thread_t thread_id = 0;
-  timer_manager_p->start (thread_id);
-  ACE_UNUSED_ARG (thread_id);
+  timer_manager_p->start (NULL);
 
   // event dispatch
   configuration_in.dispatchConfiguration.numberOfProactorThreads = 1;
-  if (!Common_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
+  if (!Common_Event_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
@@ -397,7 +388,7 @@ do_work (
 
   struct Common_EventDispatchState dispatch_state_s;
   dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
-  if (!Common_Tools::startEventDispatch (dispatch_state_s))
+  if (!Common_Event_Tools::startEventDispatch (dispatch_state_s))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start event dispatch, returning\n")));
@@ -411,7 +402,7 @@ do_work (
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
-  gtk_manager_p->start (thread_id);
+  gtk_manager_p->start (NULL);
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -441,9 +432,9 @@ do_work (
 
   connection_manager_p->stop ();
   connection_manager_p->abort (true); // wait for completion ?
-  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
-                                       dispatch_state_s.reactorGroupId,
-                                       true); // wait ?
+  Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
+                                             true,  // wait ?
+                                             true); // close singletons ?
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -482,9 +473,12 @@ ACE_TMAIN (int argc_in,
     Common_File_Tools::getWorkingDirectory ();
 
   // initialize framework(s)
-  Common_Tools::initialize (false); // initialize random number generator ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_Tools::initialize (false,  // initialize COM ?
+                            false); // initialize random number generator ?
   Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
+#else
+  Common_Tools::initialize (false); // initialize random number generator ?
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step1a set defaults
@@ -624,7 +618,7 @@ ACE_TMAIN (int argc_in,
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR_2 ());
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
 

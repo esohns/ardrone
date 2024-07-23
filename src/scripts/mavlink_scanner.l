@@ -1,23 +1,16 @@
 %top{
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
+
+#define YY_STRUCT_YY_BUFFER_STATE
+#include "ardrone_mavlink_scanner.h"
+#undef YY_STRUCT_YY_BUFFER_STATE
+
+#endif
+
 // forward declarations
 typedef void* yyscan_t;
-
-template <typename ConfigurationType,
-          typename RecordType>
-class Stream_IYaccStreamParser_T;
-struct Common_ParserConfiguration;
-struct __mavlink_message;
-typedef Stream_IYaccStreamParser_T<struct Common_ParserConfiguration,
-                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
-struct Common_ScannerState;
-template <typename ScannerStateType,
-          typename ParserInterfaceType>
-class Common_ILexScanner_T;
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
-#endif
+class ARDrone_MAVLink_IParser;
 
 #define YY_DECL int ARDrone_MAVLink_Scanner_lex (yyscan_t yyscanner)
 // ... and declare it for the parser's sake
@@ -33,9 +26,10 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 %{
 #include "ace/Log_Msg.h"
 
-#include "ace/Synch.h"
 #include "ardrone_common.h"
 #include "ardrone_macros.h"
+
+#include "ardrone_module_mavlink_decoder.h"
 %}
 
 %option header-file="ardrone_mavlink_scanner.h" outfile="ardrone_mavlink_scanner.cpp"
@@ -53,7 +47,7 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
-%option extra-type="ARDrone_MAVLink_IScanner_t*"
+%option extra-type="ARDrone_MAVLink_IParser*"
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
@@ -65,6 +59,7 @@ V09_START_CODE         \x55
 %s                     system_id
 %s                     component_id
 %s                     message_id
+%s                     message_id_2
 %s                     data
 %s                     _checksum
 %s                     end_of_frame
@@ -75,11 +70,8 @@ V09_START_CODE         \x55
   // sanity check(s)
   ACE_ASSERT (yyscanner);
 
-  ARDrone_MAVLink_IScanner_t* iscanner_p =
+  ARDrone_MAVLink_IParser* iparser_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
-  ACE_ASSERT (iscanner_p);
-  ARDrone_MAVLink_IParser_t* iparser_p =
-    const_cast<ARDrone_MAVLink_IParser_t*> (iscanner_p->getP_2 ());
   ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
@@ -125,15 +117,16 @@ V09_START_CODE         \x55
 
                                     BEGIN (data); }
 } // end <message_id>
-/* MAVLink Version 2 */
-/*{OCTET}{3}                        { ACE_ASSERT (message_p);
+<message_id_2>{
+{OCTET}{3}                        { ACE_ASSERT (message_p);
                                     ACE_ASSERT (yyleng == 3 * sizeof (uint8_t));
                                     message_p->msgid =
-                                      ((*reinterpret_cast<uint8_t*> (yytext[0])       |
+                                      ((*reinterpret_cast<uint8_t*> (yytext[0]))      |
                                        (*reinterpret_cast<uint8_t*> (yytext[1]) << 1) |
                                        (*reinterpret_cast<uint8_t*> (yytext[2]) << 2));
 
-                                    BEGIN (data); } */
+                                    BEGIN (data); }
+} // end <message_id_2>
 <data>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     yyless (0);
@@ -189,12 +182,11 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   ARDRONE_TRACE (ACE_TEXT ("::ARDrone_MAVLink_Scanner_wrap"));
 
   struct yyguts_t* yyg = static_cast<struct yyguts_t*> (yyscanner);
-  ARDrone_MAVLink_IScanner_t* iscanner_p =
+  ARDrone_MAVLink_IParser* iparser_p =
     ARDrone_MAVLink_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iparser_p);
 
-  // sanity check(s)
-  ACE_ASSERT (iscanner_p);
-  if (!iscanner_p->isBlocking ())
+  if (!iparser_p->isBlocking ())
     return 1; // not enough data, cannot proceed
 
   // *NOTE*: there is more data
@@ -218,7 +210,7 @@ ARDrone_MAVLink_Scanner_wrap (yyscan_t yyscanner)
   //              the_rest.size ()));
 
   // step2
-  if (!iscanner_p->switchBuffer ())
+  if (!iparser_p->switchBuffer ())
   {
     // *NOTE*: most probable reason: received session end message
 //    ACE_DEBUG ((LM_DEBUG,

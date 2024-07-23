@@ -20,7 +20,7 @@
 #include "stdafx.h"
 
 #include "ace/Log_Msg.h"
-#include "ace/Synch.h"
+//#include "ace/Synch.h"
 
 #include "common_ui_defines.h"
 
@@ -53,7 +53,7 @@ idle_initialize_UI_cb (gpointer userData_in)
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR_2 ());
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
 
   // step1: initialize dialog window(s)
   GtkWidget* dialog_p =
@@ -115,7 +115,7 @@ idle_initialize_UI_cb (gpointer userData_in)
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
     // schedule asynchronous updates of the log view
     guint event_source_id =
-      g_timeout_add (COMMON_UI_REFRESH_DEFAULT_WIDGET,
+      g_timeout_add (COMMON_UI_REFRESH_DEFAULT_WIDGET_MS,
                      idle_update_info_display_cb,
                      userData_in);
     if (event_source_id > 0)
@@ -192,7 +192,7 @@ idle_update_info_display_cb (gpointer userData_in)
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR_2 ());
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
     for (Common_UI_Events_t::ITERATOR iterator_2 (state_r.eventStack);
@@ -375,6 +375,8 @@ button_trim_clicked_cb (GtkWidget* widget_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in ARDrone_IController::trim(), continuing\n")));
   }
+
+  return FALSE;
 }
 
 gint
@@ -396,6 +398,8 @@ button_calibrate_clicked_cb (GtkWidget* widget_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in ARDrone_IController::calibrate(), continuing\n")));
   }
+
+  return FALSE;
 }
 
 gint
@@ -417,6 +421,8 @@ button_leds_clicked_cb (GtkWidget* widget_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in ARDrone_IController::leds(), continuing\n")));
   }
+
+  return FALSE;
 }
 
 gint
@@ -438,6 +444,8 @@ button_reset_clicked_cb (GtkWidget* widget_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in ARDrone_IController::reset(), continuing\n")));
   }
+
+  return FALSE;
 }
 
 gint

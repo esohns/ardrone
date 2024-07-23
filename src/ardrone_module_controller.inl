@@ -335,7 +335,7 @@ template <ACE_SYNCH_DECL,
           typename ConnectionManagerType,
           typename ConnectorType,
           typename CBDataType>
-void
+bool
 ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             TimePolicyType,
                             ConfigurationType,
@@ -400,7 +400,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       // sanity check(s)
       ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
       socket_configuration_2 =
-        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator_2).second);
+        static_cast<Net_UDPSocketConfiguration_t*> (&NET_CONFIGURATION_UDP_CAST ((*iterator_2).second)->socketConfiguration);
       ACE_ASSERT (socket_configuration_2);
       interface_identifier =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -663,10 +663,10 @@ error:
           set (CBData_->videoMode);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: caught exception in ARDrone_IController::set(%d), returning\n"),
+                      ACE_TEXT ("%s: caught exception in ARDrone_IController::set(%d), aborting\n"),
                       inherited::mod_->name (),
                       CBData_->videoMode));
-          return;
+          return false;
         }
       } // end IF
       break;
@@ -697,7 +697,7 @@ error:
     {
       // switch to next state
       enum ARDRone_NavDataState next_state_e = NAVDATA_STATE_INVALID;
-      { ACE_GUARD (ACE_SYNCH_NULL_MUTEX, aGuard, *inherited2::stateLock_);
+      { ACE_GUARD_RETURN (ACE_SYNCH_NULL_MUTEX, aGuard, *inherited2::stateLock_, false);
         switch (inherited2::state_)
         {
           case NAVDATA_STATE_GET_CONFIGURATION:
@@ -743,12 +743,14 @@ error:
     default:
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: invalid/unknown state (was: \"%s\"), returning\n"),
+                  ACE_TEXT ("%s: invalid/unknown state (was: \"%s\"), aborting\n"),
                   inherited::mod_->name (),
                   ACE_TEXT (inherited2::stateToString (newState_in).c_str ())));
-      break;
+      return false;
     }
   } // end SWITCH
+
+  return true;
 }
 
 template <ACE_SYNCH_DECL,

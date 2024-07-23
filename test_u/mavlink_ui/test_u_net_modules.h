@@ -77,13 +77,10 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_ControlType,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
-                                    Test_U_SessionData,
-                                    Test_U_SessionData_t,
                                     struct Stream_Statistic,
                                     Common_Timer_Manager_t,
-                                    Test_U_ConnectionManager_t,
                                     Test_U_UDPConnector_t,
-                                    struct Net_UserData> Test_U_UDPSource;
+                                    struct Stream_UserData> Test_U_UDPSource;
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     Stream_ControlMessage_t,
                                     Test_U_Message_t,
@@ -92,13 +89,10 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_ControlType,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
-                                    Test_U_SessionData,
-                                    Test_U_SessionData_t,
                                     struct Stream_Statistic,
                                     Common_Timer_Manager_t,
-                                    Test_U_ConnectionManager_t,
                                     Test_U_AsynchUDPConnector_t,
-                                    struct Net_UserData> Test_U_AsynchUDPSource;
+                                    struct Stream_UserData> Test_U_AsynchUDPSource;
 
 //////////////////////////////////////////
 

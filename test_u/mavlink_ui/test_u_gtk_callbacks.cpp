@@ -19,8 +19,9 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "test_u_gtk_callbacks.h"
+
 #include "ace/Log_Msg.h"
-#include "ace/Synch.h"
 
 #include "common_ui_defines.h"
 
@@ -31,8 +32,6 @@
 
 #include "test_u_common.h"
 #include "test_u_defines.h"
-
-#include "test_u_gtk_callbacks.h"
 
 gboolean
 idle_initialize_UI_cb (gpointer userData_in)

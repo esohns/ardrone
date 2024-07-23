@@ -86,9 +86,7 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct Test_U_StreamState,
                                       struct Test_U_StreamConfiguration,
                                       struct Stream_Statistic,
-                                      Common_Timer_Manager_t,
-                                      struct Stream_AllocatorConfiguration,
-                                      struct Stream_ModuleConfiguration,
+                                      Stream_StatisticHandler_t,
                                       struct Test_U_ModuleHandlerConfiguration,
                                       Test_U_SessionData,
                                       Test_U_SessionData_t,
@@ -97,13 +95,12 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Test_U_SessionMessage_t,
                                       ACE_INET_Addr,
                                       Test_U_ConnectionManager_t,
-                                      struct Net_UserData> Test_U_NetStream_t;
+                                      struct Stream_UserData> Test_U_NetStream_t;
 
 typedef Net_IStreamConnection_T<ACE_INET_Addr,
                                  Test_U_UDPConnectionConfiguration_t,
                                  struct Net_StreamConnectionState,
                                  Net_StreamStatistic_t,
-                                 Net_UDPSocketConfiguration_t,
                                  Net_UDPSocketConfiguration_t,
                                  Test_U_NetStream_t,
                                  enum Stream_StateMachine_ControlState> Test_U_IUDPStreamConnection_t;
@@ -142,7 +139,6 @@ typedef Net_Client_Connector_T<ACE_NULL_SYNCH,
                                struct Net_StreamConnectionState,
                                Net_StreamStatistic_t,
                                Net_UDPSocketConfiguration_t,
-                               Net_UDPSocketConfiguration_t,
                                Test_U_NetStream_t,
                                struct Net_UserData> Test_U_UDPConnector_t;
 
@@ -173,7 +169,6 @@ typedef Net_Client_AsynchConnector_T<Net_AsynchUDPConnectionBase_T<Net_AsynchUDP
                                      Test_U_UDPConnectionConfiguration_t,
                                      struct Net_StreamConnectionState,
                                      Net_StreamStatistic_t,
-                                     Net_UDPSocketConfiguration_t,
                                      Net_UDPSocketConfiguration_t,
                                      Test_U_NetStream_t,
                                      struct Net_UserData> Test_U_AsynchUDPConnector_t;

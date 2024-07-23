@@ -28,7 +28,7 @@ Test_U_SessionMessage_T<DataMessageType,
                         SessionDataType>::Test_U_SessionMessage_T (Stream_SessionId_t sessionId_in,
                                                                    enum Stream_SessionMessageType messageType_in,
                                                                    SessionDataType*& sessionData_in,
-                                                                   struct Net_UserData* userData_in)
+                                                                   struct Stream_UserData* userData_in)
  : inherited (sessionId_in,
               messageType_in,
               sessionData_in,
@@ -42,7 +42,7 @@ template <typename DataMessageType,
           typename SessionDataType>
 Test_U_SessionMessage_T<DataMessageType,
                         SessionDataType>::Test_U_SessionMessage_T (const Test_U_SessionMessage_T<DataMessageType,
-                                                                                                                                        SessionDataType>& message_in)
+                                                                                                 SessionDataType>& message_in)
  : inherited (message_in)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_SessionMessage_T::Test_U_SessionMessage_T"));

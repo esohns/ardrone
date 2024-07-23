@@ -19,7 +19,6 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "test_u_session_message.h"
 #include "test_u_stream.h"
 
@@ -89,7 +88,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // sanity check(s)
   ACE_ASSERT (!isRunning ());
 
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
   Test_U_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
@@ -97,7 +96,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   Test_U_AsynchUDPSource* source_impl_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -107,7 +106,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
                 ACE_TEXT (stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
@@ -119,7 +118,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
   configuration_p =
-      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> (&(*iterator).second.second);
+      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> ((*iterator).second.second);
   ACE_ASSERT (configuration_p);
 
   // ---------------------------------------------------------------------------
@@ -127,14 +126,14 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // ******************* Source ************************
   source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
   ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  //source_impl_p->setP (&(inherited::state_));
 
-  // *NOTE*: push()ing the module will open() it
-  //         --> set the argument that is passed along (head module expects a
-  //             handle to the session data)
-  source_.arg (inherited::sessionData_);
+  //// *NOTE*: push()ing the module will open() it
+  ////         --> set the argument that is passed along (head module expects a
+  ////             handle to the session data)
+  //source_.arg (inherited::sessionData_);
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -145,8 +144,8 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
 
   // -------------------------------------------------------------
 
-  ACE_ASSERT (configuration_in.configuration_.initializeMAVLink);
-  if (!configuration_in.configuration_.initializeMAVLink->initialize (this))
+  ACE_ASSERT (configuration_in.configuration_->initializeMAVLink);
+  if (!configuration_in.configuration_->initializeMAVLink->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
@@ -160,7 +159,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 
   return false;

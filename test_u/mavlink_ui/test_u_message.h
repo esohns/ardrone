@@ -28,6 +28,7 @@
 
 #include "stream_common.h"
 #include "stream_configuration.h"
+#include "stream_control_message.h"
 #include "stream_data_message_base.h"
 
 #include "ardrone_types.h"
@@ -49,12 +50,10 @@ template <typename DataType,
           typename SessionDataType> // derives off Stream_SessionData_T
 class Test_U_Message_T
  : public Stream_DataMessageBase_2<DataType,
-                                   struct Stream_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
                                    int>
 {
   typedef Stream_DataMessageBase_2<DataType,
-                                   struct Stream_AllocatorConfiguration,
                                    enum ARDrone_MessageType,
                                    int> inherited;
 

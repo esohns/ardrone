@@ -39,6 +39,26 @@ class Stream_IAllocator;
 
 extern const char ardrone_default_navdata_decoder_module_name_string[];
 
+class ARDrone_NavData_IParser
+ : public Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct _navdata_t>
+ , virtual public Common_ILexScanner_T<struct Common_FlexScannerState,
+                                       void>
+{
+ public:
+  // convenient types
+  typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct _navdata_t> IPARSER_T;
+  typedef Common_ILexScanner_T<struct Common_FlexScannerState,
+                               void> ISCANNER_T;
+
+  //using IPARSER_T::error;
+  inline virtual const struct Common_FlexScannerState& getR () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
+  //  using Common_IScanner::error;
+
+  virtual void addOption (unsigned int) = 0; // offset
+};
+
 template <ACE_SYNCH_DECL,
           typename TimePolicyType,
           ////////////////////////////////
@@ -58,10 +78,8 @@ class ARDrone_Module_NavDataDecoder_T
                                  SessionMessageType,
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
-                                 struct ARDrone_UserData>
+                                 struct Stream_UserData>
  , public ARDrone_NavData_IParser
- , public Common_ILexScanner_T<struct Common_ScannerState,
-                               ARDrone_NavData_IParser>
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -71,7 +89,7 @@ class ARDrone_Module_NavDataDecoder_T
                                  SessionMessageType,
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
-                                 struct ARDrone_UserData> inherited;
+                                 struct Stream_UserData> inherited;
 
  public:
 //  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -93,31 +111,34 @@ class ARDrone_Module_NavDataDecoder_T
                                      bool&);               // return value: pass message downstream ?
 
   // implement (part of) ARDrone_NavData_IParser
-  inline virtual bool initialize (const struct Common_ParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
+  inline virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
   inline virtual void dump_state () const {}
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
+  inline virtual void error (const struct YYLTYPE& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->getR ().getR ().NavData.NavData); }
   virtual void record (struct _navdata_t*&); // record handle
+  inline virtual bool hasFinished () const { return false; }
   inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->getR ().getR ()).NavData.NavDataOptionOffsets.push_back (offset_in); }
 
   // implement (part of) Common_ILexScanner_T
-  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) }
-  inline virtual const ARDrone_NavData_IParser* const getP_2 () const { return this; }
-  inline virtual void setP (ARDrone_NavData_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
+  //inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) }
+  //inline virtual const ARDrone_NavData_IParser* const getP_2 () const { return this; }
+  //inline virtual void setP (ARDrone_NavData_IParser*) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
   inline virtual ACE_Message_Block* buffer () { return buffer_; }
-//  inline virtual bool debug () const { return ARDrone_NavData_Scanner_get_debug (scannerState_); }
+  inline virtual bool debug () const { return ARDrone_NavData_Scanner_get_debug (scannerState_); }
   inline virtual bool isBlocking () const { return true; }
-  inline virtual void offset (unsigned int offset_in) { ARDrone_NavData_Scanner_set_column (offset_in, scannerState_); }
   inline virtual unsigned int offset () const { return ARDrone_NavData_Scanner_get_column (scannerState_); }
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
   virtual bool switchBuffer (bool = false); // unlink current buffer ?
   virtual void waitBuffer ();
+  inline virtual void offset (unsigned int offset_in) { ARDrone_NavData_Scanner_set_column (offset_in, scannerState_); }
   virtual void error (const std::string&);
-  inline virtual void debug (yyscan_t, bool) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
-  inline virtual bool initialize (yyscan_t& state_in, struct Common_ScannerState* state2_in) { return (ARDrone_NavData_Scanner_lex_init_extra (this, &state_in) == 0); }
+  inline virtual void setDebug (yyscan_t, bool) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
+  inline virtual void reset() { ARDrone_NavData_Scanner_set_column(1, scannerState_); ARDrone_NavData_Scanner_set_lineno(1, scannerState_); }
+  inline virtual bool initialize (yyscan_t& state_in, void*) { return (ARDrone_NavData_Scanner_lex_init_extra (this, &state_in) == 0); }
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }

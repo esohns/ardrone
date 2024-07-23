@@ -47,7 +47,7 @@
 #include "common_file_tools.h"
 
 #include "common_log_tools.h"
-#include "common_logger.h"
+//#include "common_logger.h"
 
 #include "common_signal_tools.h"
 
@@ -288,21 +288,23 @@ do_work (
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
+  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_2;
+  struct Test_U_StreamConfiguration stream_configuration;
+  struct Test_U_StreamConfiguration stream_configuration_2;
   Test_U_TCPConnectionConfiguration_t tcp_connection_configuration;
   Test_U_UDPConnectionConfiguration_t udp_connection_configuration, udp_connection_configuration_2;
   Test_U_TCPConnectionManager_t* tcp_connection_manager_p = NULL;
   Test_U_UDPConnectionManager_t* udp_connection_manager_p = NULL;
   Test_U_EventHandler_t ui_event_handler;
 
-  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator;
-  Test_U_StreamConfiguration_t::ITERATOR_T stream_iterator_2;
   modulehandler_configuration.allocatorConfiguration =
-    &configuration_in.streamConfiguration.allocatorConfiguration_;
+    &configuration_in.allocatorConfiguration;
   modulehandler_configuration.connectionConfigurations =
     &configuration_in.connectionConfigurations;
   modulehandler_configuration.parserConfiguration =
     &configuration_in.parserConfiguration;
   modulehandler_configuration.subscriber = &ui_event_handler;
+  modulehandler_configuration_2 = modulehandler_configuration;
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct Stream_AllocatorConfiguration> heap_allocator;
@@ -314,20 +316,18 @@ do_work (
   Test_U_MessageHandler_Module message_handler (&stream,
                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
-  configuration_in.streamConfiguration.configuration_.messageAllocator =
-      &message_allocator;
+  stream_configuration.messageAllocator = &message_allocator;
 //  configuration_in.streamConfiguration.configuration_.module = &message_handler;
-  configuration_in.streamConfiguration.configuration_.initializeNavData =
-      &ui_event_handler;
+  stream_configuration.initializeNavData = &ui_event_handler;
+  stream_configuration.CBData = &CBData_in;
 
-  if (!heap_allocator.initialize (configuration_in.streamConfiguration.allocatorConfiguration_))
+  if (!heap_allocator.initialize (configuration_in.allocatorConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to initialize heap allocator, returning\n")));
     return;
   } // end IF
 
-  configuration_in.streamConfiguration.configuration_.CBData = &CBData_in;
 
   modulehandler_configuration.concurrency =
       STREAM_HEADMODULECONCURRENCY_CONCURRENT;
@@ -335,21 +335,13 @@ do_work (
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
-                                                   configuration_in.streamConfiguration.allocatorConfiguration_,
-                                                   configuration_in.streamConfiguration.configuration_);
-  stream_iterator =
-    configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (stream_iterator != configuration_in.streamConfiguration.end ());
+                                                   stream_configuration);
 
   modulehandler_configuration.connectionConfigurations =
     &configuration_in.connectionConfigurations_2;
   configuration_in.streamConfiguration_2.initialize (module_configuration,
-                                                     modulehandler_configuration,
-                                                     configuration_in.streamConfiguration.allocatorConfiguration_,
-                                                     configuration_in.streamConfiguration.configuration_);
-  stream_iterator_2 =
-    configuration_in.streamConfiguration_2.find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (stream_iterator_2 != configuration_in.streamConfiguration_2.end ());
+                                                     modulehandler_configuration_2,
+                                                     stream_configuration_2);
 
   // connection configuration
   tcp_connection_manager_p =
@@ -364,13 +356,13 @@ do_work (
                                         ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
 
   tcp_connection_configuration.messageAllocator = &message_allocator;
-  tcp_connection_configuration.bufferSize =
+  tcp_connection_configuration.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   udp_connection_configuration.messageAllocator = &message_allocator;
-  udp_connection_configuration.bufferSize =
+  udp_connection_configuration.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   udp_connection_configuration_2.messageAllocator = &message_allocator;
-  udp_connection_configuration_2.bufferSize =
+  udp_connection_configuration_2.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
   //  connection_configuration.statisticReportingInterval =
   //    ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL, 0);
@@ -382,20 +374,20 @@ do_work (
   Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
                                           ip_address,
                                           gateway_address);
-  udp_connection_configuration.listenAddress = ip_address;
-  udp_connection_configuration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
-                                                              1);
+  udp_connection_configuration.socketConfiguration.listenAddress = ip_address;
+  udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                                                  1);
 
-  tcp_connection_configuration.address = gateway_address;
-  tcp_connection_configuration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
-                                                        1);
+  tcp_connection_configuration.socketConfiguration.address = gateway_address;
+  tcp_connection_configuration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
+                                                                            1);
 
-  tcp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                           configuration_in.streamConfiguration_2);
-  udp_connection_configuration.initialize (configuration_in.allocatorConfiguration,
-                                           configuration_in.streamConfiguration);
-  udp_connection_configuration_2.initialize (configuration_in.allocatorConfiguration,
-                                             configuration_in.streamConfiguration);
+  tcp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
+  tcp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration_2;
+  udp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
+  udp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration;
+  udp_connection_configuration_2.allocatorConfiguration = &configuration_in.allocatorConfiguration;
+  udp_connection_configuration_2.streamConfiguration = &configuration_in.streamConfiguration;
 
   configuration_in.connectionConfigurations_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
                                                                       &tcp_connection_configuration));
@@ -403,14 +395,14 @@ do_work (
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                     &udp_connection_configuration));
 
-  udp_connection_configuration_2.peerAddress = gateway_address;
-  udp_connection_configuration_2.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
-                                                              1);
-  udp_connection_configuration_2.connect = true;
-  udp_connection_configuration_2.writeOnly = true;
+  udp_connection_configuration_2.socketConfiguration.peerAddress = gateway_address;
+  udp_connection_configuration_2.socketConfiguration.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
+                                                                                  1);
+  udp_connection_configuration_2.socketConfiguration.connect = true;
+  udp_connection_configuration_2.socketConfiguration.writeOnly = true;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("control peer: %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.peerAddress).c_str ())));
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.socketConfiguration.peerAddress).c_str ())));
   configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
                                                                     &udp_connection_configuration_2));
 //  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
@@ -428,14 +420,12 @@ do_work (
   timer_manager_p = COMMON_TIMERMANAGER_SINGLETON::instance ();
   ACE_ASSERT (timer_manager_p);
   timer_manager_p->initialize (timer_configuration);
-  ACE_thread_t thread_id = 0;
-  timer_manager_p->start (thread_id);
-  ACE_UNUSED_ARG (thread_id);
+  timer_manager_p->start (NULL);
 
   // event dispatch
   configuration_in.dispatchConfiguration.numberOfProactorThreads =
-      NET_CLIENT_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
-  if (!Common_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
+      NET_CLIENT_DEFAULT_NUMBER_OF_PROACTOR_DISPATCH_THREADS;
+  if (!Common_Event_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::initializeEventDispatch(), returning\n")));
@@ -448,7 +438,7 @@ do_work (
 
   struct Common_EventDispatchState dispatch_state_s;
   dispatch_state_s.configuration = &configuration_in.dispatchConfiguration;
-  if (!Common_Tools::startEventDispatch (dispatch_state_s))
+  if (!Common_Event_Tools::startEventDispatch (dispatch_state_s))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to start event dispatch, returning\n")));
@@ -463,7 +453,7 @@ do_work (
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
-  gtk_manager_p->start (thread_id);
+  gtk_manager_p->start (NULL);
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -478,20 +468,19 @@ do_work (
   Stream_Module_t* module_p =
       const_cast<Stream_Module_t*> (stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
   ACE_ASSERT (module_p);
-  configuration_in.streamConfiguration_2.configuration_.deviceConfiguration =
+  stream_configuration_2.deviceConfiguration =
     dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
-  ACE_ASSERT (configuration_in.streamConfiguration_2.configuration_.deviceConfiguration);
+  ACE_ASSERT (stream_configuration_2.deviceConfiguration);
 //  (*stream_iterator).second.second.deviceConfiguration =
 //      dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
 //  ACE_ASSERT ((*stream_iterator).second.second.deviceConfiguration);
   CBData_in.controller =
     dynamic_cast<ARDrone_IController*> (module_p->writer ());
   ACE_ASSERT (CBData_in.controller);
-  configuration_in.streamConfiguration_2.configuration_.initializeControl =
-      &ui_event_handler;
-  (*stream_iterator_2).second.second.deviceConfiguration =
+  stream_configuration_2.initializeControl = &ui_event_handler;
+  modulehandler_configuration_2.deviceConfiguration =
       dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());
-  ACE_ASSERT ((*stream_iterator_2).second.second.deviceConfiguration);
+  ACE_ASSERT (modulehandler_configuration_2.deviceConfiguration);
   if (!control_stream.initialize (configuration_in.streamConfiguration_2))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -523,9 +512,9 @@ do_work (
   udp_connection_manager_p->stop ();
   tcp_connection_manager_p->abort (true); // wait for completion ?
   udp_connection_manager_p->abort (true); // wait for completion ?
-  Common_Tools::finalizeEventDispatch (dispatch_state_s.proactorGroupId,
-                                       dispatch_state_s.reactorGroupId,
-                                       true); // wait ?
+  Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
+                                             true,  // wait ?
+                                             true); // close singletons ?
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -564,9 +553,12 @@ ACE_TMAIN (int argc_in,
     Common_File_Tools::getWorkingDirectory ();
 
   // initialize framework(s)
-  Common_Tools::initialize (false); // initialize random number generator ?
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_Tools::initialize (false,  // intialize COM ?
+                            false); // initialize random number generator ?
   Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
+#else
+  Common_Tools::initialize (false); // initialize random number generator ?
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step1a set defaults
@@ -708,7 +700,7 @@ ACE_TMAIN (int argc_in,
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
   Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR_2 ());
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
 

@@ -62,19 +62,19 @@ struct Test_U_Configuration
    , streamConfiguration_2 ()
   {}
 
-  struct Stream_AllocatorConfiguration     allocatorConfiguration;
-  Net_ConnectionConfigurations_t           connectionConfigurations;
-  Net_ConnectionConfigurations_t           connectionConfigurations_2;
-  struct Common_EventDispatchConfiguration dispatchConfiguration;
+  struct Stream_AllocatorConfiguration       allocatorConfiguration;
+  Net_ConnectionConfigurations_t             connectionConfigurations;
+  Net_ConnectionConfigurations_t             connectionConfigurations_2;
+  struct Common_EventDispatchConfiguration   dispatchConfiguration;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  struct Common_UI_GTK_Configuration       GTKConfiguration;
+  Common_UI_GTK_Configuration_t              GTKConfiguration;
 #endif // GTK_USE
 #endif // GUI_SUPPORT
-  struct Common_ParserConfiguration        parserConfiguration;
+  struct Common_FlexBisonParserConfiguration parserConfiguration;
   // **************************** stream data **********************************
-  Test_U_StreamConfiguration_t             streamConfiguration;
-  Test_U_StreamConfiguration_t             streamConfiguration_2;
+  Test_U_StreamConfiguration_t               streamConfiguration;
+  Test_U_StreamConfiguration_t               streamConfiguration_2;
 };
 
 //////////////////////////////////////////

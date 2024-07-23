@@ -32,7 +32,7 @@
 #include "stream_configuration.h"
 
 #include "net_common.h"
-#include "net_configuration.h"
+#include "net_connection_configuration.h"
 #include "net_iconnection.h"
 #include "net_connection_manager.h"
 
@@ -40,26 +40,22 @@
 struct Test_U_StreamConfiguration;
 struct Test_U_ModuleHandlerConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
-                               struct Stream_AllocatorConfiguration,
                                struct Test_U_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
                                struct Test_U_ModuleHandlerConfiguration> Test_U_StreamConfiguration_t;
 
-typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
-                                      Test_U_StreamConfiguration_t,
-                                      NET_TRANSPORTLAYER_UDP> Test_U_UDPConnectionConfiguration_t;
-typedef Net_ConnectionConfiguration_T<struct Stream_AllocatorConfiguration,
-                                      Test_U_StreamConfiguration_t,
-                                      NET_TRANSPORTLAYER_TCP> Test_U_TCPConnectionConfiguration_t;
+typedef Net_StreamConnectionConfiguration_T<Test_U_StreamConfiguration_t,
+                                            NET_TRANSPORTLAYER_UDP> Test_U_UDPConnectionConfiguration_t;
+typedef Net_StreamConnectionConfiguration_T<Test_U_StreamConfiguration_t,
+                                            NET_TRANSPORTLAYER_TCP> Test_U_TCPConnectionConfiguration_t;
 
 typedef Net_IConnection_T<ACE_INET_Addr,
-                          Test_U_UDPConnectionConfiguration_t,
+                          //Test_U_UDPConnectionConfiguration_t,
                           struct Net_StreamConnectionState,
-                          Net_StreamStatistic_t> Test_U_IUDPConnection_t;
-typedef Net_IConnection_T<ACE_INET_Addr,
-                          Test_U_TCPConnectionConfiguration_t,
-                          struct Net_StreamConnectionState,
-                          Net_StreamStatistic_t> Test_U_ITCPConnection_t;
+                          Net_StreamStatistic_t> Test_U_IConnection_t;
+//typedef Net_IConnection_T<ACE_INET_Addr,
+//                          //Test_U_TCPConnectionConfiguration_t,
+//                          struct Net_StreamConnectionState,
+//                          Net_StreamStatistic_t> Test_U_ITCPConnection_t;
 
 //typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
 //                                 ACE_INET_Addr,

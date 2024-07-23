@@ -149,7 +149,7 @@ class ARDrone_Module_Controller_T
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_Controller_T& operator= (const ARDrone_Module_Controller_T&))
 
   // implement (part of) Common_IStateMachine_T
-  virtual void onChange (enum ARDRone_NavDataState); // new state
+  virtual bool onChange (enum ARDRone_NavDataState); // new state
 
   // helper methods
   void resetACKFlag ();
