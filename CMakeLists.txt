@@ -198,7 +198,7 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_config.h"
 ################################################################################
 
 add_subdirectory (test_u)
-#add_subdirectory (test_i)
+add_subdirectory (test_i)
 
 ################################################################################
 
