@@ -48,13 +48,13 @@ struct Test_U_Configuration
    , streamConfiguration ()
   {}
 
-  struct Stream_AllocatorConfiguration     allocatorConfiguration;
-  Net_ConnectionConfigurations_t           connectionConfigurations;
-  struct Common_EventDispatchConfiguration dispatchConfiguration;
-  Common_UI_GTK_Configuration_t            GTKConfiguration;
-  struct Common_ParserConfiguration        parserConfiguration;
+  struct Stream_AllocatorConfiguration       allocatorConfiguration;
+  Net_ConnectionConfigurations_t             connectionConfigurations;
+  struct Common_EventDispatchConfiguration   dispatchConfiguration;
+  Common_UI_GTK_Configuration_t              GTKConfiguration;
+  struct Common_FlexBisonParserConfiguration parserConfiguration;
   // **************************** stream data **********************************
-  Test_U_StreamConfiguration_t             streamConfiguration;
+  Test_U_StreamConfiguration_t               streamConfiguration;
 };
 
 //////////////////////////////////////////

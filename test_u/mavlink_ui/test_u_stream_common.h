@@ -91,35 +91,57 @@ typedef Stream_DataBase_T<struct Test_U_MessageData> Test_U_MessageData_t;
 struct Test_U_StreamState;
 class Test_U_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                        struct Stream_MediaFramework_FFMPEG_MediaType,
+                                        struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                         struct Test_U_StreamState,
                                         struct Stream_Statistic,
-                                        struct Net_UserData>
+                                        struct Stream_UserData>
 {
  public:
   Test_U_SessionData ()
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                   struct Stream_MediaFramework_FFMPEG_MediaType,
+                                   struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                    struct Test_U_StreamState,
                                    struct Stream_Statistic,
-                                   struct Net_UserData> ()
+                                   struct Stream_UserData> ()
+   , connection (NULL)
+   , connectionStates ()
   {}
 
-//  Test_U_SessionData& operator+= (const Test_U_SessionData& rhs_in)
-//  {
-//    // *NOTE*: the idea is to 'merge' the data
-//    Stream_SessionDataMediaBase_T<struct Test_U_SessionData,
-//                                  struct Stream_MediaFramework_FFMPEG_MediaType,
-//                                  struct Test_U_StreamState,
-//                                  Net_StreamStatistic_t,
-//                                  struct Net_UserData>::operator+= (rhs_in);
+  Test_U_SessionData& operator= (const Test_U_SessionData& rhs_in)
+  {
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  struct Stream_MediaFramework_FFMPEG_VideoMediaType,
+                                  struct Test_U_StreamState,
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator= (rhs_in);
 
-//    return *this;
-//  }
+    connection = rhs_in.connection;
+    connectionStates = rhs_in.connectionStates;
+
+    return *this;
+  }
+
+  Test_U_SessionData& operator+= (const Test_U_SessionData& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_SessionDataMediaBase_T<struct Stream_SessionData,
+                                  struct Stream_MediaFramework_FFMPEG_VideoMediaType,
+                                  struct Test_U_StreamState,
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator+= (rhs_in);
+
+    connection = rhs_in.connection;
+    connectionStates = rhs_in.connectionStates;
+
+    return *this;
+  }
+
+  Test_U_IConnection_t*         connection;
+  Stream_Net_ConnectionStates_t connectionStates;
 
  private:
 //  ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData (const Test_U_SessionData&))
-  ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData& operator= (const Test_U_SessionData&))
+  //ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData& operator= (const Test_U_SessionData&))
 };
 typedef Stream_SessionData_T<Test_U_SessionData> Test_U_SessionData_t;
 
@@ -153,6 +175,7 @@ struct Test_U_ModuleHandlerConfiguration
    : Stream_ModuleHandlerConfiguration ()
    , connection (NULL)
    , connectionConfigurations (NULL)
+   , parserConfiguration (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
   {
@@ -165,6 +188,7 @@ struct Test_U_ModuleHandlerConfiguration
 
   Test_U_IConnection_t*           connection;
   Net_ConnectionConfigurations_t* connectionConfigurations;
+  struct Common_FlexBisonParserConfiguration* parserConfiguration;
   Test_U_ISessionNotify_t*        subscriber;
   Test_U_Subscribers_t*           subscribers;
 };
@@ -181,12 +205,9 @@ struct Test_U_StreamState
   Test_U_StreamState ()
    : Stream_State ()
    , sessionData (NULL)
-   , userData (NULL)
   {}
 
-  Test_U_SessionData*  sessionData;
-
-  struct Net_UserData* userData;
+  Test_U_SessionData* sessionData;
 };
 
 struct Test_U_StreamConfiguration
@@ -195,13 +216,11 @@ struct Test_U_StreamConfiguration
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
    , initializeMAVLink (NULL)
-   , userData (NULL)
   {
     printFinalReport = true;
   }
 
   Common_IInitializeP_T<ARDrone_IMAVLinkNotify>* initializeMAVLink;
-  struct Net_UserData*                           userData;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,
                                 enum Stream_SessionMessageType,
