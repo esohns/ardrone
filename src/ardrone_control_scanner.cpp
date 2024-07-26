@@ -1,4 +1,3 @@
-#line 2 "./../scripts/control_scanner.l"
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 

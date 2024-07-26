@@ -1,7 +1,14 @@
 ﻿set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/gl/scripts;${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/gl/scripts")
+include (glm)
+include (glew)
 include (glut)
+include (assimp)
+
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/image/scripts;${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/image/scripts")
+include (png)
 
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/scripts;${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/scripts")
+include (ImageMagick)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../modules/Common/src/xml/scripts;${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/xml/scripts")
 include (PreXMLImplementation)
 include (SetXMLImplementation)
@@ -138,7 +145,7 @@ if (UNIX)
  endif ()
 endif (UNIX)
 
-include ($ENV{PRJ_ROOT}/Common/scripts/ACE.cmake)
+include (ACE)
 
 set (ACE_XML_LIB_FILE libACEXML.so)
 if (UNIX)
@@ -350,6 +357,12 @@ endif (GUI_SUPPORT)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 if (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Debug))
+ if (MSVC)
+  add_compile_options (/bigobj)
+#else ()
+#  add_compile_options(-Wa,-mbig-obj)
+ endif (MSVC)
+
  # *NOTE*: DirectShow uses 'DEBUG'
  add_definitions (-DDEBUG) # activate DirectShow debug logging
 endif (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Debug))
@@ -730,21 +743,24 @@ elseif (WIN32)
  link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/${CMAKE_BUILD_TYPE})
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
 #  link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/Debug)
-  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Debug/strmbasd.lib)
+#  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Debug/strmbasd.lib)
  else ()
 #  link_directories (${DIRECTSHOW_BASECLASSES_DIRECTORY}/Release)
-  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Release/strmbase.lib)
+ # target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Release/strmbase.lib)
  endif ()
  target_link_libraries (${EXECUTABLE} evr.lib)
 
+
+ target_link_libraries (${EXECUTABLE} ${ffmpeg_LIBRARIES})
+
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/avcodec.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/libavcodec.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavcodec/libavcodec.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/avformat.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/libavformat.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libavformat/libavformat.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/swresample.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/libswresample.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswresample/libswresample.a)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/swscale.lib)
- target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/libswscale.a)
+# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../ffmpeg/libswscale/libswscale.a)
 
 # if (MSXML_USE)
   target_link_libraries (${EXECUTABLE} msxml2.lib)
@@ -755,13 +771,13 @@ elseif (WIN32)
  if (GUI_SUPPORT)
   if (GTK_USE)
    if (GTKGL_SUPPORT)
-    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimpd.lib)
+#    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimpd.lib)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
 
     target_link_libraries (${EXECUTABLE} OpenGL32.lib)
     target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
-    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../libepoxy/cmake/${CMAKE_BUILD_TYPE}/epoxy1_static.lib)
-    target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
+#    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../libepoxy/cmake/${CMAKE_BUILD_TYPE}/epoxy1_static.lib)
+ #   target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
    endif (GTKGL_SUPPORT)
   elseif (WXWIDGETS_USE)
    target_link_libraries (${EXECUTABLE} ${wxWidgets_LIBRARIES})
@@ -780,6 +796,7 @@ if (UNIX)
   target_link_libraries (${EXECUTABLE} CommonDBus)
  endif (DBUS_USE OR NL80211_USE)
 endif (UNIX)
+target_link_libraries (${EXECUTABLE} CommonEvent)
 target_link_libraries (${EXECUTABLE} CommonImage)
 target_link_libraries (${EXECUTABLE} CommonLog)
 if (GUI_SUPPORT)
@@ -804,7 +821,7 @@ if (GUI_SUPPORT)
  endif ()
 endif (GUI_SUPPORT)
 target_link_libraries (${EXECUTABLE} CommonXML)
-target_link_libraries (${EXECUTABLE} Common_Test_U)
+#target_link_libraries (${EXECUTABLE} Common_Test_U)
 
 target_link_libraries (${EXECUTABLE} ACEStream)
 target_link_libraries (${EXECUTABLE} ACEStream_Decoder)
@@ -823,6 +840,8 @@ target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 target_link_libraries (${EXECUTABLE} ACENetwork)
 target_link_libraries (${EXECUTABLE} ACENetwork_Protocol_DHCP)
 target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
+
+target_link_libraries (${EXECUTABLE} ${PROJECT_NAME})
 
 if (UNIX)
  target_link_libraries (${EXECUTABLE} ${PKG_CAP_LIBRARIES})
@@ -892,7 +911,7 @@ install (FILES
 ##########################################
 
 #cmake_policy (SET CMP0053 OLD)
-file (TO_NATIVE_PATH ${PROJECT_BINARY_DIR}/../src WORKING_DIRECTORY)
+file (TO_NATIVE_PATH ${PROJECT_SOURCE_DIR}/test_i/${EXECUTABLE} WORKING_DIRECTORY)
 
 if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
  set (ARGS "-c")
@@ -914,7 +933,7 @@ if (UNIX)
                            ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
                            ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
 elseif (WIN32)
- string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../src) 
+ string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_i/${EXECUTABLE}) 
 # if (LIBXML2_USE)
   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                             ${PROJECT_SOURCE_DIR}/../libiconv-1.9.2-1/bin
@@ -924,15 +943,9 @@ elseif (WIN32)
   set (ARGS "-u.\\\\etc\\\\${ui_definition_file} ${ARGS}")
 
   if (GTK_USE)
-   if (GTK3_SUPPORT)
-    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                              G:/software/Development/dll
-                              ${PROJECT_SOURCE_DIR}/../gtk3/bin)
-   elseif (GTK2_SUPPORT)
-    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                              G:/software/Development/dll
-                              ${PROJECT_SOURCE_DIR}/../gtk2/bin)
-   endif ()
+   file (TO_CMAKE_PATH "${GTK_LIB_DIRS}" GTK_PATH)
+   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                              ${GTK_PATH})
   elseif (WXWIDGETS_USE)
    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                              ${wxWidgets_LIB_DIR})
@@ -940,16 +953,24 @@ elseif (WIN32)
  else ()
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
+ file (TO_CMAKE_PATH "${GLEW_LIB_DIR}" GLEW_PATH)
+ file (TO_CMAKE_PATH "${ASSIMP_LIB_DIR}" ASSIMP_PATH)
+ file (TO_CMAKE_PATH "${PNG_LIB_DIR}" PNG_PATH)
+  # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
+ file (TO_CMAKE_PATH "$ENV{VCPKG_INSTALLATION_ROOT}/installed/x64-windows/bin" VCPKG_PATH)
+ file (TO_CMAKE_PATH "${ffmpeg_LIB_DIR}" FFMPEG_PATH)
+ file (TO_CMAKE_PATH "${ImageMagick_LIB_DIR}" IMAGEMAGICK_PATH)
+ file (TO_CMAKE_PATH "${ACE_LIB_DIR}" ACE_PATH)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_LIB_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
-                           ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
-                           ${PROJECT_SOURCE_DIR}/../FreeGLUT/freeglut/freeglut/cmake/bin/${CMAKE_BUILD_TYPE}
-                           ${PROJECT_SOURCE_DIR}/../assimp/cmake/code/${CMAKE_BUILD_TYPE}
-#                           ${PROJECT_SOURCE_DIR}/../openssl/bin
-                           ${PROJECT_SOURCE_DIR}/../ATCD/ACE/lib)
+                           ${GLEW_PATH}
+                           ${ASSIMP_PATH}
+                           ${PNG_PATH}
+                           ${VCPKG_PATH}
+                           ${FFMPEG_PATH}
+                           ${IMAGEMAGICK_PATH}
+                           ${ACE_PATH}
+                           ${SSL_LIB_PATH})
 endif ()
 
 if (UNIX)
@@ -957,7 +978,10 @@ if (UNIX)
  if (NOT EXISTS ${SHELL_WRAPPER})
   message (FATAL_ERROR "could not find shell wrapper (was: \"${SHELL_WRAPPER}\"), aborting")
  endif ()
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}" COMMAND)
 elseif (WIN32)
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}.exe" COMMAND)
+ string (REPLACE "\\" "\\\\" COMMAND ${COMMAND})
  if (CMAKE_BUILD_TYPE STREQUAL Debug)
   if (DEBUG_HEAP_SUPPORT)
   else ()
@@ -966,6 +990,7 @@ elseif (WIN32)
  endif ()
 endif ()
 create_target_launcher (${EXECUTABLE}
+                        COMMAND ${COMMAND}
                         ARGS ${ARGS}
 #                         FORWARD_ARGS
                         RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}

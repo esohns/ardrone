@@ -49,39 +49,34 @@ struct ARDrone_Configuration;
 struct ARDrone_UserData;
 
 struct ARDrone_ConnectionState
- : Net_ConnectionState
+ : Net_StreamConnectionState
 {
   ARDrone_ConnectionState ()
-   : Net_ConnectionState ()
+   : Net_StreamConnectionState ()
    , configuration (NULL)
-   , statistic ()
-   , userData (NULL)
   {}
 
   // *TODO*: consider making this a separate entity (i.e. a pointer)
   struct ARDrone_Configuration* configuration;
-  struct ARDrone_Statistic      statistic;
-
-  struct ARDrone_UserData*      userData;
 };
 
-struct ARDrone_ConnectionConfiguration
- : Net_ConnectionConfiguration_T<NET_TRANSPORTLAYER_TCP>
-{
-  ARDrone_ConnectionConfiguration ()
-   : Net_ConnectionConfiguration_T<NET_TRANSPORTLAYER_TCP> ()
-   , socketConfiguration_2 ()
-   , socketConfiguration_3 ()
-   , userData (NULL)
-  {
-    socketConfiguration = socketConfiguration_2;
-  }
-
-  Net_SocketConfiguration_T<NET_TRANSPORTLAYER_TCP>  socketConfiguration_2;
-  Net_SocketConfiguration_T<NET_TRANSPORTLAYER_UDP>  socketConfiguration_3;
-
-  struct Net_UserData*                               userData;
-};
+//struct ARDrone_ConnectionConfiguration
+// : Net_ConnectionConfiguration_T<NET_TRANSPORTLAYER_TCP>
+//{
+//  ARDrone_ConnectionConfiguration ()
+//   : Net_ConnectionConfiguration_T<NET_TRANSPORTLAYER_TCP> ()
+//   , socketConfiguration_2 ()
+//   , socketConfiguration_3 ()
+//   , userData (NULL)
+//  {
+//    socketConfiguration = socketConfiguration_2;
+//  }
+//
+//  Net_SocketConfiguration_T<NET_TRANSPORTLAYER_TCP>  socketConfiguration_2;
+//  Net_SocketConfiguration_T<NET_TRANSPORTLAYER_UDP>  socketConfiguration_3;
+//
+//  struct Net_UserData*                               userData;
+//};
 
 //extern const char stream_name_string_[];
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -106,7 +101,7 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_DirectShow_StreamConfigurati
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_DirectShow_UDPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
+                                 struct Net_StreamStatistic,
                                  struct Net_UserData> ARDrone_DirectShow_IUDPConnectionManager_t;
 
 typedef Net_StreamConnectionConfiguration_T<ARDrone_MediaFoundation_StreamConfiguration_t,
@@ -114,28 +109,17 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_MediaFoundation_StreamConfig
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_MediaFoundation_UDPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
-                                 struct Net_UserData> ARDrone_MediaFoundation_IConnectionManager_t;
-
-typedef std::unordered_map<std::string, // module name
-                           ARDrone_DirectShow_UDPConnectionConfiguration_t> ARDrone_DirectShow_UDPConnectionConfigurations_t;
-typedef ARDrone_DirectShow_UDPConnectionConfigurations_t::iterator ARDrone_DirectShow_UDPConnectionConfigurationIterator_t;
-typedef std::unordered_map<std::string, // stream name
-                           ARDrone_DirectShow_UDPConnectionConfigurations_t> ARDrone_DirectShow_ConnectionConfigurations_t;
-typedef ARDrone_DirectShow_ConnectionConfigurations_t::iterator ARDrone_DirectShow_ConnectionConfigurationIterator_t;
-
-typedef std::unordered_map<std::string, // module name
-                           ARDrone_MediaFoundation_UDPConnectionConfiguration_t> ARDrone_MediaFoundation_UDPConnectionConfigurations_t;
-typedef ARDrone_MediaFoundation_UDPConnectionConfigurations_t::iterator ARDrone_MediaFoundation_UDPConnectionConfigurationIterator_t;
-typedef std::unordered_map<std::string, // stream name
-                           ARDrone_MediaFoundation_UDPConnectionConfigurations_t> ARDrone_MediaFoundation_ConnectionConfigurations_t;
-typedef ARDrone_MediaFoundation_ConnectionConfigurations_t::iterator ARDrone_MediaFoundation_ConnectionConfigurationIterator_t;
+                                 struct Net_StreamStatistic,
+                                 struct Net_UserData> ARDrone_MediaFoundation_IUDPConnectionManager_t;
 #else
 typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,
+                                            NET_TRANSPORTLAYER_TCP> ARDrone_TCPConnectionConfiguration_t;
+typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,
                                             NET_TRANSPORTLAYER_UDP> ARDrone_UDPConnectionConfiguration_t;
-typedef std::unordered_map<std::string, // stream name
-                           Net_UDPConnectionConfigurations_t> ARDrone_ConnectionConfigurations_t;
-typedef ARDrone_ConnectionConfigurations_t::iterator ARDrone_ConnectionConfigurationIterator_t;
 #endif // ACE_WIN32 || ACE_WIN64
+
+typedef std::unordered_map<std::string, // stream name
+                           Net_ConnectionConfigurations_t*> ARDrone_StreamConnectionConfigurations_t;
+typedef ARDrone_StreamConnectionConfigurations_t::iterator ARDrone_StreamConnectionConfigurationIterator_t;
 
 #endif // #ifndef ARDRONE_NETWORK_COMMON_H

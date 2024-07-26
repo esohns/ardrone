@@ -113,7 +113,7 @@ struct ARDrone_StreamState
    : CBData (NULL)
    , sessionData (NULL)
    , type (ARDRONE_STREAM_INVALID)
-   , userData (NULL)
+   //, userData (NULL)
   {}
 
   struct ARDrone_StreamState operator+= (const struct ARDrone_StreamState& rhs_in)
@@ -140,26 +140,31 @@ struct ARDrone_StreamState
 #endif // ACE_WIN32 || ACE_WIN64
   enum ARDrone_StreamType         type;
 
-  struct ARDrone_UserData*        userData;
+  //struct ARDrone_UserData*        userData;
 };
 
 struct ARDrone_ConnectionState;
+typedef Net_IConnection_T<ACE_INET_Addr,
+                          struct ARDrone_ConnectionState,
+                          struct Net_StreamStatistic> ARDrone_IConnection_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 class ARDrone_DirectShow_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct _AMMediaType,
                                         struct ARDrone_StreamState,
-                                        struct ARDrone_Statistic,
-                                        struct ARDrone_UserData>
+                                        struct Stream_Statistic,
+                                        struct Stream_UserData>
 {
  public:
   ARDrone_DirectShow_SessionData ()
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct _AMMediaType,
                                    struct ARDrone_StreamState,
-                                   struct ARDrone_Statistic,
-                                   struct ARDrone_UserData> ()
+                                   struct Stream_Statistic,
+                                   struct Stream_UserData> ()
    , builder (NULL)
+   , connection (NULL)
+   , connectionStates ()
    , direct3DDevice (NULL)
    , direct3DManagerResetToken (0)
    , session (NULL)
@@ -174,8 +179,11 @@ class ARDrone_DirectShow_SessionData
     Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                   struct _AMMediaType,
                                   struct ARDrone_StreamState,
-                                  struct ARDrone_Statistic,
-                                  struct ARDrone_UserData>::operator+= (rhs_in);
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator+= (rhs_in);
+
+    //connection = rhs_in.connection;
+    //connectionStates = rhs_in.connectionStates;
 
     // *NOTE*: the idea is to 'merge' the data
     // *NOTE*: always use upstream data, if available
@@ -214,20 +222,22 @@ class ARDrone_DirectShow_SessionData
     return *this;
   }
 
-  IGraphBuilder*              builder;
+  IGraphBuilder*                builder;
+  ARDrone_IConnection_t*        connection;
+  Stream_Net_ConnectionStates_t connectionStates;
   // *TODO*: mediafoundation only, remove ASAP
 #if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
-  IDirect3DDevice9Ex*         direct3DDevice;
+  IDirect3DDevice9Ex*           direct3DDevice;
 #else
-  IDirect3DDevice9*           direct3DDevice;
+  IDirect3DDevice9*             direct3DDevice;
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
   // *TODO*: mediafoundation only, remove ASAP
-  UINT                        direct3DManagerResetToken; // direct 3D manager 'id'
-  IMFMediaSession*            session;
-  Stream_Base_t*              stream;
-  IVideoWindow*               windowController;
+  UINT                          direct3DManagerResetToken; // direct 3D manager 'id'
+  IMFMediaSession*              session;
+  Stream_Base_t*                stream;
+  IVideoWindow*                 windowController;
 
-  std::string                 targetFileName;
+  std::string                   targetFileName;
 };
 typedef Stream_SessionData_T<ARDrone_DirectShow_SessionData> ARDrone_DirectShow_SessionData_t;
 #else
@@ -319,6 +329,7 @@ struct ARDrone_ModuleHandlerConfigurationBase
    , CBData (NULL)
 #endif // GUI_SUPPORT
    , codecConfiguration (NULL)
+   , deviceConfiguration (NULL)
 #if defined (GUI_SUPPORT)
    , display ()
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -340,6 +351,7 @@ struct ARDrone_ModuleHandlerConfigurationBase
   struct ARDrone_UI_CBData_Base*                       CBData; // controller module
 #endif // GUI_SUPPORT
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration* codecConfiguration; // H264 decoder module
+  ARDrone_IDeviceConfiguration*                        deviceConfiguration;
 #if defined (GUI_SUPPORT)
   struct Common_UI_DisplayDevice                       display; // display module
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -361,15 +373,10 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_StreamConfiguration_t;
 typedef Net_StreamConnectionConfiguration_T<ARDrone_DirectShow_StreamConfiguration_t,
                                             NET_TRANSPORTLAYER_TCP> ARDrone_DirectShow_TCPConnectionConfiguration_t;
-typedef Net_IConnection_T<ACE_INET_Addr,
-                          struct ARDrone_ConnectionState,
-                          struct ARDrone_Statistic> ARDrone_IConnection_t;
-typedef std::unordered_map<std::string, // module name
-                           ARDrone_DirectShow_TCPConnectionConfiguration_t> ARDrone_DirectShow_Stream_ConnectionConfigurations_t;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_DirectShow_TCPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
+                                 struct Net_StreamStatistic,
                                  struct Net_UserData> ARDrone_DirectShow_ITCPConnectionManager_t;
 struct ARDrone_DirectShow_FilterConfiguration;
 struct ARDrone_DirectShow_ModuleHandlerConfiguration
@@ -383,9 +390,10 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
    , builder (NULL)
    , connection (NULL)
    , connectionConfigurations (NULL)
-   , connectionManager (NULL)
+   //, connectionManager (NULL)
    , filterCLSID (GUID_NULL)
    , filterConfiguration (NULL)
+   , parserConfiguration (NULL)
    , push (STREAM_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
    , window (NULL)
    , windowController (NULL)
@@ -397,17 +405,18 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
     push = true;
   }
 
-  struct tagRECT                                        area;                     // display module
-  IGraphBuilder*                                        builder;                  // display module
-  ARDrone_IConnection_t*                                connection;               // net source/IO module
-  ARDrone_DirectShow_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_DirectShow_ITCPConnectionManager_t*           connectionManager;        // IO module
-  struct _GUID                                          filterCLSID;              // display module
-  struct ARDrone_DirectShow_FilterConfiguration*        filterConfiguration;      // display module
-  bool                                                  push;                     // display module
-  HWND                                                  window;                   // display module
-  IVideoWindow*                                         windowController;         // display module
-  IMFVideoDisplayControl*                               windowController2;        // display module (EVR)
+  struct tagRECT                                 area;                     // display module
+  IGraphBuilder*                                 builder;                  // display module
+  ARDrone_IConnection_t*                         connection;               // net source/IO module
+  Net_ConnectionConfigurations_t*                connectionConfigurations; // net source/target modules
+  //ARDrone_DirectShow_ITCPConnectionManager_t*    connectionManager;        // IO module
+  struct _GUID                                   filterCLSID;              // display module
+  struct ARDrone_DirectShow_FilterConfiguration* filterConfiguration;      // display module
+  struct Common_FlexBisonParserConfiguration*    parserConfiguration;
+  bool                                           push;                     // display module
+  HWND                                           window;                   // display module
+  IVideoWindow*                                  windowController;         // display module
+  IMFVideoDisplayControl*                        windowController2;        // display module (EVR)
 };
 
 typedef Stream_Configuration_T<//stream_name_string_,
@@ -419,12 +428,13 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_MediaFoundation_StreamConfig
 //                          struct ARDrone_ConnectionState,
 //                          struct ARDrone_Statistic> ARDrone_MediaFoundation_IConnection_t;
 typedef std::unordered_map<std::string, // module name
-                           ARDrone_MediaFoundation_TCPConnectionConfiguration_t> ARDrone_MediaFoundation_Stream_ConnectionConfigurations_t;
+                           ARDrone_MediaFoundation_TCPConnectionConfiguration_t*> ARDrone_MediaFoundation_TCPConnectionConfigurations_t;
+typedef ARDrone_MediaFoundation_TCPConnectionConfigurations_t::iterator ARDrone_MediaFoundation_TCPConnectionConfigurationIterator_t;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_MediaFoundation_TCPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
-                                 struct ARDrone_UserData> ARDrone_MediaFoundation_ITCPConnectionManager_t;
+                                 struct Net_StreamStatistic,
+                                 struct Net_UserData> ARDrone_MediaFoundation_ITCPConnectionManager_t;
 struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
  : Stream_MediaFoundation_ModuleHandlerConfiguration
  , ARDrone_ModuleHandlerConfigurationBase
@@ -435,7 +445,8 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
    , area ()
    , connection (NULL)
    , connectionConfigurations (NULL)
-   , connectionManager (NULL)
+   //, connectionManager (NULL)
+   , parserConfiguration (NULL)
    , rendererNodeId (0)
    , session (NULL)
    , window (NULL)
@@ -445,14 +456,15 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
     passive = false;
   }
 
-  struct tagRECT                                             area;                     // display module
-  ARDrone_IConnection_t*                                     connection;               // net source/IO module
-  ARDrone_MediaFoundation_Stream_ConnectionConfigurations_t* connectionConfigurations; // net source/target modules
-  ARDrone_MediaFoundation_ITCPConnectionManager_t*           connectionManager;        // IO module
-  TOPOID                                                     rendererNodeId;
-  IMFMediaSession*                                           session;
-  HWND                                                       window;                   // display module
-  IMFVideoDisplayControl*                                    windowController;
+  struct tagRECT                                     area;                     // display module
+  ARDrone_IConnection_t*                             connection;               // net source/IO module
+  Net_ConnectionConfigurations_t*                    connectionConfigurations; // net source/target modules
+  //ARDrone_MediaFoundation_ITCPConnectionManager_t* connectionManager;        // IO module
+  struct Common_FlexBisonParserConfiguration*        parserConfiguration;
+  TOPOID                                             rendererNodeId;
+  IMFMediaSession*                                   session;
+  HWND                                               window;                   // display module
+  IMFVideoDisplayControl*                            windowController;
 };
 #else
 struct ARDrone_ConnectionConfiguration;
@@ -556,7 +568,7 @@ struct ARDrone_StreamConfiguration
    , initializeMAVLink (NULL)
    , initializeNavData (NULL)
    , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
-   , userData (NULL)
+   //, userData (NULL)
   {}
 
 #if defined (GUI_SUPPORT)
@@ -574,7 +586,7 @@ struct ARDrone_StreamConfiguration
   ARDrone_INavDataInitialize_t*                 initializeNavData;
   enum Stream_Visualization_VideoRenderer       renderer;
 
-  struct ARDrone_UserData*                      userData;
+  //struct ARDrone_UserData*                      userData;
 };
 
 //extern const char stream_name_string_[];
@@ -584,7 +596,7 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_DirectShow_ModuleHandlerConfiguration> ARDrone_DirectShow_StreamConfiguration_t;
 typedef ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T ARDrone_DirectShow_StreamConfigurationIterator_t;
 typedef std::unordered_map<std::string,
-                           ARDrone_DirectShow_StreamConfiguration_t> ARDrone_DirectShow_StreamConfigurations_t;
+                           ARDrone_DirectShow_StreamConfiguration_t*> ARDrone_DirectShow_StreamConfigurations_t;
 typedef ARDrone_DirectShow_StreamConfigurations_t::iterator ARDrone_DirectShow_StreamConfigurationsIterator_t;
 
 typedef Stream_Configuration_T<//stream_name_string_,
@@ -592,7 +604,7 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_MediaFoundation_ModuleHandlerConfiguration> ARDrone_MediaFoundation_StreamConfiguration_t;
 typedef ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T ARDrone_MediaFoundation_StreamConfigurationIterator_t;
 typedef std::unordered_map<std::string,
-                           ARDrone_MediaFoundation_StreamConfiguration_t> ARDrone_MediaFoundation_StreamConfigurations_t;
+                           ARDrone_MediaFoundation_StreamConfiguration_t*> ARDrone_MediaFoundation_StreamConfigurations_t;
 typedef ARDrone_MediaFoundation_StreamConfigurations_t::iterator ARDrone_MediaFoundation_StreamConfigurationsIterator_t;
 #else
 struct ARDrone_AllocatorConfiguration;
@@ -600,7 +612,7 @@ typedef Stream_Configuration_T<//stream_name_string_,
                                struct ARDrone_StreamConfiguration,
                                struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
 typedef std::unordered_map<std::string,
-                           ARDrone_StreamConfiguration_t> ARDrone_StreamConfigurations_t;
+                           ARDrone_StreamConfiguration_t*> ARDrone_StreamConfigurations_t;
 typedef ARDrone_StreamConfigurations_t::iterator ARDrone_StreamConfigurationsIterator_t;
 #endif // ACE_WIN32 || ACE_WIN64
 

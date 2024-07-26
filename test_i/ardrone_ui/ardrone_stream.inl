@@ -30,6 +30,7 @@
 #include "stream_dev_directshow_tools.h"
 #endif
 #include "stream_file_defines.h"
+#include "stream_misc_defines.h"
 #include "stream_net_defines.h"
 #include "stream_stat_defines.h"
 #include "stream_vis_defines.h"
@@ -38,6 +39,7 @@
 #include "ardrone_macros.h"
 #include "ardrone_modules_common.h"
 #include "ardrone_network_common.h"
+#include "ardrone_network.h"
 
 template <typename ModuleConfigurationType,
           typename SessionDataType,
@@ -115,7 +117,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   module_p = NULL;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (inherited::configuration_->configuration_.mediaFramework)
+  switch (inherited::configuration_->configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
@@ -161,7 +163,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_FileWriter_Module (this,
-                                                                   ACE_TEXT_ALWAYS_CHAR (MODULE_FILE_SINK_DEFAULT_NAME_STRING)),
+                                                                   ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -213,7 +215,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_FileWriter_Module (this,
-                                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_FILE_SINK_DEFAULT_NAME_STRING)),
+                                                                        ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -226,7 +228,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: invalid/unknown media framework (was: %d), aborting\n"),
                   ACE_TEXT (video_stream_name_string_),
-                  inherited::configuration_->configuration_.mediaFramework));
+                  inherited::configuration_->configuration_->mediaFramework));
       break;
     }
   } // end SWITCH
@@ -312,7 +314,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #endif
   } // end IF
 
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   typename SessionDataType::DATA_T* session_data_p = NULL;
@@ -325,7 +327,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   typename SourceModuleType::WRITER_T* sourceWriter_impl_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -335,7 +337,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
                 ACE_TEXT (video_stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
@@ -352,14 +354,14 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
   session_data_p =
     &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
-  switch (configuration_in.configuration_.mediaFramework)
+  switch (configuration_in.configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       Stream_MediaFramework_DirectShow_Tools::free (session_data_p->formats);
 
       struct _AMMediaType* media_type_p =
-        Stream_MediaFramework_DirectShow_Tools::copy (configuration_in.configuration_.sourceFormat);
+        Stream_MediaFramework_DirectShow_Tools::copy (configuration_in.configuration_->format);
       //if (!Stream_MediaFramework_DirectShow_Tools::copyMediaType (*(configuration_p->filterConfiguration->pinConfiguration->format),
       if (!media_type_p)
       {
@@ -382,7 +384,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  configuration_in.configuration_.mediaFramework));
+                  configuration_in.configuration_->mediaFramework));
       goto error;
     }
   } // end SWITCH
@@ -412,16 +414,16 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
                 ACE_TEXT (video_stream_name_string_)));
     goto error;
   } // end IF
-  sourceWriter_impl_p->setP (&(inherited::state_));
+  //sourceWriter_impl_p->setP (&(inherited::state_));
 
-  // enqueue the module
-  // *NOTE*: push()ing the module will open() it
-  // --> set the argument that is passed along
-  module_p->arg (inherited::sessionData_);
+  //// enqueue the module
+  //// *NOTE*: push()ing the module will open() it
+  //// --> set the argument that is passed along
+  //module_p->arg (inherited::sessionData_);
 
   // ---------------------------------------------------------------------------
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -436,7 +438,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   //if (media_type_p)
@@ -497,11 +499,11 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
   Stream_Module_t* module_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (inherited::configuration_->configuration_.mediaFramework)
+  switch (inherited::configuration_->configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_TCPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -525,7 +527,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
     
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_ControlDecoder_Module (this,
-                                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                       ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -534,7 +536,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_TCPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -558,7 +560,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_ControlDecoder_Module (this,
-                                                                            ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                            ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -570,7 +572,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: invalid/unknown media framework (was: %d), aborting\n"),
                   ACE_TEXT (video_stream_name_string_),
-                  inherited::configuration_->configuration_.mediaFramework));
+                  inherited::configuration_->configuration_->mediaFramework));
       break;
     }
   } // end SWITCH
@@ -590,7 +592,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 //  module_p = NULL;
 //#endif
 
-  switch (inherited::configuration_->configuration_.dispatch)
+  switch (inherited::configuration_->configuration_->dispatch)
   {
     case COMMON_EVENT_DISPATCH_PROACTOR:
     {
@@ -612,7 +614,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
-                  inherited::configuration_->configuration_.dispatch));
+                  inherited::configuration_->configuration_->dispatch));
       return false;
     }
   } // end SWITCH
@@ -658,7 +660,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   } // end IF
 
 //  bool result = false;
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
   //  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
@@ -667,7 +669,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -677,14 +679,14 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
                 ACE_TEXT (control_stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (configuration_in.configuration_.deviceConfiguration);
+  ACE_ASSERT (configuration_in.configuration_->deviceConfiguration);
 
-  configuration_ = configuration_in.configuration_.deviceConfiguration;
+  configuration_ = configuration_in.configuration_->deviceConfiguration;
 
   iterator =
     const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -698,14 +700,14 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   // sanity check(s)
   //ACE_ASSERT (configuration_p);
   //ACE_ASSERT (configuration_p->subscribers);
-  ACE_ASSERT ((*iterator).second.second.subscribers);
+  ACE_ASSERT ((*iterator).second.second->subscribers);
 
   //configuration_p->subscribers->push_back (this);
   //configuration_p->subscribers->sort ();
   //configuration_p->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
-  (*iterator).second.second.subscribers->push_back (this);
-  (*iterator).second.second.subscribers->sort ();
-  (*iterator).second.second.subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
+  (*iterator).second.second->subscribers->push_back (this);
+  (*iterator).second.second->subscribers->sort ();
+  (*iterator).second.second->subscribers->unique (SUBSCRIBERS_IS_EQUAL_P ());
 
   // ---------------------------------------------------------------------------
 
@@ -734,8 +736,8 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  ACE_ASSERT (configuration_in.configuration_.initializeControl);
-  if (!configuration_in.configuration_.initializeControl->initialize (this))
+  ACE_ASSERT (configuration_in.configuration_->initializeControl);
+  if (!configuration_in.configuration_->initializeControl->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
@@ -745,7 +747,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -761,7 +763,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 
   return false;
@@ -888,9 +890,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   inherited::state_.type = ARDRONE_STREAM_NAVDATA;
 
-  IWLAN_SUBSCRIBE_T* isubscribe_p = WLANMonitorSingletonType::instance ();
-  ACE_ASSERT (isubscribe_p);
-  isubscribe_p->subscribe (this);
+  //IWLAN_SUBSCRIBE_T* isubscribe_p = WLANMonitorSingletonType::instance ();
+  //ACE_ASSERT (isubscribe_p);
+  //isubscribe_p->subscribe (this);
 }
 
 template <typename ModuleConfigurationType,
@@ -902,9 +904,9 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::~ARDrone_NavDataStream_T"));
 
-  IWLAN_SUBSCRIBE_T* isubscribe_p = WLANMonitorSingletonType::instance ();
-  ACE_ASSERT (isubscribe_p);
-  isubscribe_p->unsubscribe (this);
+  //IWLAN_SUBSCRIBE_T* isubscribe_p = WLANMonitorSingletonType::instance ();
+  //ACE_ASSERT (isubscribe_p);
+  //isubscribe_p->unsubscribe (this);
 
   inherited::shutdown ();
 }
@@ -923,7 +925,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   Stream_Module_t* module_p = NULL;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (inherited::configuration_->configuration_.mediaFramework)
+  switch (inherited::configuration_->configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
@@ -941,7 +943,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       //  module_p = NULL;
       //#endif
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_UDPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -965,13 +967,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_NavDataDecoder_Module (this,
-                                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                       ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
       module_p = NULL;
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_Controller_Module (this,
                                                                      ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
@@ -1003,7 +1005,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       //  module_p = NULL;
       //#endif
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_UDPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -1027,13 +1029,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_NavDataDecoder_Module (this,
-                                                                            ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                            ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
       module_p = NULL;
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_Controller_Module (this,
                                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
@@ -1054,7 +1056,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: invalid/unknown media framework (was: %d), aborting\n"),
                   ACE_TEXT (video_stream_name_string_),
-                  inherited::configuration_->configuration_.mediaFramework));
+                  inherited::configuration_->configuration_->mediaFramework));
       break;
     }
   } // end SWITCH
@@ -1072,7 +1074,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
 //#endif
-  switch (inherited::configuration_->configuration_.dispatch)
+  switch (inherited::configuration_->configuration_->dispatch)
   {
     case COMMON_EVENT_DISPATCH_PROACTOR:
     {
@@ -1094,7 +1096,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
-                  inherited::configuration_->configuration_.dispatch));
+                  inherited::configuration_->configuration_->dispatch));
       return false;
     }
   } // end SWITCH
@@ -1118,7 +1120,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
 
-  switch (inherited::configuration_->configuration_.dispatch)
+  switch (inherited::configuration_->configuration_->dispatch)
   {
     case COMMON_EVENT_DISPATCH_PROACTOR:
     {
@@ -1140,7 +1142,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
-                  inherited::configuration_->configuration_.dispatch));
+                  inherited::configuration_->configuration_->dispatch));
       return false;
     }
   } // end SWITCH
@@ -1169,7 +1171,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     isFirst_ = true;
   } // end IF
 
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
 //  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
@@ -1178,7 +1180,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -1188,14 +1190,14 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
                 ACE_TEXT (navdata_stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
   //// sanity check(s)
   //ACE_ASSERT (inherited::sessionData_);
-  { ACE_GUARD_RETURN (ACE_SYNCH_RECURSIVE_MUTEX, aGuard, inherited::lock_, false);
-    inherited::state_.CBData = configuration_in.configuration_.CBData;
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, inherited::lock_, false);
+    inherited::state_.CBData = configuration_in.configuration_->CBData;
   } // end lock scope
 
 //  session_data_p =
@@ -1206,8 +1208,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
 
-  configuration_p =
-      dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
+  configuration_p = (*iterator).second.second;
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
@@ -1245,8 +1246,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  ACE_ASSERT (configuration_in.configuration_.initializeNavData);
-  if (!configuration_in.configuration_.initializeNavData->initialize (this))
+  ACE_ASSERT (configuration_in.configuration_->initializeNavData);
+  if (!configuration_in.configuration_->initializeNavData->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
@@ -1256,7 +1257,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -1272,7 +1273,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 
   return false;
@@ -1317,9 +1318,12 @@ void
 ARDrone_NavDataStream_T<ModuleConfigurationType,
                         SessionDataType,
                         SessionMessageType>::notify (Stream_SessionId_t sessionId_in,
-                                                     const enum Stream_SessionMessageType& event_in)
+                                                     const enum Stream_SessionMessageType& event_in,
+                                                     bool expedited_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::notify"));
+
+  ACE_UNUSED_ARG (expedited_in);
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
@@ -1340,31 +1344,31 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       } // end IF
 
       // reset event dispatch notification for outbound data
-      struct Net_UDPSocketConfiguration* socket_configuration_p = NULL;
+      Net_UDPSocketConfiguration_t* socket_configuration_p = NULL;
       typename inherited::CONFIGURATION_T::ITERATOR_T configuration_iterator;
-      ConnectionConfigurationIteratorType connection_iterator;
+      Net_ConnectionConfigurationsIterator_t connection_iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      ARDrone_DirectShow_IConnectionManager_t* directshow_iconnection_manager_p =
+      ARDrone_DirectShow_IUDPConnectionManager_t* directshow_iconnection_manager_p =
         NULL;
-      typename ARDrone_DirectShow_IConnectionManager_t::CONNECTION_T* directshow_connection_p =
+      typename ARDrone_DirectShow_IUDPConnectionManager_t::ICONNECTION_T* directshow_connection_p =
         NULL;
-      ARDrone_MediaFoundation_IConnectionManager_t* mediafoundation_iconnection_manager_p =
+      ARDrone_MediaFoundation_IUDPConnectionManager_t* mediafoundation_iconnection_manager_p =
         NULL;
-      typename ARDrone_MediaFoundation_IConnectionManager_t::CONNECTION_T* mediafoundation_connection_p =
+      typename ARDrone_MediaFoundation_IUDPConnectionManager_t::ICONNECTION_T* mediafoundation_connection_p =
         NULL;
-      switch (inherited::configuration_->configuration_.mediaFramework)
+      switch (inherited::configuration_->configuration_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
           directshow_iconnection_manager_p =
-            ARDRONE_DIRECTSHOW_CONNECTIONMANAGER_SINGLETON::instance ();
+            ARDRONE_DIRECTSHOW_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
           ACE_ASSERT (directshow_iconnection_manager_p);
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
         {
           mediafoundation_iconnection_manager_p =
-            ARDRONE_MEDIAFOUNDATION_CONNECTIONMANAGER_SINGLETON::instance ();
+            ARDRONE_MEDIAFOUNDATION_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
           ACE_ASSERT (mediafoundation_iconnection_manager_p);
           break;
         }
@@ -1372,15 +1376,16 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                      inherited::configuration_->configuration_.mediaFramework));
+                      inherited::configuration_->configuration_->mediaFramework));
           return;
         }
       } // end SWITCH
 #else
-      ARDrone_IConnectionManager_t* iconnection_manager_p =
-          ARDRONE_CONNECTIONMANAGER_SINGLETON::instance ();
+      ARDrone_IUDPConnectionManager_t* iconnection_manager_p =
+        ARDRONE_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
       ACE_ASSERT (iconnection_manager_p);
-      typename ARDrone_IConnectionManager_t::CONNECTION_T* connection_p = NULL;
+      typename ARDrone_IUDPConnectionManager_t::CONNECTION_T* connection_p =
+        NULL;
 #endif
       Stream_IOutboundDataNotify* ioutbound_data_notify = NULL;
       std::string module_name_string;
@@ -1389,20 +1394,20 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       ACE_ASSERT (inherited::configuration_);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (inherited::configuration_->configuration_.mediaFramework)
+      switch (inherited::configuration_->configuration_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
           configuration_iterator =
             inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
           ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
-          ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
+          ACE_ASSERT ((*configuration_iterator).second.second->connectionConfigurations);
           connection_iterator =
-            (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
-          ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
+            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
+          //ACE_ASSERT (NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration);
           socket_configuration_p =
-            dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
+            &NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration;
           ACE_ASSERT (socket_configuration_p);
           directshow_connection_p =
             directshow_iconnection_manager_p->get (socket_configuration_p->peerAddress,
@@ -1415,13 +1420,13 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
           configuration_iterator =
             inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
           ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
-          ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
+          ACE_ASSERT ((*configuration_iterator).second.second->connectionConfigurations);
           connection_iterator =
-            (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
-          ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
+            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+          ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
+          //ACE_ASSERT (NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration);
           socket_configuration_p =
-            dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
+            &NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration;
           ACE_ASSERT (socket_configuration_p);
           mediafoundation_connection_p =
             mediafoundation_iconnection_manager_p->get (socket_configuration_p->peerAddress,
@@ -1433,7 +1438,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                      inherited::configuration_->configuration_.mediaFramework));
+                      inherited::configuration_->configuration_->mediaFramework));
           return;
         }
       } // end SWITCH
@@ -1441,10 +1446,10 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       configuration_iterator =
           inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
-      ACE_ASSERT ((*configuration_iterator).second.second.connectionConfigurations);
+      ACE_ASSERT ((*configuration_iterator).second.second->connectionConfigurations);
       connection_iterator =
-          (*configuration_iterator).second.second.connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
-      ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second.connectionConfigurations->end ());
+          (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+      ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
       ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
           dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
@@ -1455,7 +1460,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (inherited::configuration_->configuration_.mediaFramework)
+      switch (inherited::configuration_->configuration_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
@@ -1468,11 +1473,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
             return;
           } // end IF
 
-          ARDrone_DirectShow_IStreamConnection_t* istream_connection_p =
-            dynamic_cast<ARDrone_DirectShow_IStreamConnection_t*> (directshow_connection_p);
+          ARDrone_DirectShow_IUDPStreamConnection_t* istream_connection_p =
+            dynamic_cast<ARDrone_DirectShow_IUDPStreamConnection_t*> (directshow_connection_p);
           ACE_ASSERT (istream_connection_p);
           ioutbound_data_notify =
-            &const_cast<typename ARDrone_DirectShow_IStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
+            &const_cast<typename ARDrone_DirectShow_IUDPStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -1486,18 +1491,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
             return;
           } // end IF
 
-          ARDrone_MediaFoundation_IStreamConnection_t* istream_connection_p =
-            dynamic_cast<ARDrone_MediaFoundation_IStreamConnection_t*> (mediafoundation_connection_p);
+          ARDrone_MediaFoundation_IUDPStreamConnection_t* istream_connection_p =
+            dynamic_cast<ARDrone_MediaFoundation_IUDPStreamConnection_t*> (mediafoundation_connection_p);
           ACE_ASSERT (istream_connection_p);
           ioutbound_data_notify =
-            &const_cast<typename ARDrone_MediaFoundation_IStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
+            &const_cast<typename ARDrone_MediaFoundation_IUDPStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
           break;
         }
         default:
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                      inherited::configuration_->configuration_.mediaFramework));
+                      inherited::configuration_->configuration_->mediaFramework));
           return;
         }
       } // end SWITCH
@@ -1519,7 +1524,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-      switch (inherited::configuration_->configuration_.mediaFramework)
+      switch (inherited::configuration_->configuration_->mediaFramework)
       {
         case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
         {
@@ -1567,7 +1572,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                      inherited::configuration_->configuration_.mediaFramework));
+                      inherited::configuration_->configuration_->mediaFramework));
           return;
         }
       } // end SWITCH
@@ -2026,11 +2031,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: move this to onConnect() (see below)
-  if (inherited::configuration_->configuration_.CBData)
+  if (inherited::configuration_->configuration_->CBData)
   {
     guint event_source_id =
       g_idle_add (idle_associated_SSID_cb,
-                  inherited::configuration_->configuration_.CBData);
+                  inherited::configuration_->configuration_->CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -2074,11 +2079,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   // *TODO*: move this to onDisconnect() (see below)
-  if (inherited::configuration_->configuration_.CBData)
+  if (inherited::configuration_->configuration_->CBData)
   {
     guint event_source_id =
       g_idle_add (idle_associated_SSID_cb,
-                  inherited::configuration_->configuration_.CBData);
+                  inherited::configuration_->configuration_->CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -2148,7 +2153,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #if defined (GTK_USE)
   guint event_source_id =
     g_idle_add (idle_associated_SSID_cb,
-                inherited::configuration_->configuration_.CBData);
+                inherited::configuration_->configuration_->CBData);
   if (event_source_id == 0)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2237,7 +2242,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 #else
   guint event_source_id =
     g_idle_add (idle_disassociated_SSID_cb,
-                inherited::configuration_->configuration_.CBData);
+                inherited::configuration_->configuration_->CBData);
   if (event_source_id == 0)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -2384,7 +2389,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   Stream_Module_t* module_p = NULL;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (inherited::configuration_->configuration_.mediaFramework)
+  switch (inherited::configuration_->configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
@@ -2403,7 +2408,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
       //  module_p = NULL;
       //#endif
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_UDPSource_Module (this,
                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -2427,7 +2432,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_MAVLinkDecoder_Module (this,
-                                                                       ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                       ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -2452,7 +2457,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
       //  module_p = NULL;
       //#endif
 
-      if (inherited::configuration_->configuration_.dispatch == COMMON_EVENT_DISPATCH_REACTOR)
+      if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_MediaFoundation_UDPSource_Module (this,
                                                                          ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)),
@@ -2476,7 +2481,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_MAVLinkDecoder_Module (this,
-                                                                            ACE_TEXT_ALWAYS_CHAR (MODULE_MISC_PARSER_DEFAULT_NAME_STRING)),
+                                                                            ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_PARSER_DEFAULT_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -2489,7 +2494,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("%s: invalid/unknown media framework (was: %d), aborting\n"),
                   ACE_TEXT (video_stream_name_string_),
-                  inherited::configuration_->configuration_.mediaFramework));
+                  inherited::configuration_->configuration_->mediaFramework));
       break;
     }
   } // end SWITCH
@@ -2508,7 +2513,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 //  modules_out.push_back (module_p);
 //  module_p = NULL;
 //#endif
-  switch (inherited::configuration_->configuration_.dispatch)
+  switch (inherited::configuration_->configuration_->dispatch)
   {
     case COMMON_EVENT_DISPATCH_PROACTOR:
     {
@@ -2530,7 +2535,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
     {
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("invalid/unknown event dispatch (was: %d), aborting\n"),
-                  inherited::configuration_->configuration_.dispatch));
+                  inherited::configuration_->configuration_->dispatch));
       return false;
     }
   } // end SWITCH
@@ -2575,7 +2580,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   } // end IF
 
 //  bool result = false;
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
 //  struct ARDrone_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
@@ -2584,7 +2589,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -2594,7 +2599,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
                 ACE_TEXT (mavlink_stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
@@ -2609,8 +2614,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
 
-  configuration_p =
-      dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
+  configuration_p = (*iterator).second.second;
 
   // sanity check(s)
   ACE_ASSERT (configuration_p);
@@ -2666,8 +2670,8 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  ACE_ASSERT (configuration_in.configuration_.initializeMAVLink);
-  if (!configuration_in.configuration_.initializeMAVLink->initialize (this))
+  ACE_ASSERT (configuration_in.configuration_->initializeMAVLink);
+  if (!configuration_in.configuration_->initializeMAVLink->initialize (this))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to initialize event handler, aborting\n"),
@@ -2677,7 +2681,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -2693,7 +2697,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 
   return false;
@@ -2738,7 +2742,8 @@ void
 ARDrone_MAVLinkStream_T<ModuleConfigurationType,
                         SessionDataType,
                         SessionMessageType>::notify (Stream_SessionId_t sessionId_in,
-                                                     const enum Stream_SessionMessageType& event_in)
+                                                     const enum Stream_SessionMessageType& event_in,
+                                                     bool expedited_in)
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_MAVLinkStream_T::notify"));
 
@@ -2750,6 +2755,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
     return;
 
   ACE_UNUSED_ARG (event_in);
+  ACE_UNUSED_ARG (expedited_in);
 }
 
 template <typename ModuleConfigurationType,

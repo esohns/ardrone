@@ -35,11 +35,8 @@
 template <typename ConfigurationType,
           typename ConnectorType>
 ARDrone_SignalHandler_T<ConfigurationType,
-                        ConnectorType>::ARDrone_SignalHandler_T (enum Common_SignalDispatchType dispatchMode_in,
-                                                                 ACE_SYNCH_RECURSIVE_MUTEX* lock_in)
- : inherited (dispatchMode_in,
-              lock_in,
-              this)
+                        ConnectorType>::ARDrone_SignalHandler_T ()
+ : inherited (this)
  , connector_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler_T::ARDrone_SignalHandler_T"));
@@ -169,23 +166,22 @@ ARDrone_SignalHandler_T<ConfigurationType,
       }
     } // end IF
 
-    ARDRONE_WLANMONITOR_SINGLETON::instance ()->stop (true,   // wait ?
-                                                      false); // N/A
+    //ARDRONE_WLANMONITOR_SINGLETON::instance ()->stop (true,   // wait ?
+    //                                                  false); // N/A
 
     // step2: stop UI event dispatch ?
-    if (inherited::configuration_->hasUI)
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-      ARDRONE_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
+    //ARDRONE_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
+    //                                                  false); // N/A
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
                                                         false); // N/A
 #endif // GTK_USE
-#else
-      ;
 #endif // GUI_SUPPORT
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (inherited::configuration_->dispatchState->proactorGroupId,
-                                         inherited::configuration_->dispatchState->reactorGroupId,
-                                         false);                                                    // don't block
+    Common_Event_Tools::finalizeEventDispatch (*inherited::configuration_->dispatchState,
+                                               false,  // wait for completion ?
+                                               false); // delete singletons ?
   } // end IF
 }

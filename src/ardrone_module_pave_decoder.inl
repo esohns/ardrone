@@ -383,7 +383,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
         inherited2::getMediaType (format_s,
                                   STREAM_MEDIATYPE_VIDEO,
                                   media_type_s);
-         session_data_r.formats.push_back (media_type_s);
+        session_data_r.formats.push_back (media_type_s);
       } // end IF
 
       break;

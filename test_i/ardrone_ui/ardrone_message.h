@@ -94,6 +94,8 @@ class ARDrone_Message
 
   virtual void dump_state (void) const;
 
+  inline enum Stream_MediaType_Type getMediaType () { return STREAM_MEDIATYPE_VIDEO; }
+
  protected:
   // ctor to be used by clone() and derived classes
   // *NOTE*: clone()ing and passing the new data block --> "deep" copy

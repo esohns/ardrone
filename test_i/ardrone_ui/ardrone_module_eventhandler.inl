@@ -103,8 +103,8 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
 #else
     struct ARDrone_SessionData* session_data_p = NULL;
 #endif // ACE_WIN32 || ACE_WIN64
-    ARDroneStreamStatisticIterator_t iterator_3, iterator_4;
-    struct ARDrone_Statistic statistic_s;
+    //ARDroneStreamStatisticIterator_t iterator_3, iterator_4;
+    //struct ARDrone_Statistic statistic_s;
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, inherited::lock_);
       // step1: 'sink' this streams' data
       iterator_2 = inherited::sessionSessionData_.find (session_id);
@@ -120,10 +120,10 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
       ACE_ASSERT (session_data_p->lock);
       ACE_ASSERT (session_data_p->state);
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard_2, *session_data_p->lock);
-        iterator_3 =
-            session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
-        ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
-        (*iterator_3).second = session_data_r.statistic;
+        //iterator_3 =
+        //    session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
+        //ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
+        //(*iterator_3).second = session_data_r.statistic;
       } // end lock scope
 
       // step2: merge everything
@@ -139,22 +139,22 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
           &const_cast<struct ARDrone_SessionData&> ((*iterator_2).second->getR ());
 #endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (session_data_p->state);
-        iterator_3 =
-            session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
-        ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
-        iterator_4 =
-            statistic_s.streamStatistic.find (session_data_p->state->type);
-        ACE_ASSERT (iterator_4 != statistic_s.streamStatistic.end ());
-        (*iterator_4).second = (*iterator_3).second;
+        //iterator_3 =
+        //    session_data_p->statistic.streamStatistic.find (session_data_p->state->type);
+        //ACE_ASSERT (iterator_3 != session_data_p->statistic.streamStatistic.end ());
+        //iterator_4 =
+        //    statistic_s.streamStatistic.find (session_data_p->state->type);
+        //ACE_ASSERT (iterator_4 != statistic_s.streamStatistic.end ());
+        //(*iterator_4).second = (*iterator_3).second;
       } // end FOR
     } // end lock scope
     // step3: combine everything
-    +statistic_s;
+    //+statistic_s;
 
     // update message session data
     ACE_ASSERT (session_data_r.lock);
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard_3, *session_data_r.lock);
-      session_data_r.statistic = statistic_s;
+      //session_data_r.statistic = statistic_s;
     } // end lock scope
   } // end IF
 

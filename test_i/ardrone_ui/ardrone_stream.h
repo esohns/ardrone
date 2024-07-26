@@ -193,6 +193,9 @@ class ARDrone_ControlStream_T
                        bool = false);
   virtual void end (Stream_SessionId_t);
 
+  inline virtual void onSessionBegin (Stream_SessionId_t) {}
+  inline virtual void onSessionEnd (Stream_SessionId_t) {}
+
   ARDrone_IDeviceConfiguration* configuration_;
 };
 
@@ -281,8 +284,12 @@ class ARDrone_NavDataStream_T
   virtual void start (Stream_SessionId_t,
                       const typename SessionDataType::DATA_T&);
   virtual void notify (Stream_SessionId_t,
-                       const enum Stream_SessionMessageType&);
+                       const enum Stream_SessionMessageType&,
+                       bool = false);
   virtual void end (Stream_SessionId_t);
+
+  inline virtual void onSessionBegin (Stream_SessionId_t) {}
+  inline virtual void onSessionEnd (Stream_SessionId_t) {}
 
   // implement Net_WLAN_IMonitorCB
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -423,8 +430,12 @@ class ARDrone_MAVLinkStream_T
   virtual void start (Stream_SessionId_t,
                       const typename SessionDataType::DATA_T&);
   virtual void notify (Stream_SessionId_t,
-                       const enum Stream_SessionMessageType&);
+                       const enum Stream_SessionMessageType&,
+                       bool = false);
   virtual void end (Stream_SessionId_t);
+
+  inline virtual void onSessionBegin (Stream_SessionId_t) {}
+  inline virtual void onSessionEnd (Stream_SessionId_t) {}
 };
 
 //////////////////////////////////////////

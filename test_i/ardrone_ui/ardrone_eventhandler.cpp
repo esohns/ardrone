@@ -424,11 +424,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
             directshow_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
           ACE_ASSERT (directshow_video_streamconfiguration_iterator != directshow_configuration_p->streamConfigurations.end ());
           directshow_iterator_3 =
-            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-          ACE_ASSERT (directshow_iterator_3 != (*directshow_video_streamconfiguration_iterator).second.end ());
+            (*directshow_video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
+          ACE_ASSERT (directshow_iterator_3 != (*directshow_video_streamconfiguration_iterator).second->end ());
           directshow_iterator_4 =
-            (*directshow_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
-          ACE_ASSERT (directshow_iterator_4 != (*directshow_video_streamconfiguration_iterator).second.end ());
+            (*directshow_video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+          ACE_ASSERT (directshow_iterator_4 != (*directshow_video_streamconfiguration_iterator).second->end ());
           break;
         }
         case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -437,11 +437,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
             mediafoundation_configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
           ACE_ASSERT (mediafoundation_video_streamconfiguration_iterator != mediafoundation_configuration_p->streamConfigurations.end ());
           mediafoundation_iterator_3 =
-            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-          ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
+            (*mediafoundation_video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
+          ACE_ASSERT (mediafoundation_iterator_3 != (*mediafoundation_video_streamconfiguration_iterator).second->end ());
           mediafoundation_iterator_4 =
-            (*mediafoundation_video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
-          ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_video_streamconfiguration_iterator).second.end ());
+            (*mediafoundation_video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+          ACE_ASSERT (mediafoundation_iterator_4 != (*mediafoundation_video_streamconfiguration_iterator).second->end ());
           break;
         }
         default:
@@ -577,7 +577,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #if defined (GTK_USE)
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 #endif // GTK_USE
-        CBData_->progressData.statistic = session_data_r.statistic;
+        //CBData_->progressData.statistic = session_data_r.statistic;
 #if defined (GTK_USE)
       } // end lock scope
 #endif // GTK_USE

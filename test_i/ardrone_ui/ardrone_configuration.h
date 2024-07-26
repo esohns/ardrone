@@ -176,17 +176,17 @@ struct ARDrone_SignalConfiguration
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State> ARDrone_GtkBuilderDefinition_t;
+//typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State> ARDrone_GtkBuilderDefinition_t;
 
 struct ARDrone_GTK_Configuration
  : Common_UI_GTK_Configuration
 {
   ARDrone_GTK_Configuration ()
    : Common_UI_GTK_Configuration ()
-   , definition (NULL)
+   //, definition (NULL)
   {}
 
-  ARDrone_GtkBuilderDefinition_t::INTERFACE_T* definition;
+  //ARDrone_GtkBuilderDefinition_t::INTERFACE_T* definition;
 };
 #endif // GTK_USE
 #endif // GUI_SUPPORT
@@ -204,7 +204,8 @@ struct ARDrone_Configuration_Base
    , streamSubscribersLock ()
    , WLANMonitorConfiguration ()
    , GTKConfiguration ()
-   , userData (NULL)
+   //, streamUserData (NULL)
+   //, netUserData (NULL)
   {}
 
   struct ARDrone_AllocatorConfiguration               allocatorConfiguration;
@@ -212,17 +213,18 @@ struct ARDrone_Configuration_Base
   struct Stream_MediaFramework_Direct3D_Configuration direct3DConfiguration;
 #endif // ACE_WIN32 || ACE_WIN64
   struct Common_EventDispatchConfiguration            dispatchConfiguration;
-  struct Common_ParserConfiguration                   parserConfiguration;
+  struct Common_FlexBisonParserConfiguration          parserConfiguration;
   ARDrone_Subscribers_t                               streamSubscribers;
   ACE_SYNCH_RECURSIVE_MUTEX                           streamSubscribersLock;
   struct Net_WLAN_MonitorConfiguration                WLANMonitorConfiguration;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  struct ARDrone_GTK_Configuration                    GTKConfiguration;
+  Common_UI_GTK_Configuration_t                       GTKConfiguration;
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
-  struct ARDrone_UserData*                            userData;
+  //struct Stream_UserData*                             streamUserData;
+  //struct Net_UserData*                                netUserData;
 };
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -231,16 +233,20 @@ struct ARDrone_DirectShow_Configuration
 {
   ARDrone_DirectShow_Configuration ()
    : ARDrone_Configuration_Base ()
+   , allocatorProperties ()
    , connectionConfigurations ()
    , filterConfiguration ()
    , pinConfiguration ()
    , signalConfiguration ()
    , streamConfigurations ()
   {
+    ACE_OS::memset (&allocatorProperties, 0, sizeof (struct _AllocatorProperties));
+    filterConfiguration.allocatorProperties = &allocatorProperties;
     filterConfiguration.pinConfiguration = &pinConfiguration;
   }
 
-  ARDrone_DirectShow_ConnectionConfigurations_t                  connectionConfigurations;
+  struct _AllocatorProperties                                    allocatorProperties;
+  ARDrone_StreamConnectionConfigurations_t                       connectionConfigurations;
   struct ARDrone_DirectShow_FilterConfiguration                  filterConfiguration;
   struct Stream_MediaFramework_DirectShow_FilterPinConfiguration pinConfiguration;
   struct ARDrone_DirectShow_SignalConfiguration                  signalConfiguration;
@@ -257,7 +263,7 @@ struct ARDrone_MediaFoundation_Configuration
    , streamConfigurations ()
   {}
 
-  ARDrone_MediaFoundation_ConnectionConfigurations_t connectionConfigurations;
+  ARDrone_StreamConnectionConfigurations_t           connectionConfigurations;
   struct ARDrone_MediaFoundation_SignalConfiguration signalConfiguration;
   ARDrone_MediaFoundation_StreamConfigurations_t     streamConfigurations;
 };
@@ -272,9 +278,9 @@ struct ARDrone_Configuration
    , streamConfigurations ()
   {}
 
-  ARDrone_ConnectionConfigurations_t connectionConfigurations;
-  struct ARDrone_SignalConfiguration signalConfiguration;
-  ARDrone_StreamConfigurations_t     streamConfigurations;
+  ARDrone_StreamConnectionConfigurations_t connectionConfigurations;
+  struct ARDrone_SignalConfiguration       signalConfiguration;
+  ARDrone_StreamConfigurations_t           streamConfigurations;
 };
 #endif // ACE_WIN32 || ACE_WIN64
 

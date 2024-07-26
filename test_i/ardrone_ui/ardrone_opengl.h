@@ -22,6 +22,9 @@
 #define ARDRONE_OPENGL_H
 
 #if defined (GTKGL_SUPPORT)
+#if defined (GLEW_SUPPORT)
+#include "GL/glew.h"
+#endif // GLEW_SUPPORT
 #include <GL/gl.h>
 
 //void arrow (GLfloat,  // x1

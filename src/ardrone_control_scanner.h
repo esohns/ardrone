@@ -2,15 +2,14 @@
 #define ARDrone_Control_Scanner_HEADER_H 1
 #define ARDrone_Control_Scanner_IN_HEADER 1
 
-#line 2 "./../scripts/control_scanner.l"
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 
 #include "ardrone_types.h"
 
-#define YY_STRUCT_YY_BUFFER_STATE
-#include "ardrone_control_scanner.h"
-#undef YY_STRUCT_YY_BUFFER_STATE
+//#define YY_STRUCT_YY_BUFFER_STATE
+//#include "ardrone_control_scanner.h"
+//#undef YY_STRUCT_YY_BUFFER_STATE
 #endif
 
 // forward declarations
