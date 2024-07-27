@@ -284,7 +284,7 @@ Test_U_Stream::Test_U_Stream ()
  , convert_ (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING))
  , detect_ (this,
-            ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_OPENCV_DECODER_DEFAULT_NAME_STRING))
+            ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_OPENCV_CLASSIFIER_DEFAULT_NAME_STRING))
  , resize_ (this,
             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
  , display_ (this,
@@ -326,7 +326,7 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&detect_, NULL, 0);
 //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
 //  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-//   layout_inout->append (&display_, NULL, 0);
+   layout_inout->append (&display_, NULL, 0);
 //  else
 //    layout_inout->append (&display_2_, NULL, 0);
 
@@ -341,7 +341,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // sanity check(s)
   ACE_ASSERT (!isRunning ());
 
-  bool setup_pipeline = configuration_in.configuration_.setupPipeline;
+  bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
   Test_U_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
@@ -349,7 +349,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   Test_U_AsynchTCPSource* source_impl_p = NULL;
 
   // allocate a new session state, reset stream
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     false;
   reset_setup_pipeline = true;
   if (!inherited::initialize (configuration_in))
@@ -359,7 +359,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
                 ACE_TEXT (stream_name_string_)));
     goto error;
   } // end IF
-  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+  const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
 
@@ -374,29 +374,27 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
 
-  configuration_p =
-      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> (&(*iterator).second.second);
-
+  configuration_p = (*iterator).second.second;
   // sanity check(s)
   ACE_ASSERT (configuration_p);
 
   // *TODO*: remove type inferences
   ACE_ASSERT (session_data_p->formats.empty ());
-  session_data_p->formats.push_back (configuration_in.configuration_.format);
+  session_data_p->formats.push_back (configuration_in.configuration_->format);
 
   // ---------------------------------------------------------------------------
 
   // ******************* Camera Source ************************
   source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
   ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  // source_impl_p->setP (&(inherited::state_));
 
-  // *NOTE*: push()ing the module will open() it
-  //         --> set the argument that is passed along (head module expects a
-  //             handle to the session data)
-  source_.arg (inherited::sessionData_);
+  // // *NOTE*: push()ing the module will open() it
+  // //         --> set the argument that is passed along (head module expects a
+  // //             handle to the session data)
+  // source_.arg (inherited::sessionData_);
 
-  if (configuration_in.configuration_.setupPipeline)
+  if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
     {
       ACE_DEBUG ((LM_ERROR,
@@ -413,7 +411,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
 
 error:
   if (reset_setup_pipeline)
-    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_.setupPipeline =
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
       setup_pipeline;
 
   return false;

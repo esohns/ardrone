@@ -1,3 +1,5 @@
+include ($ENV{PRJ_ROOT}/Common/scripts/ffmpeg.cmake)
+
 #add_definitions (-DGUI_SUPPORT)
 #include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
 #include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
@@ -251,6 +253,10 @@ cmake_policy (SET CMP0012 NEW)
 if (WIN32 AND NOT BUILD_TEST_U)
  set_target_properties (${EXECUTABLE} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 endif (WIN32 AND NOT BUILD_TEST_U)
+
+if (UNIX)
+ target_compile_features (${EXECUTABLE} PRIVATE cxx_std_17)
+endif (UNIX)
 
 #add_dependencies (${EXECUTABLE} ACE)
 add_dependencies (${EXECUTABLE} Common)

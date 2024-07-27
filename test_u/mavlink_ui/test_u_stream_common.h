@@ -186,11 +186,11 @@ struct Test_U_ModuleHandlerConfiguration
 #endif // ACE_WIN32 || ACE_WIN64
   }
 
-  Test_U_IConnection_t*           connection;
-  Net_ConnectionConfigurations_t* connectionConfigurations;
+  Test_U_IConnection_t*                       connection;
+  Net_ConnectionConfigurations_t*             connectionConfigurations;
   struct Common_FlexBisonParserConfiguration* parserConfiguration;
-  Test_U_ISessionNotify_t*        subscriber;
-  Test_U_Subscribers_t*           subscribers;
+  Test_U_ISessionNotify_t*                    subscriber;
+  Test_U_Subscribers_t*                       subscribers;
 };
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;

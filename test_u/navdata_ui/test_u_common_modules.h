@@ -31,8 +31,8 @@
 #include "stream_common.h"
 #include "stream_streammodule_base.h"
 
-#include "stream_dec_libav_converter.h"
-#include "stream_dec_libav_decoder.h"
+// #include "stream_dec_libav_converter.h"
+// #include "stream_dec_libav_decoder.h"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_lib_directshow_asynch_source_filter.h"
@@ -52,25 +52,25 @@
 #include "ardrone_module_navdata_decoder.h"
 
 #include "test_u_message.h"
-//#include "test_u_session_message.h"
+#include "test_u_session_message.h"
 #include "test_u_network.h"
 #include "test_u_stream_common.h"
 
 // declare module(s)
-typedef ARDrone_Module_NavDataDecoder_T <ACE_MT_SYNCH,
-                                         Common_TimePolicy_t,
-                                         struct Test_U_ModuleHandlerConfiguration,
-                                         Stream_ControlMessage_t,
-                                         Test_U_Message_t,
-                                         Test_U_SessionMessage_t,
-                                         Test_U_SessionData_t> Test_U_NavDataDecoder;
-typedef ARDrone_Module_ControlDecoder_T <ACE_MT_SYNCH,
-                                         Common_TimePolicy_t,
-                                         struct Test_U_ModuleHandlerConfiguration,
-                                         Stream_ControlMessage_t,
-                                         Test_U_Message_t,
-                                         Test_U_SessionMessage_t,
-                                         Test_U_SessionData_t> Test_U_ControlDecoder;
+typedef ARDrone_Module_NavDataDecoder_T<ACE_MT_SYNCH,
+                                        Common_TimePolicy_t,
+                                        struct Test_U_ModuleHandlerConfiguration,
+                                        Stream_ControlMessage_t,
+                                        Test_U_Message_t,
+                                        Test_U_SessionMessage_t,
+                                        Test_U_SessionData_t> Test_U_NavDataDecoder;
+typedef ARDrone_Module_ControlDecoder_T<ACE_MT_SYNCH,
+                                        Common_TimePolicy_t,
+                                        struct Test_U_ModuleHandlerConfiguration,
+                                        Stream_ControlMessage_t,
+                                        Test_U_Message_t,
+                                        Test_U_SessionMessage_t,
+                                        Test_U_SessionData_t> Test_U_ControlDecoder;
 
 typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,

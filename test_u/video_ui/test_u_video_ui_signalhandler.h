@@ -35,8 +35,7 @@ class Test_U_SignalHandler_T
   typedef Common_SignalHandler_T<ConfigurationType> inherited;
 
  public:
-  Test_U_SignalHandler_T (enum Common_SignalDispatchType, // dispatch mode
-                          ACE_SYNCH_RECURSIVE_MUTEX*);    // lock handle
+  Test_U_SignalHandler_T ();
   inline virtual ~Test_U_SignalHandler_T () {}
 
   // override Common_IInitialize_T
@@ -46,7 +45,7 @@ class Test_U_SignalHandler_T
   virtual void handle (const struct Common_Signal&);
 
  private:
-  ACE_UNIMPLEMENTED_FUNC (Test_U_SignalHandler_T ());
+//  ACE_UNIMPLEMENTED_FUNC (Test_U_SignalHandler_T ());
   ACE_UNIMPLEMENTED_FUNC (Test_U_SignalHandler_T (const Test_U_SignalHandler_T&));
   ACE_UNIMPLEMENTED_FUNC (Test_U_SignalHandler_T& operator= (const Test_U_SignalHandler_T&));
 };

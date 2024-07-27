@@ -35,6 +35,7 @@
 #include "stream_stat_defines.h"
 #include "stream_vis_defines.h"
 
+#include "ardrone_callbacks.h"
 #include "ardrone_defines.h"
 #include "ardrone_macros.h"
 #include "ardrone_modules_common.h"
@@ -1384,7 +1385,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       ARDrone_IUDPConnectionManager_t* iconnection_manager_p =
         ARDRONE_UDP_CONNECTIONMANAGER_SINGLETON::instance ();
       ACE_ASSERT (iconnection_manager_p);
-      typename ARDrone_IUDPConnectionManager_t::CONNECTION_T* connection_p =
+      typename ARDrone_IUDPConnectionManager_t::ICONNECTION_T* connection_p =
         NULL;
 #endif
       Stream_IOutboundDataNotify* ioutbound_data_notify = NULL;
@@ -1450,9 +1451,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       connection_iterator =
           (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
       ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
-      ACE_ASSERT ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
       socket_configuration_p =
-          dynamic_cast<struct Net_UDPSocketConfiguration*> ((*connection_iterator).second.socketHandlerConfiguration.socketConfiguration);
+          &NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration;
       ACE_ASSERT (socket_configuration_p);
       connection_p =
           iconnection_manager_p->get (socket_configuration_p->peerAddress,
@@ -1516,11 +1516,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         return;
       } // end IF
 
-      ARDrone_IStreamConnection_t* istream_connection_p =
-        dynamic_cast<ARDrone_IStreamConnection_t*> (connection_p);
+      ARDrone_IUDPStreamConnection_t* istream_connection_p =
+        dynamic_cast<ARDrone_IUDPStreamConnection_t*> (connection_p);
       ACE_ASSERT (istream_connection_p);
       ioutbound_data_notify =
-        &const_cast<typename ARDrone_IStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
+        &const_cast<typename ARDrone_IUDPStreamConnection_t::STREAM_T&> (istream_connection_p->stream ());
 #endif
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

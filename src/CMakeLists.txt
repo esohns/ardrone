@@ -1,4 +1,8 @@
-﻿include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/Threads.cmake)
+﻿if (UNIX)
+  include (FindPkgConfig)
+endif (UNIX)
+
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/Threads.cmake)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ACE.cmake)
 
@@ -6,10 +10,9 @@ include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ffmpeg.cmake)
 
 set (ACE_XML_LIB_FILE libACEXML.so)
 if (UNIX)
-# message ("CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
  find_library (ACE_XML_LIBRARY ${ACE_XML_LIB_FILE}
-               HINTS ${CMAKE_CURRENT_BINARY_DIR}/../../../ATCD/ACE /usr/local/src/ACE_wrappers/ACEXML
-               PATHS ENV ACE_ROOT
+               HINTS $ENV{ACE_ROOT}
+               PATHS $ENV{ACE_ROOT}
                PATH_SUFFIXES lib common
                DOC "searching for ${ACE_XML_LIB_FILE}"
                NO_DEFAULT_PATH)
@@ -38,9 +41,9 @@ set (ACE_XML_PARSER_LIB_FILE libACEXML_Parser.so)
 if (UNIX)
 # message ("CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
  find_library (ACE_XML_PARSER_LIBRARY ${ACE_XML_PARSER_LIB_FILE}
-               HINTS ${CMAKE_CURRENT_BINARY_DIR}/../../../ATCD/ACE /usr/local/src/ACE_wrappers/ACEXML/parser
-               PATHS ENV ACE_ROOT
-               PATH_SUFFIXES lib parser
+               HINTS $ENV{ACE_ROOT}
+               PATHS $ENV{ACE_ROOT}
+               PATH_SUFFIXES lib ACEXML/parser/parser
                DOC "searching for ${ACE_XML_PARSER_LIB_FILE}"
                NO_DEFAULT_PATH)
 # else ()
@@ -81,11 +84,12 @@ endif (WIN32)
 
 string (REPLACE ${CMAKE_SOURCE_DIR} "" BUILD_PATH_SUFFIX ${CMAKE_BINARY_DIR})
 string (SUBSTRING ${BUILD_PATH_SUFFIX} 1 -1 BUILD_PATH_SUFFIX)
+message (STATUS "BUILD_PATH_SUFFIX: ${BUILD_PATH_SUFFIX}")
 #find_package (Common 0.0.1 EXACT
 find_package (Common
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES Common/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${Common_DIR})
@@ -100,7 +104,7 @@ endif ()
 find_package (ACEStream
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES ACEStream/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACEStream_DIR})
@@ -113,7 +117,7 @@ add_definitions (-DSTREAM_DEC_HAS_DLL)
 find_package (ACENetwork
               REQUIRED
               CONFIG
-              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules $ENV{PRJ_ROOT}
+              PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../modules $ENV{PRJ_ROOT}
               PATH_SUFFIXES ACENetwork/${BUILD_PATH_SUFFIX}
               NO_DEFAULT_PATH)
 if (NOT EXISTS ${ACENetwork_DIR})
@@ -126,6 +130,10 @@ add_definitions (-DHAVE_CONFIG_H)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
 
 add_library (${PROJECT_NAME} STATIC "")
+
+if (UNIX)
+ target_compile_features (${PROJECT_NAME} PUBLIC cxx_std_17)
+endif (UNIX)
 
 target_include_directories (${PROJECT_NAME} PUBLIC
                             $<BUILD_INTERFACE:$ENV{LIB_ROOT}/mavlink/generated/include>)

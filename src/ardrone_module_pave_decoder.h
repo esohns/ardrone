@@ -59,13 +59,7 @@ class ARDrone_Module_PaVEDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  UserDataType>
- , public Stream_MediaFramework_MediaTypeConverter_T<
-                                                     MediaType
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-                                                    ,typename SessionMessageType::DATA_T
-#endif // ACE_WIN32 || ACE_WIN64
-                                                    >
+ , public Stream_MediaFramework_MediaTypeConverter_T<MediaType>
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -76,13 +70,7 @@ class ARDrone_Module_PaVEDecoder_T
                                  enum Stream_ControlType,
                                  enum Stream_SessionMessageType,
                                  UserDataType> inherited;
- typedef Stream_MediaFramework_MediaTypeConverter_T<
-                                                    MediaType
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#else
-                                                    ,typename SessionMessageType::DATA_T
-#endif // ACE_WIN32 || ACE_WIN64
-                                                   > inherited2;
+ typedef Stream_MediaFramework_MediaTypeConverter_T<MediaType> inherited2;
 
  public:
   // *TODO*: on MSVC 2015u3 the accurate declaration does not compile

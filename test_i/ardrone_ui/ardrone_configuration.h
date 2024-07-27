@@ -347,10 +347,18 @@ struct ARDrone_UI_ProgressData
 //#pragma pack (push, 1)
 //#endif // _MSC_VER
 struct ARDrone_UI_CBData_Base
+#if defined (GTK_USE)
+ : Common_UI_GTK_CBData
+#else
  : Common_UI_CBData
+#endif // GTK_USE
 {
   ARDrone_UI_CBData_Base ()
+#if defined (GTK_USE)
+   : Common_UI_GTK_CBData ()
+#else
    : Common_UI_CBData ()
+#endif // GTK_USE
    , controller (NULL)
    , enableVideo (ARDRONE_DEFAULT_VIDEO_DISPLAY)
    , frameCounter (0)

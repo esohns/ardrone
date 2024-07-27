@@ -282,6 +282,10 @@ if (WIN32 AND NOT BUILD_TEST_U)
  set_target_properties (${EXECUTABLE} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 endif (WIN32 AND NOT BUILD_TEST_U)
 
+if (UNIX)
+ target_compile_features (${EXECUTABLE} PRIVATE cxx_std_17)
+endif (UNIX)
+
 #add_dependencies (${EXECUTABLE} ACE)
 add_dependencies (${EXECUTABLE} Common)
 add_dependencies (${EXECUTABLE} ACEStream)

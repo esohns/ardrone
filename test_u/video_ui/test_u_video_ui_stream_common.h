@@ -22,7 +22,10 @@
 #define TEST_U_VIDEO_UI_STREAM_COMMON_H
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <control.h>
+#include "control.h"
+#else
+#include "X11/X.h"
+#include "X11/Xlib.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Synch_Traits.h"

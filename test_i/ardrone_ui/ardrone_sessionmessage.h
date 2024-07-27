@@ -80,8 +80,7 @@ class ARDrone_DirectShow_SessionMessage
 };
 #else
 class ARDrone_SessionMessage
- : public Stream_SessionMessageBase_T<struct ARDRone_AllocatorConfiguration,
-                                      enum Stream_SessionMessageType,
+ : public Stream_SessionMessageBase_T<enum Stream_SessionMessageType,
                                       ARDrone_SessionData_t,
                                       struct Stream_UserData>
 {

@@ -33,11 +33,8 @@
 //#include "ardrone_network.h"
 
 template <typename ConfigurationType>
-Test_U_SignalHandler_T<ConfigurationType>::Test_U_SignalHandler_T (enum Common_SignalDispatchType dispatchMode_in,
-                                                                   ACE_SYNCH_RECURSIVE_MUTEX* lock_in)
- : inherited (dispatchMode_in,
-              lock_in,
-              this)
+Test_U_SignalHandler_T<ConfigurationType>::Test_U_SignalHandler_T ()
+ : inherited (this)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_SignalHandler_T::Test_U_SignalHandler_T"));
 
@@ -174,8 +171,8 @@ Test_U_SignalHandler_T<ConfigurationType>::handle (const struct Common_Signal& s
 #endif // GUI_SUPPORT
 
     // step3: stop reactor (&& proactor, if applicable)
-    Common_Tools::finalizeEventDispatch (inherited::configuration_->dispatchState->proactorGroupId,
-                                         inherited::configuration_->dispatchState->reactorGroupId,
-                                         false);                                                    // don't block
+    Common_Event_Tools::finalizeEventDispatch (*inherited::configuration_->dispatchState,
+                                               false,  // don't block
+                                               false); // delete singletons ?
   } // end IF
 }

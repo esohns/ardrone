@@ -105,7 +105,7 @@ endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
  add_compile_options (-ansi)
- add_compile_options (-std=c++11)
+ add_compile_options (-std=c++17)
  add_compile_options (-Wall)
  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -g")
  add_definitions (-D_GNU_SOURCE)

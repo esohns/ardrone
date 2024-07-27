@@ -44,6 +44,8 @@
 
 #include "common_tools.h"
 
+#include "common_event_tools.h"
+
 #include "common_log_tools.h"
 //#include "common_logger.h"
 
@@ -406,11 +408,9 @@ do_work (
   Test_U_MessageHandler_Module message_handler (&stream,
                                                              ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
-  configuration_in.streamConfiguration.configuration_->messageAllocator =
-      &message_allocator;
-  configuration_in.streamConfiguration.configuration_->module = &message_handler;
-//  configuration_in.streamConfiguration.configuration_.renderer =
-//      renderer_in;
+  stream_configuration.messageAllocator = &message_allocator;
+  stream_configuration.module = &message_handler;
+  // stream_configuration.renderer = renderer_in;
 
   if (!heap_allocator.initialize (configuration_in.allocatorConfiguration))
   {
@@ -419,14 +419,19 @@ do_work (
     return;
   } // end IF
 
+#if defined (FFMPEG_SUPPORT)
+  struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
+  codec_configuration.codecId = AV_CODEC_ID_H264;
+
+  modulehandler_configuration.codecConfiguration = &codec_configuration;
+#endif // FFMPEG_SUPPORT
+
   modulehandler_configuration.cascadeFile =
       Common_File_Tools::getWorkingDirectory ();
-  modulehandler_configuration.cascadeFile +=
-      ACE_DIRECTORY_SEPARATOR_STR;
+  modulehandler_configuration.cascadeFile += ACE_DIRECTORY_SEPARATOR_STR_A;
   modulehandler_configuration.cascadeFile +=
       ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
-  modulehandler_configuration.cascadeFile +=
-      ACE_DIRECTORY_SEPARATOR_STR;
+  modulehandler_configuration.cascadeFile += ACE_DIRECTORY_SEPARATOR_STR_A;
   modulehandler_configuration.cascadeFile +=
     ACE_TEXT_ALWAYS_CHAR ("haarcascade_frontalface_default.xml");
   // *IMPORTANT NOTE*: is there a way to feed RGB24 data to Xlib;
@@ -442,8 +447,8 @@ do_work (
   modulehandler_configuration.outputFormat.resolution.height = 480;
 #endif // ACE_WIN32 || ACE_WIN64
   modulehandler_configuration.outputFormat.frameRate.num = 30;
-  configuration_in.streamConfiguration.configuration_->format =
-      modulehandler_configuration.outputFormat;
+
+  stream_configuration.format = modulehandler_configuration.outputFormat;
 
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
@@ -747,8 +752,7 @@ ACE_TMAIN (int argc_in,
   ACE_SYNCH_RECURSIVE_MUTEX* lock_2 = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  Test_U_SignalHandler_t signal_handler (COMMON_SIGNAL_DISPATCH_SIGNAL,
-                                         lock_2);
+  Test_U_SignalHandler_t signal_handler;
 #endif // ACE_WIN32 || ACE_WIN64
 
   struct Test_U_VideoUI_Configuration configuration;
@@ -756,7 +760,7 @@ ACE_TMAIN (int argc_in,
   // event dispatch
   configuration.dispatchConfiguration.numberOfProactorThreads = 3;
   configuration.dispatchConfiguration.proactorType =
-    COMMON_EVENT_PROACTOR_DEFAULT_TYPE;
+    COMMON_EVENT_PROACTOR_TYPE;
   if (!Common_Event_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,

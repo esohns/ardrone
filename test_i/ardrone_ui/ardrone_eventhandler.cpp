@@ -459,11 +459,11 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         configuration_p->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
       ACE_ASSERT (video_streamconfiguration_iterator != configuration_p->streamConfigurations.end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_3 =
-        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (""));
-      ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second.end ());
+          (*video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
+      ACE_ASSERT (iterator_3 != (*video_streamconfiguration_iterator).second->end ());
       ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
-        (*video_streamconfiguration_iterator).second.find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
-      ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second.end ());
+          (*video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
+      ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second->end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
       if (session_data_r.lock)
@@ -528,10 +528,10 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       } // end SWITCH
 #else
         ACE_ASSERT (!session_data_r.formats.empty ());
-        struct Stream_MediaFramework_FFMPEG_MediaType& media_type_r =
-            const_cast<struct Stream_MediaFramework_FFMPEG_MediaType&> (session_data_r.formats.front ());
-        (*iterator_3).second.second.outputFormat = media_type_r;
-        (*iterator_4).second.second.outputFormat = media_type_r;
+        struct Stream_MediaFramework_FFMPEG_VideoMediaType& media_type_r =
+            const_cast<struct Stream_MediaFramework_FFMPEG_VideoMediaType&> (session_data_r.formats.front ());
+        (*iterator_3).second.second->outputFormat = media_type_r;
+        (*iterator_4).second.second->outputFormat = media_type_r;
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)

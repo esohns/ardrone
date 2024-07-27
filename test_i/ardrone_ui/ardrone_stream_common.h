@@ -245,16 +245,18 @@ class ARDrone_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                         struct ARDrone_StreamState,
-                                        struct ARDrone_Statistic,
-                                        struct ARDrone_UserData>
+                                        struct Stream_Statistic,
+                                        struct Stream_UserData>
 {
  public:
   ARDrone_SessionData ()
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                    struct ARDrone_StreamState,
-                                   struct ARDrone_Statistic,
-                                   struct ARDrone_UserData> ()
+                                   struct Stream_Statistic,
+                                   struct Stream_UserData> ()
+   , connection (NULL)
+   , connectionStates ()
    , stream (NULL)
    , targetFileName ()
   {
@@ -269,10 +271,10 @@ class ARDrone_SessionData
   {
     // *NOTE*: the idea is to 'merge' the data
     Stream_SessionDataMediaBase_T<struct Stream_SessionData,
-                                  struct Stream_MediaFramework_FFMPEG_MediaType,
+                                  struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                   struct ARDrone_StreamState,
-                                  struct ARDrone_Statistic,
-                                  struct ARDrone_UserData>::operator+= (rhs_in);
+                                  struct Stream_Statistic,
+                                  struct Stream_UserData>::operator+= (rhs_in);
 
     stream = rhs_in.stream;
     targetFileName =
@@ -281,8 +283,10 @@ class ARDrone_SessionData
     return *this;
   }
 
-  Stream_Base_t* stream;
-  std::string    targetFileName;
+  ARDrone_IConnection_t*        connection;
+  Stream_Net_ConnectionStates_t connectionStates;
+  Stream_Base_t*                stream;
+  std::string                   targetFileName;
 };
 typedef Stream_SessionData_T<ARDrone_SessionData> ARDrone_SessionData_t;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -472,25 +476,27 @@ struct ARDrone_AllocatorConfiguration;
 struct ARDrone_StreamConfiguration;
 struct ARDrone_ModuleHandlerConfiguration;
 typedef Stream_Configuration_T<//stream_name_string_,
-                               struct ARDrone_AllocatorConfiguration,
                                struct ARDrone_StreamConfiguration,
-                               struct Stream_ModuleConfiguration,
                                struct ARDrone_ModuleHandlerConfiguration> ARDrone_StreamConfiguration_t;
-typedef Net_ConnectionConfiguration_T<struct ARDrone_ConnectionConfiguration,
-                                      struct ARDrone_AllocatorConfiguration,
-                                      ARDrone_StreamConfiguration_t> ARDrone_ConnectionConfiguration_t;
+typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,
+                                            NET_TRANSPORTLAYER_TCP> ARDrone_TCPConnectionConfiguration_t;
+typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,
+                                            NET_TRANSPORTLAYER_UDP> ARDrone_UDPConnectionConfiguration_t;
 typedef Net_IConnection_T<ACE_INET_Addr,
-                          ARDrone_ConnectionConfiguration_t,
                           struct ARDrone_ConnectionState,
-                          struct ARDrone_Statistic> ARDrone_IConnection_t;
-typedef std::unordered_map<std::string, // module name
-                           ARDrone_ConnectionConfiguration_t> ARDrone_Stream_ConnectionConfigurations_t;
-typedef Net_IConnectionManager_T<ACE_MT_SYNCH,
-                                 ACE_INET_Addr,
-                                 ARDrone_ConnectionConfiguration_t,
+                          struct Net_StreamStatistic> ARDrone_IConnection_t;
+// typedef std::unordered_map<std::string, // module name
+//                            ARDrone_TCPConnectionConfiguration_t> ARDrone_TCPConnectionConfigurations_t;
+typedef Net_IConnectionManager_T<ACE_INET_Addr,
+                                 ARDrone_TCPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct ARDrone_Statistic,
-                                 struct ARDrone_UserData> ARDrone_IConnectionManager_t;
+                                 struct Net_StreamStatistic,
+                                 struct Net_UserData> ARDrone_ITCPConnectionManager_t;
+typedef Net_IConnectionManager_T<ACE_INET_Addr,
+                                 ARDrone_UDPConnectionConfiguration_t,
+                                 struct ARDrone_ConnectionState,
+                                 struct Net_StreamStatistic,
+                                 struct Net_UserData> ARDrone_IUDPConnectionManager_t;
 struct ARDrone_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
  , ARDrone_ModuleHandlerConfigurationBase
@@ -503,12 +509,13 @@ struct ARDrone_ModuleHandlerConfiguration
 #endif // GUI_SUPPORT
    , connection (NULL)
    , connectionConfigurations (NULL)
-   , connectionManager (NULL)
+   // , connectionManager (NULL)
    , display ()
    , frameRate ()
 #if defined (GUI_SUPPORT)
    , fullScreen (false)
    , outputFormat ()
+   , parserConfiguration (NULL)
 #if defined (GTK_USE)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
@@ -522,28 +529,28 @@ struct ARDrone_ModuleHandlerConfiguration
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  GdkRectangle                                  area;
+  GdkRectangle                                       area;
 #elif defined (WXWIDGETS_USE)
-  wxRect                                        area;
+  wxRect                                             area;
 #endif
 #endif // GUI_SUPPORT
-  ARDrone_IConnection_t*                        connection;               // net source/IO module
-  ARDrone_Stream_ConnectionConfigurations_t*    connectionConfigurations; // net source/target modules
-  ARDrone_IConnectionManager_t*                 connectionManager;        // IO module
-  struct Common_UI_DisplayDevice                display;
-  struct AVRational                             frameRate;                // AVI encoder module
+  ARDrone_IConnection_t*                             connection;               // net source/IO module
+  Net_ConnectionConfigurations_t*                    connectionConfigurations; // net source/target modules
+  struct Common_UI_DisplayDevice                     display;
+  struct AVRational                                  frameRate;                // AVI encoder module
 #if defined (GUI_SUPPORT)
-  bool                                          fullScreen;
-  struct Stream_MediaFramework_FFMPEG_MediaType outputFormat;
+  bool                                               fullScreen;
+  struct Stream_MediaFramework_FFMPEG_VideoMediaType outputFormat;
+  struct Common_FlexBisonParserConfiguration*        parserConfiguration;
 #if defined (GTK_USE)
-  GdkPixbuf*                                    pixelBuffer;              // display module
-  ACE_SYNCH_MUTEX*                              pixelBufferLock;          // display module
+  GdkPixbuf*                                         pixelBuffer;              // display module
+  ACE_SYNCH_MUTEX*                                   pixelBufferLock;          // display module
 #endif // GTK_USE
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  HWND                                          window;
+  HWND                                               window;
 #else
 #if defined (GTK_USE)
-  GdkWindow*                                    window;
+  GdkWindow*                                         window;
 #endif // GTK_USE
 #endif // ACE_WIN32 || ACE_WIN64
 #endif // GUI_SUPPORT
@@ -579,7 +586,7 @@ struct ARDrone_StreamConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct _AMMediaType                           format;
 #else
-  struct Stream_MediaFramework_FFMPEG_MediaType format;
+  struct Stream_MediaFramework_FFMPEG_VideoMediaType format;
 #endif // ACE_WIN32 || ACE_WIN64
   ARDrone_IControlInitialize_t*                 initializeControl;
   ARDrone_IMAVLinkInitialize_t*                 initializeMAVLink;

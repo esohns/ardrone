@@ -51,9 +51,9 @@
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #if defined (GTK3_USE)
-#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk3"
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone_ui.gtk3"
 #elif defined (GTK2_USE)
-#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.gtk2"
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone_ui.gtk2"
 #endif
 #elif defined (WXWIDGETS_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.xrc"

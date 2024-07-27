@@ -60,7 +60,6 @@ extern "C"
 #include "ace/Log_Msg.h"
 #include "ace/Process.h"
 #include "ace/Process_Manager.h"
-#include "ace/Synch.h"
 
 #include "gmodule.h"
 
@@ -129,9 +128,9 @@ load_wlan_interfaces (GtkListStore* listStore_inout)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #elif defined (ACE_LINUX)
 #if defined (NL80211_USE)
-  ARDrone_WLANMonitor_t* WLAN_monitor_p =
-    ARDRONE_WLANMONITOR_SINGLETON::instance ();
-  ACE_ASSERT (WLAN_monitor_p);
+  // ARDrone_WLANMonitor_t* WLAN_monitor_p =
+  //   ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  // ACE_ASSERT (WLAN_monitor_p);
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -141,15 +140,16 @@ load_wlan_interfaces (GtkListStore* listStore_inout)
       Net_WLAN_Tools::getInterfaces (ACE_INVALID_HANDLE);
 #endif // WLANAPI_USE
 #elif defined (ACE_LINUX)
-      Net_WLAN_Tools::getInterfaces (
-#if defined (NL80211_USE)
-                                     static_cast<struct nl_sock*> (NULL),
-//                                     const_cast<struct nl_sock*> (WLAN_monitor_p->getP ()),
-                                     WLAN_monitor_p->get_3 ());
-#elif defined (WEXT_USE) || defined (DBUS_USE)
-                                     AF_UNSPEC,
-                                     0);
-#endif // NL80211_USE
+  {};
+      // Net_WLAN_Tools::getInterfaces (
+// #if defined (NL80211_USE)
+//                                      static_cast<struct nl_sock*> (NULL),
+// //                                     const_cast<struct nl_sock*> (WLAN_monitor_p->getP ()),
+//                                      WLAN_monitor_p->get_3 ());
+// #elif defined (WEXT_USE) || defined (DBUS_USE)
+//                                      AF_UNSPEC,
+//                                      0);
+// #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
 
   GtkTreeIter iterator;
@@ -620,7 +620,7 @@ stream_processing_function (void* arg_in)
         Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                            ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_LOG_FILE_PREFIX));
 
-    result_2 = iinitialize_p->initialize ((*iterator_4).second);
+    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -655,7 +655,7 @@ stream_processing_function (void* arg_in)
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    result_2 = iinitialize_p->initialize ((*iterator_4).second);
+    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -688,7 +688,7 @@ stream_processing_function (void* arg_in)
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    result_2 = iinitialize_p->initialize ((*iterator_4).second);
+    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -722,7 +722,7 @@ stream_processing_function (void* arg_in)
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    result_2 = iinitialize_p->initialize ((*iterator_4).second);
+    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -1208,14 +1208,14 @@ idle_initialize_ui_cb (gpointer userData_in)
     }
   } // end SWITCH
 #else
-  ARDrone_ConnectionConfigurationIterator_t iterator_2 =
+  ARDrone_StreamConnectionConfigurationIterator_t iterator_2_2 =
     cb_data_p->configuration->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (iterator_2 != cb_data_p->configuration->connectionConfigurations.end ());
-  ARDrone_Stream_ConnectionConfigurationIterator_t iterator_2_2 =
-    (*iterator_2).second->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
-  ACE_ASSERT (iterator_2_2 != (*iterator_2).second->end ());
+  ACE_ASSERT (iterator_2_2 != cb_data_p->configuration->connectionConfigurations.end ());
+  Net_ConnectionConfigurationsIterator_t iterator_2 =
+    (*iterator_2_2).second->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  ACE_ASSERT (iterator_2 != (*iterator_2_2).second->end ());
   gtk_entry_set_text (entry_p,
-                      Net_Common_Tools::IPAddressToString ((*iterator_2_2).second.socketHandlerConfiguration.socketConfiguration_2.address, true).c_str ());
+                      Net_Common_Tools::IPAddressToString (NET_CONFIGURATION_TCP_CAST ((*iterator_2).second)->socketConfiguration.address, true).c_str ());
 #endif // ACE_WIN32 || ACE_WIN64
 
   GtkSpinButton* spin_button_p =
@@ -1261,7 +1261,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     cb_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
   ACE_ASSERT (iterator_3 != cb_data_p->configuration->streamConfigurations.end ());
   gtk_spin_button_set_value (spin_button_p,
-    (*iterator_3).second.allocatorConfiguration_.defaultBufferSize);
+                             (*iterator_3).second->configuration_->allocatorConfiguration->defaultBufferSize);
 #endif // ACE_WIN32 || ACE_WIN64
 
   list_store_p =
@@ -2756,16 +2756,20 @@ idle_update_info_display_cb (gpointer userData_in)
             return G_SOURCE_REMOVE;
           }
         } // end SWITCH
+
+        gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
+                                     resolution_s.cx, resolution_s.cy);
 #else
 //        ARDrone_StreamConfiguration_t::ITERATOR_T iterator_4 =
 //          (*video_streamconfiguration_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING));
 //        ACE_ASSERT (iterator_4 != (*video_streamconfiguration_iterator).second->end ());
 
         resolution_s =
-            (*video_streamconfiguration_iterator).second.configuration_.format.resolution;
-#endif
+            (*video_streamconfiguration_iterator).second->configuration_->format.resolution;
+
         gtk_widget_set_size_request (GTK_WIDGET (drawing_area_p),
-                                     resolution_s.cx, resolution_s.cy);
+                                     resolution_s.width, resolution_s.height);
+#endif
 
         is_session_message = true;
 
@@ -3613,12 +3617,12 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     }
   } // end SWITCH
 #else
-  ARDrone_ConnectionConfigurationIterator_t iterator_3 =
+  ARDrone_StreamConnectionConfigurationIterator_t iterator_3_2 =
     configuration_p->connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING));
-  ACE_ASSERT (iterator_3 != configuration_p->connectionConfigurations.end ());
-  ARDrone_Stream_ConnectionConfigurationIterator_t iterator_3_2 =
-    (*iterator_3).second->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
-  ACE_ASSERT (iterator_3_2 != (*iterator_3).second->end ());
+  ACE_ASSERT (iterator_3_2 != configuration_p->connectionConfigurations.end ());
+  Net_ConnectionConfigurationsIterator_t iterator_3 =
+    (*iterator_3_2).second->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
+  ACE_ASSERT (iterator_3 != (*iterator_3_2).second->end ());
   ARDrone_StreamConfigurationsIterator_t iterator_4;
   ARDrone_StreamConfiguration_t::ITERATOR_T iterator_5, iterator_6;
 #endif
@@ -3658,8 +3662,8 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   } // end SWITCH
 #else
   result =
-    (*iterator_3_2).second.socketHandlerConfiguration.socketConfiguration_2.address.set (address_string.c_str (),
-                                                                                         AF_INET);
+    NET_CONFIGURATION_TCP_CAST ((*iterator_3).second)->socketConfiguration.address.set (address_string.c_str (),
+                                                                                        AF_INET);
 #endif
   if (result == -1)
   {
@@ -3750,7 +3754,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     }
   } // end SWITCH
 #else
-  (*iterator_4).second.allocatorConfiguration_.defaultBufferSize =
+  (*iterator_4).second->configuration_->allocatorConfiguration->defaultBufferSize =
       static_cast<unsigned int> (gtk_spin_button_get_value_as_int (spin_button_p));
 #endif
   // set fullscreen ?
@@ -4074,7 +4078,7 @@ continue_:
   } // end SWITCH
 #else
   ARDroneVideoModeToResolution (static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)),
-                                (*iterator_4).second->configuration_->format->resolution);
+                                (*iterator_4).second->configuration_->format.resolution);
 #endif
   g_value_unset (&value);
 
@@ -4787,15 +4791,15 @@ combobox_wlan_interface_changed_cb (GtkComboBox* comboBox_in,
 #endif // WLANAPI_USE
 #elif defined (ACE_LINUX)
 #if defined (WEXT_USE)
-    Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
-                                    ACE_INVALID_HANDLE);
+    // Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
+    //                                 ACE_INVALID_HANDLE);
 #elif defined (NL80211_USE)
-    Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
-                                    NULL,
-                                    WLAN_monitor_p->get_3 ());
+    // Net_WLAN_Tools::associatedSSID (wlan_monitor_configuration_p->interfaceIdentifier,
+    //                                 NULL,
+    //                                 WLAN_monitor_p->get_3 ());
 #elif defined (DBUS_USE)
-    Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->getP (),
-                                    wlan_monitor_configuration_p->interfaceIdentifier);
+    // Net_WLAN_Tools::associatedSSID (WLAN_monitor_p->getP (),
+    //                                 wlan_monitor_configuration_p->interfaceIdentifier);
 #else
   ACE_TEXT_ALWAYS_CHAR ("");
   ACE_ASSERT (false);
@@ -5413,10 +5417,10 @@ glarea_realize_cb (GtkWidget* widget_in,
   ACE_ASSERT (model_list_id_p);
   if (*model_list_id_p > 0)
   {
-    glDeleteLists (*model_list_id_p, 1);
+    // glDeleteLists (*model_list_id_p, 1);
 //    glDeleteTextures (1, model_list_id_p);
-    COMMON_GL_ASSERT
-    *model_list_id_p = 0;
+    // COMMON_GL_ASSERT
+    // *model_list_id_p = 0;
   } // end IF
 
   if (!*model_list_id_p)
@@ -5428,18 +5432,19 @@ glarea_realize_cb (GtkWidget* widget_in,
     filename +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_MODEL_DEFAULT_FILE);
 //        ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE);
+    COMMON_GL_CLEAR_ERROR
     *model_list_id_p =
         Common_GL_Tools::loadModel (filename,
                                     gl_scene_p->boundingBox,
                                     gl_scene_p->center);
 //        Common_GL_Tools::loadTexture (filename);
-    if (!*model_list_id_p)
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("failed to Common_GL_Tools::loadModel(\"%s\"), aborting\n"),
-                  ACE_TEXT (filename.c_str ())));
-      goto error;
-    } // end IF
+    // if (!*model_list_id_p)
+    // {
+    //   ACE_DEBUG ((LM_ERROR,
+    //               ACE_TEXT ("failed to Common_GL_Tools::loadModel(\"%s\"), aborting\n"),
+    //               ACE_TEXT (filename.c_str ())));
+    //   goto error;
+    // } // end IF
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //    COMMON_GL_ASSERT
 //    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -5455,21 +5460,21 @@ glarea_realize_cb (GtkWidget* widget_in,
                              &allocation);
 
   glMatrixMode (GL_PROJECTION);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   // reset the projection matrix
   glLoadIdentity ();
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
                   static_cast<GLdouble> (allocation.width) / static_cast<GLdouble> (allocation.height),
                   ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
                   ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   glViewport (0, 0,
               static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
 //  GLdouble fW, fH;
 //  fH =
@@ -5487,7 +5492,7 @@ glarea_realize_cb (GtkWidget* widget_in,
 //             0.0, 0.0, -1.0); // up direction (RHCS notation, relative to eye
 
   glMatrixMode (GL_MODELVIEW);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   /* light */
 //  GLfloat light_positions[2][4]   = { 50.0, 50.0, 0.0, 0.0,
@@ -5504,19 +5509,19 @@ glarea_realize_cb (GtkWidget* widget_in,
 
   // set up light colors (ambient, diffuse, specular)
   glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_LIGHT0);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   // reset the projection matrix
   glLoadIdentity ();
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
 #if GTK_CHECK_VERSION(3,0,0)
 #else
@@ -5612,22 +5617,22 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
 //  COMMON_GL_ASSERT
 //  glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
   glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_COLOR_MATERIAL);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_LIGHTING);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glDepthFunc (GL_LESS);                              // The Type Of Depth Testing To Do
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glDepthMask (GL_TRUE);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 //  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
 //  COMMON_GL_ASSERT
 //  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -5635,20 +5640,20 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
 //  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 //  COMMON_GL_ASSERT
   glShadeModel (GL_SMOOTH);                           // Enable Smooth Shading
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 //  // XXX docs say all polygons are emitted CCW, but tests show that some aren't
 //  glFrontFace (GL_CW);
   //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
   glHint (GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_BLEND);                                // Enable Semi-Transparency
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   glEnable (GL_NORMALIZE);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   return result_p;
 }
@@ -5678,16 +5683,16 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   model_list_id_p = &cb_data_base_p->openGLModelListId;
 //#endif
   ACE_ASSERT (model_list_id_p);
-  ACE_ASSERT (*model_list_id_p);
+  // ACE_ASSERT (*model_list_id_p);
 
 //  glBindTexture (GL_TEXTURE_2D, *model_list_id_p);
 //  COMMON_GL_ASSERT
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   glLoadIdentity ();
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   // left
   //  gluLookAt (0.0f,0.0f,3.0f,  // eye xyz
 //             0.0f,0.0f,0.0f,  // center xyz
@@ -5700,16 +5705,16 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   gluLookAt (3.0f,0.0f,0.0f,  // eye xyz
              0.0f,0.0f,0.0f,  // center xyz
              0.0f,1.0f,0.0f); // up xyz
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
 //  glTranslatef (0.0f, 0.0f, ARDRONE_OPENGL_CAMERA_DEFAULT_Z);
 //  COMMON_GL_ASSERT
 
-  // rotate it around the all axes
+  // rotate it around all the axes
   static GLfloat rotation_angle = 0.0f;
   glRotatef (rotation_angle, 0.0f, 1.0f, 0.0f);
 //  glRotatef (rotation_angle, 1.0f, 1.0f, 1.0f);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   // scale the whole asset to fit into the view frustum
   static GLfloat scale_factor = 0.0f;
@@ -5721,16 +5726,16 @@ glarea_render_cb (GtkGLArea* GLArea_in,
       COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLScene.boundingBox.second.z - cb_data_base_p->openGLScene.boundingBox.first.z, scale_factor);
   scale_factor = (1.0f / scale_factor) * 2.0f;
   glScalef (scale_factor, scale_factor, scale_factor);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   // center the model
   glTranslatef (-cb_data_base_p->openGLScene.center.x,
                 -cb_data_base_p->openGLScene.center.y,
                 -cb_data_base_p->openGLScene.center.z);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   glCallList (cb_data_base_p->openGLModelListId);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
 //  Common_GL_Tools::drawCube (true);
 //  COMMON_GL_ASSERT
@@ -5799,19 +5804,19 @@ glarea_resize_cb (GtkGLArea* GLArea_in,
   COMMON_GL_PRINT_ERROR;
 
   glMatrixMode (GL_PROJECTION);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   glLoadIdentity ();
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
                   static_cast<GLdouble> (width_in) / static_cast<GLdouble> (height_in),
                   ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
                   ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 
   glMatrixMode (GL_MODELVIEW);
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
 }
 #else
 #if defined (GTKGLAREA_SUPPORT)
