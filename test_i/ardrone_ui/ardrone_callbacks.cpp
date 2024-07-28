@@ -2288,11 +2288,11 @@ idle_finalize_ui_cb (gpointer userData_in)
       cb_data_base_p->messages.pop_front ();
     } // end WHILE
 
-    //if (cb_data_base_p->openGLRefreshId)
-    //{
-    //  g_source_remove (cb_data_base_p->openGLRefreshId);
-    //  cb_data_base_p->openGLRefreshId = 0;
-    //} // end iF
+    if (cb_data_base_p->openGLRefreshId)
+    {
+      g_source_remove (cb_data_base_p->openGLRefreshId);
+      cb_data_base_p->openGLRefreshId = 0;
+    } // end iF
     state_r.eventSourceIds.clear ();
 
     //if (glIsList (cb_data_p->openGLAxesListId))
@@ -8321,8 +8321,21 @@ button_quit_clicked_cb (GtkWidget* widget_in,
   ACE_UNUSED_ARG (widget_in);
   ACE_UNUSED_ARG (userData_in);
 
-  // this is the "delete-event" / "destroy" handler
-  // --> destroy the main dialog widget
+  Common_UI_GTK_State_t& state_r =
+    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+
+  // step1: remove event sources
+  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, TRUE);
+    for (Common_UI_GTK_EventSourceIdsIterator_t iterator = state_r.eventSourceIds.begin ();
+         iterator != state_r.eventSourceIds.end ();
+         iterator++)
+      if (!g_source_remove (*iterator))
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("failed to g_source_remove(%u), continuing\n"),
+                    *iterator));
+    state_r.eventSourceIds.clear ();
+  } // end lock scope
+
   int result = -1;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   result = ACE_OS::raise (SIGINT);
