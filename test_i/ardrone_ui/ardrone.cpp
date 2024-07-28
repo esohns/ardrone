@@ -3590,8 +3590,6 @@ ACE_TMAIN (int argc_in,
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_Configuration directshow_configuration;
-  directshow_configuration.dispatchConfiguration.reactorType = COMMON_REACTOR_ACE_DEFAULT;
-  //ACE_ASSERT (false); // *TODO*: memory corruption
   ARDrone_DirectShow_SignalHandler_t directshow_signal_handler;
 
   struct ARDrone_MediaFoundation_Configuration mediafoundation_configuration;

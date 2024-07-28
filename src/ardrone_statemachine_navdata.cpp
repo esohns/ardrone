@@ -19,7 +19,6 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "ardrone_statemachine_navdata.h"
 
 #include "ace/Guard_T.h"

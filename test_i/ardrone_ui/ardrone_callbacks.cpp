@@ -1601,6 +1601,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     GGLA_RED_SIZE,   1,
     GGLA_GREEN_SIZE, 1,
     GGLA_BLUE_SIZE,  1,
+    GGLA_ALPHA_SIZE, 1,
     GGLA_DOUBLEBUFFER,
     GGLA_NONE
   };
@@ -1901,8 +1902,8 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (result);
   result =
     g_signal_connect (G_OBJECT (gl_area_p),
-                      ACE_TEXT_ALWAYS_CHAR ("expose-event"),
-                      G_CALLBACK (glarea_expose_event_cb),
+                      ACE_TEXT_ALWAYS_CHAR ("draw"),
+                      G_CALLBACK (glarea_draw_event_cb),
                       userData_in);
   ACE_ASSERT (result);
 #else
@@ -2355,12 +2356,12 @@ idle_session_end_cb (gpointer userData_in)
     GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_CONFIGURATION)));
   ACE_ASSERT (frame_p);
-  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), TRUE);
   frame_p =
     GTK_FRAME (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_FRAME_OPTIONS)));
   ACE_ASSERT (frame_p);
-  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), true);
+  gtk_widget_set_sensitive (GTK_WIDGET (frame_p), TRUE);
 
   //// stop progress reporting ?
   //if (data_p->progressData->eventSourceId)
@@ -3059,9 +3060,23 @@ idle_update_orientation_display_cb (gpointer userData_in)
   gtk_gl_area_queue_render (gl_area_p);
 #else
 #if defined (GTKGLAREA_SUPPORT)
-  ACE_ASSERT (false);
-  ACE_NOTSUP_RETURN (G_SOURCE_CONTINUE);
-  ACE_NOTREACHED (return G_SOURCE_CONTINUE;)
+  GtkBox* box_p =
+    GTK_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION)));
+  ACE_ASSERT (box_p);
+  GList* children_a = gtk_container_get_children (GTK_CONTAINER (box_p));
+  ACE_ASSERT (children_a);
+  GtkWidget* widget_p = NULL;
+  while ((children_a = g_list_next (children_a)) != NULL)
+  {
+    widget_p = GTK_WIDGET (children_a->data);
+    break;
+  } // end WHILE
+  g_list_free (children_a); children_a = NULL;
+  ACE_ASSERT (widget_p);
+  gdk_window_invalidate_rect (gtk_widget_get_window (widget_p),
+                              NULL,
+                              0);
 #endif /* GTKGLAREA_SUPPORT */
 #endif /* GTK_CHECK_VERSION (3,16,0) */
 #else
@@ -3076,7 +3091,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
   ACE_NOTREACHED (return G_SOURCE_CONTINUE;)
 //  gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (gl_area_p)),
 //                              NULL,
-//                              false);
+//                              0);
 #endif /* GTKGLAREA_SUPPORT */
 #endif /* GTK_CHECK_VERSION (3,0,0) */
 #endif /* GTKGL_SUPPORT */
@@ -3112,7 +3127,7 @@ idle_update_video_display_cb (gpointer userData_in)
 
   gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (drawing_area_p)),
                               NULL,
-                              false);
+                              0);
 
   return G_SOURCE_REMOVE;
 }
@@ -5898,11 +5913,11 @@ glarea_configure_event_cb (GtkWidget* widget_in,
   COMMON_GL_ASSERT
 }
 gboolean
-glarea_expose_event_cb (GtkWidget* widget_in,
-                        cairo_t* context_in,
-                        gpointer userData_in)
+glarea_draw_event_cb (GtkWidget* widget_in,
+                      cairo_t* context_in,
+                      gpointer userData_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::glarea_expose_event_cb"));
+  ARDRONE_TRACE (ACE_TEXT ("::glarea_draw_event_cb"));
 
   ACE_UNUSED_ARG (context_in);
 

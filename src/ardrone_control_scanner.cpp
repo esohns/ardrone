@@ -1,5 +1,6 @@
 #ifndef YY_TYPEDEF_YY_CONTROL_SCANNER_T
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
+#include "stdafx.h"
 
 #include "ardrone_types.h"
 

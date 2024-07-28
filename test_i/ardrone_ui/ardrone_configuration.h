@@ -26,9 +26,16 @@
 #include <map>
 #include <string>
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#include "windef.h"
+#endif // ACE_WIN32 || ACE_WIN64
+
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
+#if defined (GLEW_SUPPORT)
+#include "GL/glew.h"
+#endif // GLEW_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "gl/GL.h"
 #else
@@ -90,7 +97,6 @@
 
 #include "ardrone_defines.h"
 #include "ardrone_network_common.h"
-//#include "ardrone_stream.h"
 #include "ardrone_stream_common.h"
 #include "ardrone_types.h"
 
@@ -353,9 +359,6 @@ struct ARDrone_UI_ProgressData
   struct ARDrone_Statistic           statistic;
 };
 
-//#if defined (_MSC_VER)
-//#pragma pack (push, 1)
-//#endif // _MSC_VER
 struct ARDrone_UI_CBData_Base
 #if defined (GTK_USE)
  : Common_UI_GTK_CBData
@@ -437,14 +440,8 @@ struct ARDrone_UI_CBData_Base
   ACE_Time_Value                  timeStamp;
   enum ARDrone_VideoMode          videoMode;
 };
-//#if defined (_MSC_VER)
-//#pragma pack (pop)
-//#endif // _MSC_VER
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#if defined (_MSC_VER)
-//#pragma pack (push, 1)
-//#endif // _MSC_VER
 struct ARDrone_DirectShow_UI_CBData
  : ARDrone_UI_CBData_Base
 {
@@ -455,9 +452,6 @@ struct ARDrone_DirectShow_UI_CBData
 
   struct ARDrone_DirectShow_Configuration* configuration;
 };
-//#if defined (_MSC_VER)
-//#pragma pack (pop)
-//#endif // _MSC_VER
 
 struct ARDrone_MediaFoundation_UI_CBData
  : ARDrone_UI_CBData_Base

@@ -139,11 +139,7 @@ struct parrot_video_encapsulation_t
 __pragma (pack (pop))
 #endif // ACE_WIN32 || ACE_WIN64
 
-#if defined (__llvm__)
 enum ARDrone_VideoMode
-#else
-enum ARDrone_VideoMode : int
-#endif // __llvm__
 {
   ARDRONE_VIDEOMODE_INVALID = -1,
   ARDRONE_VIDEOMODE_360P = H264_360P_CODEC,

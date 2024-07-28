@@ -16,22 +16,22 @@
 // Windows Header Files
 #include <windows.h>
 
-#include <strmif.h>
-#include <reftime.h>
-#if defined (DEBUG)
-// *NOTE*: wxWidgets may have #defined __WXDEBUG__
-#if defined (__WXDEBUG__)
-#undef __WXDEBUG__
-#endif // __WXDEBUG__
-#include <wxdebug.h>
-#endif // DEBUG
-// *NOTE*: uuids.h does not have double include protection (?) (and is therefore
-//         really a PITA to integrate consistently)
-// *NOTE*: M******** obviously relies on precompilation features to get this
-//         right; Note how this apparently precludes chances of meaningful
-//         compiler standardization at this stage; YMMV
-#define UUIDS_H
-#include <uuids.h>
+//#include <strmif.h>
+//#include <reftime.h>
+//#if defined (DEBUG)
+//// *NOTE*: wxWidgets may have #defined __WXDEBUG__
+//#if defined (__WXDEBUG__)
+//#undef __WXDEBUG__
+//#endif // __WXDEBUG__
+//#include <wxdebug.h>
+//#endif // DEBUG
+//// *NOTE*: uuids.h does not have double include protection (?) (and is therefore
+////         really a PITA to integrate consistently)
+//// *NOTE*: M******** obviously relies on precompilation features to get this
+////         right; Note how this apparently precludes chances of meaningful
+////         compiler standardization at this stage; YMMV
+//#define UUIDS_H
+//#include <uuids.h>
 
 //#include <streams.h>
 #endif // _MSC_VER

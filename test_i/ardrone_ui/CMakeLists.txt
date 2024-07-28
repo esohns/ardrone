@@ -425,7 +425,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/src/log)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/src/signal)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/src/timer)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/test_u)
+# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/test_u)
 
  if (GUI_SUPPORT)
   include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/Common/src/ui)
@@ -445,7 +445,7 @@ if (UNIX)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src/modules/net)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src/modules/stat)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/src/modules/vis)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/test_u)
+# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACEStream/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACENetwork/3rd_party/bison)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../modules/ACENetwork/src)
@@ -509,7 +509,7 @@ elseif (WIN32)
   endif ()
  endif (GUI_SUPPORT)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/xml)
- include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/test_u)
+# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/test_u)
 
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ACEStream/src)
  include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../../ACEStream/src/modules/dec)
@@ -608,7 +608,7 @@ if (GUI_SUPPORT)
  endif ()
 endif (GUI_SUPPORT)
 add_executable (${EXECUTABLE}
-                stdafx.cpp
+#                stdafx.cpp
                 stdafx.h
                 ${source_files}
                 etc/${ui_definition_file}
@@ -662,7 +662,7 @@ add_dependencies (${EXECUTABLE} CommonTimer)
 if (GUI_SUPPORT)
  add_dependencies (${EXECUTABLE} CommonUI)
 endif (GUI_SUPPORT)
-add_dependencies (${EXECUTABLE} Common_Test_U)
+#add_dependencies (${EXECUTABLE} Common_Test_U)
 
 add_dependencies (${EXECUTABLE} ACEStream)
 

@@ -322,7 +322,7 @@ file (GLOB script_files scripts/*.l)
 #endif ()
 
 target_sources (${PROJECT_NAME}
-                PRIVATE stdafx.cpp
+#                PRIVATE stdafx.cpp
                 PRIVATE stdafx.h
                 ${source_files})
 
