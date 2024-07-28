@@ -26,12 +26,12 @@
 #include "ardrone_macros.h"
 
 void
-extract_data (const char* data_in,
-              float& ax_out, float& ay_out, float& az_out,
-              float& t_out,
-              float& gx_out, float& gy_out, float& gz_out)
+extract_sensor_data (const char* data_in,
+                     float& ax_out, float& ay_out, float& az_out,
+                     float& t_out,
+                     float& gx_out, float& gy_out, float& gz_out)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::extract_data"));
+  //ARDRONE_TRACE (ACE_TEXT ("::extract_sensor_data"));
 
   const short int* data_p = reinterpret_cast<const short int*> (data_in);
   short int a_x, a_y, a_z;
@@ -65,6 +65,7 @@ extract_data (const char* data_in,
   g_z = ((ACE_BYTE_ORDER == ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*data_p)
          : *data_p);
   g_z = (g_z & 0x8000) ? ((g_z & 0x7FFF) - 0x8000) : g_z;
+
   // translate quantities into absolute values
   //ax_out = a_x / ARDRONE_ACCELEROMETER_LSB_FACTOR_2;
   //ay_out = a_y / ARDRONE_ACCELEROMETER_LSB_FACTOR_2;

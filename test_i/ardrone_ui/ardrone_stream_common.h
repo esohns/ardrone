@@ -25,14 +25,13 @@
 #include <string>
 #include <unordered_map>
 
-#include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 //#include <combaseapi.h>
-#include <control.h>
-#include <d3d9.h>
-#include <evr.h>
-#include <strmif.h>
-#include <mfidl.h>
+#include "control.h"
+#include "d3d9.h"
+#include "evr.h"
+#include "strmif.h"
+#include "mfidl.h"
 //#include <minwindef.h>
 #else
 //#include "linux/videodev2.h"
@@ -347,29 +346,31 @@ struct ARDrone_ModuleHandlerConfigurationBase
    , printProgressDot (false)
    , subscriber (NULL)
    , subscribers (NULL)
+   //, subscribersLock (NULL)
    , targetFileName ()
   {}
 
-  bool                                                 block; // H264 decoder module
+  bool                                                    block; // H264 decoder module
 #if defined (GUI_SUPPORT)
-  struct ARDrone_UI_CBData_Base*                       CBData; // controller module
+  struct ARDrone_UI_CBData_Base*                          CBData; // controller module
 #endif // GUI_SUPPORT
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration* codecConfiguration; // H264 decoder module
-  ARDrone_IDeviceConfiguration*                        deviceConfiguration;
+  ARDrone_IDeviceConfiguration*                           deviceConfiguration;
 #if defined (GUI_SUPPORT)
-  struct Common_UI_DisplayDevice                       display; // display module
+  struct Common_UI_DisplayDevice                          display; // display module
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  struct Stream_MediaFramework_Direct3D_Configuration* direct3DConfiguration; // display module
+  struct Stream_MediaFramework_Direct3D_Configuration*    direct3DConfiguration; // display module
 #endif // ACE_WIN32 || ACE_WIN64
-  bool                                                 fullScreen; // display module
+  bool                                                    fullScreen; // display module
 #endif // GUI_SUPPORT
-  bool                                                 finishOnDisconnect;
-  std::string                                          interfaceIdentifier; // wireless-/display-
-  std::string                                          outboundStreamName;  // event handler module
-  bool                                                 printProgressDot;    // file writer module
-  ARDrone_Notification_t*                              subscriber;          // event handler module
-  ARDrone_Subscribers_t*                               subscribers;         // event handler module
-  std::string                                          targetFileName;      // file sink module
+  bool                                                    finishOnDisconnect;
+  std::string                                             interfaceIdentifier; // wireless-/display-
+  std::string                                             outboundStreamName;  // event handler module
+  bool                                                    printProgressDot;    // file writer module
+  ARDrone_Notification_t*                                 subscriber;          // event handler module
+  ARDrone_Subscribers_t*                                  subscribers;         // event handler module
+  //ACE_Thread_Mutex*                                       subscribersLock;
+  std::string                                             targetFileName;      // file sink module
 };
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef Stream_Configuration_T<//stream_name_string_,

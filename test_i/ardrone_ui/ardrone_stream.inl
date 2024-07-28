@@ -478,6 +478,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
                         SessionMessageType>::ARDrone_ControlStream_T ()
  : inherited ()
  , inherited2 (&(inherited::sessionDataLock_))
+ , configuration_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_ControlStream_T::ARDrone_ControlStream_T"));
 

@@ -281,7 +281,6 @@ target_include_directories (${PROJECT_NAME} PUBLIC
 set (source_files
      ardrone_common.cpp
      ardrone_common.h
-     ardrone_configuration.h
      ardrone_control_scanner.cpp
      ardrone_control_scanner.h
      ardrone_defines.h
@@ -437,7 +436,6 @@ target_precompile_headers (${PROJECT_NAME}
 
 set (${PROJECT_NAME}_LIB_HDRS
   ardrone_common.h
-  ardrone_configuration.h
   ardrone_control_scanner.h
   ardrone_defines.h
   ardrone_macros.h

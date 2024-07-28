@@ -21,7 +21,7 @@
 
 #include "ardrone_opengl.h"
 
-#if defined (GTKOPENGL_SUPPORT)
+#if defined (GTKGL_SUPPORT)
 #include "GL/gl.h"
 #include "GL/glut.h"
 #include "GL/freeglut_ext.h"
@@ -116,7 +116,7 @@
 GLuint
 axes ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("::axes"));
+  //ARDRONE_TRACE (ACE_TEXT ("::axes"));
 
   GLuint axes_list = glGenLists (1);
   ACE_ASSERT (axes_list);
@@ -274,15 +274,17 @@ static float cpdata[][3] =
 
 static float tex[2][2][2] =
 {
-  {{0, 0},
-  {1, 0}},
-  {{0, 1},
-  {1, 1}}
+  { {0, 0},
+    {1, 0} },
+  { {0, 1},
+    {1, 1} }
 };
 
 static void
 teapot (GLint grid, GLfloat scale, GLenum type)
 {
+  //ARDRONE_TRACE (ACE_TEXT ("::teapot"));
+
   float p[4][4][3], q[4][4][3], r[4][4][3], s[4][4][3];
   long i, j, k, l;
 
@@ -292,9 +294,9 @@ teapot (GLint grid, GLfloat scale, GLenum type)
   glEnable (GL_MAP2_VERTEX_3);
   glEnable (GL_MAP2_TEXTURE_COORD_2);
   glPushMatrix ();
-  glRotatef (270.0, 1.0, 0.0, 0.0);
-  glScalef (0.5F * scale, 0.5F * scale, 0.5F * scale);
-  glTranslatef (0.0, 0.0, -1.5);
+  glRotatef (270.0f, 1.0f, 0.0f, 0.0f);
+  glScalef (0.5f * scale, 0.5f * scale, 0.5f * scale);
+  glTranslatef (0.0f, 0.0f, -1.5f);
   for (i = 0; i < 10; i++)
   {
     for (j = 0; j < 4; j++)
@@ -357,14 +359,12 @@ draw_teapot (bool solid,
 void
 frames_per_second (float framesPerSecond_in)
 {
-  ARDRONE_TRACE (ACE_TEXT ("::frames_per_second"));
+  //ARDRONE_TRACE (ACE_TEXT ("::frames_per_second"));
 
-  char buffer[BUFSIZ];
-  ACE_OS::memset (buffer, 0, sizeof (buffer));
-  int result = -1;
-  result = ACE_OS::sprintf (buffer,
-                            ACE_TEXT_ALWAYS_CHAR ("%.2f"),
-                            framesPerSecond_in);
+  char buffer_a[BUFSIZ];
+  ACE_OS::memset (buffer_a, 0, sizeof (char[BUFSIZ]));
+  int result =
+    ACE_OS::sprintf (buffer_a, ACE_TEXT_ALWAYS_CHAR ("%.2f"), framesPerSecond_in);
   if (result < 0)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -374,6 +374,6 @@ frames_per_second (float framesPerSecond_in)
 
   glRasterPos2f (5.0F, glutBitmapHeight (ARDRONE_OPENGL_FONT_FPS) / 2.0F);
   glutBitmapString (ARDRONE_OPENGL_FONT_FPS,
-                    reinterpret_cast<unsigned char*> (buffer));
+                    reinterpret_cast<unsigned char*> (buffer_a));
 }
 #endif

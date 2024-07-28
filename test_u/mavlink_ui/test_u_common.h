@@ -21,7 +21,13 @@
 #ifndef TEST_U_COMMON_H
 #define TEST_U_COMMON_H
 
+#include "common_parser_common.h"
+
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 #include "common_ui_gtk_common.h"
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #include "stream_istreamcontrol.h"
 
@@ -43,7 +49,11 @@ struct Test_U_Configuration
    : allocatorConfiguration ()
    , connectionConfigurations ()
    , dispatchConfiguration ()
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
    , GTKConfiguration ()
+#endif // GTK_USE
+#endif // GUI_SUPPORT
    , parserConfiguration ()
    , streamConfiguration ()
   {}
@@ -51,7 +61,11 @@ struct Test_U_Configuration
   struct Stream_AllocatorConfiguration       allocatorConfiguration;
   Net_ConnectionConfigurations_t             connectionConfigurations;
   struct Common_EventDispatchConfiguration   dispatchConfiguration;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   Common_UI_GTK_Configuration_t              GTKConfiguration;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   struct Common_FlexBisonParserConfiguration parserConfiguration;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t               streamConfiguration;

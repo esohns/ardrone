@@ -140,9 +140,9 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
 
   int result = -1;
   ACE_Message_Block* message_block_p, *message_block_2 = NULL;
-  unsigned int skipped_bytes, trailing_bytes = 0;
-  unsigned int length = 0;
-  unsigned int buffered_bytes, missing_bytes, bytes_to_copy;
+  size_t skipped_bytes, trailing_bytes = 0;
+  size_t length = 0;
+  size_t buffered_bytes, missing_bytes, bytes_to_copy;
   enum ARDrone_VideoMode video_mode_e = ARDRONE_VIDEOMODE_INVALID;
 
   // initialize return value(s)

@@ -29,7 +29,7 @@
 // fonts
 //#define ARDRONE_OPENGL_FONT_AXES                          GLUT_BITMAP_HELVETICA_18
 #define ARDRONE_OPENGL_FONT_AXES                           GLUT_STROKE_MONO_ROMAN
-//#define ARDRONE_OPENGL_FONT_FPS                            GLUT_BITMAP_HELVETICA_12
+#define ARDRONE_OPENGL_FONT_FPS                            GLUT_BITMAP_HELVETICA_12
 // camera calibration
 #define ARDRONE_OPENGL_CAMERA_ROTATION_FACTOR              0.8F
 #define ARDRONE_OPENGL_CAMERA_TRANSLATION_FACTOR           0.01F
@@ -252,20 +252,21 @@
 #define ARDRONE_H264_720P_VIDEO_HEIGHT                     720
 
 // *** application-related ***
-#define ARDRONE_CONFIGURATION_DIRECTORY                    "etc"
 #define ARDRONE_LOG_FILE_NAME                              "ardrone.log"
 #define ARDRONE_CONTROL_LOG_FILE_PREFIX                    "ardrone_control"
 #define ARDRONE_MAVLINK_LOG_FILE_PREFIX                    "ardrone_mavlink"
 #define ARDRONE_NAVDATA_LOG_FILE_PREFIX                    "ardrone_navdata"
+
 #define ARDRONE_VIDEO_FILE_NAME                            "ardrone.avi"
 #define ARDRONE_VIDEO_RAW_FILE_NAME                        "ardrone.rgb"
+
+#define ARDRONE_DEFAULT_VIDEO_DISPLAY                      true
+#define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
+#define ARDRONE_DEFAULT_VIDEO_MODE                         ARDRONE_VIDEOMODE_360P
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #define ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING         true
 #endif
 #define ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE            true
-#define ARDRONE_DEFAULT_VIDEO_DISPLAY                      true
-#define ARDRONE_DEFAULT_VIDEO_FULLSCREEN                   false
-#define ARDRONE_DEFAULT_VIDEO_MODE                         ARDRONE_VIDEOMODE_360P
 
 #endif // #ifndef ARDRONE_DEFINES_H

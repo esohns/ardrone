@@ -23,6 +23,8 @@
 
 #include "common_gl_common.h"
 
+#include "common_parser_common.h"
+
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #include "common_ui_gtk_common.h"

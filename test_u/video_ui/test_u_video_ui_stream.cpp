@@ -163,7 +163,7 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   Test_U_SessionData* session_data_p = NULL;
   inherited::CONFIGURATION_T::ITERATOR_T iterator, iterator_2;
   Test_U_AsynchTCPSource* source_impl_p = NULL;
-  struct _AMMediaType media_type_s;
+  //struct _AMMediaType media_type_s;
   struct _AMMediaType* media_type_p = NULL, *media_type_2 = NULL;
 
   iterator =

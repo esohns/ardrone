@@ -1,8 +1,8 @@
 include ($ENV{PRJ_ROOT}/Common/scripts/ffmpeg.cmake)
 
 #add_definitions (-DGUI_SUPPORT)
-#include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
-#include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/PreUIFramework.cmake)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/src/ui/scripts/SetUIFramework.cmake)
 
 if (CURSES_USE)
 elseif (GTK_USE)

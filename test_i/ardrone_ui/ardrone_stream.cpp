@@ -19,11 +19,8 @@
  ***************************************************************************/
 #include "stdafx.h"
 
-#include "ace/Synch.h"
 #include "ardrone_sessionmessage.h"
 #include "ardrone_stream.h"
-
-//#include "stream_misc_defines.h"
 
 #include "ardrone_defines.h"
 

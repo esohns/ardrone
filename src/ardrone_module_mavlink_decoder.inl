@@ -76,10 +76,10 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   // frame the MAVLink message data
   int result = -1;
-  unsigned int remaining_bytes = record_inout->len + MAVLINK_NUM_CHECKSUM_BYTES;
-  unsigned int remaining_bytes_2 = MAVLINK_NUM_HEADER_BYTES;
-  unsigned int length = 0;
-  unsigned int trailing_bytes_total, trailing_bytes = 0;
+  size_t remaining_bytes = record_inout->len + MAVLINK_NUM_CHECKSUM_BYTES;
+  size_t remaining_bytes_2 = MAVLINK_NUM_HEADER_BYTES;
+  size_t length = 0;
+  size_t trailing_bytes_total, trailing_bytes = 0;
   ACE_Message_Block* message_block_p = fragment_;
   ACE_Message_Block* message_block_2 = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;

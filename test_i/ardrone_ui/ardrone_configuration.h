@@ -30,9 +30,9 @@
 #if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <gl/GL.h>
+#include "gl/GL.h"
 #else
-#include <GL/gl.h>
+#include "GL/gl.h"
 #endif // ACE_WIN32 || ACE_WIN64
 #endif /* GTKGL_SUPPORT */
 #endif /* GTK_USE */
@@ -115,16 +115,20 @@ struct ARDrone_DirectShow_FilterConfiguration
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-struct ARDrone_DirectShow_SocketHandlerConfiguration;
-struct ARDrone_MediaFoundation_SocketHandlerConfiguration;
 typedef Net_IConnector_T<ACE_INET_Addr,
-                         struct ARDrone_DirectShow_SocketHandlerConfiguration> ARDrone_DirectShow_IConnector_t;
+                         ARDrone_DirectShow_TCPConnectionConfiguration_t> ARDrone_DirectShow_ITCPConnector_t;
 typedef Net_IConnector_T<ACE_INET_Addr,
-                         struct ARDrone_MediaFoundation_SocketHandlerConfiguration> ARDrone_MediaFoundation_IConnector_t;
+                         ARDrone_DirectShow_UDPConnectionConfiguration_t> ARDrone_DirectShow_IUDPConnector_t;
+
+typedef Net_IConnector_T<ACE_INET_Addr,
+                         ARDrone_MediaFoundation_TCPConnectionConfiguration_t> ARDrone_MediaFoundation_ITCPConnector_t;
+typedef Net_IConnector_T<ACE_INET_Addr,
+                         ARDrone_MediaFoundation_UDPConnectionConfiguration_t> ARDrone_MediaFoundation_IUDPConnector_t;
 #else
-struct ARDrone_SocketHandlerConfiguration;
 typedef Net_IConnector_T<ACE_INET_Addr,
-                         struct ARDrone_SocketHandlerConfiguration> ARDrone_IConnector_t;
+                         ARDrone_TCPConnectionConfiguration_t> ARDrone_ITCPConnector_t;
+typedef Net_IConnector_T<ACE_INET_Addr,
+                         ARDrone_UDPConnectionConfiguration_t> ARDrone_IUDPConnector_t;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -134,13 +138,15 @@ struct ARDrone_DirectShow_SignalConfiguration
   ARDrone_DirectShow_SignalConfiguration ()
    : Stream_SignalHandlerConfiguration ()
    , actionTimerId (-1)
-   , connector (NULL)
+   , TCPConnector (NULL)
+   , UDPConnector (NULL)
    , peerAddress ()
   {}
 
-  long                             actionTimerId;
-  ARDrone_DirectShow_IConnector_t* connector;
-  ACE_INET_Addr                    peerAddress;
+  long                                actionTimerId;
+  ARDrone_DirectShow_ITCPConnector_t* TCPConnector;
+  ARDrone_DirectShow_ITCPConnector_t* UDPConnector;
+  ACE_INET_Addr                       peerAddress;
 };
 
 struct ARDrone_MediaFoundation_SignalConfiguration
@@ -149,13 +155,15 @@ struct ARDrone_MediaFoundation_SignalConfiguration
   ARDrone_MediaFoundation_SignalConfiguration ()
    : Stream_SignalHandlerConfiguration ()
    , actionTimerId (-1)
-   , connector (NULL)
+   , TCPConnector (NULL)
+   , UDPConnector (NULL)
    , peerAddress ()
   {}
 
-  long                                  actionTimerId;
-  ARDrone_MediaFoundation_IConnector_t* connector;
-  ACE_INET_Addr                         peerAddress;
+  long                                     actionTimerId;
+  ARDrone_MediaFoundation_ITCPConnector_t* TCPConnector;
+  ARDrone_MediaFoundation_IUDPConnector_t* UDPConnector;
+  ACE_INET_Addr                            peerAddress;
 };
 #else
 struct ARDrone_SignalConfiguration
@@ -164,13 +172,15 @@ struct ARDrone_SignalConfiguration
   ARDrone_SignalConfiguration ()
    : Stream_SignalHandlerConfiguration ()
    , actionTimerId (-1)
-   , connector (NULL)
+   , TCPConnector (NULL)
+   , UDPConnector (NULL)
    , peerAddress ()
   {}
 
-  long                  actionTimerId;
-  ARDrone_IConnector_t* connector;
-  ACE_INET_Addr         peerAddress;
+  long                     actionTimerId;
+  ARDrone_ITCPConnector_t* TCPConnector;
+  ARDrone_IUDPConnector_t* UDPConnector;
+  ACE_INET_Addr            peerAddress;
 };
 #endif // ACE_WIN32 || ACE_WIN64
 
@@ -497,25 +507,25 @@ struct ARDrone_ThreadData
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                Common_UI_GTK_Configuration_t,
-                                struct ARDrone_UI_GTK_State,
-                                struct ARDrone_DirectShow_UI_CBData> ARDrone_DirectShow_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_DirectShow_GTK_Manager_t,
-                      ACE_MT_SYNCH::MUTEX> ARDRONE_DIRECTSHOW_GTK_MANAGER_SINGLETON;
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                Common_UI_GTK_Configuration_t,
-                                struct ARDrone_UI_GTK_State,
-                                struct ARDrone_MediaFoundation_UI_CBData> ARDrone_MediaFoundation_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_MediaFoundation_GTK_Manager_t,
-                      ACE_MT_SYNCH::MUTEX> ARDRONE_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON;
+//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+//                                Common_UI_GTK_Configuration_t,
+//                                struct ARDrone_UI_GTK_State,
+//                                struct ARDrone_DirectShow_UI_CBData> ARDrone_DirectShow_GTK_Manager_t;
+//typedef ACE_Singleton<ARDrone_DirectShow_GTK_Manager_t,
+//                      ACE_MT_SYNCH::MUTEX> ARDRONE_DIRECTSHOW_GTK_MANAGER_SINGLETON;
+//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+//                                Common_UI_GTK_Configuration_t,
+//                                struct ARDrone_UI_GTK_State,
+//                                struct ARDrone_MediaFoundation_UI_CBData> ARDrone_MediaFoundation_GTK_Manager_t;
+//typedef ACE_Singleton<ARDrone_MediaFoundation_GTK_Manager_t,
+//                      ACE_MT_SYNCH::MUTEX> ARDRONE_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON;
 #else
-typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-                                struct ARDrone_GTK_Configuration,
-                                struct ARDrone_UI_GTK_State,
-                                gpointer> ARDrone_UI_GTK_Manager_t;
-typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
-                      ACE_MT_SYNCH::MUTEX> ARDRONE_GTK_MANAGER_SINGLETON;
+//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+//                                struct ARDrone_GTK_Configuration,
+//                                struct ARDrone_UI_GTK_State,
+//                                gpointer> ARDrone_UI_GTK_Manager_t;
+//typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
+//                      ACE_MT_SYNCH::MUTEX> ARDRONE_GTK_MANAGER_SINGLETON;
 #endif // ACE_WIN32 || ACE_WIN64
 
 //////////////////////////////////////////

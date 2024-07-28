@@ -33,35 +33,37 @@
 #include "ardrone_network.h"
 
 template <typename ConfigurationType,
-          typename ConnectorType>
+          typename TCPConnectorType,
+          typename UDPConnectorType>
 ARDrone_SignalHandler_T<ConfigurationType,
-                        ConnectorType>::ARDrone_SignalHandler_T ()
+                        TCPConnectorType,
+                        UDPConnectorType>::ARDrone_SignalHandler_T ()
  : inherited (this)
- , connector_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler_T::ARDrone_SignalHandler_T"));
 
 }
 
 template <typename ConfigurationType,
-          typename ConnectorType>
+          typename TCPConnectorType,
+          typename UDPConnectorType>
 bool
 ARDrone_SignalHandler_T<ConfigurationType,
-                        ConnectorType>::initialize (const ConfigurationType& configuration_in)
+                        TCPConnectorType,
+                        UDPConnectorType>::initialize (const ConfigurationType& configuration_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler_T::initialize"));
-
-  // *TODO*: remove type inference
-  connector_ = configuration_in.connector;
 
   return inherited::initialize (configuration_in);
 }
 
 template <typename ConfigurationType,
-          typename ConnectorType>
+          typename TCPConnectorType,
+          typename UDPConnectorType>
 void
 ARDrone_SignalHandler_T<ConfigurationType,
-                        ConnectorType>::handle (const struct Common_Signal& signal_in)
+                        TCPConnectorType,
+                        UDPConnectorType>::handle (const struct Common_Signal& signal_in)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_SignalHandler_T::handle"));
 
@@ -131,14 +133,13 @@ ARDrone_SignalHandler_T<ConfigurationType,
 //  } // end IF
 
   // ...connect ?
-  if (connect &&
-      connector_)
+  if (connect && inherited::configuration_->UDPConnector)
   {
     try {
-      connector_->connect (inherited::configuration_->peerAddress);
+      inherited::configuration_->UDPConnector->connect (inherited::configuration_->peerAddress);
     } catch (...) {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("caught exception in ARDrone_IConnector_t::connect(), returning\n")));
+                  ACE_TEXT ("caught exception in ARDrone_IUDPConnector_t::connect(), returning\n")));
       return;
     }
   } // end IF
@@ -151,11 +152,11 @@ ARDrone_SignalHandler_T<ConfigurationType,
     // --> (try to) terminate in a well-behaved manner
 
     // step1: close open connection attempt(s)
-    if (connector_ &&
-        !connector_->useReactor ())
+    if (inherited::configuration_->UDPConnector &&
+        !inherited::configuration_->UDPConnector->useReactor ())
     {
-      typename ConnectorType::IASYNCH_CONNECTOR_T* iasynch_connector_p =
-        dynamic_cast<typename ConnectorType::IASYNCH_CONNECTOR_T*> (connector_);
+      typename UDPConnectorType::IASYNCH_CONNECTOR_T* iasynch_connector_p =
+        dynamic_cast<typename UDPConnectorType::IASYNCH_CONNECTOR_T*> (inherited::configuration_->UDPConnector);
       ACE_ASSERT (iasynch_connector_p);
       try {
         iasynch_connector_p->abort ();

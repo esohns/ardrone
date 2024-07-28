@@ -305,7 +305,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   int result = -1;
   typename DataMessageType::DATA_T::DATA_T* message_data_p = NULL;
   typename DataMessageType::DATA_T* message_data_container_p = NULL;
-  unsigned int missing_bytes =
+  size_t missing_bytes =
     sizeof (struct _navdata_t) - sizeof (struct _navdata_option_t);
 
   const typename DataMessageType::DATA_T& message_data_container_r =
@@ -331,9 +331,9 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   const typename SessionDataContainerType::DATA_T& session_data_r =
     inherited::sessionData_->getR ();
 
-  unsigned int trailing_bytes = 0;
-  unsigned int length = 0;
-  unsigned int bytes_to_skip = 0;
+  size_t trailing_bytes = 0;
+  size_t length = 0;
+  size_t bytes_to_skip = 0;
   ACE_Message_Block* message_block_p = NULL;
   ACE_Message_Block* message_block_2 = NULL;
   for (message_block_2 = buffer_;

@@ -32,13 +32,13 @@
 #include "GL/glew.h"
 #endif // GLEW_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <gl/GL.h>
-#include <gl/GLU.h>
+#include "gl/GL.h"
+#include "gl/GLU.h"
 #else
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include "GL/gl.h"
+#include "GL/glu.h"
 #endif // ACE_WIN32 || ACE_WIN64
-//#include <GL/glut.h>
+//#include "GL/glut.h"
 #include "glm/glm.hpp"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -1070,8 +1070,11 @@ idle_initialize_ui_cb (gpointer userData_in)
   use_proactor_b =
     (cb_data_p->configuration->dispatchConfiguration.numberOfProactorThreads > 0);
 #endif // ACE_WIN32 || ACE_WIN64
+  Common_UI_GTK_Manager_t* gtk_manager_p =
+    COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
+  ACE_ASSERT (gtk_manager_p);
   Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
   Common_UI_GTK_BuildersIterator_t iterator =
     state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
   // sanity check(s)
@@ -2275,7 +2278,7 @@ idle_finalize_ui_cb (gpointer userData_in)
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   Common_UI_GTK_State_t& state_r =
     const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
-  unsigned int num_messages = 0;
+  size_t num_messages = 0;
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
     num_messages = cb_data_base_p->messages.size ();
     while (!cb_data_base_p->messages.empty ())
@@ -2576,7 +2579,7 @@ idle_reset_ui_cb (gpointer userData_in)
   gtk_progress_bar_set_text (progress_bar_p, ACE_TEXT_ALWAYS_CHAR (""));
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
-    data_base_p->progressData.statistic.bytes = 0.0F;
+    data_base_p->progressData.statistic.bytes = 0;
   } // end lock scope
 
   return G_SOURCE_REMOVE;
@@ -5427,7 +5430,7 @@ glarea_realize_cb (GtkWidget* widget_in,
   { ACE_ASSERT (gl_scene_p);
     std::string filename = Common_File_Tools::getWorkingDirectory ();
     filename += ACE_DIRECTORY_SEPARATOR_CHAR;
-    filename += ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONFIGURATION_DIRECTORY);
+    filename += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
     filename += ACE_DIRECTORY_SEPARATOR_CHAR;
     filename +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_MODEL_DEFAULT_FILE);

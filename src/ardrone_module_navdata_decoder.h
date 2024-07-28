@@ -27,6 +27,8 @@
 #include "common_iscanner.h"
 #include "common_time_common.h"
 
+#include "common_parser_common.h"
+
 #include "stream_task_base_synch.h"
 
 #include "ardrone_common.h"

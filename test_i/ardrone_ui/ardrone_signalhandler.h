@@ -29,7 +29,8 @@
 #include "ardrone_types.h"
 
 template <typename ConfigurationType,
-          typename ConnectorType> // inherits Net_IConnector_T
+          typename TCPConnectorType,
+          typename UDPConnectorType> // inherits Net_IConnector_T
 class ARDrone_SignalHandler_T
  : public Common_SignalHandler_T<ConfigurationType>
 {
@@ -49,8 +50,6 @@ class ARDrone_SignalHandler_T
   //ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T ());
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T (const ARDrone_SignalHandler_T&));
   ACE_UNIMPLEMENTED_FUNC (ARDrone_SignalHandler_T& operator= (const ARDrone_SignalHandler_T&));
-
-  ConnectorType* connector_;
 };
 
 // include template definition
@@ -60,12 +59,15 @@ class ARDrone_SignalHandler_T
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 typedef ARDrone_SignalHandler_T<struct ARDrone_DirectShow_SignalConfiguration,
-                                ARDrone_DirectShow_IConnector_t> ARDrone_DirectShow_SignalHandler_t;
+                                ARDrone_DirectShow_ITCPConnector_t,
+                                ARDrone_DirectShow_IUDPConnector_t> ARDrone_DirectShow_SignalHandler_t;
 typedef ARDrone_SignalHandler_T<struct ARDrone_MediaFoundation_SignalConfiguration,
-                                ARDrone_MediaFoundation_IConnector_t> ARDrone_MediaFoundation_SignalHandler_t;
+                                ARDrone_MediaFoundation_ITCPConnector_t,
+                                ARDrone_MediaFoundation_IUDPConnector_t> ARDrone_MediaFoundation_SignalHandler_t;
 #else
 typedef ARDrone_SignalHandler_T<struct ARDrone_SignalConfiguration,
-                                ARDrone_IConnector_t> ARDrone_SignalHandler_t;
+                                ARDrone_ITCPConnector_t,
+                                ARDrone_IUDPConnector_t> ARDrone_SignalHandler_t;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #endif

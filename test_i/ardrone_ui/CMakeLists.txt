@@ -536,8 +536,6 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 ############## next target ################
 set (source_files
      ardrone.cpp
-     ardrone_common.cpp
-     ardrone_common.h
      ardrone_configuration.h
      ardrone_eventhandler.cpp
      ardrone_eventhandler.h

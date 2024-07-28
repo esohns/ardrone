@@ -23,7 +23,6 @@
 
 #include <string>
 
-#include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include <mfobjects.h>
 #include <strmif.h>
@@ -49,7 +48,6 @@ extern "C"
 #include "common_iscanner.h"
 #include "common_statistic_handler.h"
 
-#include "common_parser_common.h"
 #include "common_parser_defines.h"
 
 #include "stream_configuration.h"
@@ -104,8 +102,17 @@ struct ARDrone_MessageData
 {
   ARDrone_MessageData ()
    : messageType (ARDRONE_MESSAGE_INVALID)
+   , controlData ()
+   , MAVLinkData ()
+   , NavData ()
+   , videoFrame ()
   {}
   ARDrone_MessageData (const ARDrone_MessageData& data_in)
+   : messageType (ARDRONE_MESSAGE_INVALID)
+   , controlData ()
+   , MAVLinkData ()
+   , NavData ()
+   , videoFrame ()
   {
     messageType = data_in.messageType;
     switch (messageType)
@@ -168,20 +175,20 @@ struct ARDrone_MessageData
 };
 typedef Stream_DataBase_T<struct ARDrone_MessageData> ARDrone_MessageData_t;
 
-typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
-                                   ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
-typedef Common_ILexScanner_T<struct Common_FlexScannerState,
-                             void> ARDrone_Control_IScanner_t;
+//typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+//                                   ARDrone_DeviceConfiguration_t> ARDrone_Control_IParser_t;
+//typedef Common_ILexScanner_T<struct Common_ScannerState,
+//                             ARDrone_Control_IParser_t> ARDrone_Control_IScanner_t;
 class ARDrone_IControlNotify
 {
  public:
   virtual void messageCB (const ARDrone_DeviceConfiguration_t&) = 0; // device configuration
 };
 
-typedef Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
-                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
-typedef Common_ILexScanner_T<struct Common_ScannerState,
-                             ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
+//typedef Common_IYaccStreamParser_T<struct Common_FlexBisonParserConfiguration,
+//                                   struct __mavlink_message> ARDrone_MAVLink_IParser_t;
+//typedef Common_ILexScanner_T<struct Common_ScannerState,
+//                             ARDrone_MAVLink_IParser_t> ARDrone_MAVLink_IScanner_t;
 class ARDrone_IMAVLinkNotify
 {
  public:
@@ -190,7 +197,7 @@ class ARDrone_IMAVLinkNotify
 };
 
 //class ARDrone_NavData_IParser
-// : public Common_IYaccStreamParser_T<struct Common_ParserConfiguration,
+// : public Common_IYaccStreamParser_T<struct Common_FlexBisonParserConfiguration,
 //                                     struct _navdata_t>
 //{
 // public:
@@ -218,21 +225,21 @@ class ARDrone_IController
  , public Common_IGet_2_T<struct _navdata_demo_t>
 {
  public:
-  // *NOTE*: calibrate accelerometer (only when not (!) airborne)
-  virtual void trim () = 0;
   // *NOTE*: calibrate gyroscope (only when airborne)
   virtual void calibrate () = 0;
-
-  virtual void leds () = 0;
-
   // *NOTE*: dump device configuration
   virtual void dump () = 0;
 
   virtual void takeoff () = 0;
   virtual void land () = 0;
-  virtual void reset () = 0;
 
   virtual void set (enum ARDrone_VideoMode) = 0;
+
+  // *NOTE*: cycle LEDs on drone
+  virtual void leds () = 0;
+
+  // *NOTE*: calibrate accelerometer (only when not (!) airborne)
+  virtual void trim () = 0;
 
  protected:
   virtual void ids (const std::string&,      // session id
@@ -243,7 +250,7 @@ class ARDrone_IController
   virtual void resetWatchdog () = 0; // reset com watchdog (every 50ms)
 };
 
-typedef Common_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
+//typedef Common_StatisticHandler_T<struct ARDrone_Statistic> ARDrone_StatisticHandler_t;
 
 // *TODO*: move this into ardrone_configuration.h ASAP
 struct ARDrone_AllocatorConfiguration
@@ -257,13 +264,7 @@ struct ARDrone_AllocatorConfiguration
     // *NOTE*: facilitate (message block) data buffers to be scanned with
     //         (f)lexs' yy_scan_buffer() method, and (!) support 'padding' in
     //         ffmpeg
-    paddingBytes =
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-        AV_INPUT_BUFFER_PADDING_SIZE;
-#else
-//      FF_INPUT_BUFFER_PADDING_SIZE;
-        AV_INPUT_BUFFER_PADDING_SIZE;
-#endif // ACE_WIN32 || ACE_WIN64
+    paddingBytes = AV_INPUT_BUFFER_PADDING_SIZE;
     paddingBytes =
       std::max (static_cast<unsigned int> (COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE),
                 paddingBytes);
@@ -272,9 +273,9 @@ struct ARDrone_AllocatorConfiguration
 
 //////////////////////////////////////////
 
-//void extract_data (const char*,             // data
-//                   float&, float&, float&,  // return value: accelerometer data
-//                   float&,                  // return value: thermometer data
-//                   float&, float&, float&); // return value: gyroscope data
+void extract_sensor_data (const char*,             // data
+                          float&, float&, float&,  // return value: accelerometer data
+                          float&,                  // return value: thermometer data
+                          float&, float&, float&); // return value: gyroscope data
 
 #endif
