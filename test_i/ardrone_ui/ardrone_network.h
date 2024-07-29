@@ -60,7 +60,7 @@
 #include "net_iconnection.h"
 #include "net_iconnectionmanager.h"
 
-// #include "net_wlan_inetmonitor.h"
+#include "net_wlan_monitor_common.h"
 
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
@@ -439,13 +439,17 @@ typedef ACE_Singleton<ARDrone_MediaFoundation_TCPConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_MEDIAFOUNDATION_TCP_CONNECTIONMANAGER_SINGLETON;
 typedef ACE_Singleton<ARDrone_MediaFoundation_UDPConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_MEDIAFOUNDATION_UDP_CONNECTIONMANAGER_SINGLETON;
+
+typedef Net_WLAN_WlanAPIMonitor_t ARDrone_WLANMonitor_t;
 #else
 typedef ACE_Singleton<ARDrone_TCPConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_TCP_CONNECTIONMANAGER_SINGLETON;
 typedef ACE_Singleton<ARDrone_UDPConnectionManager_t,
                       ACE_SYNCH_MUTEX> ARDRONE_UDP_CONNECTIONMANAGER_SINGLETON;
+
+typedef Net_WLAN_Nl80211Monitor_t ARDrone_WLANMonitor_t;
 #endif // ACE_WIN32 || ACE_WIN64
-// typedef ACE_Singleton<ARDrone_WLANMonitor_t,
-//                       ACE_SYNCH_MUTEX> ARDRONE_WLANMONITOR_SINGLETON;
+typedef ACE_Singleton<ARDrone_WLANMonitor_t,
+                      ACE_SYNCH_MUTEX> ARDRONE_WLANMONITOR_SINGLETON;
 
 #endif // #ifndef ARDRONE_NETWORK_H

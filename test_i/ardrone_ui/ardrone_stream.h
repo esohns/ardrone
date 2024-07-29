@@ -22,7 +22,6 @@
 #define ARDRONE_STREAM_H
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#include <minwindef.h>
 #include <mfidl.h>
 #include <strmif.h>
 #endif // ACE_WIN32 || ACE_WIN64

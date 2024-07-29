@@ -783,11 +783,11 @@ do_processArguments (int argc_in,
                      bool& fullScreen_out,
                      std::string& displayInterfaceIdentifier_out, // fullscreen-
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
                      struct _GUID& WLANInterfaceIdentifier_out,
 #else
                      std::string& WLANInterfaceIdentifier_out,
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
                      std::string& WLANInterfaceIdentifier_out,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -851,11 +851,11 @@ do_processArguments (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
   WLANInterfaceIdentifier_out     =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
     Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
 #else
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
     Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
 #endif // ACE_WIN32 || ACE_WIN64
@@ -1657,9 +1657,9 @@ do_work (int argc_in,
                                                 true); // block
 
   ACE_Event_Handler* signal_handler_p = NULL;
-  //ARDrone_WLANMonitor_t* WLAN_monitor_p =
-  //  ARDRONE_WLANMONITOR_SINGLETON::instance ();
-  //ACE_ASSERT (WLAN_monitor_p);
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
   ACE_Time_Value visit_interval = ACE_Time_Value::zero;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_DirectShow_TCPConnectionManager_t* directshow_tcp_connection_manager_p =
@@ -1888,6 +1888,7 @@ do_work (int argc_in,
 //  stream_configuration.userData = configuration_in.userData;
 //#endif // ACE_WIN32 || ACE_WIN64
 
+  struct Net_UserData user_data_s;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_DirectShow_EventHandler_Module directshow_event_handler_module (NULL,
                                                                                  ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
@@ -2341,10 +2342,9 @@ do_work (int argc_in,
     {
       wlan_monitor_configuration_p->autoAssociate =
         ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
       wlan_monitor_configuration_p->enableMediaStreamingMode =
         ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-#endif // ACE_WIN32 || ACE_WIN64
+      wlan_monitor_configuration_p->subscriber = &directshow_navdata_stream;
       //wlan_monitor_configuration_p->userData =
       //  directShowConfiguration_in.userData;
       break;
@@ -2353,10 +2353,9 @@ do_work (int argc_in,
     {
       wlan_monitor_configuration_p->autoAssociate =
         ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
       wlan_monitor_configuration_p->enableMediaStreamingMode =
         ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-#endif // ACE_WIN32 || ACE_WIN64
+      wlan_monitor_configuration_p->subscriber = &mediafoundation_navdata_stream;
       //wlan_monitor_configuration_p->userData =
       //  mediaFoundationConfiguration_in.userData;
       break;
@@ -2372,18 +2371,17 @@ do_work (int argc_in,
 #else
   wlan_monitor_configuration_p->autoAssociate =
     ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  wlan_monitor_configuration_p->enableMediaStreamingMode =
-    ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-#endif // ACE_WIN32 || ACE_WIN64
+  //wlan_monitor_configuration_p->enableMediaStreamingMode =
+  //  ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
+  wlan_monitor_configuration_p->subscriber = &navdata_stream;
   // wlan_monitor_configuration_p->userData = configuration_in.userData;
 #endif // ACE_WIN32 || ACE_WIN64
-  //if (!WLAN_monitor_p->initialize (*wlan_monitor_configuration_p))
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to Net_WLANMonitor_T::initialize(), returning\n")));
-  //  goto clean;
-  //} // end IF
+  if (!WLAN_monitor_p->initialize (*wlan_monitor_configuration_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLANMonitor_T::initialize(), returning\n")));
+    goto clean;
+  } // end IF
   // *NOTE*: start the WLAN monitor after initializing the NavData stream to
   //         enable the event notification callbacks (see below #2174)
 
@@ -2668,7 +2666,6 @@ do_work (int argc_in,
   // ACE_ASSERT (connection_iterator != configuration_in.connectionConfigurations.end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
-  struct Net_UserData user_data_s;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (CBData_in->mediaFramework)
   {
@@ -3127,14 +3124,14 @@ do_work (int argc_in,
     goto clean;
   } // end IF
 
-  //ACE_ASSERT (WLAN_monitor_p);
-  //WLAN_monitor_p->start ();
-  //if (!WLAN_monitor_p->isRunning ())
-  //{
-  //  ACE_DEBUG ((LM_ERROR,
-  //              ACE_TEXT ("failed to Net_WLANMonitor_T::start(), returning\n")));
-  //  goto clean;
-  //} // end IF
+  ACE_ASSERT (WLAN_monitor_p);
+  WLAN_monitor_p->start ();
+  if (!WLAN_monitor_p->isRunning ())
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_WLANMonitor_T::start(), returning\n")));
+    goto clean;
+  } // end IF
 
 #if defined (GUI_SUPPORT)
   if (UIDefinitionFilePath_in.empty ())
@@ -3483,9 +3480,9 @@ continue_2:
   udp_connection_manager_p->stop ();
   udp_connection_manager_p->abort (true); // wait for completion ?
 #endif
-  //if (WLAN_monitor_p)
-  //  WLAN_monitor_p->stop (true,  // wait for completion ?
-  //                        true); // locked access ?
+  if (WLAN_monitor_p)
+    WLAN_monitor_p->stop (true,  // wait for completion ?
+                          true); // high priority ? (*NOTE*: also closes the WLANAPI handle on Win32)
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,
                                              true);
@@ -3500,9 +3497,9 @@ clean:
                          false);
 #endif // GTK_USE
 #endif // GUI_SUPPORT
-  //if (WLAN_monitor_p)
-  //  WLAN_monitor_p->stop (true,  // wait for completion ?
-  //                        true); // locked access ?
+  if (WLAN_monitor_p)
+    WLAN_monitor_p->stop (true,  // wait for completion ?
+                          true); // locked access ?
   if (timer_manager_p)
     timer_manager_p->stop ();
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
@@ -3823,11 +3820,11 @@ ACE_TMAIN (int argc_in,
 #endif // NL80211_SUPPORT
   wlan_interface_identifier   =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
       Net_Common_Tools::getDefaultInterface_2 (NET_LINKLAYER_802_11);
 #else
       Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
       Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
 #endif // ACE_WIN32 || ACE_WIN64

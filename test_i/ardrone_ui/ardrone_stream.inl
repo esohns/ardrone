@@ -20,7 +20,7 @@
 #include <string>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <Mferror.h>
+#include "Mferror.h"
 #endif
 
 #include "ace/Log_Msg.h"
@@ -2083,12 +2083,12 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   if (inherited::configuration_->configuration_->CBData)
   {
     guint event_source_id =
-      g_idle_add (idle_associated_SSID_cb,
+      g_idle_add (idle_disassociated_SSID_cb,
                   inherited::configuration_->configuration_->CBData);
     if (event_source_id == 0)
     {
       ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("%s: failed to g_idle_add(idle_associated_SSID_cb): \"%m\", returning\n"),
+                  ACE_TEXT ("%s: failed to g_idle_add(idle_disassociated_SSID_cb): \"%m\", returning\n"),
                   ACE_TEXT (navdata_stream_name_string_)));
       return;
     } // end IF
@@ -2122,29 +2122,29 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     return;
 
   // debug info
-  ACE_INET_Addr local_SAP, peer_SAP;
-//  ARDrone_WLANMonitor_t* wlan_monitor_p =
-//    ARDRONE_WLANMONITOR_SINGLETON::instance ();
-//  ACE_ASSERT (wlan_monitor_p);
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  if (!Net_Common_Tools::interfaceToIPAddress_2 (interfaceIdentifier_in,
-#else
-  if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
-#endif // ACE_WIN32 || ACE_WIN64
-                                               local_SAP,
-                                               peer_SAP))
-  {
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress_2(\"%s\"), returning\n"),
-                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ())));
-#else
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
-                ACE_TEXT (interfaceIdentifier_in.c_str ())));
-#endif // ACE_WIN32 || ACE_WIN64
-    return;
-  } // end IF
+//  ACE_INET_Addr local_SAP, peer_SAP;
+////  ARDrone_WLANMonitor_t* wlan_monitor_p =
+////    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+////  ACE_ASSERT (wlan_monitor_p);
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  if (!Net_Common_Tools::interfaceToIPAddress_2 (interfaceIdentifier_in,
+//#else
+//  if (!Net_Common_Tools::interfaceToIPAddress (interfaceIdentifier_in,
+//#endif // ACE_WIN32 || ACE_WIN64
+//                                               local_SAP,
+//                                               peer_SAP))
+//  {
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress_2(\"%s\"), returning\n"),
+//                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ())));
+//#else
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+//                ACE_TEXT (interfaceIdentifier_in.c_str ())));
+//#endif // ACE_WIN32 || ACE_WIN64
+//    return;
+//  } // end IF
 
   // update UI
   if (!inherited::configuration_)
@@ -2338,26 +2338,31 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_NavDataStream_T::onScanComplete"));
 
-//  // sanity check(s)
-//  if (!isInitialized_ || !isActive_)
-//    return;
-//  ACE_ASSERT (configuration_);
-//  if (!configuration_->autoAssociate)
-//    return;
-//
-//  if (!associate (interfaceIdentifier_in,
-//                  configuration_->SSID))
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-//                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
-//                ACE_TEXT (configuration_->SSID.c_str ())));
-//#else
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
-//                ACE_TEXT (interfaceIdentifier_in.c_str ()),
-//                ACE_TEXT (configuration_->SSID.c_str ())));
-//#endif
+  ARDrone_WLANMonitor_t* WLAN_monitor_p =
+    ARDRONE_WLANMONITOR_SINGLETON::instance ();
+  ACE_ASSERT (WLAN_monitor_p);
+  const struct Net_WLAN_MonitorConfiguration& WLAN_configuration_r =
+    WLAN_monitor_p->getR_4 ();
+  // sanity check(s)
+  std::string SSID_string = WLAN_monitor_p->SSID ();
+  if (!WLAN_configuration_r.autoAssociate ||
+      WLAN_configuration_r.SSID.empty ()  ||
+      (WLAN_configuration_r.SSID == SSID_string))
+    return;
+
+  if (!WLAN_monitor_p->associate (interfaceIdentifier_in,
+                                  WLAN_configuration_r.SSID))
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
+                ACE_TEXT (Net_Common_Tools::interfaceToString (interfaceIdentifier_in).c_str ()),
+                ACE_TEXT (WLAN_configuration_r.SSID.c_str ())));
+#else
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
+                ACE_TEXT (interfaceIdentifier_in.c_str ()),
+                ACE_TEXT (WLAN_configuration_r.SSID.c_str ())));
+#endif
 }
 
 //////////////////////////////////////////
