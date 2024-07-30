@@ -5677,7 +5677,7 @@ glarea_render_cb (GtkGLArea* GLArea_in,
                                       cb_data_base_p->openGLPerspective,
                                       glm::mat4 (1.0f),
                                       translation_s,
-                                      glm::quat (1.0f, 0.0f, 0.0f, 0.0f),
+                                      glm::quat (0.0f, 0.0f, 0.0f, 1.0f), // *NOTE*: order is: x,y,z,w --> no rotation
                                       scale_s);
 
   glFlush ();
@@ -5915,7 +5915,7 @@ glarea_draw_event_cb (GtkWidget* widget_in,
                    cb_data_base_p->openGLPerspective,
                    glm::mat4 (1.0f),
                    translation_s,
-                   glm::quat (1.0f, 0.0f, 0.0f, 0.0f),
+                   glm::quat (0.0f, 0.0f, 0.0f, 1.0f), // *NOTE*: order is: x,y,z,w --> no rotation
                    scale_s);
 
   glFlush ();
