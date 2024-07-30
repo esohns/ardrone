@@ -346,6 +346,7 @@ teapot (GLint grid, GLfloat scale, GLenum type)
   glPopMatrix ();
   glPopAttrib ();
 }
+
 void
 draw_teapot (bool solid,
              float scale)

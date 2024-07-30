@@ -37,16 +37,21 @@
 // defaults
 #define ARDRONE_OPENGL_CAMERA_DEFAULT_Z                    -7.0F
 // perspective(s)
-#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    45.0
-#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0
-#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    1000.0
+#define ARDRONE_OPENGL_PERSPECTIVE_FOVY                    45.0f
+#define ARDRONE_OPENGL_PERSPECTIVE_ZNEAR                   1.0f
+#define ARDRONE_OPENGL_PERSPECTIVE_ZFAR                    1000.0f
 #define ARDRONE_OPENGL_ORTHO_ZNEAR                         -1.0
 #define ARDRONE_OPENGL_ORTHO_ZFAR                          1.0
 
 // model
 #define ARDRONE_OPENGL_MODEL_ORIENTATION_PRECISION         3
-#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
-//#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                  "ardrone.png"
+#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "teapot.obj"
+// #define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
+#define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                "ardrone.png"
+
+// shader
+#define ARDRONE_OPENGL_SHADER_FRAGMENT_FILE                "ardrone_ui.frag"
+#define ARDRONE_OPENGL_SHADER_VERTEX_FILE                  "ardrone_ui.vert"
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)

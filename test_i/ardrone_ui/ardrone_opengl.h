@@ -25,7 +25,7 @@
 #if defined (GLEW_SUPPORT)
 #include "GL/glew.h"
 #endif // GLEW_SUPPORT
-#include <GL/gl.h>
+#include "GL/gl.h"
 
 //void arrow (GLfloat,  // x1
 //            GLfloat,  // y1

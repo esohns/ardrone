@@ -1727,6 +1727,9 @@ idle_initialize_ui_cb (gpointer userData_in)
 //  } // end ELSE
 #endif /* GTK_CHECK_VERSION (3,0,0) */
   ACE_ASSERT (gl_area_p);
+
+  gtk_widget_set_size_request (GTK_WIDGET (gl_area_p), 160, 120);
+
   GtkBox* box_p =
     GTK_BOX (gtk_builder_get_object ((*iterator).second.second,
                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION)));
@@ -3033,7 +3036,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
                                        ARDRONE_UI_WIDGET_NAME_LABEL_ROLL));
   ACE_ASSERT (label_p);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
-    converter << data_p->openGLScene.orientation.x;
+    converter << data_p->orientation.x;
     gtk_label_set_text (label_p,
                         ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
 
@@ -3043,7 +3046,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
     ACE_ASSERT (label_p);
     converter.clear ();
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-    converter << data_p->openGLScene.orientation.y;
+    converter << data_p->orientation.y;
     gtk_label_set_text (label_p,
                         ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
 
@@ -3053,7 +3056,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
     ACE_ASSERT (label_p);
     converter.clear ();
     converter.str (ACE_TEXT_ALWAYS_CHAR (""));
-    converter << data_p->openGLScene.orientation.z;
+    converter << data_p->orientation.z;
     gtk_label_set_text (label_p,
                         ACE_TEXT_ALWAYS_CHAR (converter.str ().c_str ()));
   } // end .lock scope
@@ -3064,7 +3067,11 @@ idle_update_orientation_display_cb (gpointer userData_in)
     GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
                                          ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
   ACE_ASSERT (gl_area_p);
-  gtk_gl_area_queue_render (gl_area_p);
+  // gtk_widget_queue_draw (GTK_WIDGET (gl_area_p));
+  // gtk_gl_area_queue_render (gl_area_p);
+  gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (gl_area_p)),
+                              NULL,
+                              0);
 #else
 #if defined (GTKGLAREA_SUPPORT)
   GtkBox* box_p =
@@ -3105,6 +3112,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
 
   return G_SOURCE_CONTINUE;
 }
+
 gboolean
 idle_update_video_display_cb (gpointer userData_in)
 {
@@ -5227,24 +5235,17 @@ glarea_realize_cb (GtkWidget* widget_in,
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
   Common_UI_GTK_State_t& state_r =
     const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
-  GLuint* model_list_id_p = NULL;
-  struct Common_GL_Scene* gl_scene_p = NULL;
   GtkAllocation allocation;
-
-  GLfloat light_ambient[] = {1.0F, 1.0F, 1.0F, 1.0F};
-  GLfloat light_diffuse[] = {0.3F, 0.3F, 0.3F, 1.0F};
-  GLfloat light_specular[] = {1.0F, 1.0F, 1.0F, 1.0F};
-  // position the light in eye space
-  GLfloat light0_position[] = {0.0F,
-                               5.0F * 2,
-                               5.0F * 2,
-                               0.0F}; // --> directional light
+  Common_GL_Camera* camera_p = NULL;
+  Common_GL_Model* model_p = NULL;
+  struct Common_GL_Perspective* perspective_p = NULL;
+  Common_GL_Shader* shader_p = NULL;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
   struct ARDrone_UI_CBData* data_p = NULL;
-  ARDrone_StreamConfigurationsIterator_t streams_iterator;
-  ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator;
+  // ARDrone_StreamConfigurationsIterator_t streams_iterator;
+  // ARDrone_StreamConfiguration_t::ITERATOR_T modulehandler_configuration_iterator;
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -5275,12 +5276,7 @@ glarea_realize_cb (GtkWidget* widget_in,
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_UI_CBData* directshow_data_p = NULL;
-  struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_data_p =
-    NULL;
-  ARDrone_DirectShow_StreamConfigurationsIterator_t directshow_streams_iterator;
-  ARDrone_MediaFoundation_StreamConfigurationsIterator_t mediafoundation_streams_iterator;
-  ARDrone_DirectShow_StreamConfiguration_t::ITERATOR_T directshow_modulehandler_configuration_iterator;
-  ARDrone_MediaFoundation_StreamConfiguration_t::ITERATOR_T mediafoundation_modulehandler_configuration_iterator;
+  struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_data_p = NULL;
   switch (cb_data_base_p->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -5289,14 +5285,6 @@ glarea_realize_cb (GtkWidget* widget_in,
         static_cast<struct ARDrone_DirectShow_UI_CBData*> (userData_in);
       // sanity check(s)
       ACE_ASSERT (directshow_data_p);
-      ACE_ASSERT (directshow_data_p->configuration);
-
-      directshow_streams_iterator =
-        directshow_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (directshow_streams_iterator != directshow_data_p->configuration->streamConfigurations.end ());
-      directshow_modulehandler_configuration_iterator =
-        (*directshow_streams_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
-      ACE_ASSERT (directshow_modulehandler_configuration_iterator != (*directshow_streams_iterator).second->end ());
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -5305,16 +5293,6 @@ glarea_realize_cb (GtkWidget* widget_in,
         static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (userData_in);
       // sanity check(s)
       ACE_ASSERT (mediafoundation_data_p);
-      ACE_ASSERT (mediafoundation_data_p->configuration);
-
-      mediafoundation_streams_iterator =
-        mediafoundation_data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-      ACE_ASSERT (mediafoundation_streams_iterator != mediafoundation_data_p->configuration->streamConfigurations.end ());
-      mediafoundation_modulehandler_configuration_iterator =
-        //mediafoundation_data_p->configuration->streamConfiguration_.find (ACE_TEXT_ALWAYS_CHAR (""));
-        (*mediafoundation_streams_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
-      //ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != mediafoundation_data_p->configuration->directShowStreamConfigurations.end ());
-      ACE_ASSERT (mediafoundation_modulehandler_configuration_iterator != (*mediafoundation_streams_iterator).second->end ());
       break;
     }
     default:
@@ -5329,14 +5307,6 @@ glarea_realize_cb (GtkWidget* widget_in,
   data_p = static_cast<struct ARDrone_UI_CBData*> (userData_in);
   // sanity check(s)
   ACE_ASSERT (data_p);
-  ACE_ASSERT (data_p->configuration);
-
-  streams_iterator =
-      data_p->configuration->streamConfigurations.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING));
-  ACE_ASSERT (streams_iterator != data_p->configuration->streamConfigurations.end ());
-  modulehandler_configuration_iterator =
-    (*streams_iterator).second->find (ACE_TEXT_ALWAYS_CHAR (""));
-  ACE_ASSERT (modulehandler_configuration_iterator != (*streams_iterator).second->end ());
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -5395,6 +5365,15 @@ glarea_realize_cb (GtkWidget* widget_in,
 #endif // GTKGLAREA_SUPPORT
 #endif // GTK_CHECK_VERSION(3,0,0)
 
+#if defined (GLEW_SUPPORT)
+  glewExperimental = GL_TRUE;
+  GLenum err = glewInit ();
+  if (GLEW_OK != err)
+    ACE_DEBUG ((LM_WARNING,
+                ACE_TEXT ("failed to glewInit(): \"%s\", continuing\n"),
+                ACE_TEXT (glewGetErrorString (err))));
+#endif // GLEW_SUPPORT
+
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
   // sanity check(s)
@@ -5410,17 +5389,21 @@ glarea_realize_cb (GtkWidget* widget_in,
 #endif /* GTKGLAREA_SUPPORT */
 #endif /* GTK_CHECK_VERSION (3,0,0) */
 
-  // load model mesh
+  // load model
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (cb_data_base_p->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-      model_list_id_p = &directshow_data_p->openGLModelListId;
-      gl_scene_p = &directshow_data_p->openGLScene;
+      camera_p = &directshow_data_p->openGLCamera;
+      model_p = &directshow_data_p->openGLModel;
+      perspective_p = &directshow_data_p->openGLPerspective;
+      shader_p = &directshow_data_p->openGLShader;
       break;
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-      model_list_id_p = &mediafoundation_data_p->openGLModelListId;
-      gl_scene_p = &mediafoundation_data_p->openGLScene;
+      camera_p = &mediafoundation_data_p->openGLCamera;
+      model_p = &mediafoundation_data_p->openGLModel;
+      perspective_p = &mediafoundation_data_p->openGLPerspective;
+      shader_p = &mediafoundation_data_p->openGLShader;
       break;
     default:
     {
@@ -5431,117 +5414,80 @@ glarea_realize_cb (GtkWidget* widget_in,
     }
   } // end SWITCH
 #else
-  model_list_id_p = &data_p->openGLModelListId;
-  gl_scene_p = &data_p->openGLScene;
+  camera_p = &data_p->openGLCamera;
+  model_p = &data_p->openGLModel;
+  perspective_p = &data_p->openGLPerspective;
+  shader_p = &data_p->openGLShader;
 #endif // ACE_WIN32 || ACE_WIN64
-  ACE_ASSERT (model_list_id_p);
-  if (*model_list_id_p > 0)
-  {
-    // glDeleteLists (*model_list_id_p, 1);
-//    glDeleteTextures (1, model_list_id_p);
-    // COMMON_GL_ASSERT
-    // *model_list_id_p = 0;
-  } // end IF
+  ACE_ASSERT (camera_p && model_p && perspective_p && shader_p);
 
-  if (!*model_list_id_p)
-  { ACE_ASSERT (gl_scene_p);
+  //   // left
+  //   //  gluLookAt (0.0f,0.0f,3.0f,  // eye xyz
+  // //             0.0f,0.0f,0.0f,  // center xyz
+  // //             0.0f,1.0f,0.0f); // up xyz
+  //   // top
+  // //  gluLookAt (0.0f,3.0f,0.0f,  // eye xyz
+  // //             0.0f,0.0f,0.0f,  // center xyz
+  // //             -1.0f,0.0f,0.0f); // up xyz
+  //   // behind
+  //   gluLookAt (3.0f,0.0f,0.0f,  // eye xyz
+  //              0.0f,0.0f,0.0f,  // center xyz
+  //              0.0f,1.0f,0.0f); // up xyz
+  //   // COMMON_GL_ASSERT
+
+  camera_p->position_ = {0.0f, 0.0f, 3.0f};
+  camera_p->looking_at_ = {0.0f, 0.0f, -1.0f};
+  camera_p->up_ = {0.0f, 1.0f, 0.0f};
+
+  if (model_p->meshes_.empty ())
+  {
     std::string filename = Common_File_Tools::getWorkingDirectory ();
-    filename += ACE_DIRECTORY_SEPARATOR_CHAR;
+    filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
     filename += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
-    filename += ACE_DIRECTORY_SEPARATOR_CHAR;
+    filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
     filename +=
       ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_MODEL_DEFAULT_FILE);
-//        ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE);
-    COMMON_GL_CLEAR_ERROR
-    *model_list_id_p =
-        Common_GL_Tools::loadModel (filename,
-                                    gl_scene_p->boundingBox,
-                                    gl_scene_p->center);
-//        Common_GL_Tools::loadTexture (filename);
-    // if (!*model_list_id_p)
-    // {
-    //   ACE_DEBUG ((LM_ERROR,
-    //               ACE_TEXT ("failed to Common_GL_Tools::loadModel(\"%s\"), aborting\n"),
-    //               ACE_TEXT (filename.c_str ())));
-    //   goto error;
-    // } // end IF
-//    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    COMMON_GL_ASSERT
-//    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    COMMON_GL_ASSERT
-
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("OpenGL model list id: %u\n"),
-                *model_list_id_p));
+    model_p->load (filename);
   } // end IF
 
   // initialize perspective
   gtk_widget_get_allocation (widget_in,
                              &allocation);
-
-  glMatrixMode (GL_PROJECTION);
-  // COMMON_GL_ASSERT
-
-  // reset the projection matrix
-  glLoadIdentity ();
-  // COMMON_GL_ASSERT
-
-  gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
-                  static_cast<GLdouble> (allocation.width) / static_cast<GLdouble> (allocation.height),
-                  ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
-                  ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  // COMMON_GL_ASSERT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  perspective_p->resolution.cx = allocation.width;
+  perspective_p->resolution.cy = allocation.height;
+#else
+  perspective_p->resolution.width = allocation.width;
+  perspective_p->resolution.height = allocation.height;
+#endif // ACE_WIN32 || ACE_WIN64
 
   glViewport (0, 0,
               static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
-  // COMMON_GL_ASSERT
 
-//  GLdouble fW, fH;
-//  fH =
-//   ::tan (60.0 / 360.0 * M_PI) *
-//   -1.0;
-//  fW = fH * (allocation.width / allocation.height);
-//  glFrustum (-fW, fW,
-//             -fH, fH,
-//             -1.0,
-//             100.0);
-//  gluLookAt (-10.0, 0.0, 0.0, // eye position (*NOTE*: relative to standard
-//             //                       "right-hand" coordinate
-//             //                       system [RHCS])
-//             0.0, 0.0, 0.0,   // looking-at position (RHCS notation)
-//             0.0, 0.0, -1.0); // up direction (RHCS notation, relative to eye
-
-  glMatrixMode (GL_MODELVIEW);
-  // COMMON_GL_ASSERT
-
-  /* light */
-//  GLfloat light_positions[2][4]   = { 50.0, 50.0, 0.0, 0.0,
-//                                     -50.0, 50.0, 0.0, 0.0 };
-//  GLfloat light_colors[2][4] = { .6, .6,  .6, 1.0,   /* white light */
-//                                 .4, .4, 1.0, 1.0 }; /* cold blue light */
-//  glLightfv (GL_LIGHT0, GL_POSITION, light_positions[0]);
-//  glLightfv (GL_LIGHT0, GL_DIFFUSE,  light_colors[0]);
-//  glLightfv (GL_LIGHT1, GL_POSITION, light_positions[1]);
-//  glLightfv (GL_LIGHT1, GL_DIFFUSE,  light_colors[1]);
-//  glEnable (GL_LIGHT0);
-//  glEnable (GL_LIGHT1);
-//  glEnable (GL_LIGHTING);
-
-  // set up light colors (ambient, diffuse, specular)
-  glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-  // COMMON_GL_ASSERT
-  glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  // COMMON_GL_ASSERT
-  glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-  // COMMON_GL_ASSERT
-  glLightfv (GL_LIGHT0, GL_POSITION, light0_position);
-  // COMMON_GL_ASSERT
-  glEnable (GL_LIGHT0);
-  // COMMON_GL_ASSERT
-
-  // reset the projection matrix
-  glLoadIdentity ();
-  // COMMON_GL_ASSERT
+  // load shader
+  if (!shader_p->id_)
+  {
+    std::string filename = Common_File_Tools::getWorkingDirectory ();
+    filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    filename += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
+    filename += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    filename +=
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_SHADER_VERTEX_FILE);
+    std::string filename_2 = Common_File_Tools::getWorkingDirectory ();
+    filename_2 += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    filename_2 += ACE_TEXT_ALWAYS_CHAR (COMMON_LOCATION_CONFIGURATION_SUBDIRECTORY);
+    filename_2 += ACE_DIRECTORY_SEPARATOR_CHAR_A;
+    filename_2 +=
+      ACE_TEXT_ALWAYS_CHAR (ARDRONE_OPENGL_SHADER_FRAGMENT_FILE);
+    COMMON_GL_CLEAR_ERROR
+    if (!shader_p->loadFromFile (filename, filename_2))
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_GL_Shader::loadFromFile(\"%s\",\"%s\"), returning\n"),
+                  ACE_TEXT (filename.c_str ()), ACE_TEXT (filename_2.c_str ())));
+      goto error;
+    } // end IF
+  } // end IF
 
 #if GTK_CHECK_VERSION(3,0,0)
 #else
@@ -5563,6 +5509,7 @@ error:
 #endif // GTK_CHECK_VERSION(3,0,0)
   return;
 } // glarea_realize_cb
+
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 GdkGLContext*
@@ -5594,15 +5541,13 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to gdk_window_create_gl_context(): \"%s\", aborting\n"),
                 ACE_TEXT (error_p->message)));
-
     gtk_gl_area_set_error (GLArea_in, error_p);
     g_error_free (error_p);
-
     return NULL;
   } // end IF
 
   gdk_gl_context_set_required_version (result_p,
-                                       2, 1);
+                                       3, 3);
 #if defined (_DEBUG)
   gdk_gl_context_set_debug_enabled (result_p,
                                     TRUE);
@@ -5640,11 +5585,11 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   // COMMON_GL_ASSERT
   glEnable (GL_COLOR_MATERIAL);
   // COMMON_GL_ASSERT
-  glEnable (GL_LIGHTING);
+  // glEnable (GL_LIGHTING);
   // COMMON_GL_ASSERT
-  glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
+  // glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
   // COMMON_GL_ASSERT
-  glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  // glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   // COMMON_GL_ASSERT
   //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
@@ -5672,11 +5617,12 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   // COMMON_GL_ASSERT
   glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
   // COMMON_GL_ASSERT
-  glEnable (GL_NORMALIZE);
+  // glEnable (GL_NORMALIZE);
   // COMMON_GL_ASSERT
 
   return result_p;
 }
+
 gboolean
 glarea_render_cb (GtkGLArea* GLArea_in,
                   GdkGLContext* context_in,
@@ -5684,124 +5630,61 @@ glarea_render_cb (GtkGLArea* GLArea_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("::glarea_render_cb"));
 
+  ACE_UNUSED_ARG (GLArea_in);
   ACE_UNUSED_ARG (context_in);
 
   // sanity check(s)
-  ACE_ASSERT (GLArea_in);
   ACE_ASSERT (userData_in);
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
-//  struct Stream_Module_Visualization_OpenGLInstruction* instruction_p = NULL;
 
-  GLuint* model_list_id_p = NULL;
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//  if (data_p->useMediaFoundation)
-//    model_list_id_p = &mediafoundation_data_p->openGLModelListId;
-//  else
-//    model_list_id_p = &directshow_data_p->openGLModelListId;
-//#else
-  model_list_id_p = &cb_data_base_p->openGLModelListId;
-//#endif
-  ACE_ASSERT (model_list_id_p);
-  // ACE_ASSERT (*model_list_id_p);
-
-//  glBindTexture (GL_TEXTURE_2D, *model_list_id_p);
-//  COMMON_GL_ASSERT
+//   static bool glew_initialized_b = false;
+//   if (!glew_initialized_b)
+//   { glew_initialized_b = true;
+// #if defined (GLEW_SUPPORT)
+//     glewExperimental = GL_TRUE;
+//     GLenum err = glewInit ();
+//     if (GLEW_OK != err)
+//     {
+//       ACE_DEBUG ((LM_ERROR,
+//                   ACE_TEXT ("failed to glewInit(): \"%s\", aborting\n"),
+//                   ACE_TEXT (glewGetErrorString (err))));
+//       return FALSE;
+//     } // end IF
+// #endif // GLEW_SUPPORT
+//   } // end IF
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // COMMON_GL_ASSERT
-
-  glLoadIdentity ();
-  // COMMON_GL_ASSERT
-  // left
-  //  gluLookAt (0.0f,0.0f,3.0f,  // eye xyz
-//             0.0f,0.0f,0.0f,  // center xyz
-//             0.0f,1.0f,0.0f); // up xyz
-  // top
-//  gluLookAt (0.0f,3.0f,0.0f,  // eye xyz
-//             0.0f,0.0f,0.0f,  // center xyz
-//             -1.0f,0.0f,0.0f); // up xyz
-  // behind
-  gluLookAt (3.0f,0.0f,0.0f,  // eye xyz
-             0.0f,0.0f,0.0f,  // center xyz
-             0.0f,1.0f,0.0f); // up xyz
-  // COMMON_GL_ASSERT
-
-//  glTranslatef (0.0f, 0.0f, ARDRONE_OPENGL_CAMERA_DEFAULT_Z);
-//  COMMON_GL_ASSERT
-
-  // rotate it around all the axes
-  static GLfloat rotation_angle = 0.0f;
-  glRotatef (rotation_angle, 0.0f, 1.0f, 0.0f);
-//  glRotatef (rotation_angle, 1.0f, 1.0f, 1.0f);
-  // COMMON_GL_ASSERT
 
   // scale the whole asset to fit into the view frustum
-  static GLfloat scale_factor = 0.0f;
-  scale_factor = (cb_data_base_p->openGLScene.boundingBox.second.x -
-                  cb_data_base_p->openGLScene.boundingBox.first.x);
-  scale_factor =
-      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLScene.boundingBox.second.y - cb_data_base_p->openGLScene.boundingBox.first.y, scale_factor);
-  scale_factor =
-      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLScene.boundingBox.second.z - cb_data_base_p->openGLScene.boundingBox.first.z, scale_factor);
-  scale_factor = (1.0f / scale_factor) * 2.0f;
-  glScalef (scale_factor, scale_factor, scale_factor);
-  // COMMON_GL_ASSERT
+  static GLfloat scale_factor_f = 0.0f;
+  if (unlikely (!scale_factor_f))
+  {
+    scale_factor_f = (cb_data_base_p->openGLModel.box_.second.x - cb_data_base_p->openGLModel.box_.first.x);
+    scale_factor_f =
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLModel.box_.second.y - cb_data_base_p->openGLModel.box_.first.y, scale_factor_f);
+    scale_factor_f =
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLModel.box_.second.z - cb_data_base_p->openGLModel.box_.first.z, scale_factor_f);
+    scale_factor_f = (1.0f / scale_factor_f) * 2.0f;
+  } // end IF
+  static glm::vec3 scale_s = {scale_factor_f, scale_factor_f, scale_factor_f};
 
   // center the model
-  glTranslatef (-cb_data_base_p->openGLScene.center.x,
-                -cb_data_base_p->openGLScene.center.y,
-                -cb_data_base_p->openGLScene.center.z);
-  // COMMON_GL_ASSERT
+  static glm::vec3 translation_s = -cb_data_base_p->openGLModel.center_;
 
-  glCallList (cb_data_base_p->openGLModelListId);
-  // COMMON_GL_ASSERT
+  cb_data_base_p->openGLModel.render (cb_data_base_p->openGLShader,
+                                      cb_data_base_p->openGLCamera,
+                                      cb_data_base_p->openGLPerspective,
+                                      glm::mat4 (1.0f),
+                                      translation_s,
+                                      glm::quat (1.0f, 0.0f, 0.0f, 0.0f),
+                                      scale_s);
 
-//  Common_GL_Tools::drawCube (true);
-//  COMMON_GL_ASSERT
+  glFlush ();
 
-//  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->lock, FALSE);
-//    if (data_p->OpenGLInstructions.empty ())
-//      goto continue_;
-
-//    do
-//    {
-//      instruction_p = &data_p->OpenGLInstructions.front ();
-//      switch (instruction_p->type)
-//      {
-//        case STREAM_STREAM_VIS_OPENGLINSTRUCTION_SET_COLOR_BG:
-//        {
-//          glClearColor (static_cast<GLclampf> (instruction_p->color.red),
-//                        static_cast<GLclampf> (instruction_p->color.green),
-//                        static_cast<GLclampf> (instruction_p->color.blue),
-//                        1.0F);
-//          break;
-//        }
-//        case STREAM_STREAM_VIS_OPENGLINSTRUCTION_SET_COLOR_FG:
-//        {
-//          glColor4f (static_cast<GLclampf> (instruction_p->color.red),
-//                     static_cast<GLclampf> (instruction_p->color.green),
-//                     static_cast<GLclampf> (instruction_p->color.blue),
-//                     1.0F);
-//          break;
-//        }
-//        default:
-//        {
-//          ACE_DEBUG ((LM_ERROR,
-//                      ACE_TEXT ("invalid/unknown OpenGL effect (was: %d), continuing\n"),
-//                      ACE_TEXT (instruction_p->type)));
-//          break;
-//        }
-//      } // end SWITCH
-//      data_p->OpenGLInstructions.pop_front ();
-//    } while (!data_p->OpenGLInstructions.empty ());
-//  } // end lock scope
-
-//  rotation_angle -= 1.0f;
-
-//continue_:
-  return TRUE;
+  return FALSE;
 }
+
 void
 glarea_resize_cb (GtkGLArea* GLArea_in,
                   gint width_in,
@@ -5820,23 +5703,9 @@ glarea_resize_cb (GtkGLArea* GLArea_in,
 
   glViewport (0, 0,
               static_cast<GLsizei> (width_in), static_cast<GLsizei> (height_in));
-  // *TODO*: find out why this reports GL_INVALID_OPERATION
-  COMMON_GL_PRINT_ERROR;
 
-  glMatrixMode (GL_PROJECTION);
-  // COMMON_GL_ASSERT
-
-  glLoadIdentity ();
-  // COMMON_GL_ASSERT
-
-  gluPerspective (ARDRONE_OPENGL_PERSPECTIVE_FOVY,
-                  static_cast<GLdouble> (width_in) / static_cast<GLdouble> (height_in),
-                  ARDRONE_OPENGL_PERSPECTIVE_ZNEAR,
-                  ARDRONE_OPENGL_PERSPECTIVE_ZFAR);
-  // COMMON_GL_ASSERT
-
-  glMatrixMode (GL_MODELVIEW);
-  // COMMON_GL_ASSERT
+  data_p->openGLPerspective.resolution.width = width_in;
+  data_p->openGLPerspective.resolution.height = height_in;
 }
 #else
 #if defined (GTKGLAREA_SUPPORT)
@@ -5900,20 +5769,15 @@ glarea_configure_event_cb (GtkWidget* widget_in,
               event_in->configure.width, event_in->configure.height);
   COMMON_GL_ASSERT
 
-  glMatrixMode (GL_PROJECTION);
-  COMMON_GL_ASSERT
-  glLoadIdentity (); // Reset The Projection Matrix
-  COMMON_GL_ASSERT
-
-  gluPerspective (45.0,
-                  event_in->configure.width / (GLdouble)event_in->configure.height,
-                  0.1,
-                  100.0); // Calculate The Aspect Ratio Of The Window
-  COMMON_GL_ASSERT
-
-  glMatrixMode (GL_MODELVIEW);
-  COMMON_GL_ASSERT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  cb_data_base_p->openGLPerspective.resolution.cx = event_in->configure.width;
+  cb_data_base_p->openGLPerspective.resolution.cy = event_in->configure.height;
+#else
+  cb_data_base_p->openGLPerspective.resolution.width = event_in->configure.width;
+  cb_data_base_p->openGLPerspective.resolution.height = event_in->configure.height;
+#endif // ACE_WIN32 || ACE_WIN64
 }
+
 gboolean
 glarea_draw_event_cb (GtkWidget* widget_in,
                       cairo_t* context_in,
@@ -5929,7 +5793,7 @@ glarea_draw_event_cb (GtkWidget* widget_in,
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
 
-  GLuint* model_list_id_p = NULL;
+  Common_GL_Model* model_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   struct ARDrone_DirectShow_UI_CBData* directshow_data_p = NULL;
   struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_data_p =
@@ -5938,20 +5802,20 @@ glarea_draw_event_cb (GtkWidget* widget_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
+      // sanity check(s)
       directshow_data_p =
         static_cast<struct ARDrone_DirectShow_UI_CBData*> (userData_in);
-      // sanity check(s)
       ACE_ASSERT (directshow_data_p);
-      model_list_id_p = &directshow_data_p->openGLModelListId;
+      model_p = &directshow_data_p->openGLModel;
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
+      // sanity check(s)
       mediafoundation_data_p =
         static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (userData_in);
-      // sanity check(s)
       ACE_ASSERT (mediafoundation_data_p);
-      model_list_id_p = &mediafoundation_data_p->openGLModelListId;
+      model_p = &mediafoundation_data_p->openGLModel;
       break;
     }
     default:
@@ -5963,13 +5827,13 @@ glarea_draw_event_cb (GtkWidget* widget_in,
     }
   } // end SWITCH
 #else
+  // sanity check(s)
   struct ARDrone_GTK_CBData* data_p =
     static_cast<struct ARDrone_GTK_CBData*> (userData_in);
-  // sanity check(s)
   ACE_ASSERT (data_p);
-  model_list_id_p = &data_p->openGLModelListId;
+  model_p = &data_p->openGLModel;
 #endif // ACE_WIN32 || ACE_WIN64
-  ACE_ASSERT (model_list_id_p);
+  ACE_ASSERT (model_p);
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
@@ -6029,87 +5893,32 @@ glarea_draw_event_cb (GtkWidget* widget_in,
 #endif // GTK_CHECK_VERSION(3,0,0)
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  COMMON_GL_ASSERT
-  glLoadIdentity (); // Reset the transformation matrix.
-  COMMON_GL_ASSERT
-  glTranslatef (0.0F, 0.0F, -5.0F); // Move back into the screen 5 units
-  COMMON_GL_ASSERT
 
-  // draw the display list
-  glCallList (*model_list_id_p);
-  COMMON_GL_ASSERT
+  // scale the whole asset to fit into the view frustum
+  static GLfloat scale_factor_f = 0.0f;
+  if (unlikely (!scale_factor_f))
+  {
+    scale_factor_f = (cb_data_base_p->openGLModel.box_.second.x - cb_data_base_p->openGLModel.box_.first.x);
+    scale_factor_f =
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLModel.box_.second.y - cb_data_base_p->openGLModel.box_.first.y, scale_factor_f);
+    scale_factor_f =
+      COMMON_GL_ASSIMP_MAX (cb_data_base_p->openGLModel.box_.second.z - cb_data_base_p->openGLModel.box_.first.z, scale_factor_f);
+    scale_factor_f = (1.0f / scale_factor_f) * 2.0f;
+  } // end IF
+  static glm::vec3 scale_s = {scale_factor_f, scale_factor_f, scale_factor_f};
 
-//  static GLfloat rot_x = 0.0f;
-//  static GLfloat rot_y = 0.0f;
-//  static GLfloat rot_z = 0.0f;
-//  glRotatef (rot_x, 1.0f, 0.0f, 0.0f); // Rotate On The X Axis
-//  glRotatef (rot_y, 0.0f, 1.0f, 0.0f); // Rotate On The Y Axis
-//  glRotatef (rot_z, 0.0f, 0.0f, 1.0f); // Rotate On The Z Axis
-  static GLfloat rotation = 0.0F;
-  glRotatef (rotation, 1.0F, 1.0F, 1.0F); // Rotate On The X,Y,Z Axis
-  COMMON_GL_ASSERT
+  // center the model
+  static glm::vec3 translation_s = -cb_data_base_p->openGLModel.center_;
 
-//  glBegin (GL_QUADS);
+  model_p->render (cb_data_base_p->openGLShader,
+                   cb_data_base_p->openGLCamera,
+                   cb_data_base_p->openGLPerspective,
+                   glm::mat4 (1.0f),
+                   translation_s,
+                   glm::quat (1.0f, 0.0f, 0.0f, 0.0f),
+                   scale_s);
 
-//  glTexCoord2i (0, 0); glVertex3f (  0.0f,   0.0f, 0.0f);
-//  glTexCoord2i (0, 1); glVertex3f (  0.0f, 100.0f, 0.0f);
-//  glTexCoord2i (1, 1); glVertex3f (100.0f, 100.0f, 0.0f);
-//  glTexCoord2i (1, 0); glVertex3f (100.0f,   0.0f, 0.0f);
-
-  static GLfloat vertices[] = {
-    -0.5f, 0.0f, 0.5f,   0.5f, 0.0f, 0.5f,   0.5f, 1.0f, 0.5f,  -0.5f, 1.0f, 0.5f,
-    -0.5f, 1.0f, -0.5f,  0.5f, 1.0f, -0.5f,  0.5f, 0.0f, -0.5f, -0.5f, 0.0f, -0.5f,
-    0.5f, 0.0f, 0.5f,   0.5f, 0.0f, -0.5f,  0.5f, 1.0f, -0.5f,  0.5f, 1.0f, 0.5f,
-    -0.5f, 0.0f, -0.5f,  -0.5f, 0.0f, 0.5f,  -0.5f, 1.0f, 0.5f, -0.5f, 1.0f, -0.5f};
-  static GLfloat texture_coordinates[] = {
-    0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
-    0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
-    0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0,
-    0.0,0.0, 1.0,0.0, 1.0,1.0, 0.0,1.0 };
-  static GLubyte cube_indices[24] = {
-    0,1,2,3, 4,5,6,7, 3,2,5,4, 7,6,1,0,
-    8,9,10,11, 12,13,14,15};
-
-  glTexCoordPointer (2, GL_FLOAT, 0, texture_coordinates);
-  COMMON_GL_ASSERT
-  glVertexPointer (3, GL_FLOAT, 0, vertices);
-  COMMON_GL_ASSERT
-  glDrawElements (GL_QUADS, 24, GL_UNSIGNED_BYTE, cube_indices);
-  COMMON_GL_ASSERT
-
-//  rot_x += 0.3f;
-//  rot_y += 0.20f;
-//  rot_z += 0.4f;
-  rotation -= 1.0f; // Decrease The Rotation Variable For The Cube
-
-  //GLuint vertex_array_id = 0;
-  //glGenVertexArrays (1, &vertex_array_id);
-  //glBindVertexArray (vertex_array_id);
-
-  //static const GLfloat vertex_buffer_data[] = {
-  //  -1.0f, -1.0f, 0.0f,
-  //  1.0f, -1.0f, 0.0f,
-  //  -1.0f,  1.0f, 0.0f,
-  //  -1.0f,  1.0f, 0.0f,
-  //  1.0f, -1.0f, 0.0f,
-  //  1.0f,  1.0f, 0.0f,
-  //};
-
-  //GLuint vertex_buffer;
-  //glGenBuffers (1, &vertex_buffer);
-  //glBindBuffer (GL_ARRAY_BUFFER, vertex_buffer);
-  //glBufferData (GL_ARRAY_BUFFER,
-  //              sizeof (vertex_buffer_data), vertex_buffer_data,
-  //              GL_STATIC_DRAW);
-
-  ////GLuint program_id = LoadShaders ("Passthrough.vertexshader",
-  ////                                 "SimpleTexture.fragmentshader");
-  ////GLuint tex_id = glGetUniformLocation (program_id, "renderedTexture");
-  ////GLuint time_id = glGetUniformLocation (program_id, "time");
-
-  //glBindFramebuffer (GL_FRAMEBUFFER, 0);
-  //glViewport (0, 0,
-  //            data_p->area3D.width, data_p->area3D.height);
+  glFlush ();
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
@@ -7372,8 +7181,10 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
   ACE_ASSERT (WLAN_monitor_p);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-  struct ether_addr ap_mac_address;
-  ACE_OS::memset (&ap_mac_address, 0, sizeof (struct ether_addr));
+  const Net_WLAN_AccessPointCacheValue_t& cache_value_r =
+      WLAN_monitor_p->get1RR (wlan_monitor_configuration_p->SSID);
+  struct ether_addr ap_mac_address_s =
+      cache_value_r.second.linkLayerAddress;
 #endif // ACE_WIN32 || ACE_WIN64
 
   if (ACE_OS::strcmp (WLAN_monitor_p->SSID ().c_str (),
@@ -7389,7 +7200,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
     if (!WLAN_monitor_p->associate (wlan_monitor_configuration_p->interfaceIdentifier,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-                                    ap_mac_address,
+                                    ap_mac_address_s,
 #endif // ACE_WIN32 || ACE_WIN64
                                     wlan_monitor_configuration_p->SSID))
     {
@@ -7402,7 +7213,7 @@ toggleaction_associate_toggled_cb (GtkToggleAction* toggleAction_in,
       ACE_DEBUG ((LM_ERROR,
                   ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s,%s), returning\n"),
                   ACE_TEXT (wlan_monitor_configuration_p->interfaceIdentifier.c_str ()),
-                  ACE_TEXT (Net_Common_Tools::LinkLayerAddressToString (reinterpret_cast<unsigned char*> (&ap_mac_address)).c_str ()),
+                  ACE_TEXT (Net_Common_Tools::LinkLayerAddressToString (reinterpret_cast<unsigned char*> (&ap_mac_address_s)).c_str ()),
                   ACE_TEXT (wlan_monitor_configuration_p->SSID.c_str ())));
 #endif // ACE_WIN32 || ACE_WIN64
     } // end IF

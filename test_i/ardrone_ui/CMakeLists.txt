@@ -614,6 +614,8 @@ add_executable (${EXECUTABLE}
                 etc/${ui_definition_file}
                 ${script_files}
                 etc/ardrone.3ds
+                etc/ardrone_ui.frag
+                etc/ardrone_ui.vert
                 etc/ardrone.jpg
                 etc/ardrone.png
                 etc/ardrone_small.ico
@@ -736,7 +738,7 @@ if (UNIX)
    endif ()
    if (GTKGL_SUPPORT)
     target_link_libraries (${EXECUTABLE} ${PKG_OPENGL_LIBRARIES})
-    target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARY})
+    target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARIES})
    endif (GTKGL_SUPPORT)
   endif (GTK_USE)
  endif (GUI_SUPPORT)
@@ -897,8 +899,10 @@ elseif (WIN32)
 endif ()
 install (FILES
          etc/ardrone.3ds
-         etc/ardrone.gtk2
-         etc/ardrone.gtk3
+         etc/ardrone_ui.frag
+         etc/ardrone_ui.vert
+         etc/ardrone_ui.gtk2
+         etc/ardrone_ui.gtk3
          etc/ardrone.jpg
          etc/ardrone.png
          etc/ardrone_small.ico

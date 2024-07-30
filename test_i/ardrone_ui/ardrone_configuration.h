@@ -59,7 +59,10 @@
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #if defined (GTKGL_SUPPORT)
+#include "common_gl_camera.h"
 #include "common_gl_common.h"
+#include "common_gl_model.h"
+#include "common_gl_shader.h"
 #endif /* GTKGL_SUPPORT */
 #endif /* GTK_USE */
 #endif /* GUI_SUPPORT */
@@ -77,8 +80,6 @@
 #include "common_ui_wxwidgets_iapplication.h"
 #endif
 #endif /* GUI_SUPPORT */
-
-//#include "common_test_u_common.h"
 
 #include "stream_common.h"
 #include "stream_configuration.h"
@@ -382,9 +383,14 @@ struct ARDrone_UI_CBData_Base
    , messages ()
    , messageAllocator (NULL)
 #if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
-   , openGLModelListId (0)
+   , openGLCamera ()
+   , openGLModel ()
+   , openGLPerspective (0, 0,
+                        ARDRONE_OPENGL_PERSPECTIVE_FOVY,
+                        ARDRONE_OPENGL_PERSPECTIVE_ZNEAR, ARDRONE_OPENGL_PERSPECTIVE_ZFAR)
    , openGLRefreshId (0)
-   , openGLScene ()
+   , openGLShader ()
+   , orientation ()
 #endif
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -426,9 +432,12 @@ struct ARDrone_UI_CBData_Base
   ARDrone_Messages_t              messages;
   ARDrone_MessageAllocator_t*     messageAllocator;
 #if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
-  GLuint                          openGLModelListId;
+  Common_GL_Camera                openGLCamera;
+  Common_GL_Model                 openGLModel;
+  struct Common_GL_Perspective    openGLPerspective;
   guint                           openGLRefreshId;
-  struct Common_GL_Scene          openGLScene;
+  Common_GL_Shader                openGLShader;
+  glm::vec3                       orientation;
 #endif // GTKGL_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else

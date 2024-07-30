@@ -1707,11 +1707,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
         //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
         //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 #if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
-          inherited::state_.CBData->openGLScene.orientation.x =
+          inherited::state_.CBData->orientation.x =
               option_2->phi; // roll (--> rotation along x)
-          inherited::state_.CBData->openGLScene.orientation.y =
+          inherited::state_.CBData->orientation.y =
               option_2->psi; // yaw (--> rotation along y)
-          inherited::state_.CBData->openGLScene.orientation.z =
+          inherited::state_.CBData->orientation.z =
               option_2->theta; // pitch (--> rotation along z)
 #endif
         //} // end lock scope
@@ -2350,7 +2350,18 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       (WLAN_configuration_r.SSID == SSID_string))
     return;
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+  const Net_WLAN_AccessPointCacheValue_t& cache_value_r =
+      WLAN_monitor_p->get1RR (WLAN_configuration_r.SSID);
+  struct ether_addr ap_mac_address_s =
+      cache_value_r.second.linkLayerAddress;
+#endif // ACE_WIN32 || ACE_WIN64
   if (!WLAN_monitor_p->associate (interfaceIdentifier_in,
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#else
+                                  ap_mac_address_s,
+#endif // ACE_WIN32 || ACE_WIN64
                                   WLAN_configuration_r.SSID))
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     ACE_DEBUG ((LM_ERROR,
@@ -2362,7 +2373,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
                 ACE_TEXT ("failed to Net_IWLANMonitor_T::associate(\"%s\",%s), returning\n"),
                 ACE_TEXT (interfaceIdentifier_in.c_str ()),
                 ACE_TEXT (WLAN_configuration_r.SSID.c_str ())));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 }
 
 //////////////////////////////////////////

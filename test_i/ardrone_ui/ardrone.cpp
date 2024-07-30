@@ -1766,8 +1766,6 @@ do_work (int argc_in,
   Common_UI_GTK_Manager_t* gtk_manager_p =
       COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
-  //Common_UI_GTK_State_t& state_r =
-  //    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2201,6 +2199,8 @@ do_work (int argc_in,
   modulehandler_configuration.frameRate.num = 30;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
+  Common_UI_GTK_State_t& state_r =
+     const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
   modulehandler_configuration.pixelBufferLock = &state_r.lock;
 #endif // GTK_USE
 #endif // GUI_SUPPORT
@@ -3125,7 +3125,7 @@ do_work (int argc_in,
   } // end IF
 
   ACE_ASSERT (WLAN_monitor_p);
-  WLAN_monitor_p->start ();
+  WLAN_monitor_p->start (NULL);
   if (!WLAN_monitor_p->isRunning ())
   {
     ACE_DEBUG ((LM_ERROR,
