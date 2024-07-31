@@ -5910,12 +5910,18 @@ glarea_draw_event_cb (GtkWidget* widget_in,
   // center the model
   static glm::vec3 translation_s = -cb_data_base_p->openGLModel.center_;
 
+  // rotate the model
+  static glm::quat rotation_s (1.0f, 0.0f, 0.0f, 0.0f); // *NOTE*: order is: w,x,y,z --> no rotation
+  static glm::quat rotation_offset_s =
+    glm::angleAxis (glm::radians (1.0f), glm::normalize (glm::vec3 (1.0f, 1.0f, 1.0f))); // rotate around x,y,z by 1° each frame
+  rotation_s = rotation_offset_s * rotation_s;
+
   model_p->render (cb_data_base_p->openGLShader,
                    cb_data_base_p->openGLCamera,
                    cb_data_base_p->openGLPerspective,
                    glm::mat4 (1.0f),
                    translation_s,
-                   glm::quat (0.0f, 0.0f, 0.0f, 1.0f), // *NOTE*: order is: x,y,z,w --> no rotation
+                   rotation_s, 
                    scale_s);
 
   glFlush ();
