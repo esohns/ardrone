@@ -1863,6 +1863,10 @@ idle_initialize_ui_cb (gpointer userData_in)
   ACE_ASSERT (result);
 
   result = g_signal_connect_swapped (G_OBJECT (about_dialog_p),
+                                     ACE_TEXT_ALWAYS_CHAR ("close"),
+                                     G_CALLBACK (gtk_widget_hide),
+                                     about_dialog_p);
+  result = g_signal_connect_swapped (G_OBJECT (about_dialog_p),
                                      ACE_TEXT_ALWAYS_CHAR ("response"),
                                      G_CALLBACK (gtk_widget_hide),
                                      about_dialog_p);
@@ -1873,6 +1877,12 @@ idle_initialize_ui_cb (gpointer userData_in)
     g_signal_connect (G_OBJECT (gl_area_p),
                       ACE_TEXT_ALWAYS_CHAR ("realize"),
                       G_CALLBACK (glarea_realize_cb),
+                      userData_in);
+  ACE_ASSERT (result);
+  result =
+    g_signal_connect (G_OBJECT (gl_area_p),
+                      ACE_TEXT_ALWAYS_CHAR ("unrealize"),
+                      G_CALLBACK (glarea_unrealize_cb),
                       userData_in);
   ACE_ASSERT (result);
 #if GTK_CHECK_VERSION(3,0,0)
@@ -5461,6 +5471,56 @@ glarea_realize_cb (GtkWidget* widget_in,
   perspective_p->resolution.height = allocation.height;
 #endif // ACE_WIN32 || ACE_WIN64
 
+  // initialize options
+  glClearColor (0.5f, 0.5f, 0.5f, 1.0f);              // Grey Background
+  COMMON_GL_ASSERT
+  //glClearDepth (1.0);                                 // Depth Buffer Setup
+  //COMMON_GL_ASSERT
+  /* speedups */
+  //  glDisable (GL_CULL_FACE);
+  //  glEnable (GL_DITHER);
+//  COMMON_GL_ASSERT
+//  glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+  glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  // COMMON_GL_ASSERT
+  glEnable (GL_COLOR_MATERIAL);
+  // COMMON_GL_ASSERT
+  // glEnable (GL_LIGHTING);
+  // COMMON_GL_ASSERT
+  // glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
+  // COMMON_GL_ASSERT
+  // glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  // COMMON_GL_ASSERT
+  //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
+  // COMMON_GL_ASSERT
+  glDepthFunc (GL_LESS);                              // The Type Of Depth Testing To Do
+  // COMMON_GL_ASSERT
+  glDepthMask (GL_TRUE);
+  // COMMON_GL_ASSERT
+//  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
+//  COMMON_GL_ASSERT
+//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//  COMMON_GL_ASSERT
+//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//  COMMON_GL_ASSERT
+  glShadeModel (GL_SMOOTH);                           // Enable Smooth Shading
+  // COMMON_GL_ASSERT
+//  // XXX docs say all polygons are emitted CCW, but tests show that some aren't
+//  glFrontFace (GL_CW);
+  //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
+  glHint (GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+  // COMMON_GL_ASSERT
+  glEnable (GL_BLEND);                                // Enable Semi-Transparency
+  // COMMON_GL_ASSERT
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // COMMON_GL_ASSERT
+  glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
+  // COMMON_GL_ASSERT
+  // glEnable (GL_NORMALIZE);
+  // COMMON_GL_ASSERT
+  glPolygonMode (GL_FRONT_AND_BACK, GL_FILL); // GL_LINE
+
   glViewport (0, 0,
               static_cast<GLsizei> (allocation.width), static_cast<GLsizei> (allocation.height));
 
@@ -5488,6 +5548,194 @@ glarea_realize_cb (GtkWidget* widget_in,
       goto error;
     } // end IF
   } // end IF
+
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+  gdk_gl_drawable_gl_end (drawable_p);
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
+
+  return;
+
+error:
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+  gdk_gl_drawable_gl_end (drawable_p);
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
+  return;
+} // glarea_realize_cb
+
+void
+glarea_unrealize_cb (GtkWidget* widget_in,
+                     gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::glarea_unrealize_cb"));
+
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+  ACE_ASSERT (userData_in);
+  struct ARDrone_UI_CBData_Base* cb_data_base_p =
+    static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
+  Common_UI_GTK_State_t& state_r =
+    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+  Common_GL_Model* model_p = NULL;
+  Common_GL_Shader* shader_p = NULL;
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  struct ARDrone_DirectShow_UI_CBData* directshow_data_p = NULL;
+  struct ARDrone_MediaFoundation_UI_CBData* mediafoundation_data_p = NULL;
+#else
+  struct ARDrone_UI_CBData* data_p = NULL;
+#endif // ACE_WIN32 || ACE_WIN64
+
+#if GTK_CHECK_VERSION (3,0,0)
+#if GTK_CHECK_VERSION (3,16,0)
+  GtkGLArea* gl_area_p = GTK_GL_AREA (widget_in);
+  ACE_ASSERT (gl_area_p);
+  // NOTE*: the OpenGL context has been created at this point
+  GdkGLContext* context_p = gtk_gl_area_get_context (gl_area_p);
+  if (unlikely (!context_p))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to gtk_gl_area_get_context(%@), returning\n"),
+                gl_area_p));
+    goto error;
+  } // end IF
+#else
+#if defined (GTKGLAREA_SUPPORT)
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  // sanity check(s)
+  ACE_ASSERT (widget_in);
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+    {
+      directshow_data_p =
+        static_cast<struct ARDrone_DirectShow_UI_CBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (directshow_data_p);
+      break;
+    }
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+    {
+      mediafoundation_data_p =
+        static_cast<struct ARDrone_MediaFoundation_UI_CBData*> (userData_in);
+      // sanity check(s)
+      ACE_ASSERT (mediafoundation_data_p);
+      break;
+    }
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  data_p = static_cast<struct ARDrone_UI_CBData*> (userData_in);
+  // sanity check(s)
+  ACE_ASSERT (data_p);
+#endif // ACE_WIN32 || ACE_WIN64
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+  gtk_gl_area_attach_buffers (gl_area_p);
+  gdk_gl_context_make_current (context_p);
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+    return;
+#else
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,16,0) */
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
+    return;
+#else
+  GdkGLDrawable* drawable_p =
+    (*modulehandler_configuration_iterator).second.GdkWindow3D;
+  GdkGLContext* context_p =
+    (*modulehandler_configuration_iterator).second.OpenGLContext;
+
+  // sanity check(s)
+  ACE_ASSERT (drawable_p);
+  ACE_ASSERT (context_p);
+#endif /* GTKGLAREA_SUPPORT */
+#endif /* GTK_CHECK_VERSION (3,0,0) */
+
+#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,24,1)
+  gtk_gl_area_make_current (gl_area_p);
+#elif GTK_CHECK_VERSION(3,16,0)
+  if (!gtk_gl_area_make_current (gl_area_p))
+    return;
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!ggla_area_make_current (GGLA_AREA (widget_in)))
+    return;
+#else
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,24,1)
+#else
+#if defined (GTKGLAREA_SUPPORT)
+  if (!gtk_gl_area_make_current (GTK_GL_AREA (widget_in)))
+    return;
+#else
+  bool result = gdk_gl_drawable_make_current (drawable_p,
+                                              context_p);
+  if (!result)
+    return;
+  result = gdk_gl_drawable_gl_begin (drawable_p,
+                                     context_p);
+  if (!result)
+    return;
+#endif // GTKGLAREA_SUPPORT
+#endif // GTK_CHECK_VERSION(3,0,0)
+
+  // free model
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  switch (cb_data_base_p->mediaFramework)
+  {
+    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
+      model_p = &directshow_data_p->openGLModel;
+      shader_p = &directshow_data_p->openGLShader;
+      break;
+    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
+      model_p = &mediafoundation_data_p->openGLModel;
+      shader_p = &mediafoundation_data_p->openGLShader;
+      break;
+    default:
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
+                  cb_data_base_p->mediaFramework));
+      goto error;
+    }
+  } // end SWITCH
+#else
+  model_p = &data_p->openGLModel;
+  shader_p = &data_p->openGLShader;
+#endif // ACE_WIN32 || ACE_WIN64
+  ACE_ASSERT (model_p && shader_p);
+
+  model_p->reset ();
+  shader_p->reset ();
 
 #if GTK_CHECK_VERSION(3,0,0)
 #else
@@ -5569,56 +5817,6 @@ glarea_create_context_cb (GtkGLArea* GLArea_in,
   } // end IF
 
   gdk_gl_context_make_current (result_p);
-
-  // initialize options
-  glClearColor (0.0f, 0.0f, 0.0f, 1.0f);              // Black Background
-//  glClearColor (0.1f, 0.1f, 0.1f, 1.0f);              // Black Background
-  COMMON_GL_ASSERT
-  //glClearDepth (1.0);                                 // Depth Buffer Setup
-  //COMMON_GL_ASSERT
-  /* speedups */
-  //  glDisable (GL_CULL_FACE);
-  //  glEnable (GL_DITHER);
-//  COMMON_GL_ASSERT
-//  glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-  glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  // COMMON_GL_ASSERT
-  glEnable (GL_COLOR_MATERIAL);
-  // COMMON_GL_ASSERT
-  // glEnable (GL_LIGHTING);
-  // COMMON_GL_ASSERT
-  // glEnable (GL_LIGHT0);    /* Uses default lighting parameters */
-  // COMMON_GL_ASSERT
-  // glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  // COMMON_GL_ASSERT
-  //  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective
-  // COMMON_GL_ASSERT
-  glDepthFunc (GL_LESS);                              // The Type Of Depth Testing To Do
-  // COMMON_GL_ASSERT
-  glDepthMask (GL_TRUE);
-  // COMMON_GL_ASSERT
-//  glEnable (GL_TEXTURE_2D);                           // Enable Texture Mapping
-//  COMMON_GL_ASSERT
-//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//  COMMON_GL_ASSERT
-//  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//  COMMON_GL_ASSERT
-  glShadeModel (GL_SMOOTH);                           // Enable Smooth Shading
-  // COMMON_GL_ASSERT
-//  // XXX docs say all polygons are emitted CCW, but tests show that some aren't
-//  glFrontFace (GL_CW);
-  //  glHint (GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
-  glHint (GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-  // COMMON_GL_ASSERT
-  glEnable (GL_BLEND);                                // Enable Semi-Transparency
-  // COMMON_GL_ASSERT
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  // COMMON_GL_ASSERT
-  glEnable (GL_DEPTH_TEST);                           // Enables Depth Testing
-  // COMMON_GL_ASSERT
-  // glEnable (GL_NORMALIZE);
-  // COMMON_GL_ASSERT
 
   return result_p;
 }
@@ -5915,6 +6113,8 @@ glarea_draw_event_cb (GtkWidget* widget_in,
   static glm::quat rotation_offset_s =
     glm::angleAxis (glm::radians (1.0f), glm::normalize (glm::vec3 (1.0f, 1.0f, 1.0f))); // rotate around x,y,z by 1° each frame
   rotation_s = rotation_offset_s * rotation_s;
+
+  glDisable (GL_DEPTH_TEST);
 
   model_p->render (cb_data_base_p->openGLShader,
                    cb_data_base_p->openGLCamera,
@@ -8125,7 +8325,7 @@ button_about_clicked_cb (GtkWidget* widget_in,
 #else
   if (!gtk_widget_get_visible (about_dialog))
 #endif // GTK_CHECK_VERSION(3,0,0)
-    gtk_widget_show_all (about_dialog);
+    gtk_widget_show (about_dialog);
 
   return TRUE; // done (do not propagate further)
 }
