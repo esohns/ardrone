@@ -206,6 +206,7 @@ class ARDrone_DirectShow_SessionData
       reference_count = rhs_in.builder->AddRef ();
       builder = rhs_in.builder;
     } // end IF
+    stream = (stream ? stream : rhs_in.stream);
     if (rhs_in.windowController)
     {
       if (windowController)

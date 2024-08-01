@@ -380,6 +380,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
         ARDroneVideoModeToResolution (videoMode_,
                                       format_s.resolution);
         MediaType media_type_s;
+        ACE_OS::memset (&media_type_s, 0, sizeof (MediaType));
         inherited2::getMediaType (format_s,
                                   STREAM_MEDIATYPE_VIDEO,
                                   media_type_s);
@@ -390,17 +391,27 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
     }
     case STREAM_SESSION_MESSAGE_RESIZE:
     {
-      // update session data
+      // --> update session data
+
+      // sanity check(s)
       ACE_ASSERT (inherited::sessionData_);
 
       typename SessionMessageType::DATA_T::DATA_T& session_data_r =
           const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
-      // sanity check(s)
-//      ACE_ASSERT (!session_data_r.formats.empty ());
-//      MediaType& format_r =
-//        const_cast<MediaType&> (session_data_r.formats.back ());
-//      ARDroneVideoModeToResolution (videoMode_,
-//                                    format_r.resolution);
+      ACE_ASSERT (!session_data_r.formats.empty ());
+
+      struct Stream_MediaFramework_FFMPEG_VideoMediaType format_s;
+      format_s.format = AV_PIX_FMT_NONE; // video is header- + H.264-encoded
+      format_s.frameRate.num = 30;
+      ARDroneVideoModeToResolution (videoMode_,
+                                    format_s.resolution);
+      MediaType media_type_s;
+      ACE_OS::memset (&media_type_s, 0, sizeof (MediaType));
+      inherited2::getMediaType (format_s,
+                                STREAM_MEDIATYPE_VIDEO,
+                                media_type_s);
+      session_data_r.formats.push_back (media_type_s);
+
       break;
     }
     default:

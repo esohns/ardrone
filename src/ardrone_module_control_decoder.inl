@@ -49,7 +49,6 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
  , fragment_ (NULL)
  , isFirst_ (true)
  , subscriber_ (NULL)
- , state_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::ARDrone_Module_ControlDecoder_T"));
 

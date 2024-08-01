@@ -316,6 +316,9 @@ ARDrone_Message::duplicate (void) const
 
   // *NOTE*: if 'this' is initialized, so is the "clone"
 
+  // set message type
+  message_p->set (inherited::type_);
+
   return message_p;
 }
 
@@ -328,12 +331,10 @@ ARDrone_Message::dump_state (void) const
   {
     case ARDRONE_MESSAGE_ATCOMMAND:
     {
-#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),
                   inherited::id_,
                   inherited::length ()));
-#endif
       break;
     }
     case ARDRONE_MESSAGE_CONTROL:
@@ -349,16 +350,14 @@ ARDrone_Message::dump_state (void) const
         inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
 
-#if defined (_DEBUG)
-      unsigned int number_of_settings = 0;
+      size_t number_of_settings = 0;
       for (ARDrone_DeviceConfigurationConstIterator_t iterator = message_data_r.controlData.begin ();
            iterator != message_data_r.controlData.end ();
            ++iterator)
         number_of_settings += (*iterator).second.size ();
       ACE_DEBUG ((LM_DEBUG,
-                  ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+                  ACE_TEXT ("received device configuration (%Q setting(s) in %Q categories):\n"),
                   number_of_settings, message_data_r.controlData.size ()));
-#endif
 
       break;
     }
@@ -375,7 +374,6 @@ ARDrone_Message::dump_state (void) const
           inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_MAVLINK);
 
-#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s): seq: %u, id (msg/comp/sys): %u/%u/%u\n"),
                   inherited::id_,
@@ -384,7 +382,6 @@ ARDrone_Message::dump_state (void) const
                   message_data_r.MAVLinkData.msgid,
                   message_data_r.MAVLinkData.compid,
                   message_data_r.MAVLinkData.sysid));
-#endif
       break;
     }
     case ARDRONE_MESSAGE_NAVDATA:
@@ -400,7 +397,6 @@ ARDrone_Message::dump_state (void) const
           inherited::data_->getR ();
       ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_NAVDATA);
 
-#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
                   ((message_data_r.NavData.NavData.ardrone_state & ARDRONE_FLY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no")),
@@ -455,18 +451,15 @@ ARDrone_Message::dump_state (void) const
                     option_p->tag,
                     option_p->size));
       } // end FOR
-#endif
 
       break;
     }
     case ARDRONE_MESSAGE_VIDEO:
     {
-#if defined (_DEBUG)
       ACE_DEBUG ((LM_DEBUG,
                   ACE_TEXT ("[%u]: %u byte(s)\n"),
                   inherited::id_,
                   inherited::length ()));
-#endif
       break;
     }
     default:

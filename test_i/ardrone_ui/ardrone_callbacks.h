@@ -72,7 +72,7 @@ G_MODULE_EXPORT void places_save_mount_cb (GtkPlacesSidebar*,
 //------------------------------------------------------------------------------
 #if defined (GTKGL_SUPPORT)
 G_MODULE_EXPORT void glarea_realize_cb (GtkWidget*, gpointer);
-G_MODULE_EXPORT void glarea_unrealize_cb (GtkWidget*, gpointer);
+G_MODULE_EXPORT void glarea_unrealize_cb (GtkWidget*, gpointer); // *TODO*: not invoked on GTK 3.6.4 --> leaks OpenGL resources
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 G_MODULE_EXPORT GdkGLContext* glarea_create_context_cb (GtkGLArea*, gpointer);

@@ -834,12 +834,6 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::sendATCommand"));
 
-  // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
-
-  const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
-    inherited::sessionData_->getR ();
-
   DataMessageType* message_p =
     inherited::allocateMessage (ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH);
   if (!message_p)
@@ -850,7 +844,13 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
-  message_p->set (session_data_r.sessionId);
+
+  if (likely (inherited::sessionData_))
+  {
+    const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
+      inherited::sessionData_->getR ();
+    message_p->set (session_data_r.sessionId);
+  } // end IF
   message_p->set (ARDRONE_MESSAGE_ATCOMMAND);
   int result = message_p->copy (commandString_in.c_str (),
                                 commandString_in.size ());
@@ -871,12 +871,10 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     goto error;
   } // end IF
 
-//#if defined (_DEBUG)
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("%s: sent AT command: \"%s\"\n"),
 //              inherited::mod_->name (),
 //              ACE_TEXT (commandString_in.c_str ())));
-//#endif
 
   return true;
 

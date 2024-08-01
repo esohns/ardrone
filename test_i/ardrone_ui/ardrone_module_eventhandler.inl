@@ -50,21 +50,21 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleDataMessage (ARDrone_Mes
   // --> create duplicates
   if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
   {
-    message_p =
-      dynamic_cast<ARDrone_Message*> (message_inout->duplicate ());
-    ACE_ASSERT (message_p);
+    //message_p =
+    //  dynamic_cast<ARDrone_Message*> (message_inout->duplicate ());
+    //ACE_ASSERT (message_p);
   } // end IF
   inherited::handleDataMessage (message_p,
                                 passMessageDownstream_out);
-  ACE_ASSERT (!message_p);
-  ACE_ASSERT (!passMessageDownstream_out);
+  //ACE_ASSERT (!message_p);
+  //ACE_ASSERT (!passMessageDownstream_out);
 
   if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
   {
     // sanity check(s)
     ACE_ASSERT (message_inout);
 
-    passMessageDownstream_out = true;
+    //passMessageDownstream_out = true;
   } // end IF
 }
 
@@ -161,8 +161,8 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleSessionMessage (ARDrone_
 continue_:
   inherited::handleSessionMessage (message_inout,
                                    passMessageDownstream_out);
-  ACE_ASSERT (!message_inout);
-  ACE_ASSERT (!passMessageDownstream_out);
+  //ACE_ASSERT (!message_inout);
+  //ACE_ASSERT (!passMessageDownstream_out);
 }
 
 template <typename ConfigurationType>

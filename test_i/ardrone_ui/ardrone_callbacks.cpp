@@ -344,11 +344,11 @@ stream_processing_function (void* arg_in)
   Stream_IStreamControlBase* istream_base_p = NULL;
   std::ostringstream converter;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Common_IGetR_T<ARDrone_DirectShow_SessionData_t>* iget_p = NULL;
+  Common_IGetR_2_T<ARDrone_DirectShow_SessionData_t>* iget_p = NULL;
   const ARDrone_DirectShow_SessionData_t* session_data_container_p = NULL;
   const ARDrone_DirectShow_SessionData* session_data_p = NULL;
 #else
-  Common_IGetR_T<ARDrone_SessionData_t>* iget_p = NULL;
+  Common_IGetR_2_T<ARDrone_SessionData_t>* iget_p = NULL;
   const ARDrone_SessionData_t* session_data_container_p = NULL;
   const struct ARDrone_SessionData* session_data_p = NULL;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -547,13 +547,13 @@ stream_processing_function (void* arg_in)
 
         iget_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-          dynamic_cast<Common_IGetR_T<ARDrone_DirectShow_SessionData_t>*> ((*streams_iterator).second);
+          dynamic_cast<Common_IGetR_2_T<ARDrone_DirectShow_SessionData_t>*> ((*streams_iterator).second);
 #else
-          dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+          dynamic_cast<Common_IGetR_2_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
 #endif // ACE_WIN32 || ACE_WIN64
         ACE_ASSERT (iget_p);
 
-        session_data_container_p = &iget_p->getR ();
+        session_data_container_p = &iget_p->getR_2 ();
         ACE_ASSERT (session_data_container_p);
         session_data_p =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -2293,10 +2293,10 @@ idle_finalize_ui_cb (gpointer userData_in)
   ARDRONE_TRACE (ACE_TEXT ("::idle_finalize_ui_cb"));
 
   // sanity check(s)
-  ACE_ASSERT (userData_in);
-
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
       static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
+  ACE_ASSERT (cb_data_base_p);
+
   Common_UI_GTK_State_t& state_r =
     const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
   size_t num_messages = 0;
@@ -3073,13 +3073,31 @@ idle_update_orientation_display_cb (gpointer userData_in)
 #if defined (GTKGL_SUPPORT)
 #if GTK_CHECK_VERSION (3,0,0)
 #if GTK_CHECK_VERSION (3,16,0)
-  GtkGLArea* gl_area_p =
-    GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
-                                         ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
-  ACE_ASSERT (gl_area_p);
+  // GtkGLArea* gl_area_p =
+  //   GTK_GL_AREA (gtk_builder_get_object ((*iterator).second.second,
+  //                                        ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_OPENGL));
+  // ACE_ASSERT (gl_area_p);
   // gtk_widget_queue_draw (GTK_WIDGET (gl_area_p));
   // gtk_gl_area_queue_render (gl_area_p);
-  gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (gl_area_p)),
+  // gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (gl_area_p)),
+  //                             NULL,
+  //                             0);
+  GtkBox* box_p =
+    GTK_BOX (gtk_builder_get_object ((*iterator).second.second,
+                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION)));
+  ACE_ASSERT (box_p);
+  // get the LAST child
+  GList* children_a = gtk_container_get_children (GTK_CONTAINER (box_p));
+  ACE_ASSERT (children_a);
+  GtkWidget* widget_p = NULL;
+  while ((children_a = g_list_next (children_a)) != NULL)
+  {
+    widget_p = GTK_WIDGET (children_a->data);
+    break;
+  } // end WHILE
+  g_list_free (children_a); children_a = NULL;
+  ACE_ASSERT (widget_p);
+  gdk_window_invalidate_rect (gtk_widget_get_window (widget_p),
                               NULL,
                               0);
 #else
@@ -3088,6 +3106,7 @@ idle_update_orientation_display_cb (gpointer userData_in)
     GTK_BOX (gtk_builder_get_object ((*iterator).second.second,
                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION)));
   ACE_ASSERT (box_p);
+  // get the LAST child
   GList* children_a = gtk_container_get_children (GTK_CONTAINER (box_p));
   ACE_ASSERT (children_a);
   GtkWidget* widget_p = NULL;
@@ -3295,10 +3314,10 @@ idle_update_progress_cb (gpointer userData_in)
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_CONTROL)));
   ACE_ASSERT (progress_bar_p);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, data_p->state->lock, G_SOURCE_REMOVE);
-    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_CONTROL);
-    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps = (*iterator_4).second.messagesPerSecond;
-    speed = (*iterator_4).second.bytesPerSecond;
+    //iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_CONTROL);
+    //ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    //fps = (*iterator_4).second.messagesPerSecond;
+    //speed = (*iterator_4).second.bytesPerSecond;
     if (speed)
     {
       if (speed >= 1024.0F)
@@ -3328,10 +3347,10 @@ idle_update_progress_cb (gpointer userData_in)
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_NAVDATA)));
     ACE_ASSERT (progress_bar_p);
-    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_NAVDATA);
-    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps = (*iterator_4).second.messagesPerSecond;
-    speed = (*iterator_4).second.bytesPerSecond;
+    //iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_NAVDATA);
+    //ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    //fps = (*iterator_4).second.messagesPerSecond;
+    //speed = (*iterator_4).second.bytesPerSecond;
     if (speed)
     {
       if (speed >= 1024.0F)
@@ -3361,10 +3380,10 @@ idle_update_progress_cb (gpointer userData_in)
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_MAVLINK)));
     ACE_ASSERT (progress_bar_p);
-    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_MAVLINK);
-    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps = (*iterator_4).second.messagesPerSecond;
-    speed = (*iterator_4).second.bytesPerSecond;
+    //iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_MAVLINK);
+    //ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    //fps = (*iterator_4).second.messagesPerSecond;
+    //speed = (*iterator_4).second.bytesPerSecond;
     if (speed)
     {
       if (speed >= 1024.0F)
@@ -3394,10 +3413,10 @@ idle_update_progress_cb (gpointer userData_in)
       GTK_PROGRESS_BAR (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_PROGRESSBAR_VIDEO)));
     ACE_ASSERT (progress_bar_p);
-    iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_VIDEO);
-    ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
-    fps = (*iterator_4).second.messagesPerSecond;
-    speed = (*iterator_4).second.bytesPerSecond;
+    //iterator_4 = data_p->statistic.streamStatistic.find (ARDRONE_STREAM_VIDEO);
+    //ACE_ASSERT (iterator_4 != data_p->statistic.streamStatistic.end ());
+    //fps = (*iterator_4).second.messagesPerSecond;
+    //speed = (*iterator_4).second.bytesPerSecond;
     if (speed)
     {
       if (speed >= 1024.0F)
@@ -4146,6 +4165,8 @@ continue_:
 
       (*directshow_iterator_5).second.second->window =
         static_cast<HWND> (GDK_WINDOW_HWND (gtk_widget_get_window (GTK_WIDGET (drawing_area_p))));
+      (*directshow_iterator_5).second.second->direct3DConfiguration->presentationParameters.hDeviceWindow =
+        (*directshow_iterator_5).second.second->window;
 
       break;
     }
@@ -5250,6 +5271,9 @@ glarea_realize_cb (GtkWidget* widget_in,
   Common_GL_Model* model_p = NULL;
   struct Common_GL_Perspective* perspective_p = NULL;
   Common_GL_Shader* shader_p = NULL;
+#if defined (GLEW_SUPPORT)
+  GLenum err;
+#endif // GLEW_SUPPORT
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -5377,7 +5401,7 @@ glarea_realize_cb (GtkWidget* widget_in,
 
 #if defined (GLEW_SUPPORT)
   glewExperimental = GL_TRUE;
-  GLenum err = glewInit ();
+  err = glewInit ();
   if (GLEW_OK != err)
     ACE_DEBUG ((LM_WARNING,
                 ACE_TEXT ("failed to glewInit(): \"%s\", continuing\n"),
@@ -5473,7 +5497,7 @@ glarea_realize_cb (GtkWidget* widget_in,
 
   // initialize options
   glClearColor (0.5f, 0.5f, 0.5f, 1.0f);              // Grey Background
-  COMMON_GL_ASSERT
+  // COMMON_GL_ASSERT
   //glClearDepth (1.0);                                 // Depth Buffer Setup
   //COMMON_GL_ASSERT
   /* speedups */
@@ -5836,22 +5860,6 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   struct ARDrone_UI_CBData_Base* cb_data_base_p =
     static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
 
-//   static bool glew_initialized_b = false;
-//   if (!glew_initialized_b)
-//   { glew_initialized_b = true;
-// #if defined (GLEW_SUPPORT)
-//     glewExperimental = GL_TRUE;
-//     GLenum err = glewInit ();
-//     if (GLEW_OK != err)
-//     {
-//       ACE_DEBUG ((LM_ERROR,
-//                   ACE_TEXT ("failed to glewInit(): \"%s\", aborting\n"),
-//                   ACE_TEXT (glewGetErrorString (err))));
-//       return FALSE;
-//     } // end IF
-// #endif // GLEW_SUPPORT
-//   } // end IF
-
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // scale the whole asset to fit into the view frustum
@@ -5870,17 +5878,23 @@ glarea_render_cb (GtkGLArea* GLArea_in,
   // center the model
   static glm::vec3 translation_s = -cb_data_base_p->openGLModel.center_;
 
+  // rotate the model
+  static glm::quat rotation_s (1.0f, 0.0f, 0.0f, 0.0f); // *NOTE*: order is: w,x,y,z --> no rotation
+  static glm::quat rotation_offset_s =
+    glm::angleAxis (glm::radians (1.0f), glm::normalize (glm::vec3 (1.0f, 1.0f, 1.0f))); // rotate around x,y,z by 1° each frame
+  rotation_s = rotation_offset_s * rotation_s;
+
   cb_data_base_p->openGLModel.render (cb_data_base_p->openGLShader,
                                       cb_data_base_p->openGLCamera,
                                       cb_data_base_p->openGLPerspective,
                                       glm::mat4 (1.0f),
                                       translation_s,
-                                      glm::quat (0.0f, 0.0f, 0.0f, 1.0f), // *NOTE*: order is: x,y,z,w --> no rotation
+                                      rotation_s,
                                       scale_s);
 
   glFlush ();
 
-  return FALSE;
+  return TRUE;
 }
 
 void
@@ -6114,7 +6128,7 @@ glarea_draw_event_cb (GtkWidget* widget_in,
     glm::angleAxis (glm::radians (1.0f), glm::normalize (glm::vec3 (1.0f, 1.0f, 1.0f))); // rotate around x,y,z by 1° each frame
   rotation_s = rotation_offset_s * rotation_s;
 
-  glDisable (GL_DEPTH_TEST);
+  //glDisable (GL_DEPTH_TEST);
 
   model_p->render (cb_data_base_p->openGLShader,
                    cb_data_base_p->openGLCamera,
@@ -8369,8 +8383,8 @@ button_quit_clicked_cb (GtkWidget* widget_in,
                 pid));
 #endif
 
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("leaving GTK...\n")));
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
+                                                      false); // N/A
 
   return TRUE; // done (do not propagate further)
 }

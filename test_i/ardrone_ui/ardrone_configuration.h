@@ -353,11 +353,13 @@ struct ARDrone_UI_ProgressData
   {}
 
 #if defined (GTK_USE)
-  struct ARDrone_UI_GTK_State*       state;
+  Common_UI_GTK_State_t*             state;
+  //struct ARDrone_UI_GTK_State*       state;
 #elif defined (WXWIDGETS_USE)
   struct ARDrone_UI_wxWidgets_State* state;
 #endif // WXWIDGETS_USE
-  struct ARDrone_Statistic           statistic;
+  //struct ARDrone_Statistic           statistic;
+  struct Stream_Statistic            statistic;
 };
 
 struct ARDrone_UI_CBData_Base

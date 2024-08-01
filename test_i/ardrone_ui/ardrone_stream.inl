@@ -107,6 +107,17 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 {
   STREAM_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::load"));
 
+  typename inherited::CONFIGURATION_T::ITERATOR_T iterator =
+    inherited::configuration_->find (ACE_TEXT_ALWAYS_CHAR (""));
+  ACE_ASSERT (iterator != inherited::configuration_->end ());
+
+  // *NOTE*: this processing stream may have branches, depending on:
+  //         - whether the output is displayed on a screen
+  //         - whether the output is saved to file
+  typename inherited::MODULE_T* branch_p = NULL; // NULL: 'main' branch
+  unsigned int index_i = 0;
+  Stream_Branches_t branches_a;
+
   Stream_Module_t* module_p = NULL;
 
   ACE_NEW_RETURN (module_p,
@@ -154,21 +165,40 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
       layout_in->append (module_p, NULL, 0);
       module_p = NULL;
 
-      ACE_NEW_RETURN (module_p,
-                      ARDrone_Module_DirectShow_AVIEncoder_Module (this,
-                                                                   ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
-                      false);
-      ACE_ASSERT (module_p);
-      layout_in->append (module_p, NULL, 0);
-      module_p = NULL;
+      if (!(*iterator).second.second->targetFileName.empty ())
+      {
+        ACE_NEW_RETURN (module_p,
+                        ARDrone_Module_DirectShow_Distributor_Module (this,
+                                                                      ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_DISTRIBUTOR_DEFAULT_NAME_STRING)),
+                        false);
+        ACE_ASSERT (module_p);
+        layout_in->append (module_p, NULL, 0);
 
-      ACE_NEW_RETURN (module_p,
-                      ARDrone_Module_DirectShow_FileWriter_Module (this,
-                                                                   ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
-                      false);
-      ACE_ASSERT (module_p);
-      layout_in->append (module_p, NULL, 0);
-      module_p = NULL;
+        branch_p = module_p;
+        branches_a.push_back (ACE_TEXT_ALWAYS_CHAR (STREAM_SUBSTREAM_SAVE_NAME));
+        Stream_IDistributorModule* idistributor_p =
+            dynamic_cast<Stream_IDistributorModule*> (module_p->writer ());
+        ACE_ASSERT (idistributor_p);
+        idistributor_p->initialize (branches_a);
+
+        module_p = NULL;
+
+        ACE_NEW_RETURN (module_p,
+                        ARDrone_Module_DirectShow_AVIEncoder_Module (this,
+                                                                     ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
+                        false);
+        ACE_ASSERT (module_p);
+        layout_in->append (module_p, branch_p, index_i);
+        module_p = NULL;
+
+        ACE_NEW_RETURN (module_p,
+                        ARDrone_Module_DirectShow_FileWriter_Module (this,
+                                                                     ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
+                        false);
+        ACE_ASSERT (module_p);
+        layout_in->append (module_p, branch_p, index_i);
+        module_p = NULL;
+      } // end IF
 
       break;
     }
@@ -317,9 +347,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
   typename SessionDataType::DATA_T* session_data_p = NULL;
-#endif
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   //ModuleConfigurationType* configuration_p = NULL;
@@ -342,6 +370,12 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     setup_pipeline;
   reset_setup_pipeline = false;
 
+  // sanity check(s)
+  ACE_ASSERT(inherited::sessionData_);
+
+  session_data_p =
+    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR());
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -349,12 +383,6 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   //configuration_p =
   //  dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
 
-  // sanity check(s)
-  //ACE_ASSERT (configuration_p);
-  ACE_ASSERT (inherited::sessionData_);
-
-  session_data_p =
-    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
   switch (configuration_in.configuration_->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -371,7 +399,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
         goto error;
       } // end IF
       session_data_p->formats.push_front (*media_type_p);
-      CoTaskMemFree (media_type_p); media_type_p = NULL;
+      delete media_type_p; media_type_p = NULL;
 
       break;
     }
@@ -390,6 +418,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     }
   } // end SWITCH
 #endif
+  session_data_p->stream = this;
 
   // ---------------------------------------------------------------------------
 
@@ -664,7 +693,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
-  //  struct ARDrone_SessionData* session_data_p = NULL;
+  typename SessionDataType::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   //ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -684,6 +713,14 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
     setup_pipeline;
   reset_setup_pipeline = false;
+
+    // sanity check(s)
+  //ACE_ASSERT (configuration_p);
+  ACE_ASSERT (inherited::sessionData_);
+
+  session_data_p =
+    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
+  session_data_p->stream = this;
 
   // sanity check(s)
   ACE_ASSERT (configuration_in.configuration_->deviceConfiguration);
@@ -731,10 +768,10 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   ACE_ASSERT (iset_p);
   iset_p->setP (&(inherited::state_));
 
-  // enqueue the module
-  // *NOTE*: push()ing the module will open() it
-  // --> set the argument that is passed along
-  module_p->arg (inherited::sessionData_);
+  //// enqueue the module
+  //// *NOTE*: push()ing the module will open() it
+  //// --> set the argument that is passed along
+  //module_p->arg (inherited::sessionData_);
 
   // ---------------------------------------------------------------------------
 
@@ -978,12 +1015,12 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_Controller_Module (this,
-                                                                     ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)),
                         false);
       else
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_AsynchController_Module (this,
-                                                                           ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                                                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)),
                         false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -1175,7 +1212,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
-//  struct ARDrone_SessionData* session_data_p = NULL;
+  typename SessionDataType::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -1202,8 +1239,11 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     inherited::state_.CBData = configuration_in.configuration_->CBData;
   } // end lock scope
 
-//  session_data_p =
-//    &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
+  ACE_ASSERT (inherited::sessionData_);
+  session_data_p =
+    &const_cast<SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
+  session_data_p->stream = this;
+
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 
@@ -1241,10 +1281,10 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   ACE_ASSERT (iset_p);
   iset_p->setP (&(inherited::state_));
 
-  // enqueue the module
-  // *NOTE*: push()ing the module will open() it
-  // --> set the argument that is passed along
-  module_p->arg (inherited::sessionData_);
+  //// enqueue the module
+  //// *NOTE*: push()ing the module will open() it
+  //// --> set the argument that is passed along
+  //module_p->arg (inherited::sessionData_);
 
   // ---------------------------------------------------------------------------
 
@@ -1936,7 +1976,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
                         SessionMessageType>::getP () const
 {
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING),
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
                                                    true,
                                                    false));
   if (!module_p)
@@ -1944,7 +1984,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT (MODULE_NET_TARGET_DEFAULT_NAME_STRING)));
+                ACE_TEXT (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
     return NULL;
   } // end IF
 
@@ -2599,7 +2639,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 //  bool result = false;
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
-//  struct ARDrone_SessionData* session_data_p = NULL;
+  typename SessionDataType::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
@@ -2622,9 +2662,10 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
+  session_data_p =
+    &const_cast<SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
+  session_data_p->stream = this;
 
-  //session_data_p =
-  //  &const_cast<struct ARDrone_SessionData&> (inherited::sessionData_->getR ());
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
 

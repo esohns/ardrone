@@ -45,8 +45,8 @@
 
 // model
 #define ARDRONE_OPENGL_MODEL_ORIENTATION_PRECISION         3
-#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "backpack.obj"
-// #define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
+//#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "backpack.obj"
+#define ARDRONE_OPENGL_MODEL_DEFAULT_FILE                  "ardrone.3ds"
 #define ARDRONE_OPENGL_TEXTURE_DEFAULT_FILE                "ardrone.png"
 
 // shader

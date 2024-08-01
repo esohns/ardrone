@@ -144,7 +144,7 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
-  inline virtual bool lex () { return (ARDrone_NavData_Scanner_lex (scannerState_) == 0); }
+  inline virtual bool lex (yyscan_t state_in) { return (ARDrone_NavData_Scanner_lex (scannerState_) == 0); }
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_NavDataDecoder_T ())

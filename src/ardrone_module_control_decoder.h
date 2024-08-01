@@ -54,16 +54,41 @@ class ARDrone_Control_IParser
   using IPARSER_T::initialize;
   //using IPARSER_T::error;
 
-  inline virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
+  virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in)
+  {
+    ACE_UNUSED_ARG (configuration_in);
+
+    ACE_ASSERT (!state_);
+    bool result = false;
+    ISCANNER_T* scanner_p = this;
+    try {
+      result = scanner_p->initialize (state_,
+                                      this);
+    } catch (...) {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in Common_ILexScanner_T::initialize(): \"%m\", continuing\n")));
+    }
+    if (!result)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_ILexScanner_T::initialize(): \"%m\", aborting\n")));
+      return false;
+    } // end IF
+    ACE_ASSERT (state_);
+
+    return true;
+  }
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
   inline virtual const struct Common_FlexScannerState& getR () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
   //  using Common_IScanner::error;
 
   ARDrone_Control_IParser ()
    : finished_ (false)
+   , state_ (NULL)
   {}
 
-  bool finished_;
+  bool     finished_;
+  yyscan_t state_;
 };
 
 ////////////////////////////////////////////
@@ -138,11 +163,11 @@ class ARDrone_Module_ControlDecoder_T
   virtual void error (const std::string&);
   inline virtual void setDebug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_Control_Scanner_set_debug ((debug_in ? 1 : 0), state_in); }
   inline virtual void reset () { ARDrone_Control_Scanner_set_lineno (1, state_); ARDrone_Control_Scanner_set_column (1, state_); }
-  inline virtual bool initialize (yyscan_t& state_in, void*) { return (ARDrone_Control_Scanner_lex_init_extra (this, &state_in) == 0); }
+  inline virtual bool initialize (yyscan_t& state_in, void* = NULL) { return (ARDrone_Control_Scanner_lex_init_extra (this, &state_in) == 0); }
   inline virtual void finalize (yyscan_t&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
   inline virtual struct yy_buffer_state* create (yyscan_t, char*, size_t) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
   inline virtual void destroy (yyscan_t, struct yy_buffer_state*&) { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) }
-  //inline virtual bool lex () { return (ARDrone_Control_Scanner_lex (inherited::state_) == 0); }
+  inline virtual bool lex (yyscan_t state_in) { return (ARDrone_Control_Scanner_lex (state_in) == 0); }
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_ControlDecoder_T ())
@@ -157,7 +182,6 @@ class ARDrone_Module_ControlDecoder_T
   DataMessageType*              fragment_;
   bool                          isFirst_;
   ARDrone_IDeviceConfiguration* subscriber_;
-  yyscan_t                      state_;
 };
 
 // include template definition

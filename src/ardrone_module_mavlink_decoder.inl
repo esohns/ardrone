@@ -47,7 +47,6 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
  , buffer_ (NULL)
  , fragment_ (NULL)
  , isFirst_ (true)
- , state_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::ARDrone_Module_MAVLinkDecoder_T"));
 
@@ -605,7 +604,7 @@ continue_:
 
         // parse data fragment
         try {
-          result_2 = this->lex ();
+          result_2 = this->lex (state_);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),

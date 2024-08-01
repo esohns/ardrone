@@ -43,6 +43,7 @@
 #else
 #include "stream_lib_ffmpeg_common.h"
 #endif // ACE_WIN32 || ACE_WIN64
+#include "stream_misc_distributor.h"
 #include "stream_misc_dump.h"
 
 #include "stream_net_source.h"
@@ -584,6 +585,14 @@ typedef Stream_Module_Dump_T<ACE_MT_SYNCH,
 #endif // _DEBUG
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+typedef Stream_Miscellaneous_Distributor_WriterTask_T<ACE_MT_SYNCH,
+                                                      Common_TimePolicy_t,
+                                                      struct ARDrone_DirectShow_ModuleHandlerConfiguration,
+                                                      Stream_ControlMessage_t,
+                                                      ARDrone_Message,
+                                                      ARDrone_DirectShow_SessionMessage,
+                                                      typename ARDrone_DirectShow_SessionMessage::DATA_T> ARDrone_Module_DirectShow_DistributorWriter_t;
+
 typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    Common_TimePolicy_t,
                                    struct ARDrone_DirectShow_ModuleHandlerConfiguration,
@@ -743,13 +752,13 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // 
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_DirectShow_ModuleHandlerConfiguration, // module handler configuration type
-                              libacestream_default_net_target_module_name_string,
+                              ardrone_default_controller_module_name_string,
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_DirectShow_Controller);     // writer type
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                  // session data type
                               enum Stream_SessionMessageType,              // session event type
                               struct ARDrone_DirectShow_ModuleHandlerConfiguration,   // module handler configuration type
-                              libacestream_default_net_target_module_name_string,
+                              ardrone_default_controller_module_name_string,
                               Stream_INotify_t,                            // stream notification interface type
                               ARDrone_Module_DirectShow_AsynchController); // writer type
 
@@ -760,14 +769,21 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // 
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_DirectShow_Display);        // writer type
 
-#if defined (_DEBUG)
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_DirectShow_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_misc_dump_module_name_string,
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_DirectShow_Dump);           // writer type
-#endif
+
+DATASTREAM_MODULE_DUPLEX (ARDrone_DirectShow_SessionData,                               // session data type
+                          enum Stream_SessionMessageType,                               // session event type
+                          struct ARDrone_DirectShow_ModuleHandlerConfiguration,         // module handler configuration type
+                          libacestream_default_misc_distributor_module_name_string,
+                          Stream_INotify_t,                                             // stream notification interface type
+                          ARDrone_Module_DirectShow_DistributorWriter_t::READER_TASK_T, // reader type
+                          ARDrone_Module_DirectShow_DistributorWriter_t,                // writer type
+                          ARDrone_Module_DirectShow_Distributor);                       // module name prefix
 
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
@@ -871,14 +887,12 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // 
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_MediaFoundation_Display);   // writer type
 
-#if defined (_DEBUG)
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_MediaFoundation_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_misc_dump_module_name_string,
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_MediaFoundation_Dump);      // writer type
-#endif
 
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                 // session data type
                               enum Stream_SessionMessageType,             // session event type

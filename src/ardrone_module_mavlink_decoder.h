@@ -55,7 +55,30 @@ class ARDrone_MAVLink_IParser
 
   //using IPARSER_T::error;
 
-  inline virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
+  virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in)
+  {
+    ACE_UNUSED_ARG (configuration_in);
+
+    ACE_ASSERT (!state_);
+    bool result = false;
+    ISCANNER_T* scanner_p = this;
+    try {
+      result = scanner_p->initialize (state_,
+                                      this);
+    } catch (...) {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("caught exception in Common_ILexScanner_T::initialize(): \"%m\", continuing\n")));
+    }
+    if (!result)
+    {
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("failed to Common_ILexScanner_T::initialize(): \"%m\", aborting\n")));
+      return false;
+    } // end IF
+    ACE_ASSERT (state_);
+
+    return true;
+  }
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
   inline virtual const struct Common_FlexScannerState& getR () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
   
@@ -63,9 +86,11 @@ class ARDrone_MAVLink_IParser
 
   ARDrone_MAVLink_IParser ()
    : finished_ (false)
+   , state_ (NULL)
   {}
 
-  bool finished_;
+  bool     finished_;
+  yyscan_t state_;
 };
 
 template <ACE_SYNCH_DECL,
@@ -134,7 +159,7 @@ class ARDrone_Module_MAVLinkDecoder_T
   inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; }
   inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__scan_buffer (buffer_in, size_in, state_in); }
   inline virtual void destroy (yyscan_t state_in, struct yy_buffer_state*& buffer_inout) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_inout); ARDrone_MAVLink_Scanner__delete_buffer (buffer_inout, state_in); buffer_inout = NULL; }
-  inline virtual bool lex () { return (ARDrone_MAVLink_Scanner_lex (state_) == 0); }
+  inline virtual bool lex (yyscan_t state_in) { return (ARDrone_MAVLink_Scanner_lex (state_in) == 0); }
 
  private:
   ACE_UNIMPLEMENTED_FUNC (ARDrone_Module_MAVLinkDecoder_T ())
@@ -147,7 +172,6 @@ class ARDrone_Module_MAVLinkDecoder_T
   YY_BUFFER_STATE  buffer_;
   DataMessageType* fragment_;
   bool             isFirst_;
-  yyscan_t         state_;
 };
 
 // include template definition
