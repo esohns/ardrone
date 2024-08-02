@@ -40,31 +40,21 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleDataMessage (ARDrone_Mes
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_EventHandler_T::handleDataMessage"));
 
   // *NOTE*: messages traversing this module will be sent to the device
-  //         --> filter inbound NavData here
+  //         --> filter inbound data here
+
+  inherited::handleDataMessage (message_inout,
+                                passMessageDownstream_out);
+  ACE_ASSERT (message_inout && passMessageDownstream_out);
 
   enum ARDrone_MessageType message_type_e =
     static_cast<enum ARDrone_MessageType> (message_inout->type ());
-  ARDrone_Message* message_p = message_inout;
-
-  // the base class release()s all messages; 'this' needs to forward AT commands
-  // --> create duplicates
-  if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
-  {
-    //message_p =
-    //  dynamic_cast<ARDrone_Message*> (message_inout->duplicate ());
-    //ACE_ASSERT (message_p);
-  } // end IF
-  inherited::handleDataMessage (message_p,
-                                passMessageDownstream_out);
-  //ACE_ASSERT (!message_p);
-  //ACE_ASSERT (!passMessageDownstream_out);
-
-  if (message_type_e == ARDRONE_MESSAGE_ATCOMMAND)
+  if (message_type_e != ARDRONE_MESSAGE_ATCOMMAND)
   {
     // sanity check(s)
     ACE_ASSERT (message_inout);
 
-    //passMessageDownstream_out = true;
+    message_inout->release ();
+    passMessageDownstream_out = false;
   } // end IF
 }
 

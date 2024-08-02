@@ -423,14 +423,14 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   do
   {
     message_block_p = NULL;
-    result = inherited::getq (message_block_p,
-                              NULL);
+    result = inherited::parserQueue_.dequeue_head (message_block_p,
+                                                   NULL);
     if (result == -1)
     {
       int error = ACE_OS::last_error ();
       if (error != EWOULDBLOCK) // Win32: 10035
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: worker thread (id: %t) failed to ACE_Task::getq(): \"%m\", aborting\n"),
+                    ACE_TEXT ("%s: worker thread (id: %t) failed to ACE_Message_Queue::dequeue_head(): \"%m\", aborting\n"),
                     inherited::mod_->name ()));
       break;
     } // end IF

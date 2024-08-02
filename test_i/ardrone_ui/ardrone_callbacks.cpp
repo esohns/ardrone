@@ -2150,12 +2150,10 @@ idle_initialize_ui_cb (gpointer userData_in)
 #else
                          monitor_info.szDevice))
 #endif
-    {
-      g_value_unset (&value);
       break;
-    } // end IF
     g_value_unset (&value);
   } // end FOR
+  g_value_unset (&value);
 #endif
 
   combo_box_p =
@@ -3572,6 +3570,14 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     ACE_ASSERT (istream_base_p);
     istream_base_p->stop (false, false, true);
 
+    if (likely (cb_data_base_p->progressData.eventSourceId))
+    {
+      { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+        g_source_remove (cb_data_base_p->progressData.eventSourceId);
+        cb_data_base_p->progressData.eventSourceId = 0;
+      } // end lock scope
+    } // end IF
+
     return;
   } // end IF
 
@@ -3871,7 +3877,6 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
         GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_SAVE_FORMAT)));
     ACE_ASSERT (list_store_p);
-    g_value_unset (&value);
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     g_value_init (&value, G_TYPE_STRING);
 #else
@@ -3965,7 +3970,7 @@ continue_:
       GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_DEVICE)));
   ACE_ASSERT (list_store_p);
-  g_value_unset (&value);
+  //g_value_unset (&value);
   g_value_init (&value, G_TYPE_STRING);
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
@@ -4103,7 +4108,7 @@ continue_:
       GTK_LIST_STORE (gtk_builder_get_object ((*iterator).second.second,
                                               ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_LISTSTORE_DISPLAY_FORMAT)));
   ACE_ASSERT (list_store_p);
-  g_value_unset (&value);
+  //g_value_unset (&value);
   g_value_init (&value, G_TYPE_INT);
   gtk_tree_model_get_value (GTK_TREE_MODEL (list_store_p),
                             &iterator_2,
@@ -5021,6 +5026,7 @@ combobox_display_format_changed_cb (GtkComboBox* comboBox_in,
       return;
     }
   } // end IF
+  g_value_unset (&value);
 }
 
 void

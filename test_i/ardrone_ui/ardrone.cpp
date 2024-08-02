@@ -1886,6 +1886,7 @@ do_work (int argc_in,
 //  stream_configuration.userData = configuration_in.userData;
 //#endif // ACE_WIN32 || ACE_WIN64
 
+  ACE_INET_Addr local_address, gateway_address;
   struct Net_UserData user_data_s;
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
   codec_configuration.codecId = AV_CODEC_ID_H264;
@@ -2398,6 +2399,20 @@ do_work (int argc_in,
   // control
   // *TODO*: bind to a specific interface
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
+  Net_Common_Tools::interfaceToIPAddress_2 (WLANInterfaceIdentifier_in,
+                                            local_address,
+                                            gateway_address);
+#else
+  Net_Common_Tools::interfaceToIPAddress (WLANInterfaceIdentifier_in,
+                                          local_address,
+                                          gateway_address);
+#endif // _WIN32_WINNT_VISTA
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("interface: \"%s\" --> \"%s\"...\n"),
+              ACE_TEXT (Net_Common_Tools::interfaceToString (WLANInterfaceIdentifier_in).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (local_address, true, false).c_str ())));
+
   switch (CBData_in->mediaFramework)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
@@ -2433,14 +2448,24 @@ do_work (int argc_in,
         useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_udp_connection_configuration.socketConfiguration.bufferSize =
         NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
+      //directshow_udp_connection_configuration.socketConfiguration.listenAddress = local_address;
+      //directshow_udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
+      //                                                                                           1);
       result =
         directshow_udp_connection_configuration.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
                                                                                        static_cast<ACE_UINT32> (INADDR_ANY),
                                                                                        1,
                                                                                        0);
       ACE_ASSERT (result == 0);
+      result =
+        directshow_udp_connection_configuration.socketConfiguration.peerAddress.set (static_cast<u_short> (0),
+                                                                                     static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                     1,
+                                                                                     0);
+      ACE_ASSERT (result == 0);
       directshow_udp_connection_configuration.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
+      //directshow_udp_connection_configuration.delayRead = true;
       directshow_udp_connection_configuration.socketConfiguration.writeOnly = false;
       directshow_udp_connection_configuration.streamConfiguration =
         &directshow_stream_configuration_5;
@@ -2476,6 +2501,7 @@ do_work (int argc_in,
 
       directshow_udp_connection_configuration_3.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
+      //directshow_udp_connection_configuration_3.delayRead = true;
       directshow_udp_connection_configuration_3.dispatch =
         useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       result =
