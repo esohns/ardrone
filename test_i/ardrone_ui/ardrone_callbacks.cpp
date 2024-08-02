@@ -498,7 +498,7 @@ stream_processing_function (void* arg_in)
             dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
         ACE_ASSERT (istream_base_p);
 
-        result_2 = iinitialize_p->initialize (*(*directshow_iterator_4).second);
+        //result_2 = iinitialize_p->initialize (*(*directshow_iterator_4).second);
         if (!result_2)
         {
           ACE_DEBUG ((LM_ERROR,
@@ -5005,6 +5005,8 @@ combobox_display_format_changed_cb (GtkComboBox* comboBox_in,
                             &iterator_2,
                             1, &value);
   ACE_ASSERT (G_VALUE_TYPE (&value) == G_TYPE_INT);
+  if (cb_data_p->videoMode == static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value)))
+    return; // initial setting
   cb_data_p->videoMode =
     static_cast<enum ARDrone_VideoMode> (g_value_get_int (&value));
 

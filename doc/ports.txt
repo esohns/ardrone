@@ -1,0 +1,9 @@
+Port Description
+21 TCP FTP: Serves videos and images recorded by drone
+23 TCP Telnet
+5551 TCP FTP: used for updates
+5553 TCP Video frames for client recording
+5554 UDP Navigation Data: telemetry
+5555 TCP Video stream
+5556 UDP Control interface: uses AT* commands to operate drone
+5559 TCP Configuration port: uses AT* commands

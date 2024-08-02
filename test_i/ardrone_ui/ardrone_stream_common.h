@@ -104,43 +104,7 @@ class ARDrone_SessionData;
 #if defined (GUI_SUPPORT)
 struct ARDrone_UI_CBData_Base;
 #endif // GUI_SUPPORT
-struct ARDrone_UserData;
-struct ARDrone_StreamState
- : Stream_State
-{
-  ARDrone_StreamState ()
-   : CBData (NULL)
-   , sessionData (NULL)
-   , type (ARDRONE_STREAM_INVALID)
-   //, userData (NULL)
-  {}
-
-  struct ARDrone_StreamState operator+= (const struct ARDrone_StreamState& rhs_in)
-  {
-    // *NOTE*: the idea is to 'merge' the data
-    Stream_State::operator+= (rhs_in);
-
-    // *NOTE*: the idea is to 'merge' the data
-    //*sessionData += *rhs_in.sessionData;
-    type = (type != ARDRONE_STREAM_INVALID ? type : rhs_in.type);
-
-    userData = (userData ? userData : rhs_in.userData);
-
-    return *this;
-  }
-
-#if defined (GUI_SUPPORT)
-  struct ARDrone_UI_CBData_Base*  CBData;
-#endif // GUI_SUPPORT
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  ARDrone_DirectShow_SessionData* sessionData;
-#else
-  ARDrone_SessionData*            sessionData;
-#endif // ACE_WIN32 || ACE_WIN64
-  enum ARDrone_StreamType         type;
-
-  //struct ARDrone_UserData*        userData;
-};
+//struct ARDrone_UserData;
 
 struct ARDrone_ConnectionState;
 typedef Net_IConnection_T<ACE_INET_Addr,
@@ -290,6 +254,39 @@ class ARDrone_SessionData
 };
 typedef Stream_SessionData_T<ARDrone_SessionData> ARDrone_SessionData_t;
 #endif // ACE_WIN32 || ACE_WIN64
+
+struct ARDrone_StreamState
+ : Stream_State
+{
+  ARDrone_StreamState ()
+   : CBData (NULL)
+   , sessionData (NULL)
+   , type (ARDRONE_STREAM_INVALID)
+   //, userData (NULL)
+  {}
+
+  struct ARDrone_StreamState operator+= (const struct ARDrone_StreamState& rhs_in)
+  {
+    // *NOTE*: the idea is to 'merge' the data
+    Stream_State::operator+= (rhs_in);
+
+    // *NOTE*: the idea is to 'merge' the data
+    *sessionData += *(rhs_in.sessionData);
+    type = (type != ARDRONE_STREAM_INVALID ? type : rhs_in.type);
+
+    return *this;
+  }
+
+#if defined (GUI_SUPPORT)
+  struct ARDrone_UI_CBData_Base*  CBData;
+#endif // GUI_SUPPORT
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  ARDrone_DirectShow_SessionData* sessionData;
+#else
+  ARDrone_SessionData*            sessionData;
+#endif // ACE_WIN32 || ACE_WIN64
+  enum ARDrone_StreamType         type;
+};
 
 struct ARDrone_AllocatorConfiguration;
 //typedef Stream_ControlMessage_T<enum Stream_ControlType,

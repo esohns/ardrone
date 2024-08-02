@@ -1889,6 +1889,8 @@ do_work (int argc_in,
   struct Net_UserData user_data_s;
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
   codec_configuration.codecId = AV_CODEC_ID_H264;
+  struct Common_FlexBisonParserConfiguration parser_configuration; // MAVLink
+  struct Common_FlexBisonParserConfiguration parser_configuration_2; // NavData
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_DirectShow_EventHandler_Module directshow_event_handler_module (NULL,
                                                                                  ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
@@ -1968,6 +1970,8 @@ do_work (int argc_in,
 
       // mavlink
       directshow_modulehandler_configuration_2 = directshow_modulehandler_configuration;
+      directshow_modulehandler_configuration_2.parserConfiguration =
+        &parser_configuration;
       stream_configuration_2 = stream_configuration;
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration_2,
@@ -1977,6 +1981,8 @@ do_work (int argc_in,
 
       // navdata
       directshow_modulehandler_configuration_3 = directshow_modulehandler_configuration;
+      directshow_modulehandler_configuration_3.parserConfiguration =
+        &parser_configuration_2;
       stream_configuration_3 = stream_configuration;
       directshow_stream_configuration_3.initialize (module_configuration,
                                                     directshow_modulehandler_configuration_3,
@@ -2397,8 +2403,8 @@ do_work (int argc_in,
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       // control
-      //directshow_tcp_connection_configuration.connectionManager =
-      //  directshow_connection_manager_p;
+      directshow_tcp_connection_configuration.dispatch =
+        useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_tcp_connection_configuration.generateUniqueIOModuleNames = true;
       directshow_tcp_connection_configuration.messageAllocator = &message_allocator;
       //directshow_connection_configuration.PDUSize =
@@ -2411,10 +2417,6 @@ do_work (int argc_in,
         NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
       directshow_tcp_connection_configuration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
-      //directshow_connection_configuration.userData =
-      //  directShowConfiguration_in.userData;
-      //directshow_connection_configuration.userData =
-      //  directShowConfiguration_in.userData;
 
       directshow_tcp_connection_configuration.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
@@ -2427,6 +2429,8 @@ do_work (int argc_in,
                                                                                   &directshow_tcp_connection_configurations));
 
       // mavlink
+      directshow_udp_connection_configuration.dispatch =
+        useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_udp_connection_configuration.socketConfiguration.bufferSize =
         NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
       result =
@@ -2447,9 +2451,15 @@ do_work (int argc_in,
                                                                                   &directshow_udp_connection_configurations));
 
       // navdata
+      directshow_udp_connection_configuration_2.dispatch =
+        useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       // *TODO*: bind to a specific interface
       directshow_udp_connection_configuration_2.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
+      directshow_udp_connection_configuration_2.socketConfiguration.listenAddress.set (static_cast<u_short> (0),
+                                                                                       static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                       1,
+                                                                                       0);
       directshow_udp_connection_configuration_2.socketConfiguration.peerAddress = address_in;
       directshow_udp_connection_configuration_2.socketConfiguration.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
                                                                                                  1);
@@ -2466,16 +2476,20 @@ do_work (int argc_in,
 
       directshow_udp_connection_configuration_3.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
+      directshow_udp_connection_configuration_3.dispatch =
+        useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       result =
         directshow_udp_connection_configuration_3.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION),
                                                                                          static_cast<ACE_UINT32> (INADDR_ANY),
                                                                                          1,
                                                                                          0);
       ACE_ASSERT (result == 0);
-      //directshow_udp_connection_configuration_3.socketConfiguration.peerAddress.base_set (AF_ANY,
-      //                                                                                    -1);
-      directshow_udp_connection_configuration_3.socketConfiguration.connect = false;
-      directshow_udp_connection_configuration_3.socketConfiguration.sourcePort = 0;
+      directshow_udp_connection_configuration_3.socketConfiguration.peerAddress.set (static_cast<u_short> (0),
+                                                                                     static_cast<ACE_UINT32> (INADDR_ANY),
+                                                                                     1,
+                                                                                     0);
+      //directshow_udp_connection_configuration_3.socketConfiguration.connect = false;
+      //directshow_udp_connection_configuration_3.socketConfiguration.sourcePort = 0;
       directshow_udp_connection_configuration_3.socketConfiguration.writeOnly = false;
       directshow_udp_connection_configuration_3.streamConfiguration =
         &directshow_stream_configuration_5;
@@ -2485,28 +2499,10 @@ do_work (int argc_in,
       //                                                                             &directshow_udp_connection_configurations_3));
 
       // video
-      //  // *TODO*: verify the given address
-      //  if (!Net_Common_Tools::IPAddress2Interface (address_in,
-      //                                              wlan_interface_identifier_string))
-      //  {
-      //    ACE_DEBUG ((LM_ERROR,
-      //                ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), returning\n"),
-      //                ACE_TEXT (Net_Common_Tools::IPAddressToString (address_in).c_str ())));
-      //    goto error;
-      //  } // end IF
-      //  if (!Net_Common_Tools::interface2IPAddress (wlan_interface_identifier_string,
-      //                                              CBData_in.localSAP))
-      //  {
-      //    ACE_DEBUG ((LM_ERROR,
-      //                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s), returning\n"),
-      //                ACE_TEXT (wlan_interface_identifier_string.c_str ())));
-      //    goto error;
-      //  } // end IF
-      //  ACE_DEBUG ((LM_ERROR,
-      //              ACE_TEXT ("set local SAP: %s...\n"),
-      //              ACE_TEXT (Net_Common_Tools::IPAddressToString (CBData_in.localSAP).c_str ())));
       directshow_tcp_connection_configuration_2.allocatorConfiguration =
         &directShowConfiguration_in.allocatorConfiguration;
+      directshow_tcp_connection_configuration_2.dispatch =
+        useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_tcp_connection_configuration_2.socketConfiguration.address = address_in;
       directshow_tcp_connection_configuration_2.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_VIDEO,
                                                                                              1);
@@ -3485,20 +3481,62 @@ continue_2:
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       directshow_tcp_connection_manager_p->stop (false); // wait for completion ?
-      directshow_tcp_connection_manager_p->abort (true); // wait for completion ?
+      directshow_tcp_connection_manager_p->abort (false); // wait for completion ?
+      directshow_tcp_connection_manager_p->wait ();
 
       directshow_udp_connection_manager_p->stop (false); // wait for completion ?
-      directshow_udp_connection_manager_p->abort (true); // wait for completion ?
+      directshow_udp_connection_manager_p->abort (false); // wait for completion ?
+      directshow_udp_connection_manager_p->wait ();
+
+      // prevent crash when module falls off the stack before the stream
+      directshow_control_stream.stop (true,   // wait for completion ?
+                                      false,  // recurse ?
+                                      false); // high priority
+      directshow_control_stream.remove (&directshow_event_handler_module,
+                                        true,   // lock ?
+                                        false); // reset ?
+      directshow_mavlink_stream.stop (true,   // wait for completion ?
+                                      false,  // recurse ?
+                                      false); // high priority
+      directshow_mavlink_stream.remove (&directshow_event_handler_module,
+                                        true,   // lock ?
+                                        false); // reset ?
+      directshow_navdata_stream.stop (true,   // wait for completion ?
+                                      false,  // recurse ?
+                                      false); // high priority
+      directshow_navdata_stream.remove (&directshow_event_handler_module,
+                                        true,   // lock ?
+                                        false); // reset ?
+      if (useReactor_in)
+      {
+        directshow_video_stream.stop (true,   // wait for completion ?
+                                      false,  // recurse ?
+                                      false); // high priority
+        directshow_video_stream.remove (&directshow_event_handler_module,
+                                        true,   // lock ?
+                                        false); // reset ?
+      } // end IF
+      else
+      {
+        directshow_asynch_video_stream.stop (true,   // wait for completion ?
+                                             false,  // recurse ?
+                                             false); // high priority
+        directshow_asynch_video_stream.remove (&directshow_event_handler_module,
+                                               true,   // lock ?
+                                               false); // reset ?
+      } // end ELSE
 
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
       mediafoundation_tcp_connection_manager_p->stop (false); // wait for completion ?
-      mediafoundation_tcp_connection_manager_p->abort (true); // wait for completion ?
+      mediafoundation_tcp_connection_manager_p->abort (false); // wait for completion ?
+      mediafoundation_tcp_connection_manager_p->wait ();
 
       mediafoundation_udp_connection_manager_p->stop (false); // wait for completion ?
-      mediafoundation_udp_connection_manager_p->abort (true); // wait for completion ?
+      mediafoundation_udp_connection_manager_p->abort (false); // wait for completion ?
+      mediafoundation_udp_connection_manager_p->wait ();
 
       break;
     }
@@ -3512,10 +3550,12 @@ continue_2:
   } // end SWITCH
 #else
   tcp_connection_manager_p->stop (false); // wait for completion ?
-  tcp_connection_manager_p->abort (true); // wait for completion ?
+  tcp_connection_manager_p->abort (false); // wait for completion ?
+  tcp_connection_manager_p->wait ();
 
   udp_connection_manager_p->stop (false); // wait for completion ?
-  udp_connection_manager_p->abort (true); // wait for completion ?
+  udp_connection_manager_p->abort (false); // wait for completion ?
+  udp_connection_manager_p->wait ();
 
   // prevent crash when module falls off the stack before the stream
   control_stream.stop (true,   // wait for completion ?
@@ -3560,7 +3600,7 @@ continue_2:
                           true); // high priority ? (*NOTE*: also closes the WLANAPI handle on Win32)
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,
-                                             true);
+                                             false);
 
   return;
 

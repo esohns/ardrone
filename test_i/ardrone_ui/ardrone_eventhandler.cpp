@@ -309,19 +309,28 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
         std::find_if (streams_.begin (), streams_.end (),
                       std::bind (SESSIONID_TO_STREAM_MAP_FIND_S (), _1,
                                  session_data_r.state->type));
-      ACE_ASSERT (iterator != streams_.end ());
-      if ((*iterator).first != sessionId_in)
+      if (iterator == streams_.end ())
       {
-        //ACE_DEBUG ((LM_DEBUG,
-        //            ACE_TEXT ("updating session id (was: %u) --> %u\n"),
-        //            (*iterator).first,
-        //            sessionId_in));
-        streams_.erase (iterator);
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("received link before begin (session id was: %u), continuing\n"),
+                    (*iterator).first,
+                    sessionId_in));
+        goto continue_;
+      } // end IF
+      else if ((*iterator).first != sessionId_in)
+      {
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("updating session id (was: %u) --> %u\n"),
+                    (*iterator).first,
+                    sessionId_in));
+        if ((*iterator).first < sessionId_in)
+          streams_.erase (iterator);
         streams_.insert (std::make_pair (sessionId_in,
                                          session_data_r.state->type));
         //(*iterator).first = sessionId_in;
-      } // end IF
+      } // end ELSE IF
     } // end IF
+continue_:
     iterator = streams_.find (sessionId_in);
     // sanity check(s)
     if (iterator == streams_.end ())
@@ -629,11 +638,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   Stream_IStreamControlBase* istream_base_p = NULL;
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
-#if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
-#endif // GTK_USE
-#endif // GUI_SUPPORT
     iterator = streams_.find (sessionId_in);
     if (iterator != streams_.end ())
     {
@@ -644,11 +649,7 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
                   ACE_TEXT (ARDroneStreamTypeToString (stream_type_e).c_str ()),
                   sessionId_in));
     } // end IF
-#if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
   } // end lock scope
-#endif // GTK_USE
-#endif // GUI_SUPPORT
 
   switch (stream_type_e)
   {
@@ -657,18 +658,20 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       // *NOTE*: the device closes the control connection after transmitting
       //         configuration data
       //         --> reconnect automatically ?
+      ARDrone_StreamsIterator_t iterator_2;
+
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-      Common_UI_GTK_BuildersIterator_t iterator =
+      Common_UI_GTK_BuildersIterator_t iterator_3 =
         state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
-      // sanity check(s)
-      ACE_ASSERT (iterator != state_r.builders.end ());
+      if (iterator_3 == state_r.builders.end())
+        goto continue_; // --> shutting down
 
       // disconnecting ?
       gdk_threads_enter ();
       GtkToggleAction* toggle_action_p =
-          GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator).second.second,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
+          GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator_3).second.second,
+                                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
       ACE_ASSERT (toggle_action_p);
       if (!gtk_toggle_action_get_active (toggle_action_p))
       {
@@ -677,15 +680,16 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
       } // end IF
       gdk_threads_leave ();
 #endif // GTK_USE
+#endif // GUI_SUPPORT
 
-      ARDrone_StreamsIterator_t iterator_2 =
-          CBData_->streams.find (control_stream_name_string_);
+      iterator_2 = CBData_->streams.find (control_stream_name_string_);
       ACE_ASSERT (iterator_2 != CBData_->streams.end ());
       istream_base_p =
           dynamic_cast<Stream_IStreamControlBase*> ((*iterator_2).second);
       ACE_ASSERT (istream_base_p);
       istream_base_p->start ();
-#endif // GUI_SUPPORT // *TODO*
+
+continue_:
       break;
     }
     case ARDRONE_STREAM_MAVLINK:

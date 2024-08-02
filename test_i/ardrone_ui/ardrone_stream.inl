@@ -1445,9 +1445,8 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
           ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
           ACE_ASSERT ((*configuration_iterator).second.second->connectionConfigurations);
           connection_iterator =
-            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING));
+            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING));
           ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
-          //ACE_ASSERT (NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration);
           socket_configuration_p =
             &NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration;
           ACE_ASSERT (socket_configuration_p);
