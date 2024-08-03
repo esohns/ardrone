@@ -1818,39 +1818,6 @@ do_work (int argc_in,
     return;
   } // end IF
 
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  switch (CBData_in->mediaFramework)
-  {
-    case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
-    {
-#if defined (_DEBUG)
-      directShowConfiguration_in.parserConfiguration.debugScanner =
-        debugScanner_in;
-#endif // _DEBUG
-      break;
-    }
-    case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
-    {
-#if defined (_DEBUG)
-      mediaFoundationConfiguration_in.parserConfiguration.debugScanner =
-        debugScanner_in;
-#endif // _DEBUG
-      break;
-    }
-    default:
-    {
-      ACE_DEBUG ((LM_ERROR,
-                  ACE_TEXT ("invalid/unknown media framework (was: %d), returning\n"),
-                  CBData_in->mediaFramework));
-      return;
-    }
-  } // end SWITCH
-#else
-#if defined (_DEBUG)
-  configuration_in.parserConfiguration.debugScanner = debugScanner_in;
-#endif // _DEBUG
-#endif // ACE_WIN32 || ACE_WIN64
-
 #if defined (GUI_SUPPORT)
   stream_configuration.CBData = CBData_in;
 #endif // GUI_SUPPORT
@@ -1890,8 +1857,14 @@ do_work (int argc_in,
   struct Net_UserData user_data_s;
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
   codec_configuration.codecId = AV_CODEC_ID_H264;
-  struct Common_FlexBisonParserConfiguration parser_configuration; // MAVLink
-  struct Common_FlexBisonParserConfiguration parser_configuration_2; // NavData
+  struct Common_FlexBisonParserConfiguration parser_configuration; // control
+  struct Common_FlexBisonParserConfiguration parser_configuration_2; // MAVLink
+  struct Common_FlexBisonParserConfiguration parser_configuration_3; // NavData
+
+  parser_configuration.debugScanner = debugScanner_in;
+  parser_configuration_2 = parser_configuration;
+  parser_configuration_3 = parser_configuration;
+
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_DirectShow_EventHandler_Module directshow_event_handler_module (NULL,
                                                                                  ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
@@ -1925,6 +1898,7 @@ do_work (int argc_in,
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
+      // control
       directshow_modulehandler_configuration.codecConfiguration = &codec_configuration;
       directshow_modulehandler_configuration.concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
       directshow_modulehandler_configuration.direct3DConfiguration =
@@ -1936,10 +1910,6 @@ do_work (int argc_in,
       delete media_type_p; media_type_p = NULL;
 
       directshow_modulehandler_configuration.CBData = directshow_cb_data_p;
-      //directshow_modulehandler_configuration.connectionManager =
-      //  directshow_tcp_connection_manager_p;
-      //directshow_modulehandler_configuration.consoleMode =
-      //  UIDefinitionFilePath_in.empty ();
 #if defined (_DEBUG)
       directshow_modulehandler_configuration.debug = debugFfmpeg_in;
 #endif // _DEBUG
@@ -1950,7 +1920,7 @@ do_work (int argc_in,
       directshow_modulehandler_configuration.interfaceIdentifier =
         displayInterfaceIdentifier_in;
       directshow_modulehandler_configuration.parserConfiguration =
-        &directShowConfiguration_in.parserConfiguration;
+        &parser_configuration;
       directshow_modulehandler_configuration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
       directshow_modulehandler_configuration.subscriber = &event_handler;
@@ -1958,11 +1928,9 @@ do_work (int argc_in,
         &directShowConfiguration_in.streamSubscribers;
       directshow_modulehandler_configuration.lock =
         &directShowConfiguration_in.streamSubscribersLock;
-      //directshow_modulehandler_configuration.useYYScanBuffer = false;
 
       stream_configuration.module = &directshow_event_handler_module;
 
-      // control
       directshow_stream_configuration.initialize (module_configuration,
                                                   directshow_modulehandler_configuration,
                                                   stream_configuration);
@@ -1972,7 +1940,7 @@ do_work (int argc_in,
       // mavlink
       directshow_modulehandler_configuration_2 = directshow_modulehandler_configuration;
       directshow_modulehandler_configuration_2.parserConfiguration =
-        &parser_configuration;
+        &parser_configuration_2;
       stream_configuration_2 = stream_configuration;
       directshow_stream_configuration_2.initialize (module_configuration,
                                                     directshow_modulehandler_configuration_2,
@@ -1983,7 +1951,7 @@ do_work (int argc_in,
       // navdata
       directshow_modulehandler_configuration_3 = directshow_modulehandler_configuration;
       directshow_modulehandler_configuration_3.parserConfiguration =
-        &parser_configuration_2;
+        &parser_configuration_3;
       stream_configuration_3 = stream_configuration;
       directshow_stream_configuration_3.initialize (module_configuration,
                                                     directshow_modulehandler_configuration_3,
@@ -2072,7 +2040,7 @@ do_work (int argc_in,
       mediafoundation_modulehandler_configuration.direct3DConfiguration->presentationParameters.Windowed =
         !fullScreen_in;
       mediafoundation_modulehandler_configuration.parserConfiguration =
-        &mediaFoundationConfiguration_in.parserConfiguration;
+        &parser_configuration;
       mediafoundation_modulehandler_configuration.statisticReportingInterval =
         ACE_Time_Value (NET_STREAM_DEFAULT_STATISTIC_REPORTING_INTERVAL_S, 0);
       mediafoundation_modulehandler_configuration.subscriber = &event_handler;
@@ -2422,9 +2390,6 @@ do_work (int argc_in,
         useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_tcp_connection_configuration.generateUniqueIOModuleNames = true;
       directshow_tcp_connection_configuration.messageAllocator = &message_allocator;
-      //directshow_connection_configuration.PDUSize =
-      //  std::max (bufferSize_in,
-      //            static_cast<unsigned int> (ARDRONE_MESSAGE_BUFFER_SIZE));
       directshow_tcp_connection_configuration.socketConfiguration.address = address_in;
       directshow_tcp_connection_configuration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                                                            1);
@@ -2448,15 +2413,15 @@ do_work (int argc_in,
         useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
       directshow_udp_connection_configuration.socketConfiguration.bufferSize =
         NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
-      //directshow_udp_connection_configuration.socketConfiguration.listenAddress = local_address;
-      //directshow_udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
-      //                                                                                           1);
-      result =
-        directshow_udp_connection_configuration.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
-                                                                                       static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                       1,
-                                                                                       0);
-      ACE_ASSERT (result == 0);
+      directshow_udp_connection_configuration.socketConfiguration.listenAddress = local_address;
+      directshow_udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
+                                                                                                 1);
+      //result =
+      //  directshow_udp_connection_configuration.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_MAVLINK),
+      //                                                                                 static_cast<ACE_UINT32> (INADDR_ANY),
+      //                                                                                 1,
+      //                                                                                 0);
+      //ACE_ASSERT (result == 0);
       result =
         directshow_udp_connection_configuration.socketConfiguration.peerAddress.set (static_cast<u_short> (0),
                                                                                      static_cast<ACE_UINT32> (INADDR_ANY),
@@ -2504,12 +2469,15 @@ do_work (int argc_in,
       //directshow_udp_connection_configuration_3.delayRead = true;
       directshow_udp_connection_configuration_3.dispatch =
         useReactor_in ? COMMON_EVENT_DISPATCH_REACTOR : COMMON_EVENT_DEFAULT_DISPATCH;
-      result =
-        directshow_udp_connection_configuration_3.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION),
-                                                                                         static_cast<ACE_UINT32> (INADDR_ANY),
-                                                                                         1,
-                                                                                         0);
-      ACE_ASSERT (result == 0);
+      directshow_udp_connection_configuration_3.socketConfiguration.listenAddress = local_address;
+      directshow_udp_connection_configuration_3.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
+                                                                                                   1);
+      //result =
+      //  directshow_udp_connection_configuration_3.socketConfiguration.listenAddress.set (static_cast<u_short> (ARDRONE_PORT_UDP_NAVDATA),
+      //                                                                                   static_cast<ACE_UINT32> (INADDR_ANY),
+      //                                                                                   1,
+      //                                                                                   0);
+      //ACE_ASSERT (result == 0);
       directshow_udp_connection_configuration_3.socketConfiguration.peerAddress.set (static_cast<u_short> (0),
                                                                                      static_cast<ACE_UINT32> (INADDR_ANY),
                                                                                      1,
@@ -2728,6 +2696,8 @@ do_work (int argc_in,
       directshow_modulehandler_configuration_2 = directshow_modulehandler_configuration;
       directshow_modulehandler_configuration_2.connectionConfigurations =
         &directshow_udp_connection_configurations;
+      directshow_modulehandler_configuration_2.parserConfiguration =
+        &parser_configuration_2;
       directshow_stream_configuration_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (&module_configuration,
                                                                                                       &directshow_modulehandler_configuration_2)));
@@ -2736,6 +2706,8 @@ do_work (int argc_in,
       directshow_modulehandler_configuration_3 = directshow_modulehandler_configuration;
       directshow_modulehandler_configuration_3.connectionConfigurations =
         &directshow_udp_connection_configurations_2;
+      directshow_modulehandler_configuration_3.parserConfiguration =
+        &parser_configuration_3;
       directshow_stream_configuration_3.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (&module_configuration,
                                                                                                       &directshow_modulehandler_configuration_3)));
@@ -2759,6 +2731,7 @@ do_work (int argc_in,
       //  network
       module_configuration_2.generateUniqueNames = true;
       directshow_modulehandler_configuration_5 = directshow_modulehandler_configuration;
+      directshow_modulehandler_configuration_5.concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
       directshow_stream_configuration_5.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (&module_configuration_2,
                                                                                                       &directshow_modulehandler_configuration_5)));

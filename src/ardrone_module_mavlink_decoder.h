@@ -137,7 +137,7 @@ class ARDrone_Module_MAVLinkDecoder_T
   inline virtual void dump_state () const {}
   inline virtual void error (const struct YYLTYPE& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
-  inline virtual struct __mavlink_message& current () { ACE_ASSERT (fragment_); return const_cast<struct __mavlink_message&> (fragment_->getR ().getR ().MAVLinkData); }
+  inline virtual struct __mavlink_message& current () { ACE_ASSERT (buffer_); return const_cast<struct __mavlink_message&> (buffer_->getR ().getR ().MAVLinkData); }
   virtual void record (struct __mavlink_message*&); // record handle
   inline virtual bool hasFinished () const { return false; }
 
@@ -149,7 +149,7 @@ class ARDrone_Module_MAVLinkDecoder_T
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
-  inline virtual bool switchBuffer (bool = false) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
+  virtual bool switchBuffer (bool = false);
   virtual void waitBuffer ();
   inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, state_); }
   virtual void error (const std::string&);
@@ -169,8 +169,8 @@ class ARDrone_Module_MAVLinkDecoder_T
   // override some ACE_Task_T methods
   virtual int svc (void);
 
-  YY_BUFFER_STATE  buffer_;
-  DataMessageType* fragment_;
+  DataMessageType* buffer_;
+  YY_BUFFER_STATE  bufferState_;
   bool             isFirst_;
 };
 

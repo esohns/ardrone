@@ -313,8 +313,9 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("received link before begin (session id was: %u), continuing\n"),
-                    (*iterator).first,
                     sessionId_in));
+        streams_.insert (std::make_pair (sessionId_in,
+                                         session_data_r.state->type));
         goto continue_;
       } // end IF
       else if ((*iterator).first != sessionId_in)
@@ -559,6 +560,8 @@ continue_:
       break;
     }
     case STREAM_SESSION_MESSAGE_UNLINK:
+      break;
+    case STREAM_SESSION_MESSAGE_STEP_DATA:
       break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
     {

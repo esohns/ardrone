@@ -216,7 +216,6 @@ struct ARDrone_Configuration_Base
    , direct3DConfiguration ()
 #endif // ACE_WIN32 || ACE_WIN64
    , dispatchConfiguration ()
-   , parserConfiguration ()
    , streamSubscribers ()
    , streamSubscribersLock ()
    , WLANMonitorConfiguration ()
@@ -230,7 +229,6 @@ struct ARDrone_Configuration_Base
   struct Stream_MediaFramework_Direct3D_Configuration direct3DConfiguration;
 #endif // ACE_WIN32 || ACE_WIN64
   struct Common_EventDispatchConfiguration            dispatchConfiguration;
-  struct Common_FlexBisonParserConfiguration          parserConfiguration; // control
   ARDrone_Subscribers_t                               streamSubscribers;
   ACE_SYNCH_RECURSIVE_MUTEX                           streamSubscribersLock;
   struct Net_WLAN_MonitorConfiguration                WLANMonitorConfiguration;

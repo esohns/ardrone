@@ -370,11 +370,11 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
           NULL;
       ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
       struct _GUID interface_identifier;
 #else
       std::string interface_identifier;
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
       std::string interface_identifier;
 #endif // ACE_WIN32 || ACE_WIN64
@@ -404,20 +404,25 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       ACE_ASSERT (socket_configuration_2);
       interface_identifier =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
         Net_Common_Tools::IPAddressToInterface_2 (socket_configuration_2->peerAddress);
 #else
         Net_Common_Tools::IPAddressToInterface (socket_configuration_2->peerAddress);
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
         Net_Common_Tools::IPAddressToInterface (socket_configuration_2->peerAddress);
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("IP %s --> \"%s\"\n"),
+    //            ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_2->peerAddress).c_str ()),
+    //            ACE_TEXT (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())));
+
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
       if (unlikely (InlineIsEqualGUID (interface_identifier, GUID_NULL)))
 #else
       if (unlikely (interface_identifier.empty ()))
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
       if (unlikely (interface_identifier.empty ()))
 #endif // ACE_WIN32 || ACE_WIN64
@@ -428,7 +433,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         goto error;
       } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
       if (unlikely (!Net_Common_Tools::interfaceToIPAddress_2 (interface_identifier,
                                                                local_SAP,
                                                                gateway_address)))
@@ -436,7 +441,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
                                                              local_SAP,
                                                              gateway_address)))
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
       if (unlikely (!Net_Common_Tools::interfaceToIPAddress (interface_identifier,
                                                              local_SAP,
@@ -444,7 +449,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 #endif
       {
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0600) // _WIN32_WINNT_VISTA
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s): \"%m\", aborting\n"),
                     ACE_TEXT (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())));
@@ -452,7 +457,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s): \"%m\", aborting\n"),
                     ACE_TEXT (interface_identifier.c_str ())));
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0600)
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(%s): \"%m\", aborting\n"),
@@ -494,7 +499,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                                                      message_block_p)))
       {
         ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to Net_Common_Tools::sendDatagram(%s,%s,%u), aborting\n"),
+                    ACE_TEXT ("%s: failed to Net_Common_Tools::sendDatagram(%s,%s,%u): \"%m\", aborting\n"),
                     inherited::mod_->name (),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
                     ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ()),
