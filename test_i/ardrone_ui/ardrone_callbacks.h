@@ -48,6 +48,7 @@ extern "C"
 // -----------------------------------------------------------------------------
 G_MODULE_EXPORT void toggleaction_connect_toggled_cb (GtkToggleAction*, gpointer);
 G_MODULE_EXPORT void action_trim_activate_cb (GtkAction*, gpointer);
+G_MODULE_EXPORT void action_animate_leds_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void action_calibrate_activate_cb (GtkAction*, gpointer);
 G_MODULE_EXPORT void action_dump_activate_cb (GtkAction*, gpointer);
 // -----------------------------------------------------------------------------

@@ -2482,6 +2482,7 @@ do_work (int argc_in,
                                                                                      static_cast<ACE_UINT32> (INADDR_ANY),
                                                                                      1,
                                                                                      0);
+      directshow_udp_connection_configuration_3.socketConfiguration.reuseAddress = true; // reuse so that sending is possible on 5554 to initiate transfer
       //directshow_udp_connection_configuration_3.socketConfiguration.connect = false;
       //directshow_udp_connection_configuration_3.socketConfiguration.sourcePort = 0;
       directshow_udp_connection_configuration_3.socketConfiguration.writeOnly = false;

@@ -2439,6 +2439,7 @@ idle_session_end_cb (gpointer userData_in)
 
   return G_SOURCE_REMOVE;
 }
+
 gboolean
 idle_session_start_cb (gpointer userData_in)
 {
@@ -2480,12 +2481,17 @@ idle_session_start_cb (gpointer userData_in)
     GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_TRIM)));
   ACE_ASSERT (toggle_action_p);
-  gtk_action_set_sensitive (action_p, true);
+  gtk_action_set_sensitive (action_p, TRUE);
   action_p =
     GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
-                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_LEDS)));
   ACE_ASSERT (action_p);
-  gtk_action_set_sensitive (action_p, true);
+  gtk_action_set_sensitive (action_p, TRUE);
+  //action_p =
+  //  GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+  //                                      ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
+  //ACE_ASSERT (action_p);
+  //gtk_action_set_sensitive (action_p, FALSE);
 
   ACE_ASSERT (!data_p->stateEventId);
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
@@ -4698,6 +4704,46 @@ error:
 
   un_toggling_connect = true;
   gtk_action_activate (GTK_ACTION (toggleAction_in));
+}
+
+void
+action_trim_activate_cb (GtkAction* action_in,
+                         gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::action_trim_activate_cb"));
+
+  // sanity check(s)
+  ACE_ASSERT (userData_in);
+  struct ARDrone_UI_CBData_Base* cb_data_p =
+      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
+  ACE_ASSERT (cb_data_p->controller);
+
+  try {
+    cb_data_p->controller->trim ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::trim(), continuing\n")));
+  }
+}
+
+void
+action_animate_leds_activate_cb (GtkAction* action_in,
+                                 gpointer userData_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("::action_animate_leds_activate_cb"));
+
+  // sanity check(s)
+  ACE_ASSERT (userData_in);
+  struct ARDrone_UI_CBData_Base* cb_data_p =
+      static_cast<struct ARDrone_UI_CBData_Base*> (userData_in);
+  ACE_ASSERT (cb_data_p->controller);
+
+  try {
+    cb_data_p->controller->leds ();
+  } catch (...) {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("caught exception in ARDrone_IController::leds(), continuing\n")));
+  }
 }
 
 void

@@ -38,15 +38,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//                                SessionDataContainerType>::ARDrone_Module_ControlDecoder_T (ISTREAM_T* stream_in)
-//#else
                                 SessionDataContainerType>::ARDrone_Module_ControlDecoder_T (typename inherited::ISTREAM_T* stream_in)
-//#endif
  : inherited (stream_in)
  , buffer_ (NULL)
+ , bufferState_ (NULL)
  , configuration_ ()
- , fragment_ (NULL)
  , isFirst_ (true)
  , subscriber_ (NULL)
 {
@@ -102,11 +98,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   int result = -1;
 
   // sanity check(s)
-  ACE_ASSERT (fragment_);
+  ACE_ASSERT (buffer_);
   ACE_ASSERT (record_inout);
 
   const typename DataMessageType::DATA_T& message_data_container_r =
-    fragment_->getR ();
+    buffer_->getR ();
   typename DataMessageType::DATA_T::DATA_T& message_data_r =
     const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_r.getR ());
 
@@ -118,7 +114,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   if (subscriber_)
     subscriber_->setP (&configuration_);
 
-  result = inherited::put_next (fragment_, NULL);
+  result = inherited::put_next (buffer_, NULL);
   if (result == -1)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -126,9 +122,9 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                 inherited::mod_->name ()));
 
     // clean up
-    fragment_->release ();
+    buffer_->release ();
   } // end IF
-  fragment_ = NULL;
+  buffer_ = NULL;
 }
 
 template <ACE_SYNCH_DECL,
@@ -156,10 +152,89 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
               ACE_TEXT (message_in.c_str ())));
 //   ACE_DEBUG((LM_ERROR,
 //              ACE_TEXT("failed to parse \"%s\": \"%s\"\n"),
-//              std::string(fragment_->rd_ptr(), fragment_->length()).c_str(),
+//              std::string(buffer_->rd_ptr(), buffer_->length()).c_str(),
 //              message_in.c_str()));
 
 //   std::clog << message_in << std::endl;
+}
+
+template <ACE_SYNCH_DECL,
+          typename TimePolicyType,
+          typename ConfigurationType,
+          typename ControlMessageType,
+          typename DataMessageType,
+          typename SessionMessageType,
+          typename SessionDataContainerType>
+bool
+ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
+                                TimePolicyType,
+                                ConfigurationType,
+                                ControlMessageType,
+                                DataMessageType,
+                                SessionMessageType,
+                                SessionDataContainerType>::switchBuffer (bool unlink_in)
+{
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::switchBuffer"));
+
+  ACE_UNUSED_ARG (unlink_in);
+
+  // sanity check(s)
+  ACE_ASSERT (state_);
+
+  ACE_Message_Block* message_block_p = buffer_;
+  ACE_Message_Block* message_block_2 = NULL;
+
+  // retrieve trailing chunk
+  if (!buffer_)
+    goto continue_;
+
+  do
+  {
+    message_block_2 = message_block_p->cont ();
+    if (message_block_2)
+      message_block_p = message_block_2;
+    else
+      break;
+  } while (true);
+  ACE_ASSERT (!message_block_p->cont ());
+
+continue_:
+  waitBuffer (); // <-- wait for data
+
+  message_block_2 = message_block_p ? message_block_p->cont ()
+                                    : buffer_;
+  if (!message_block_2)
+  {
+    // *NOTE*: most probable reason: received session end
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("%s: no data after waitBuffer(), aborting\n"),
+    //            inherited::mod_->name ()));
+    return false;
+  } // end IF
+
+  // switch to the next fragment
+
+  // clean state
+  end ();
+
+  // initialize next buffer
+
+//  // append the "\0\0"-sequence, as required by flex
+//  ACE_ASSERT (message_block_2->capacity () - message_block_2->length () >= NET_PROTOCOL_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
+//  *(message_block_2->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
+//  *(message_block_2->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
+//  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
+
+  if (!begin (message_block_2->rd_ptr (),
+              message_block_2->length ()))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("%s: failed to begin(), aborting\n"),
+                inherited::mod_->name ()));
+    return false;
+  } // end IF
+
+  return true;
 }
 
 template <ACE_SYNCH_DECL,
@@ -269,9 +344,9 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
     return;
 
   // 2. append data ?
-  if (fragment_)
+  if (buffer_)
   {
-    ACE_Message_Block* message_block_2 = fragment_;
+    ACE_Message_Block* message_block_2 = buffer_;
     for (;
          message_block_2->cont ();
          message_block_2 = message_block_2->cont ());
@@ -285,7 +360,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
     session_data_p =
       &const_cast<typename SessionDataContainerType::DATA_T&> (inherited::sessionData_->getR ());
 
-    fragment_ = static_cast<DataMessageType*> (message_block_p);
+    buffer_ = static_cast<DataMessageType*> (message_block_p);
 
     ACE_NEW_NORETURN (message_data_p,
                       typename DataMessageType::DATA_T::DATA_T ());
@@ -312,11 +387,11 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
       return;
     } // end IF
     message_data_p = NULL;
-    fragment_->initialize (message_data_container_p,
+    buffer_->initialize (message_data_container_p,
                            session_data_p->sessionId,
                            NULL);
     message_data_container_p = NULL;
-    fragment_->set (ARDRONE_MESSAGE_CONTROL);
+    buffer_->set (ARDRONE_MESSAGE_CONTROL);
   } // end ELSE
 }
 
@@ -340,19 +415,21 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::begin"));
 
   // sanity check(s)
-  ACE_ASSERT (!buffer_);
+  ACE_ASSERT (inherited::configuration_);
+  ACE_ASSERT (inherited::configuration_->parserConfiguration);
+  ACE_ASSERT (!bufferState_);
   ACE_ASSERT (state_);
   ACE_ASSERT (data_in);
 
   // create/initialize a new buffer state
-  buffer_ =
+  bufferState_ =
     (inherited::configuration_->parserConfiguration->useYYScanBuffer ? ARDrone_Control_Scanner__scan_buffer (const_cast<char*> (data_in),
                                                                                                              length_in + COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
                                                                                                               state_)
                                                                      : ARDrone_Control_Scanner__scan_bytes (data_in,
                                                                                                             length_in,
                                                                                                             state_));
-  if (!buffer_)
+  if (!bufferState_)
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to yy_scan_[buffer/bytes](0x%@, %u): \"%m\", aborting\n"),
@@ -384,12 +461,12 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_ControlDecoder_T::end"));
 
   // sanity check(s)
-  ACE_ASSERT (buffer_);
+  ACE_ASSERT (bufferState_);
 
   // clean state
-  ARDrone_Control_Scanner__delete_buffer (buffer_,
+  ARDrone_Control_Scanner__delete_buffer (bufferState_,
                                           state_);
-  buffer_ = NULL;
+  bufferState_ = NULL;
 }
 
 template <ACE_SYNCH_DECL,
@@ -451,12 +528,15 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
         break;
       }
       default:
-      { ACE_ASSERT (!fragment_);
-        fragment_ = static_cast<DataMessageType*> (message_block_p);
-        ACE_ASSERT (fragment_);
+      {
+        if (buffer_)
+          Stream_Tools::append (buffer_, message_block_p);
+        else
+          buffer_ = static_cast<DataMessageType*> (message_block_p);
+        ACE_ASSERT (buffer_);
         message_block_p = NULL;
 
-        if (fragment_->isInitialized ())
+        if (buffer_->isInitialized ())
         {
           //// sanity check(s)
           //message_data_container_p =
@@ -489,16 +569,16 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
           goto error;
         } // end IF
         message_data_p = NULL;
-        fragment_->initialize (message_data_container_p,
-                               fragment_->sessionId (),
-                               NULL);
+        buffer_->initialize (message_data_container_p,
+                             buffer_->sessionId (),
+                             NULL);
         message_data_container_p = NULL;
-        fragment_->set (ARDRONE_MESSAGE_CONTROL);
+        buffer_->set (ARDRONE_MESSAGE_CONTROL);
         //buffer_->set_2 (inherited::stream_);
 
 continue_:
-        if (!begin (fragment_->rd_ptr (),
-                    fragment_->length ()))
+        if (!begin (buffer_->rd_ptr (),
+                    buffer_->length ()))
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to begin(), aborting\n"),
@@ -552,7 +632,7 @@ continue_:
             do_scan_end = false;
 
             // more data ?
-            if (fragment_)
+            if (buffer_)
               goto continue_;
 
             break;

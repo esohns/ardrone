@@ -34,6 +34,9 @@
 #include "common_iscanner.h"
 #include "common_time_common.h"
 
+#include "common_timer_manager_common.h"
+#include "common_timer_second_publisher.h"
+
 #include "stream_task_base_synch.h"
 
 #include "ardrone_common.h"
@@ -72,6 +75,7 @@ class ARDrone_Module_Controller_T
                                  struct Stream_UserData>
  , public ARDrone_StateMachine_NavData
  , public ARDrone_IController
+ , public Common_ICounter
 {
   typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
                                  TimePolicyType,
@@ -107,14 +111,13 @@ class ARDrone_Module_Controller_T
   inline virtual void setP (ARDrone_DeviceConfiguration_t* configuration_in) { ACE_ASSERT (configuration_in); deviceConfiguration_ = *configuration_in; }
   inline virtual const uint32_t get () const { return deviceState_; }
   inline virtual const struct _navdata_demo_t get_2 () const { return deviceState_2; }
-  virtual void trim ();
   virtual void calibrate ();
-  virtual void leds ();
   virtual void dump ();
   virtual void takeoff ();
   virtual void land ();
-  virtual void reset ();
-  virtual void set (enum ARDrone_VideoMode); // video mode
+  void set (enum ARDrone_VideoMode); // video mode
+  virtual void leds ();
+  virtual void trim ();
 
   inline bool wait (const ACE_Time_Value* timeout_in = NULL) { return inherited2::wait (NAVDATA_STATE_READY, timeout_in); }
 
@@ -126,6 +129,8 @@ class ARDrone_Module_Controller_T
   inline virtual void init () { inherited2::change (NAVDATA_STATE_INITIAL); }
   inline virtual void start () { inherited2::change (NAVDATA_STATE_GET_CONFIGURATION); }
   virtual void resetWatchdog ();
+
+  void resetEmergencyMode ();
 
  private:
   // convenient types
@@ -152,10 +157,16 @@ class ARDrone_Module_Controller_T
   void resetACKFlag ();
   bool sendATCommand (const std::string&); // AT command string
 
+  // implement Common_ICounter
+  inline virtual void reset () { resetWatchdog (); }
+
   // atomic id generator
   typedef ACE_Atomic_Op<ACE_SYNCH_MUTEX,
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
+
+  // one-second timer
+  typedef Common_Timer_SecondPublisher_T<Common_Timer_Manager_t> TIMER_SECONDPUBLISHER_T;
 
   CBDataType*                                    CBData_;
   typename ConnectionManagerType::ICONNECTION_T* connection_;

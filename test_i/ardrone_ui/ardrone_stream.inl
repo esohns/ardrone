@@ -1956,10 +1956,10 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       }
       default:
       {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
-                    ACE_TEXT (navdata_stream_name_string_),
-                    option_p->tag));
+        //ACE_DEBUG ((LM_WARNING,
+        //            ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
+        //            ACE_TEXT (navdata_stream_name_string_),
+        //            option_p->tag));
         break;
       }
     } // end SWITCH

@@ -16,9 +16,9 @@
     </child>
     <child>
       <object class="GtkAction" id="action_calibrate">
-        <property name="label" translatable="yes">Calibrate Gyroscope</property>
+        <property name="label" translatable="yes">Calibrate Magnetometer</property>
         <property name="short_label" translatable="yes">Calibrate</property>
-        <property name="tooltip" translatable="yes">calibrate gyroscope</property>
+        <property name="tooltip" translatable="yes">calibrate magnetometer</property>
         <property name="stock_id">gtk-execute</property>
         <property name="sensitive">False</property>
         <signal name="activate" handler="action_calibrate_activate_cb" swapped="no"/>
@@ -116,6 +116,16 @@
         <signal name="activate" handler="action_dump_activate_cb" swapped="no"/>
       </object>
       <accelerator key="d"/>
+    </child>
+    <child>
+      <object class="GtkAction" id="action_trim">
+        <property name="label" translatable="yes">Trim</property>
+        <property name="short_label" translatable="yes">Trim</property>
+        <property name="tooltip" translatable="yes">trim</property>
+        <property name="stock_id">gtk-execute</property>
+        <signal name="activate" handler="action_trim_activate_cb" swapped="no"/>
+      </object>
+      <accelerator key="r"/>
     </child>
   </object>
   <object class="GtkAdjustment" id="adjustment_buffersize">
@@ -295,16 +305,12 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="button_calibrate">
-                                    <property name="related_action">action_calibrate</property>
+                                  <object class="GtkButton" id="button_trim">
+                                    <property name="related_action">action_trim</property>
                                     <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
-                                    <property name="can_default">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">calibrate</property>
                                     <property name="relief">half</property>
-                                    <property name="use_underline">True</property>
                                     <property name="use_stock">True</property>
                                     <property name="focus_on_click">False</property>
                                     <property name="xalign">0</property>
@@ -325,6 +331,28 @@
                                     <property name="can_default">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="tooltip_text" translatable="yes">animate LEDs</property>
+                                    <property name="relief">half</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="use_stock">True</property>
+                                    <property name="focus_on_click">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="button_calibrate">
+                                    <property name="related_action">action_calibrate</property>
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="can_default">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">calibrate</property>
                                     <property name="relief">half</property>
                                     <property name="use_underline">True</property>
                                     <property name="use_stock">True</property>

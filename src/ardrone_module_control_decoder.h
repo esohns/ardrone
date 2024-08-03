@@ -157,7 +157,7 @@ class ARDrone_Module_ControlDecoder_T
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
-  inline virtual bool switchBuffer (bool = false) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
+  virtual bool switchBuffer (bool = false);
   virtual void waitBuffer ();
   inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, state_); }
   virtual void error (const std::string&);
@@ -177,9 +177,9 @@ class ARDrone_Module_ControlDecoder_T
   // override some ACE_Task_T methods
   int svc (void);
 
-  YY_BUFFER_STATE               buffer_;
+  DataMessageType*              buffer_;
+  YY_BUFFER_STATE               bufferState_;
   ARDrone_DeviceConfiguration_t configuration_;
-  DataMessageType*              fragment_;
   bool                          isFirst_;
   ARDrone_IDeviceConfiguration* subscriber_;
 };

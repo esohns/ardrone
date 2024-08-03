@@ -225,14 +225,19 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                   inherited::mod_->name ()));
       return;
     }
+
+    typename TIMER_SECONDPUBLISHER_T::INTERFACE_T* itimer_second_publisher_p =
+      TIMER_SECONDPUBLISHER_T::SINGLETON_T::instance ();
+    ACE_ASSERT (itimer_second_publisher_p);
+    itimer_second_publisher_p->subscribe (this);
   } // end IF
 
   // received acknowlegement ?
   if (deviceState_ & ARDRONE_COMMAND_MASK)
   {
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("%s: received command acknowlegement\n"),
-                inherited::mod_->name ()));
+    //ACE_DEBUG ((LM_DEBUG,
+    //            ACE_TEXT ("%s: received command acknowlegement\n"),
+    //            inherited::mod_->name ()));
 
     change (NAVDATA_STATE_COMMAND_ACK);
 
@@ -391,6 +396,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         return;
       }
 
+      // start sending watchdog resets
+      COMMON_TIMER_SECONDPUBLISHER_SINGLETON::instance ()->start (NULL);
+
       break;
 
 error:
@@ -407,6 +415,13 @@ error:
     }
     case STREAM_SESSION_MESSAGE_END:
     {
+      // stop sending watchdog resets
+      typename TIMER_SECONDPUBLISHER_T* itimer_second_publisher_p =
+        TIMER_SECONDPUBLISHER_T::SINGLETON_T::instance ();
+      ACE_ASSERT (itimer_second_publisher_p);
+      itimer_second_publisher_p->unsubscribe (this);
+      itimer_second_publisher_p->stop ();
+
       if (connection_)
       {
         connection_->abort ();
@@ -604,13 +619,11 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     sizeof (ACE_UINT32)));
         goto error;
       } // end IF
-//#if defined (_DEBUG)
-//      ACE_DEBUG ((LM_DEBUG,
-//                  ACE_TEXT ("%s: subscribed to NavData (local: %s; peer: %s)\n"),
-//                  inherited::mod_->name (),
-//                  ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-//                  ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ())));
-//#endif // _DEBUG
+      //ACE_DEBUG ((LM_DEBUG,
+      //            ACE_TEXT ("%s: subscribed to NavData (local: %s; peer: %s)\n"),
+      //            inherited::mod_->name (),
+      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
+      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ())));
 
 error:
       if (likely (message_block_p))
@@ -1433,9 +1446,9 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionManagerType,
                             ConnectorType,
-                            CBDataType>::reset ()
+                            CBDataType>::resetEmergencyMode ()
 {
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::reset"));
+  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::resetEmergencyMode"));
 
   std::ostringstream converter;
 

@@ -75,6 +75,7 @@
 //#define ARDRONE_DEFAULT_UI_WIDGET_DRAWINGAREA_VIDEO_HEIGHT 240
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE                   "action_calibrate"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_CUT                         "action_cut"
+#define ARDRONE_UI_WIDGET_NAME_ACTION_LEDS                        "action_animate_leds"
 #define ARDRONE_UI_WIDGET_NAME_ACTION_TRIM                        "action_trim"
 #define ARDRONE_UI_WIDGET_NAME_BOX_ORIENTATION                    "box_orientation"
 #define ARDRONE_UI_WIDGET_NAME_BUTTON_ABOUT                       "button_about"
