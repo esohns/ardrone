@@ -36,8 +36,6 @@
 
 #include "stream_task_base_synch.h"
 
-#include "stream_net_target.h"
-
 #include "ardrone_common.h"
 #include "ardrone_statemachine_navdata.h"
 
@@ -63,27 +61,27 @@ template <ACE_SYNCH_DECL,
           ////////////////////////////////
           typename CBDataType>
 class ARDrone_Module_Controller_T
- : public Stream_Module_Net_Target_T<ACE_SYNCH_USE,
-                                     TimePolicyType,
-                                     ConfigurationType,
-                                     ControlMessageType,
-                                     DataMessageType,
-                                     SessionMessageType,
-                                     SessionDataContainerType,
-                                     ConnectionManagerType,
-                                     ConnectorType>
+ : public Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
+                                 TimePolicyType,
+                                 ConfigurationType,
+                                 ControlMessageType,
+                                 DataMessageType,
+                                 SessionMessageType,
+                                 enum Stream_ControlType,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_UserData>
  , public ARDrone_StateMachine_NavData
  , public ARDrone_IController
 {
-  typedef Stream_Module_Net_Target_T<ACE_SYNCH_USE,
-                                     TimePolicyType,
-                                     ConfigurationType,
-                                     ControlMessageType,
-                                     DataMessageType,
-                                     SessionMessageType,
-                                     SessionDataContainerType,
-                                     ConnectionManagerType,
-                                     ConnectorType> inherited;
+  typedef Stream_TaskBaseSynch_T<ACE_SYNCH_USE,
+                                 TimePolicyType,
+                                 ConfigurationType,
+                                 ControlMessageType,
+                                 DataMessageType,
+                                 SessionMessageType,
+                                 enum Stream_ControlType,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_UserData> inherited;
   typedef ARDrone_StateMachine_NavData inherited2;
 
  public:
@@ -159,12 +157,14 @@ class ARDrone_Module_Controller_T
                         unsigned long> SEQUENCENUMBER_GENERATOR_T;
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
 
-  CBDataType*                       CBData_;
-  ARDrone_DeviceConfiguration_t     deviceConfiguration_;
-  bool                              deviceInitialized_;
-  uint32_t                          deviceState_;
-  struct _navdata_demo_t            deviceState_2;
-  bool                              isFirst_;
+  CBDataType*                                    CBData_;
+  typename ConnectionManagerType::ICONNECTION_T* connection_;
+  ARDrone_DeviceConfiguration_t                  deviceConfiguration_;
+  bool                                           deviceInitialized_;
+  uint32_t                                       deviceState_;
+  struct _navdata_demo_t                         deviceState_2;
+  bool                                           isFirst_;
+  struct Net_UserData                            userData_;
 };
 
 // include template definition

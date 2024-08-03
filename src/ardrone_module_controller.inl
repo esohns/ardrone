@@ -82,19 +82,17 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                             WLANMonitorType,
                             ConnectionManagerType,
                             ConnectorType,
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//                            CBDataType>::ARDrone_Module_Controller_T (ISTREAM_T* stream_in)
-//#else
                             CBDataType>::ARDrone_Module_Controller_T (typename inherited::ISTREAM_T* stream_in)
-//#endif
  : inherited (stream_in)
  , inherited2 ()
  , CBData_ (NULL)
+ , connection_ (NULL)
  , deviceConfiguration_ ()
  , deviceInitialized_ (false)
  , deviceState_ (0)
  , deviceState_2 ()
  , isFirst_ (true)
+ , userData_ ()
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_Controller_T::ARDrone_Module_Controller_T"));
 
@@ -291,15 +289,96 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
 
   enum Stream_SessionMessageType message_type_e =
     message_inout->type ();
-
-  // set up connection
-  inherited::handleSessionMessage (message_inout,
-                                   passMessageDownstream_out);
-
   switch (message_type_e)
   {
     case STREAM_SESSION_MESSAGE_BEGIN:
     {
+      ACE_ASSERT (inherited::configuration_);
+      ACE_ASSERT (inherited::configuration_->connectionConfigurations);
+
+      Net_ConnectionConfigurationsIterator_t iterator_2;
+      if (!inherited::configuration_->connectionConfigurationName.empty ())
+        iterator_2 =
+          inherited::configuration_->connectionConfigurations->find (inherited::configuration_->connectionConfigurationName);
+      else
+       iterator_2 =
+         inherited::configuration_->connectionConfigurations->find (Stream_Tools::sanitizeUniqueName (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ())));
+      if (iterator_2 == inherited::configuration_->connectionConfigurations->end ())
+        iterator_2 =
+          inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (""));
+      else
+        ACE_DEBUG ((LM_DEBUG,
+                    ACE_TEXT ("%s: applying connection configuration\n"),
+                    inherited::mod_->name ()));
+      ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
+      typename ConnectorType::CONFIGURATION_T* configuration_p =
+          static_cast<typename ConnectorType::CONFIGURATION_T*> ((*iterator_2).second);
+      ACE_ASSERT (configuration_p);
+
+      ConnectorType connector (true);
+      typename ConnectorType::ADDRESS_T peer_SAP;
+      ACE_HANDLE handle_h;
+       typename ConnectionManagerType::INTERFACE_T* iconnection_manager_p =
+        ConnectionManagerType::SINGLETON_T::instance ();
+      ACE_ASSERT (iconnection_manager_p);
+      switch (connector.transportLayer ())
+      {
+        //case NET_TRANSPORTLAYER_TCP:
+        //{
+        //  Net_TCPSocketConfiguration_t* socket_configuration_p =
+        //      (Net_TCPSocketConfiguration_t*)&configuration_p->socketConfiguration;
+        //  ACE_ASSERT (socket_configuration_p);
+        //  peer_SAP = socket_configuration_p->address;
+        //  break;
+        //}
+        case NET_TRANSPORTLAYER_UDP:
+        {
+          Net_UDPSocketConfiguration_t* socket_configuration_p =
+            (Net_UDPSocketConfiguration_t*)&configuration_p->socketConfiguration;
+          ACE_ASSERT (socket_configuration_p);
+          peer_SAP = socket_configuration_p->peerAddress;
+          break;
+        }
+        default:
+        {
+          ACE_DEBUG ((LM_ERROR,
+                      ACE_TEXT ("%s: invalid/unknown transport layer type (was: %d), aborting\n"),
+                      inherited::mod_->name (),
+                      connector.transportLayer ()));
+          goto error;
+        }
+      } // end SWITCH
+
+      // step2: connect
+      handle_h =
+        Net_Client_Common_Tools::connect<ConnectorType> (connector,
+                                                         *configuration_p,
+                                                         userData_,
+                                                         peer_SAP,
+                                                         true,  // wait ?
+                                                         true); // is peer address ?
+      if (handle_h == ACE_INVALID_HANDLE)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to connect to %s, aborting\n"),
+                    inherited::mod_->name (),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+        goto error;
+      } // end IF
+      connection_ = iconnection_manager_p->get (handle_h);
+      if (!connection_)
+      {
+        ACE_DEBUG ((LM_ERROR,
+                    ACE_TEXT ("%s: failed to connect to %s, aborting\n"),
+                    inherited::mod_->name (),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+        goto error;
+      } // end IF
+      ACE_DEBUG ((LM_DEBUG,
+                  ACE_TEXT ("%s: connected to %s\n"),
+                  inherited::mod_->name (),
+                  ACE_TEXT (Net_Common_Tools::IPAddressToString (peer_SAP).c_str ())));
+
       // reset message sequence number generator
       OWN_TYPE_T::currentNavDataMessageId = 1;
 
@@ -311,10 +390,29 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                     inherited::mod_->name ()));
         return;
       }
+
+      break;
+
+error:
+      if (connection_)
+      {
+        connection_->decrease (); connection_ = NULL;
+      } // end IF
+
+      inherited::notify (STREAM_SESSION_MESSAGE_ABORT);
+      message_inout->release (); message_inout = NULL;
+      passMessageDownstream_out = false;
+
       break;
     }
     case STREAM_SESSION_MESSAGE_END:
     {
+      if (connection_)
+      {
+        connection_->abort ();
+        connection_->decrease (); connection_ = NULL;
+      } // end IF
+
       change (NAVDATA_STATE_INVALID);
 
       break;
@@ -849,6 +947,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
                 ARDRONE_PROTOCOL_AT_COMMAND_MAXIMUM_LENGTH));
     return false;
   } // end IF
+  ACE_Message_Block* message_block_p = message_p;
 
   if (likely (inherited::sessionData_))
   {
@@ -867,14 +966,19 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
     goto error;
   } // end IF
 
-  result = inherited::put_next (message_p, NULL);
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to ACE_Task::put_next(): \"%m\", aborting\n"),
-                inherited::mod_->name ()));
-    goto error;
-  } // end IF
+  ACE_ASSERT (connection_);
+
+  connection_->send (message_block_p);
+  message_p = NULL;
+
+  //result = inherited::put_next (message_p, NULL);
+  //if (result == -1)
+  //{
+  //  ACE_DEBUG ((LM_ERROR,
+  //              ACE_TEXT ("%s: failed to ACE_Task::put_next(): \"%m\", aborting\n"),
+  //              inherited::mod_->name ()));
+  //  goto error;
+  //} // end IF
 
 //  ACE_DEBUG ((LM_DEBUG,
 //              ACE_TEXT ("%s: sent AT command: \"%s\"\n"),

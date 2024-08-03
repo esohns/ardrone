@@ -870,13 +870,13 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // 
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_MediaFoundation_ModuleHandlerConfiguration, // module handler configuration type
-                              libacestream_default_net_target_module_name_string,
+                              ardrone_default_controller_module_name_string,
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_MediaFoundation_Controller);     // writer type
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_DirectShow_SessionData,                  // session data type
                               enum Stream_SessionMessageType,              // session event type
                               struct ARDrone_MediaFoundation_ModuleHandlerConfiguration,   // module handler configuration type
-                              libacestream_default_net_target_module_name_string,
+                              ardrone_default_controller_module_name_string,
                               Stream_INotify_t,                            // stream notification interface type
                               ARDrone_Module_MediaFoundation_AsynchController); // writer type
 
