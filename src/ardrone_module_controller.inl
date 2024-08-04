@@ -20,11 +20,15 @@
 
 #include "ace/Log_Msg.h"
 
-#include "stream_net_defines.h"
-
 //#include "ATcodec/ATcodec_api.h"
 #include "Soft/Common/ardrone_api.h"
 #include "VLIB/video_codec.h"
+
+#include "stream_net_defines.h"
+
+#include "net_connection_configuration.h"
+
+#include "net_client_common_tools.h"
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
@@ -416,7 +420,7 @@ error:
     case STREAM_SESSION_MESSAGE_END:
     {
       // stop sending watchdog resets
-      typename TIMER_SECONDPUBLISHER_T* itimer_second_publisher_p =
+      TIMER_SECONDPUBLISHER_T* itimer_second_publisher_p =
         TIMER_SECONDPUBLISHER_T::SINGLETON_T::instance ();
       ACE_ASSERT (itimer_second_publisher_p);
       itimer_second_publisher_p->unsubscribe (this);
@@ -479,8 +483,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       //const typename SessionMessageType::DATA_T::DATA_T& session_data_r =
       //  inherited::sessionData_->getR ();
       Net_ConnectionConfigurationsIterator_t iterator, iterator_2;
-      Net_UDPSocketConfiguration_t* socket_configuration_p = NULL, *socket_configuration_2 =
-          NULL;
+      Net_UDPSocketConfiguration_t* socket_configuration_p = NULL;
       ACE_INET_Addr local_SAP, remote_SAP, gateway_address;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
@@ -501,34 +504,27 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       // sanity check(s)
       ACE_ASSERT (inherited::configuration_);
       ACE_ASSERT (inherited::configuration_->connectionConfigurations);
-//      iterator =
-//        inherited::configuration_->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING));
-//      // sanity check(s)
-//      ACE_ASSERT (iterator != inherited::configuration_->connectionConfigurations->end ());
-//      socket_configuration_p =
-//        dynamic_cast<Net_UDPSocketConfiguration_t*> ((*iterator).second);
-//      ACE_ASSERT (socket_configuration_p);
       iterator_2 =
         inherited::configuration_->connectionConfigurations->find (Stream_Tools::sanitizeUniqueName (ACE_TEXT_ALWAYS_CHAR (inherited::mod_->name ())));
       // sanity check(s)
       ACE_ASSERT (iterator_2 != inherited::configuration_->connectionConfigurations->end ());
-      socket_configuration_2 =
+      socket_configuration_p =
         static_cast<Net_UDPSocketConfiguration_t*> (&NET_CONFIGURATION_UDP_CAST ((*iterator_2).second)->socketConfiguration);
-      ACE_ASSERT (socket_configuration_2);
+      ACE_ASSERT (socket_configuration_p);
       interface_identifier =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
-        Net_Common_Tools::IPAddressToInterface_2 (socket_configuration_2->peerAddress);
+        Net_Common_Tools::IPAddressToInterface_2 (socket_configuration_p->peerAddress);
 #else
-        Net_Common_Tools::IPAddressToInterface (socket_configuration_2->peerAddress);
+        Net_Common_Tools::IPAddressToInterface (socket_configuration_p->peerAddress);
 #endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0600)
 #else
-        Net_Common_Tools::IPAddressToInterface (socket_configuration_2->peerAddress);
+        Net_Common_Tools::IPAddressToInterface (socket_configuration_p->peerAddress);
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     //ACE_DEBUG ((LM_DEBUG,
     //            ACE_TEXT ("IP %s --> \"%s\"\n"),
-    //            ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_2->peerAddress).c_str ()),
+    //            ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ()),
     //            ACE_TEXT (Net_Common_Tools::interfaceToString (interface_identifier).c_str ())));
 
 #if COMMON_OS_WIN32_TARGET_PLATFORM (0x0600) // _WIN32_WINNT_VISTA
@@ -542,7 +538,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       {
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("failed to Net_Common_Tools::IPAddressToInterface(%s), aborting\n"),
-                    ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_2->peerAddress).c_str ())));
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (socket_configuration_p->peerAddress).c_str ())));
         goto error;
       } // end IF
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -580,7 +576,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
       } // end IF
       local_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                  1);
-      remote_SAP = socket_configuration_2->peerAddress;
+      remote_SAP = socket_configuration_p->peerAddress;
       remote_SAP.set_port_number (ARDRONE_PORT_UDP_NAVDATA, 1);
 
       // 'subscribe' to the NavData stream

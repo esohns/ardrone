@@ -269,7 +269,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ACE_UNUSED_ARG (unlink_in);
 
   // sanity check(s)
-  ACE_ASSERT (state_);
+  // ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = buffer_;
   ACE_Message_Block* message_block_2 = NULL;
@@ -504,18 +504,18 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::begin"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::state_);
   ACE_ASSERT (!bufferState_);
-  ACE_ASSERT (state_);
   ACE_ASSERT (data_in);
 
   // create/initialize a new buffer state
   bufferState_ =
     (inherited::configuration_->parserConfiguration->useYYScanBuffer ? ARDrone_MAVLink_Scanner__scan_buffer (const_cast<char*> (data_in),
                                                                                                              length_in + COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
-                                                                                                             state_)
+                                                                                                             inherited::state_)
                                                                      : ARDrone_MAVLink_Scanner__scan_bytes (data_in,
                                                                                                             length_in,
-                                                                                                            state_));
+                                                                                                            inherited::state_));
   if (!bufferState_)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -554,7 +554,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   // clean state
   ARDrone_MAVLink_Scanner__delete_buffer (bufferState_,
-                                          state_);
+                                          inherited::state_);
   bufferState_ = NULL;
 }
 
@@ -575,7 +575,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::svc"));
 
   // sanity check(s)
-  ACE_ASSERT (state_);
+  ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = NULL;
   int result = -1;
@@ -676,13 +676,13 @@ continue_:
           isFirst_ = false;
 
           /* column is only valid if an input buffer exists. */
-          ARDrone_MAVLink_Scanner_set_column (1, state_);
-          ARDrone_MAVLink_Scanner_set_lineno (1, state_);
+          ARDrone_MAVLink_Scanner_set_column (1, inherited::state_);
+          ARDrone_MAVLink_Scanner_set_lineno (1, inherited::state_);
         } // end IF
 
         // parse data fragment
         try {
-          result_2 = this->lex (state_);
+          result_2 = this->lex (inherited::state_);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),

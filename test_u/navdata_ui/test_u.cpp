@@ -23,8 +23,8 @@
 #include <string>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <initguid.h> // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
-#include <mfapi.h>
+#include "initguid.h" // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
+#include "mfapi.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Get_Opt.h"
@@ -36,7 +36,6 @@
 #include "ace/Profile_Timer.h"
 #include "ace/Sig_Handler.h"
 #include "ace/Signal.h"
-#include "ace/Synch.h"
 #include "ace/Version.h"
 
 #if defined (HAVE_CONFIG_H)
@@ -128,6 +127,10 @@ do_print_usage (const std::string& programName_in)
             << display_device_s.description
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-r          : use reactor [")
+            << (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR)
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-t          : trace information [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -155,6 +158,7 @@ do_process_arguments (int argc_in,
                       std::string& UIDefinition_out,
                       bool& logToFile_out,
                       struct Common_UI_DisplayDevice& displayDevice_out,
+                      bool& useReactor_out,
                       bool& traceInformation_out,
                       enum Test_U_ProgramMode& mode_out)
 {
@@ -174,16 +178,18 @@ do_process_arguments (int argc_in,
   UIDefinition_out += ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_DEFINITION_FILE);
   logToFile_out = false;
   displayDevice_out = Common_UI_Tools::getDefaultDisplay ();
+  useReactor_out =
+    (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   traceInformation_out = false;
   mode_out = TEST_U_PROGRAMMODE_NORMAL;
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              ACE_TEXT ("cg::lo:tv"),
+                              ACE_TEXT ("cg::lo:rtv"),
 #else
-                              ACE_TEXT ("g::lo:tv"),
-#endif // ACE_WIN32 || ACE_WIN64%
+                              ACE_TEXT ("g::lo:rtv"),
+#endif // ACE_WIN32 || ACE_WIN64
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -222,6 +228,11 @@ do_process_arguments (int argc_in,
           Common_UI_Tools::getDisplay (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ()));
         break;
       }
+      case 'r':
+      {
+        useReactor_out = true;
+        break;
+      }
       case 't':
       {
         traceInformation_out = true;
@@ -232,11 +243,6 @@ do_process_arguments (int argc_in,
         mode_out = TEST_U_PROGRAMMODE_PRINT_VERSION;
         break;
       }
-      //case 'y':
-      //{
-      //  runStressTest_out = true;
-      //  break;
-      //}
       // error handling
       case ':':
       {
@@ -272,7 +278,7 @@ do_process_arguments (int argc_in,
 }
 
 void
-do_work (
+do_work (bool useReactor_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -289,6 +295,8 @@ do_work (
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_2;
+  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_io; // NetIO
+  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_source; // NetSource
   struct Test_U_StreamConfiguration stream_configuration;
   struct Test_U_StreamConfiguration stream_configuration_2;
   Test_U_TCPConnectionConfiguration_t tcp_connection_configuration;
@@ -299,12 +307,19 @@ do_work (
 
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.allocatorConfiguration;
+  modulehandler_configuration.concurrency =
+      STREAM_HEADMODULECONCURRENCY_ACTIVE;
   modulehandler_configuration.connectionConfigurations =
     &configuration_in.connectionConfigurations;
   modulehandler_configuration.parserConfiguration =
     &configuration_in.parserConfiguration;
   modulehandler_configuration.subscriber = &ui_event_handler;
+
   modulehandler_configuration_2 = modulehandler_configuration;
+  modulehandler_configuration_2.connectionConfigurations =
+      &configuration_in.connectionConfigurations_2;
+  modulehandler_configuration_2.parserConfiguration =
+    &configuration_in.parserConfiguration_2;
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct Stream_AllocatorConfiguration> heap_allocator;
@@ -328,20 +343,24 @@ do_work (
     return;
   } // end IF
 
-
-  modulehandler_configuration.concurrency =
-      STREAM_HEADMODULECONCURRENCY_CONCURRENT;
   modulehandler_configuration.CBData = &CBData_in;
 //  modulehandler_configuration.display = displayDevice_in;
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
                                                    stream_configuration);
+  modulehandler_configuration_io = modulehandler_configuration;
+  modulehandler_configuration_io.concurrency =
+      STREAM_HEADMODULECONCURRENCY_CONCURRENT;
+  configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+                                                               std::make_pair (&module_configuration,
+                                                                               &modulehandler_configuration_io)));
 
-  modulehandler_configuration.connectionConfigurations =
-    &configuration_in.connectionConfigurations_2;
   configuration_in.streamConfiguration_2.initialize (module_configuration,
                                                      modulehandler_configuration_2,
                                                      stream_configuration_2);
+  configuration_in.streamConfiguration_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+                                                                 std::make_pair (&module_configuration,
+                                                                                 &modulehandler_configuration_io)));
 
   // connection configuration
   tcp_connection_manager_p =
@@ -371,9 +390,20 @@ do_work (
       Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
   ACE_ASSERT (!default_interface_identifier_string.empty ());
   ACE_INET_Addr ip_address, gateway_address;
-  Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
-                                          ip_address,
-                                          gateway_address);
+  if (!Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
+                                               ip_address,
+                                               gateway_address))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                ACE_TEXT (default_interface_identifier_string.c_str ())));
+    return;
+  } // end IF
+  ACE_DEBUG ((LM_DEBUG,
+              ACE_TEXT ("\"%s\" --> \"%s\" (gateway: \"%s\")\n"),
+              ACE_TEXT (default_interface_identifier_string.c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (ip_address, true, false).c_str ()),
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (gateway_address, true, false).c_str ())));
   udp_connection_configuration.socketConfiguration.listenAddress = ip_address;
   udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                                                                   1);
@@ -398,8 +428,9 @@ do_work (
   udp_connection_configuration_2.socketConfiguration.peerAddress = gateway_address;
   udp_connection_configuration_2.socketConfiguration.peerAddress.set_port_number (ARDRONE_PORT_UDP_CONTROL_CONFIGURATION,
                                                                                   1);
-  udp_connection_configuration_2.socketConfiguration.connect = true;
+  udp_connection_configuration_2.socketConfiguration.connect = !useReactor_in;
   udp_connection_configuration_2.socketConfiguration.writeOnly = true;
+  udp_connection_configuration_2.delayRead = true;
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("control peer: %s\n"),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.socketConfiguration.peerAddress).c_str ())));
@@ -510,11 +541,13 @@ do_work (
 
   tcp_connection_manager_p->stop ();
   udp_connection_manager_p->stop ();
-  tcp_connection_manager_p->abort (true); // wait for completion ?
-  udp_connection_manager_p->abort (true); // wait for completion ?
+  tcp_connection_manager_p->abort (false); // wait for completion ?
+  udp_connection_manager_p->abort (false); // wait for completion ?
+  tcp_connection_manager_p->wait ();
+  udp_connection_manager_p->wait ();
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,  // wait ?
-                                             true); // close singletons ?
+                                             false); // close singletons ?
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -577,7 +610,8 @@ ACE_TMAIN (int argc_in,
   bool trace_information = false;
   enum Test_U_ProgramMode program_mode_e =
       TEST_U_PROGRAMMODE_NORMAL;
-  //bool run_stress_test = false;
+  bool use_reactor_b =
+      COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR;
 
   // step1b: parse/process/validate configuration
   if (!do_process_arguments (argc_in,
@@ -588,6 +622,7 @@ ACE_TMAIN (int argc_in,
                              UI_definition_filename,
                              log_to_file,
                              display_device_s,
+                             use_reactor_b,
                              trace_information,
                              program_mode_e))
   {
@@ -724,7 +759,7 @@ ACE_TMAIN (int argc_in,
   ACE_High_Res_Timer timer;
   timer.start ();
   // step2: do actual work
-  do_work (
+  do_work (use_reactor_b,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
            show_console,
 #endif // ACE_WIN32 || ACE_WIN64

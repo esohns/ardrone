@@ -141,6 +141,10 @@ do_print_usage (const std::string& programName_in)
             << display_device_s.description
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-r          : use reactor [")
+            << (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR)
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-t          : trace information [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -153,10 +157,6 @@ do_print_usage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  //std::cout << ACE_TEXT_ALWAYS_CHAR ("-y          : run stress-test [")
-  //  << false
-  //  << ACE_TEXT_ALWAYS_CHAR ("]")
-  //  << std::endl;
 }
 
 bool
@@ -168,6 +168,7 @@ do_process_arguments (int argc_in,
                       bool& logToFile_out,
                       struct Common_UI_DisplayDevice& displayDevice_out,
                       enum Stream_Visualization_VideoRenderer& renderer_out,
+                      bool& useReactor_out,
                       bool& traceInformation_out,
                       enum Test_U_ProgramMode& mode_out)
 {
@@ -183,15 +184,17 @@ do_process_arguments (int argc_in,
   logToFile_out = false;
   displayDevice_out = Common_UI_Tools::getDefaultDisplay ();
   renderer_out = STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW;
+  useReactor_out =
+    (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   traceInformation_out = false;
   mode_out = TEST_U_PROGRAMMODE_NORMAL;
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              ACE_TEXT ("23clo:tv"),
+                              ACE_TEXT ("23clo:rtv"),
 #else
-                              ACE_TEXT ("1lo:tv"),
+                              ACE_TEXT ("1lo:rtv"),
 #endif // ACE_WIN32 || ACE_WIN64
                               1,                          // skip command name
                               1,                          // report parsing errors
@@ -238,6 +241,11 @@ do_process_arguments (int argc_in,
           Common_UI_Tools::getDisplay (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ()));
         break;
       }
+      case 'r':
+      {
+        useReactor_out = true;
+        break;
+      }
       case 't':
       {
         traceInformation_out = true;
@@ -248,11 +256,6 @@ do_process_arguments (int argc_in,
         mode_out = TEST_U_PROGRAMMODE_PRINT_VERSION;
         break;
       }
-      //case 'y':
-      //{
-      //  runStressTest_out = true;
-      //  break;
-      //}
       // error handling
       case ':':
       {
@@ -363,7 +366,7 @@ do_initializeSignals (bool allowUserRuntimeConnect_in,
 }
 
 void
-do_work (
+do_work (bool useReactor_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -545,8 +548,8 @@ do_work (
   connection_manager_p->stop ();
   connection_manager_p->abort (true); // wait for completion ?
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
-                                             true,  // wait ?
-                                             true); // release singleton pro/reactors ?
+                                             true,   // wait ?
+                                             false); // release singleton pro/reactors ?
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_MediaFramework_DirectDraw_Tools::finalize ();
@@ -609,7 +612,8 @@ ACE_TMAIN (int argc_in,
   bool trace_information = false;
   enum Test_U_ProgramMode program_mode_e =
       TEST_U_PROGRAMMODE_NORMAL;
-  //bool run_stress_test = false;
+  bool use_reactor_b =
+      COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR;
 
   // step1b: parse/process/validate configuration
   if (!do_process_arguments (argc_in,
@@ -620,6 +624,7 @@ ACE_TMAIN (int argc_in,
                              log_to_file,
                              display_device_s,
                              video_renderer_e,
+                             use_reactor_b,
                              trace_information,
                              program_mode_e))
   {
@@ -781,7 +786,7 @@ ACE_TMAIN (int argc_in,
   ACE_High_Res_Timer timer;
   timer.start ();
   // step2: do actual work
-  do_work (
+  do_work (use_reactor_b,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
            show_console,
 #endif // ACE_WIN32 || ACE_WIN64

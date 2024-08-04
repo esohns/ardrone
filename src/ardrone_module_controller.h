@@ -166,7 +166,7 @@ class ARDrone_Module_Controller_T
   static SEQUENCENUMBER_GENERATOR_T currentNavDataMessageId;
 
   // one-second timer
-  typedef Common_Timer_SecondPublisher_T<Common_Timer_Manager_t> TIMER_SECONDPUBLISHER_T;
+  typedef Common_Timer_SecondPublisher_t TIMER_SECONDPUBLISHER_T;
 
   CBDataType*                                    CBData_;
   typename ConnectionManagerType::ICONNECTION_T* connection_;

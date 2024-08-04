@@ -67,12 +67,6 @@
 #include "stream_control_message.h"
 #include "stream_macros.h"
 
-#include "stream_dev_defines.h"
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dev_mediafoundation_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
-#include "stream_dev_tools.h"
-
 #include "stream_lib_tools.h"
 
 #include "stream_misc_defines.h"
@@ -130,6 +124,10 @@ do_print_usage (const std::string& programName_in)
             << display_device_s.description
             << ACE_TEXT_ALWAYS_CHAR ("\"]")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-r          : use reactor [")
+            << (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR)
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-t          : trace information [")
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -142,10 +140,6 @@ do_print_usage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
-  //std::cout << ACE_TEXT_ALWAYS_CHAR ("-y          : run stress-test [")
-  //  << false
-  //  << ACE_TEXT_ALWAYS_CHAR ("]")
-  //  << std::endl;
 }
 
 bool
@@ -157,6 +151,7 @@ do_process_arguments (int argc_in,
                       std::string& UIDefinition_out,
                       bool& logToFile_out,
                       struct Common_UI_DisplayDevice& displayDevice_out,
+                      bool& useReactor_out,
                       bool& traceInformation_out,
                       enum Test_U_ProgramMode& mode_out)
 {
@@ -176,16 +171,18 @@ do_process_arguments (int argc_in,
   UIDefinition_out += ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_DEFINITION_FILE);
   logToFile_out = false;
   displayDevice_out = Common_UI_Tools::getDefaultDisplay ();
+  useReactor_out =
+      (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR);
   traceInformation_out = false;
   mode_out = TEST_U_PROGRAMMODE_NORMAL;
 
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              ACE_TEXT ("cg::lo:tv"),
+                              ACE_TEXT ("cg::lo:rtv"),
 #else
-                              ACE_TEXT ("g::lo:tv"),
-#endif // ACE_WIN32 || ACE_WIN64%
+                              ACE_TEXT ("g::lo:rtv"),
+#endif // ACE_WIN32 || ACE_WIN64
                               1,                          // skip command name
                               1,                          // report parsing errors
                               ACE_Get_Opt::PERMUTE_ARGS,  // ordering
@@ -224,6 +221,11 @@ do_process_arguments (int argc_in,
           Common_UI_Tools::getDisplay (ACE_TEXT_ALWAYS_CHAR (argumentParser.opt_arg ()));
         break;
       }
+      case 'r':
+      {
+        useReactor_out = true;
+        break;
+      }
       case 't':
       {
         traceInformation_out = true;
@@ -234,11 +236,6 @@ do_process_arguments (int argc_in,
         mode_out = TEST_U_PROGRAMMODE_PRINT_VERSION;
         break;
       }
-      //case 'y':
-      //{
-      //  runStressTest_out = true;
-      //  break;
-      //}
       // error handling
       case ':':
       {
@@ -274,7 +271,7 @@ do_process_arguments (int argc_in,
 }
 
 void
-do_work (
+do_work (bool useReactor_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
@@ -337,14 +334,25 @@ do_work (
       Net_Common_Tools::getDefaultInterface (NET_LINKLAYER_802_11);
   ACE_ASSERT (!default_interface_identifier_string.empty ());
   ACE_INET_Addr gateway_address;
-  Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
-                                          connection_configuration.socketConfiguration.listenAddress,
-                                          gateway_address);
+  if (!Net_Common_Tools::interfaceToIPAddress (default_interface_identifier_string,
+                                               connection_configuration.socketConfiguration.listenAddress,
+                                               gateway_address))
+  {
+    ACE_DEBUG ((LM_ERROR,
+                ACE_TEXT ("failed to Net_Common_Tools::interfaceToIPAddress(\"%s\"), returning\n"),
+                ACE_TEXT (default_interface_identifier_string.c_str ())));
+    return;
+  } // end IF
+  ACE_DEBUG ((LM_DEBUG,
+             ACE_TEXT ("\"%s\" --> \"%s\" (gateway: \"%s\")\n"),
+             ACE_TEXT (default_interface_identifier_string.c_str ()),
+             ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.socketConfiguration.listenAddress, true, false).c_str ()),
+             ACE_TEXT (Net_Common_Tools::IPAddressToString (gateway_address, true, false).c_str ())));
   connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_MAVLINK,
                                                                               1);
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("listening to %s\n"),
-              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.socketConfiguration.listenAddress).c_str ())));
+              ACE_TEXT (Net_Common_Tools::IPAddressToString (connection_configuration.socketConfiguration.listenAddress, false, false).c_str ())));
 
   connection_configuration.socketConfiguration.bufferSize =
     NET_SOCKET_DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -497,7 +505,8 @@ ACE_TMAIN (int argc_in,
   bool trace_information = false;
   enum Test_U_ProgramMode program_mode_e =
       TEST_U_PROGRAMMODE_NORMAL;
-  //bool run_stress_test = false;
+  bool use_reactor_b =
+      COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_REACTOR;
 
   // step1b: parse/process/validate configuration
   if (!do_process_arguments (argc_in,
@@ -508,6 +517,7 @@ ACE_TMAIN (int argc_in,
                              UI_definition_filename,
                              log_to_file,
                              display_device_s,
+                             use_reactor_b,
                              trace_information,
                              program_mode_e))
   {
@@ -643,7 +653,7 @@ ACE_TMAIN (int argc_in,
   ACE_High_Res_Timer timer;
   timer.start ();
   // step2: do actual work
-  do_work (
+  do_work (use_reactor_b,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
            show_console,
 #endif // ACE_WIN32 || ACE_WIN64

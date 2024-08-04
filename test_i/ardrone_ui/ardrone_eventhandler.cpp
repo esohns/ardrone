@@ -667,12 +667,13 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
 #if defined (GTK_USE)
       Common_UI_GTK_BuildersIterator_t iterator_3 =
         state_r.builders.find (ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN));
+      GtkToggleAction* toggle_action_p = NULL;
       if (iterator_3 == state_r.builders.end())
         goto continue_; // --> shutting down
 
       // disconnecting ?
       gdk_threads_enter ();
-      GtkToggleAction* toggle_action_p =
+      toggle_action_p =
           GTK_TOGGLE_ACTION (gtk_builder_get_object ((*iterator_3).second.second,
                                                       ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_TOGGLEACTION_CONNECT)));
       ACE_ASSERT (toggle_action_p);

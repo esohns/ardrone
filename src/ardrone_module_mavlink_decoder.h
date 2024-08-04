@@ -143,18 +143,18 @@ class ARDrone_Module_MAVLinkDecoder_T
 
   // implement/override (part of) Common_ILexScanner_T
   inline virtual ACE_Message_Block* buffer () { ACE_ASSERT (false); ACE_NOTSUP_RETURN (NULL); ACE_NOTREACHED (return NULL;) }
-  inline virtual bool debug () const { return ARDrone_MAVLink_Scanner_get_debug (state_); }
+  inline virtual bool debug () const { return ARDrone_MAVLink_Scanner_get_debug (inherited::state_); }
   inline virtual bool isBlocking() const { return true; }
-  inline virtual unsigned int offset () const { return ARDrone_MAVLink_Scanner_get_column (state_); }
+  inline virtual unsigned int offset () const { return ARDrone_MAVLink_Scanner_get_column (inherited::state_); }
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
   virtual bool switchBuffer (bool = false);
   virtual void waitBuffer ();
-  inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, state_); }
+  inline virtual void offset (unsigned int offset_in) { ARDrone_MAVLink_Scanner_set_column (offset_in, inherited::state_); }
   virtual void error (const std::string&);
   inline virtual void setDebug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_MAVLink_Scanner_set_debug ((debug_in ? 1 : 0), state_in); }
-  inline virtual void reset () { ARDrone_MAVLink_Scanner_set_lineno (1, state_); ARDrone_MAVLink_Scanner_set_column (1, state_); }
+  inline virtual void reset () { ARDrone_MAVLink_Scanner_set_lineno (1, inherited::state_); ARDrone_MAVLink_Scanner_set_column (1, inherited::state_); }
   inline virtual bool initialize (yyscan_t& state_inout, void* = NULL) { ACE_ASSERT (!state_inout); int result = ARDrone_MAVLink_Scanner_lex_init_extra (this, &state_inout); return (result == 0); }
   inline virtual void finalize (yyscan_t& state_inout) { ACE_ASSERT (state_inout); ARDrone_MAVLink_Scanner_lex_destroy (state_inout); state_inout = NULL; }
   inline virtual struct yy_buffer_state* create (yyscan_t state_in, char* buffer_in, size_t size_in) { ACE_ASSERT (state_in); ACE_ASSERT (buffer_in); ACE_ASSERT (size_in); return ARDrone_MAVLink_Scanner__scan_buffer (buffer_in, size_in, state_in); }

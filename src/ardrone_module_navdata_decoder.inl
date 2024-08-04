@@ -74,10 +74,11 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   if (buffer_)
     buffer_->release ();
 
-  if (ARDrone_NavData_Scanner_lex_destroy (state_))
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to yylex_destroy(): \"%m\", continuing\n"),
-                inherited::mod_->name ()));
+  if (inherited::state_)
+    if (ARDrone_NavData_Scanner_lex_destroy (inherited::state_))
+      ACE_DEBUG ((LM_ERROR,
+                  ACE_TEXT ("%s: failed to yylex_destroy(): \"%m\", continuing\n"),
+                  inherited::mod_->name ()));
 }
 
 template <ACE_SYNCH_DECL,
@@ -99,8 +100,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::initialize"));
 
-  int result = -1;
-
   // sanity check(s)
   // *TODO*: remove type inferences
   ACE_ASSERT (configuration_in.parserConfiguration);
@@ -112,9 +111,9 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     buffer_ = NULL;
 
     if (bufferState_)
-    { ACE_ASSERT (state_);
+    { ACE_ASSERT (inherited::state_);
       ARDrone_NavData_Scanner__delete_buffer (bufferState_,
-                                              state_);
+                                              inherited::state_);
       bufferState_ = NULL;
     } // end IF
 
@@ -458,7 +457,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   ACE_UNUSED_ARG (unlink_in);
 
   // sanity check(s)
-  ACE_ASSERT (state_);
+  // ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = buffer_;
   ACE_Message_Block* message_block_2 = NULL;
@@ -693,18 +692,18 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // sanity check(s)
   ACE_ASSERT (inherited::configuration_);
   ACE_ASSERT (inherited::configuration_->parserConfiguration);
+  ACE_ASSERT (inherited::state_);
   ACE_ASSERT (!bufferState_);
-  ACE_ASSERT (state_);
   ACE_ASSERT (data_in);
 
   // create/initialize a new buffer state
   bufferState_ =
     (inherited::configuration_->parserConfiguration->useYYScanBuffer ? ARDrone_NavData_Scanner__scan_buffer (const_cast<char*> (data_in),
                                                                                                              length_in + COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE,
-                                                                                                             state_)
+                                                                                                             inherited::state_)
                                                                      : ARDrone_NavData_Scanner__scan_bytes (data_in,
                                                                                                             length_in,
-                                                                                                            state_));
+                                                                                                            inherited::state_));
   if (!bufferState_)
   {
     ACE_DEBUG ((LM_ERROR,
@@ -749,7 +748,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   // clean state
   ARDrone_NavData_Scanner__delete_buffer (bufferState_,
-                                          state_);
+                                          inherited::state_);
   bufferState_ = NULL;
 }
 
@@ -773,7 +772,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
-  ACE_ASSERT (state_);
+  ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = NULL;
   int result = -1;
@@ -881,13 +880,13 @@ continue_:
           isFirst_ = false;
 
           /* column is only valid if an input buffer exists. */
-          ARDrone_NavData_Scanner_set_column (1, state_);
-          ARDrone_NavData_Scanner_set_lineno (1, state_);
+          ARDrone_NavData_Scanner_set_column (1, inherited::state_);
+          ARDrone_NavData_Scanner_set_lineno (1, inherited::state_);
         } // end IF
 
         // parse data fragment
         try {
-          result = ARDrone_NavData_Scanner_lex (state_);
+          result = ARDrone_NavData_Scanner_lex (inherited::state_);
         } catch (...) {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: caught exception in yylex(), continuing\n"),

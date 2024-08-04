@@ -21,7 +21,13 @@
 #ifndef TEST_U_DEFINES_H
 #define TEST_U_DEFINES_H
 
+#if defined (GTK2_USE)
 #define TEST_U_UI_DEFINITION_FILE                     "mavlink_ui.gtk2"
+#elif defined (GTK3_USE)
+#define TEST_U_UI_DEFINITION_FILE                     "mavlink_ui.gtk3"
+#else
+#define TEST_U_UI_DEFINITION_FILE                     ""
+#endif // GTK2_USE || GTK3_USE
 
 #define TEST_U_UI_GTK_DIALOG_ABOUT_NAME               "dialog_about"
 #define TEST_U_UI_GTK_DIALOG_MAIN_NAME                "dialog_main"

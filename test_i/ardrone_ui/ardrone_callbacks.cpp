@@ -730,9 +730,9 @@ stream_processing_function (void* arg_in)
     } // end IF
 
     iget_p =
-        dynamic_cast<Common_IGetR_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
+        dynamic_cast<Common_IGetR_2_T<ARDrone_SessionData_t>*> ((*streams_iterator).second);
     ACE_ASSERT (iget_p);
-    session_data_container_p = &iget_p->getR ();
+    session_data_container_p = &iget_p->getR_2 ();
     ACE_ASSERT (session_data_container_p);
     session_data_p =
       &const_cast<struct ARDrone_SessionData&> (session_data_container_p->getR ());

@@ -1241,7 +1241,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
   ACE_ASSERT (inherited::sessionData_);
   session_data_p =
-    &const_cast<SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
+    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
   session_data_p->stream = this;
 
   iterator =
@@ -1742,9 +1742,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
 
 #if defined (GUI_SUPPORT)
         ACE_ASSERT (inherited::state_.CBData);
-        //struct ARDrone_UI_GTK_State& state_r =
-        //  const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_UI_GTK_MANAGER_SINGLETON::instance ()->getR_2 ());
-        //{ ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 #if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
           inherited::state_.CBData->orientation.x =
               option_2->phi; // roll (--> rotation along x)
@@ -2662,7 +2659,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   session_data_p =
-    &const_cast<SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
+    &const_cast<typename SessionDataType::DATA_T&> (inherited::sessionData_->getR ());
   session_data_p->stream = this;
 
   iterator =

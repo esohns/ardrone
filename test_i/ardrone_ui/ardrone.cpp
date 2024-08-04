@@ -2173,7 +2173,7 @@ do_work (int argc_in,
   modulehandler_configuration.fullScreen = fullScreen_in;
 #endif // GUI_SUPPORT
   modulehandler_configuration.parserConfiguration =
-    &cb_data_p->configuration->parserConfiguration;
+    &parser_configuration;
   modulehandler_configuration.frameRate.den = 1;
   modulehandler_configuration.frameRate.num = 30;
 #if defined (GUI_SUPPORT)

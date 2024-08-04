@@ -60,6 +60,7 @@ struct Test_U_Configuration
 #endif // GTK_USE
 #endif // GUI_SUPPORT
    , parserConfiguration ()
+   , parserConfiguration_2 ()
    , streamConfiguration ()
    , streamConfiguration_2 ()
   {}
@@ -74,6 +75,7 @@ struct Test_U_Configuration
 #endif // GTK_USE
 #endif // GUI_SUPPORT
   struct Common_FlexBisonParserConfiguration parserConfiguration;
+  struct Common_FlexBisonParserConfiguration parserConfiguration_2;
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t               streamConfiguration;
   Test_U_StreamConfiguration_t               streamConfiguration_2;
