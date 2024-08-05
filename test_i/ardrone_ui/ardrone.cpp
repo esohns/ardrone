@@ -1857,6 +1857,7 @@ do_work (int argc_in,
   struct Net_UserData user_data_s;
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
   codec_configuration.codecId = AV_CODEC_ID_H264;
+  codec_configuration.padInputBuffers = false; // data arrives fragmented !
   struct Common_FlexBisonParserConfiguration parser_configuration; // control
   struct Common_FlexBisonParserConfiguration parser_configuration_2; // MAVLink
   struct Common_FlexBisonParserConfiguration parser_configuration_3; // NavData
@@ -4091,16 +4092,16 @@ ACE_TMAIN (int argc_in,
     log_file_name =
       Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
                                         ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR)));
-  if (!Common_Log_Tools::initializeLogging (ACE::basename (argv_in[0],
-                                                           ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
-                                            log_file_name,                                   // log file name
-                                            false,                                           // log to syslog ?
-                                            false,                                           // trace messages ?
-                                            trace_information,                               // debug messages ?
-                                            NULL))
+  if (!Common_Log_Tools::initialize (ACE::basename (argv_in[0],
+                                                    ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
+                                     log_file_name,                                   // log file name
+                                     false,                                           // log to syslog ?
+                                     false,                                           // trace messages ?
+                                     trace_information,                               // debug messages ?
+                                     NULL))
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Log_Tools::initializeLogging(), aborting\n")));
+                ACE_TEXT ("failed to Common_Log_Tools::initialize(), aborting\n")));
     goto error;
   } // end IF
 
@@ -4119,7 +4120,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Tools::preInitializeSignals(), aborting\n")));
 
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     goto error;
   } // end IF
 
@@ -4155,7 +4156,7 @@ ACE_TMAIN (int argc_in,
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       goto error;
     }
   } // end SWITCH
@@ -4167,7 +4168,7 @@ ACE_TMAIN (int argc_in,
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                    previous_signal_actions,
                                    previous_signal_mask);
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     goto error;
   } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
@@ -4196,7 +4197,7 @@ ACE_TMAIN (int argc_in,
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       goto error;
     }
   } // end SWITCH
@@ -4271,7 +4272,7 @@ ACE_TMAIN (int argc_in,
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       goto error;
     }
   } // end SWITCH
@@ -4393,7 +4394,7 @@ ACE_TMAIN (int argc_in,
       Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                      previous_signal_actions,
                                      previous_signal_mask);
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       goto error;
     }
   } // end SWITCH
@@ -4441,7 +4442,7 @@ ACE_TMAIN (int argc_in,
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                     previous_signal_actions,
                                     previous_signal_mask);
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     goto error;
   } // end IF
 #elif defined (WXWIDGETS_USE)
@@ -4455,7 +4456,7 @@ ACE_TMAIN (int argc_in,
                                     signal_set,
                                     previous_signal_actions,
                                     previous_signal_mask);
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     goto error;
   } // end IF
 #endif
@@ -4564,7 +4565,7 @@ done:
     Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                    previous_signal_actions,
                                    previous_signal_mask);
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     goto error;
   } // end IF
   ACE_Profile_Timer::Rusage elapsed_rusage;
@@ -4632,7 +4633,7 @@ done:
   Common_Signal_Tools::finalize ((use_reactor ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                  previous_signal_actions,
                                  previous_signal_mask);
-  Common_Log_Tools::finalizeLogging ();
+  Common_Log_Tools::finalize ();
   Common_Tools::finalize ();
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

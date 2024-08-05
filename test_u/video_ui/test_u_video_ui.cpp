@@ -23,8 +23,8 @@
 #include <string>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <initguid.h> // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
-#include <mfapi.h>
+#include "initguid.h" // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
+#include "mfapi.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Get_Opt.h"
@@ -43,6 +43,9 @@
 #endif // HAVE_CONFIG_H
 
 #include "common_tools.h"
+
+#include "common_error_defines.h"
+#include "common_error_tools.h"
 
 #include "common_event_tools.h"
 
@@ -63,12 +66,6 @@
 #include "stream_macros.h"
 
 #include "stream_dec_defines.h"
-
-#include "stream_dev_defines.h"
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dev_mediafoundation_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
-#include "stream_dev_tools.h"
 
 #include "stream_lib_tools.h"
 
@@ -118,6 +115,10 @@ do_print_usage (const std::string& programName_in)
             << false
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : enable debug heap [")
+            << COMMON_ERROR_WIN32_DEBUGHEAP_DEFAULT_ENABLE
+            << ACE_TEXT_ALWAYS_CHAR ("])")
+            << std::endl;
 #else
 //  std::cout << ACE_TEXT_ALWAYS_CHAR ("-1          : use X11 renderer [")
 //            << (STREAM_VIS_RENDERER_VIDEO_DEFAULT == STREAM_VISUALIZATION_VIDEORENDERER_X11)
@@ -164,6 +165,7 @@ do_process_arguments (int argc_in,
                       ACE_TCHAR** argv_in, // cannot be const...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                       bool& showConsole_out,
+                      bool& enableDebugHeap_out,
 #endif // ACE_WIN32 || ACE_WIN64
                       bool& logToFile_out,
                       struct Common_UI_DisplayDevice& displayDevice_out,
@@ -180,6 +182,7 @@ do_process_arguments (int argc_in,
   // initialize results
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out = false;
+  enableDebugHeap_out = COMMON_ERROR_WIN32_DEBUGHEAP_DEFAULT_ENABLE;
 #endif // ACE_WIN32 || ACE_WIN64
   logToFile_out = false;
   displayDevice_out = Common_UI_Tools::getDefaultDisplay ();
@@ -192,7 +195,7 @@ do_process_arguments (int argc_in,
   ACE_Get_Opt argumentParser (argc_in,
                               argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                              ACE_TEXT ("23clo:rtv"),
+                              ACE_TEXT ("23cdlo:rtv"),
 #else
                               ACE_TEXT ("1lo:rtv"),
 #endif // ACE_WIN32 || ACE_WIN64
@@ -221,6 +224,11 @@ do_process_arguments (int argc_in,
       case 'c':
       {
         showConsole_out = true;
+        break;
+      }
+      case 'd':
+      {
+        enableDebugHeap_out = true;
         break;
       }
 #else
@@ -379,6 +387,7 @@ do_work (bool useReactor_in,
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
+  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_io;
   struct Test_U_StreamConfiguration stream_configuration;
   Test_U_TCPConnectionConfiguration_t connection_configuration;
   Test_U_TCPConnectionManager_t* connection_manager_p = NULL;
@@ -397,10 +406,6 @@ do_work (bool useReactor_in,
   //  // *TODO*: turn these into an option
 //  modulehandler_configuration.method = STREAM_DEV_CAM_V4L_DEFAULT_IO_METHOD;
   modulehandler_configuration.subscriber = &ui_event_handler;
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Stream_MediaFramework_DirectDraw_Tools::initialize ();
-#endif // ACE_WIN32 || ACE_WIN64
 
   Stream_AllocatorHeap_T<ACE_MT_SYNCH,
                          struct Stream_AllocatorConfiguration> heap_allocator;
@@ -425,7 +430,7 @@ do_work (bool useReactor_in,
 #if defined (FFMPEG_SUPPORT)
   struct Stream_MediaFramework_FFMPEG_CodecConfiguration codec_configuration;
   codec_configuration.codecId = AV_CODEC_ID_H264;
-
+  codec_configuration.padInputBuffers = false; // data arrives fragmented !
   modulehandler_configuration.codecConfiguration = &codec_configuration;
 #endif // FFMPEG_SUPPORT
 
@@ -437,6 +442,7 @@ do_work (bool useReactor_in,
   modulehandler_configuration.cascadeFile += ACE_DIRECTORY_SEPARATOR_STR_A;
   modulehandler_configuration.cascadeFile +=
     ACE_TEXT_ALWAYS_CHAR ("haarcascade_frontalface_default.xml");
+  modulehandler_configuration.concurrency = STREAM_HEADMODULECONCURRENCY_ACTIVE;
   // *IMPORTANT NOTE*: is there a way to feed RGB24 data to Xlib;
   //                   XCreateImage() only 'likes' 32-bit data, regardless of
   //                   what 'depth' values are set (in fact, it requires BGRA on
@@ -451,6 +457,10 @@ do_work (bool useReactor_in,
 #endif // ACE_WIN32 || ACE_WIN64
   modulehandler_configuration.outputFormat.frameRate.num = 30;
 
+  modulehandler_configuration_io = modulehandler_configuration;
+  modulehandler_configuration_io.concurrency =
+    STREAM_HEADMODULECONCURRENCY_CONCURRENT;
+
   stream_configuration.format = modulehandler_configuration.outputFormat;
 
 //  modulehandler_configuration.display = displayDevice_in;
@@ -460,6 +470,10 @@ do_work (bool useReactor_in,
   configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING),
                                                                std::make_pair (&module_configuration,
                                                                                &modulehandler_configuration)));
+  configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+                                                               std::make_pair (&module_configuration,
+                                                                               &modulehandler_configuration_io)));
+
   v4l_stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (v4l_stream_iterator != configuration_in.streamConfiguration.end ());
@@ -471,6 +485,8 @@ do_work (bool useReactor_in,
                                     ACE_Time_Value (0, NET_STATISTIC_DEFAULT_VISIT_INTERVAL_MS * 1000));
 //  struct Net_UserData net_user_data;
 
+  connection_configuration.allocatorConfiguration =
+    &configuration_in.allocatorConfiguration;
 //  connection_configuration.generateUniqueIOModuleNames = true;
   connection_configuration.messageAllocator = &message_allocator;
 //  connection_configuration.PDUSize =
@@ -540,7 +556,9 @@ do_work (bool useReactor_in,
 //      //timer_manager_p->stop ();
 //      return;
 //    } // end IF
-  stream_p->wait (true, false, false);
+  stream_p->wait (true,   // wait for thread(s) ?
+                  true,   // wait for upstream ?
+                  false); // wait for downstream ?
 
   // step3: clean up
   timer_manager_p->stop ();
@@ -550,10 +568,6 @@ do_work (bool useReactor_in,
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,   // wait ?
                                              false); // release singleton pro/reactors ?
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  Stream_MediaFramework_DirectDraw_Tools::finalize ();
-#endif // ACE_WIN32 || ACE_WIN64
 
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("finished working...\n")));
@@ -588,9 +602,6 @@ ACE_TMAIN (int argc_in,
   // start profile timer...
   process_profile.start ();
 
-  std::string configuration_path =
-    Common_File_Tools::getWorkingDirectory ();
-
   // initialize framework(s)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Common_Tools::initialize (false,  // initialize COM ?
@@ -600,10 +611,16 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_MediaFramework_Tools::initialize (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK);
+  Stream_MediaFramework_DirectDraw_Tools::initialize ();
 #endif // ACE_WIN32 || ACE_WIN64
 
+  std::string configuration_path = Common_File_Tools::getWorkingDirectory ();
+
   // step1a set defaults
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   bool show_console = false;
+  bool enable_debug_heap_b = COMMON_ERROR_WIN32_DEBUGHEAP_DEFAULT_ENABLE;
+#endif // ACE_WIN32 || ACE_WIN64
   bool log_to_file = false;
   enum Stream_Visualization_VideoRenderer video_renderer_e =
       STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW;
@@ -620,6 +637,7 @@ ACE_TMAIN (int argc_in,
                              argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
                              show_console,
+                             enable_debug_heap_b,
 #endif // ACE_WIN32 || ACE_WIN64
                              log_to_file,
                              display_device_s,
@@ -638,6 +656,13 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
     return EXIT_FAILURE;
   } // end IF
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Common_Log_Tools::packageName = ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME);
+  Common_Error_Tools::initialize (enable_debug_heap_b);
+#else
+  Common_Error_Tools::initialize ();
+#endif // ACE_WIN32 || ACE_WIN64
 
   // step1c: validate arguments
   // *IMPORTANT NOTE*: iff the number of message buffers is limited, the
@@ -667,17 +692,17 @@ ACE_TMAIN (int argc_in,
   std::string log_file_name;
   if (log_to_file)
     log_file_name =
-        Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ACEStream_PACKAGE_NAME),
-                                          ACE::basename (argv_in[0]));
-  if (!Common_Log_Tools::initializeLogging (ACE::basename (argv_in[0]),                   // program name
-                                            log_file_name,                                // log file name
-                                            false,                                        // log to syslog ?
-                                            false,                                        // trace messages ?
-                                            trace_information,                            // debug messages ?
-                                            NULL))                                        // (ui) logger ?
+        Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
+                                          ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR_A)));
+  if (!Common_Log_Tools::initialize (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR_A)), // program name
+                                     log_file_name,                                // log file name
+                                     false,                                        // log to syslog ?
+                                     false,                                        // trace messages ?
+                                     trace_information,                            // debug messages ?
+                                     NULL))                                        // (ui) logger ?
   {
     ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to Common_Log_Tools::initializeLogging(), aborting\n")));
+                ACE_TEXT ("failed to Common_Log_Tools::initialize(), aborting\n")));
 
     // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -696,7 +721,7 @@ ACE_TMAIN (int argc_in,
     {
       do_print_version (ACE::basename (argv_in[0]));
 
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       result = ACE::fini ();
@@ -714,7 +739,7 @@ ACE_TMAIN (int argc_in,
                   ACE_TEXT ("invalid/unknown program mode (was: %d), aborting\n"),
                   program_mode_e));
 
-      Common_Log_Tools::finalizeLogging ();
+      Common_Log_Tools::finalize ();
       // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
       result = ACE::fini ();
@@ -735,7 +760,7 @@ ACE_TMAIN (int argc_in,
   Common_SignalActions_t previous_signal_actions;
   ACE_Sig_Set previous_signal_mask (false);
   if (!Common_Signal_Tools::preInitialize (signal_set,
-                                           (COMMON_EVENT_DEFAULT_DISPATCH == COMMON_EVENT_DISPATCH_PROACTOR) ? COMMON_SIGNAL_DISPATCH_PROACTOR : COMMON_SIGNAL_DISPATCH_REACTOR,
+                                           (use_reactor_b ? COMMON_SIGNAL_DISPATCH_REACTOR : COMMON_SIGNAL_DISPATCH_PROACTOR),
                                            true,
                                            false,
                                            previous_signal_actions,
@@ -744,7 +769,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_Signal_Tools::preInitialize(), aborting\n")));
 
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     result = ACE::fini ();
@@ -763,9 +788,10 @@ ACE_TMAIN (int argc_in,
   struct Test_U_VideoUI_Configuration configuration;
 
   // event dispatch
-  configuration.dispatchConfiguration.numberOfProactorThreads = 3;
-  configuration.dispatchConfiguration.proactorType =
-    COMMON_EVENT_PROACTOR_TYPE;
+  if (use_reactor_b)
+    configuration.dispatchConfiguration.numberOfReactorThreads = 3;
+  else
+    configuration.dispatchConfiguration.numberOfProactorThreads = 3;
   if (!Common_Event_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
@@ -818,7 +844,7 @@ ACE_TMAIN (int argc_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to ACE_Profile_Timer::elapsed_time: \"%m\", aborting\n")));
 
-    Common_Log_Tools::finalizeLogging ();
+    Common_Log_Tools::finalize ();
     // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
     result = ACE::fini ();
@@ -871,7 +897,14 @@ ACE_TMAIN (int argc_in,
               elapsed_rusage.ru_nivcsw));
 #endif // ACE_WIN32 || ACE_WIN64
 
-  Common_Log_Tools::finalizeLogging ();
+  Common_Log_Tools::finalize ();
+
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+  Stream_MediaFramework_DirectDraw_Tools::finalize ();
+  Stream_MediaFramework_Tools::finalize ();
+#endif // ACE_WIN32 || ACE_WIN64
+  Common_Error_Tools::finalize ();
+  Common_Tools::finalize ();
 
   // *PORTABILITY*: on Windows, finalize ACE...
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

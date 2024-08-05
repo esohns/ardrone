@@ -34,6 +34,8 @@ elseif (WXWIDGETS_USE)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 endif ()
 
+include ($ENV{PRJ_ROOT}/ACEStream/src/modules/dec/scripts/opencv.cmake)
+
 include ($ENV{PRJ_ROOT}/Common/scripts/ACE.cmake)
 
 ##########################################
@@ -50,8 +52,8 @@ if (UNIX)
 # *NOTE*: Common requires libcap
 # pkg_check_modules (PKG_CAP REQUIRED libcap)
 # pkg_check_modules (PKG_V4L2 REQUIRED libv4l2)
- pkg_check_modules (PKG_FFMPEG REQUIRED libswscale libavutil libavformat libavcodec)
- pkg_check_modules (PKG_OPENCV REQUIRED opencv)
+# pkg_check_modules (PKG_FFMPEG REQUIRED libswscale libavutil libavformat libavcodec)
+# pkg_check_modules (PKG_OPENCV REQUIRED opencv)
 # if (GUI_SUPPORT)
 #  if (GTK_SUPPORT)
 #   if (GTK3_SUPPORT)
@@ -90,7 +92,7 @@ if (NOT EXISTS ${ACEStream_DIR})
 endif ()
 add_definitions (-DSTREAM_HAS_DLL)
 #add_definitions (-DSTREAM_DEC_HAS_DLL)
-add_definitions (-DOPENCV_SUPPORT)
+#add_definitions (-DOPENCV_SUPPORT)
 
 find_package (ACENetwork
               REQUIRED
@@ -298,8 +300,8 @@ add_dependencies (${EXECUTABLE} ACENetwork)
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
 if (UNIX)
 # target_link_libraries (${EXECUTABLE} GL)
- target_link_libraries (${EXECUTABLE} ${PKG_FFMPEG_LIBRARIES})
- target_link_libraries (${EXECUTABLE} ${PKG_OPENCV_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${FFMPEG_LIBRARIES})
+ target_link_libraries (${EXECUTABLE} ${OPENCV_LIBRARIES})
 
 # target_link_libraries (${EXECUTABLE} ${ACEXML_LIBRARY})
 elseif (WIN32)
@@ -424,60 +426,69 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
  set (ARGS "${ARGS} -t")
 endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 if (UNIX)
- if (GUI_SUPPORT)
-  if (GTK_USE)
-   set (ARGS "-g./etc/${ui_definition_file} ${ARGS}")
-  elseif (WXWIDGETS_USE)
-   set (ENVIRONMENT "DISPLAY=:0")
-  endif ()
- else ()
-  set (ARGS "-g ${ARGS}")
- endif (GUI_SUPPORT)
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}" COMMAND)
+# if (GUI_SUPPORT)
+#  if (GTK_USE)
+#   set (ARGS "-g./etc/${ui_definition_file} ${ARGS}")
+#  elseif (WXWIDGETS_USE)
+#   set (ENVIRONMENT "DISPLAY=:0")
+#  endif ()
+# else ()
+#  set (ARGS "-g ${ARGS}")
+# endif (GUI_SUPPORT)
 
  set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
  set (ENVIRONMENT "GDK_BACKEND=x11")
 elseif (WIN32)
- if (GUI_SUPPORT)
-  set (ARGS "-g.\\\\etc\\\\${ui_definition_file} ${ARGS}")
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}.exe" COMMAND)
+ string (REPLACE "\\" "\\\\" COMMAND ${COMMAND})
+# if (GUI_SUPPORT)
+#  set (ARGS "-g.\\\\etc\\\\${ui_definition_file} ${ARGS}")
 
-  if (GTK_USE)
-   if (GTK3_USE)
-    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk3/bin GTK_LIB_PATH)
-    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                              G:/software/Development/dll
-                              ${GTK_LIB_PATH})
-   elseif (GTK2_USE)
-    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk2/bin GTK_LIB_PATH)
-    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                              G:/software/Development/dll
-                              ${GTK_LIB_PATH})
-   endif ()
-  elseif (WXWIDGETS_USE)
-   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                             ${wxWidgets_LIB_DIR})
-  endif ()
- else ()
-  set (ARGS "-g ${ARGS}")
- endif (GUI_SUPPORT)
+#  if (GTK_USE)
+#   if (GTK3_USE)
+#    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk3/bin GTK_LIB_PATH)
+#    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+#                              G:/software/Development/dll
+#                              ${GTK_LIB_PATH})
+#   elseif (GTK2_USE)
+#    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk2/bin GTK_LIB_PATH)
+#    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+#                              G:/software/Development/dll
+#                              ${GTK_LIB_PATH})
+#   endif ()
+#  elseif (WXWIDGETS_USE)
+#   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+#                             ${wxWidgets_LIB_DIR})
+#  endif ()
+# else ()
+#  set (ARGS "-g ${ARGS}")
+# endif (GUI_SUPPORT)
 #file (TO_CMAKE_PATH $ENV{LIB_ROOT}/libpng/cmake/${CMAKE_BUILD_TYPE} LIBPNG_PATH)
-file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ffmpeg/bin FFMPEG_PATH)
-file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ImageMagick IMAGEMAGICK_PATH)
-file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_PATH)
-file (TO_CMAKE_PATH $ENV{LIB_ROOT}/assimp/cmake/code/${CMAKE_BUILD_TYPE} ASSIMP_PATH)
-file (TO_CMAKE_PATH $ENV{PRJ_ROOT}/ACE_TAO/ACE/lib ACE_PATH)
+ # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
+ file (TO_CMAKE_PATH "$ENV{VCPKG_INSTALLATION_ROOT}/installed/x64-windows/bin" VCPKG_PATH)
+ file (TO_CMAKE_PATH "${ffmpeg_LIB_DIR}" FFMPEG_PATH)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ImageMagick IMAGEMAGICK_PATH)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_PATH)
+ file (TO_CMAKE_PATH $ENV{LIB_ROOT}/assimp/cmake/code/${CMAKE_BUILD_TYPE} ASSIMP_PATH)
+ file (TO_CMAKE_PATH "${OPENCV_LIB_DIR}" OPENCV_PATH)
+ file (TO_CMAKE_PATH "${ACE_LIB_DIR}" ACE_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                            ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
+                           ${VCPKG_PATH}
                            ${FFMPEG_PATH}
                            ${IMAGEMAGICK_PATH}
                            ${SSL_PATH}
                            ${ASSIMP_PATH}
+                           ${OPENCV_PATH}
                            ${ACE_PATH})
 endif ()
 create_target_launcher (${EXECUTABLE}
+                        COMMAND ${COMMAND}
                         ARGS ${ARGS}
 #                        FORWARD_ARGS
                         RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../test_u/video_ui
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_u/video_ui
                         ENVIRONMENT ${ENVIRONMENT})
 
 ##########################################

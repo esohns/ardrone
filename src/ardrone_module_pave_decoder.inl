@@ -43,11 +43,7 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
                              DataMessageType,
                              SessionMessageType,
                              MediaType,
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//                             UserDataType>::ARDrone_Module_PaVEDecoder_T (ISTREAM_T* stream_in)
-//#else
                              UserDataType>::ARDrone_Module_PaVEDecoder_T (typename inherited::ISTREAM_T* stream_in)
-//#endif // ACE_WIN32 || ACE_WIN64
  : inherited (stream_in)
  , buffer_ (NULL)
  , header_ ()
@@ -197,15 +193,13 @@ next:
         break;
       buffer_p += bytes_to_copy;
     } // end FOR
-#if defined (_DEBUG)
     // *WARNING*: the PAVE_CHECK macro is endian- (i.e. platform-)dependent and
     //            therefore needs to be generated/compiled for each targeted
     //            platform separately (see: video_encapsulation.h)
     if (!PAVE_CHECK (header_.signature))
-      ACE_DEBUG ((LM_ERROR,
+      ACE_DEBUG ((LM_WARNING,
                   ACE_TEXT ("%s: corrupt PaVE header, continuing\n"),
                   inherited::mod_->name ()));
-#endif // _DEBUG
 
     buffered_bytes -= sizeof (parrot_video_encapsulation_t);
 
@@ -321,8 +315,7 @@ next:
   } // end IF
   if (message_block_2)
   {
-    buffer_ = dynamic_cast<DataMessageType*> (message_block_2);
-    ACE_ASSERT (buffer_);
+    buffer_ = static_cast<DataMessageType*> (message_block_2);
   } // end IF
   else
     buffer_ = NULL;
