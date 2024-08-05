@@ -66,8 +66,8 @@ struct Test_U_Configuration
   {}
 
   struct Stream_AllocatorConfiguration       allocatorConfiguration;
-  Net_ConnectionConfigurations_t             connectionConfigurations;
-  Net_ConnectionConfigurations_t             connectionConfigurations_2;
+  Net_ConnectionConfigurations_t             connectionConfigurations;   // navdata
+  Net_ConnectionConfigurations_t             connectionConfigurations_2; // control
   struct Common_EventDispatchConfiguration   dispatchConfiguration;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
@@ -77,8 +77,8 @@ struct Test_U_Configuration
   struct Common_FlexBisonParserConfiguration parserConfiguration;
   struct Common_FlexBisonParserConfiguration parserConfiguration_2;
   // **************************** stream data **********************************
-  Test_U_StreamConfiguration_t               streamConfiguration;
-  Test_U_StreamConfiguration_t               streamConfiguration_2;
+  Test_U_StreamConfiguration_t               streamConfiguration;   // navdata
+  Test_U_StreamConfiguration_t               streamConfiguration_2; // control
 };
 
 //////////////////////////////////////////
@@ -100,6 +100,7 @@ struct Test_U_UI_CBData
    , configuration (NULL)
    , controller (NULL)
    , openGLScene ()
+   , statistic ()
    , stream (NULL)
    , videoMode (ARDRONE_VIDEOMODE_360P)
   {}
@@ -107,6 +108,7 @@ struct Test_U_UI_CBData
   struct Test_U_Configuration* configuration;
   ARDrone_IController*         controller;
   struct Common_GL_Scene       openGLScene;
+  struct Stream_Statistic      statistic;
   Stream_IStreamControlBase*   stream;
   enum ARDrone_VideoMode       videoMode;
 };

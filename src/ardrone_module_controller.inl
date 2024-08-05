@@ -610,16 +610,16 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
         ACE_DEBUG ((LM_ERROR,
                     ACE_TEXT ("%s: failed to Net_Common_Tools::sendDatagram(%s,%s,%u): \"%m\", aborting\n"),
                     inherited::mod_->name (),
-                    ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-                    ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ()),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP, false, false).c_str ()),
+                    ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP, false, false).c_str ()),
                     sizeof (ACE_UINT32)));
         goto error;
       } // end IF
       //ACE_DEBUG ((LM_DEBUG,
       //            ACE_TEXT ("%s: subscribed to NavData (local: %s; peer: %s)\n"),
       //            inherited::mod_->name (),
-      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP).c_str ()),
-      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP).c_str ())));
+      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (local_SAP, false, false).c_str ()),
+      //            ACE_TEXT (Net_Common_Tools::IPAddressToString (remote_SAP, false, false).c_str ())));
 
 error:
       if (likely (message_block_p))

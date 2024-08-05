@@ -79,21 +79,21 @@ idle_initialize_UI_cb (gpointer userData_in)
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
-                             std::numeric_limits<double>::max ());
+                             static_cast<double> (std::numeric_limits<ACE_UINT64>::max ()));
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
       ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_SPINBUTTON_SESSIONMESSAGES_NAME)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
-                             std::numeric_limits<double>::max ());
+                             static_cast<double> (std::numeric_limits<ACE_UINT64>::max ()));
   spin_button_p =
     GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
       ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_SPINBUTTON_DATA_NAME)));
   ACE_ASSERT (spin_button_p);
   gtk_spin_button_set_range (spin_button_p,
                              0.0,
-                             std::numeric_limits<double>::max ());
+                             static_cast<double> (std::numeric_limits<ACE_UINT64>::max ()));
 
   GtkDrawingArea* drawing_area_p =
     GTK_DRAWING_AREA (gtk_builder_get_object ((*iterator).second.second,
@@ -187,7 +187,6 @@ idle_update_info_display_cb (gpointer userData_in)
   bool is_session_message = false;
   enum Common_UI_EventType* event_p = NULL;
   int result = -1;
-  enum Common_UI_EventType event_e = COMMON_UI_EVENT_INVALID;
   Common_UI_GTK_Manager_t* gtk_manager_p =
     COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
@@ -196,8 +195,8 @@ idle_update_info_display_cb (gpointer userData_in)
 
   { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, G_SOURCE_REMOVE);
     for (Common_UI_Events_t::ITERATOR iterator_2 (state_r.eventStack);
-         !iterator_2.done ();
-         iterator_2.next (event_p))
+         iterator_2.next (event_p);
+         iterator_2.advance ())
     { ACE_ASSERT (event_p);
       switch (*event_p)
       {
@@ -208,6 +207,7 @@ idle_update_info_display_cb (gpointer userData_in)
                                                      ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_SPINBUTTON_DATAMESSAGES_NAME)));
           ACE_ASSERT (spin_button_p);
           gtk_spin_button_set_value (spin_button_p, 0.0);
+
           spin_button_p =
             //GTK_SPIN_BUTTON (glade_xml_get_widget ((*iterator).second.second,
             //                                       ACE_TEXT_ALWAYS_CHAR (TEST_U_STREAM_UI_GTK_SPINBUTTON_SESSIONMESSAGES_NAME)));
@@ -237,6 +237,7 @@ idle_update_info_display_cb (gpointer userData_in)
           is_session_message = true;
           break;
         }
+        case COMMON_UI_EVENT_ABORT:
         case COMMON_UI_EVENT_STATISTIC:
         {
           spin_button_p =
@@ -248,20 +249,23 @@ idle_update_info_display_cb (gpointer userData_in)
         }
         default:
         {
-          ACE_DEBUG ((LM_ERROR,
+          ACE_DEBUG ((LM_WARNING,
                       ACE_TEXT ("invalid/unknown event type (was: %d), continuing\n"),
-                      event_e));
+                      *event_p));
+          spin_button_p = NULL;
           break;
         }
       } // end SWITCH
       ACE_UNUSED_ARG (is_session_message);
-      gtk_spin_button_spin (spin_button_p,
-                            GTK_SPIN_STEP_FORWARD,
-                            1.0);
+      if (likely (spin_button_p))
+        gtk_spin_button_spin (spin_button_p,
+                              GTK_SPIN_STEP_FORWARD,
+                              1.0);
       event_p = NULL;
     } // end FOR
 
     // clean up
+    Common_UI_EventType event_e;
     while (!state_r.eventStack.is_empty ())
     {
       result = state_r.eventStack.pop (event_e);
@@ -497,6 +501,14 @@ button_quit_clicked_cb (GtkWidget* widget_in,
     static_cast<struct Test_U_UI_CBData*> (userData_in);
   ACE_ASSERT (ui_cb_data_p);
   ACE_ASSERT (ui_cb_data_p->stream);
+  ACE_ASSERT (ui_cb_data_p->UIState);
+
+  // clear any event source(s)
+  for (Common_UI_GTK_EventSourceIdsIterator_t iterator = ui_cb_data_p->UIState->eventSourceIds.begin ();
+       iterator != ui_cb_data_p->UIState->eventSourceIds.end ();
+       ++iterator)
+    g_source_remove (*iterator);
+  ui_cb_data_p->UIState->eventSourceIds.clear ();
 
   // stop stream
   ui_cb_data_p->stream->stop (false,
@@ -504,7 +516,7 @@ button_quit_clicked_cb (GtkWidget* widget_in,
                               true);
 
   // step2: initiate shutdown sequence
-  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false); // do not wait for ourselves !
 
   return FALSE;
 } // button_quit_clicked_cb

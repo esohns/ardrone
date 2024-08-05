@@ -427,43 +427,11 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
 endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 if (UNIX)
  file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}" COMMAND)
-# if (GUI_SUPPORT)
-#  if (GTK_USE)
-#   set (ARGS "-g./etc/${ui_definition_file} ${ARGS}")
-#  elseif (WXWIDGETS_USE)
-#   set (ENVIRONMENT "DISPLAY=:0")
-#  endif ()
-# else ()
-#  set (ARGS "-g ${ARGS}")
-# endif (GUI_SUPPORT)
-
  set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
  set (ENVIRONMENT "GDK_BACKEND=x11")
 elseif (WIN32)
  file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}.exe" COMMAND)
  string (REPLACE "\\" "\\\\" COMMAND ${COMMAND})
-# if (GUI_SUPPORT)
-#  set (ARGS "-g.\\\\etc\\\\${ui_definition_file} ${ARGS}")
-
-#  if (GTK_USE)
-#   if (GTK3_USE)
-#    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk3/bin GTK_LIB_PATH)
-#    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-#                              G:/software/Development/dll
-#                              ${GTK_LIB_PATH})
-#   elseif (GTK2_USE)
-#    file (TO_CMAKE_PATH $ENV{LIB_ROOT}/gtk2/bin GTK_LIB_PATH)
-#    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-#                              G:/software/Development/dll
-#                              ${GTK_LIB_PATH})
-#   endif ()
-#  elseif (WXWIDGETS_USE)
-#   set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-#                             ${wxWidgets_LIB_DIR})
-#  endif ()
-# else ()
-#  set (ARGS "-g ${ARGS}")
-# endif (GUI_SUPPORT)
 #file (TO_CMAKE_PATH $ENV{LIB_ROOT}/libpng/cmake/${CMAKE_BUILD_TYPE} LIBPNG_PATH)
  # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
  file (TO_CMAKE_PATH "$ENV{VCPKG_INSTALLATION_ROOT}/installed/x64-windows/bin" VCPKG_PATH)

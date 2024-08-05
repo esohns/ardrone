@@ -38,11 +38,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
                                 ControlMessageType,
                                 DataMessageType,
                                 SessionMessageType,
-//#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//                                SessionDataContainerType>::ARDrone_Module_NavDataDecoder_T (ISTREAM_T* stream_in)
-//#else
                                 SessionDataContainerType>::ARDrone_Module_NavDataDecoder_T (typename inherited::ISTREAM_T* stream_in)
-//#endif
  : inherited (stream_in)
  , buffer_ (NULL)
  , bufferState_ (NULL)
@@ -126,129 +122,6 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
   return inherited::initialize (configuration_in,
                                 allocator_in);
-}
-
-//template <ACE_SYNCH_DECL,
-//          typename TimePolicyType,
-//          typename ConfigurationType,
-//          typename ControlMessageType,
-//          typename DataMessageType,
-//          typename SessionMessageType,
-//          typename SessionDataContainerType>
-//void
-//ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
-//                                TimePolicyType,
-//                                ConfigurationType,
-//                                ControlMessageType,
-//                                DataMessageType,
-//                                SessionMessageType,
-//                                SessionDataContainerType>::handleDataMessage (DataMessageType*& message_inout,
-//                                                                              bool& passMessageDownstream_out)
-//{
-//  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::handleDataMessage"));
-//
-//  int result = -1;
-//
-//  // initialize return value(s)
-//  // *NOTE*: the default behavior is to pass all messages along
-//  //         --> in this case, the individual frames are extracted and passed
-//  //             as such
-//  passMessageDownstream_out = false;
-//
-//  // append the "\0\0"-sequence, as required by flex
-//  ACE_ASSERT (message_inout->capacity () - message_inout->length () >= COMMON_PARSER_FLEX_BUFFER_BOUNDARY_SIZE);
-//  *(message_inout->wr_ptr ()) = YY_END_OF_BUFFER_CHAR;
-//  *(message_inout->wr_ptr () + 1) = YY_END_OF_BUFFER_CHAR;
-//  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
-//
-//  result = inherited::msg_queue_->enqueue_tail (message_inout,
-//                                                NULL);
-//  if (result == -1)
-//  {
-//    int error = ACE_OS::last_error ();
-//    if (error != ESHUTDOWN)
-//      ACE_DEBUG ((LM_ERROR,
-//                  ACE_TEXT ("%s: failed to ACE_Message_Queue::enqueue_tail(): \"%m\", returning\n"),
-//                  inherited::mod_->name ()));
-//
-//    // clean up
-//    message_inout->release ();
-//    message_inout = NULL;
-//
-//    return;
-//  } // end IF
-//  message_inout = NULL;
-//}
-
-template <ACE_SYNCH_DECL,
-          typename TimePolicyType,
-          typename ConfigurationType,
-          typename ControlMessageType,
-          typename DataMessageType,
-          typename SessionMessageType,
-          typename SessionDataContainerType>
-void
-ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
-                                TimePolicyType,
-                                ConfigurationType,
-                                ControlMessageType,
-                                DataMessageType,
-                                SessionMessageType,
-                                SessionDataContainerType>::handleSessionMessage (SessionMessageType*& message_inout,
-                                                                                 bool& passMessageDownstream_out)
-{
-  ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::handleSessionMessage"));
-
-  int result = -1;
-
-  // don't care (implies yes per default, if part of a stream)
-  ACE_UNUSED_ARG (passMessageDownstream_out);
-
-  // sanity check(s)
-  ACE_ASSERT (inherited::isInitialized_);
-
-  switch (message_inout->type ())
-  {
-    case STREAM_SESSION_MESSAGE_BEGIN:
-    {
-      result = inherited::activate ();
-      if (result == -1)
-      {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: failed to ACE_Task_T::activate(): \"%m\", aborting\n"),
-                    inherited::mod_->name ()));
-        goto error;
-      } // end IF
-
-      goto continue_;
-
-error:
-      this->notify (STREAM_SESSION_MESSAGE_ABORT);
-
-      break;
-
-continue_:
-      break;
-    }
-    case STREAM_SESSION_MESSAGE_END:
-    {
-      if (inherited::thr_count_)
-        inherited::stop ();
-      else
-      {
-        ACE_ASSERT (inherited::msg_queue_);
-        result = inherited::msg_queue_->deactivate ();
-        if (result == -1)
-          ACE_DEBUG ((LM_ERROR,
-                      ACE_TEXT ("%s: failed to ACE_Message_Queue::deactivate(): \"%m\", continuing\n"),
-                      inherited::mod_->name ()));
-      } // end ELSE
-
-      break;
-    }
-    default:
-      break;
-  } // end SWITCH
 }
 
 template <ACE_SYNCH_DECL,

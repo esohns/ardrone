@@ -43,7 +43,11 @@ class Test_U_EventHandler_T
  , public Common_IInitializeP_T<ARDrone_IControlNotify>
 {
  public:
+#if defined (GUI_SUPPORT)
+  Test_U_EventHandler_T (struct Test_U_UI_CBData*); // callback data handle
+#else
   Test_U_EventHandler_T ();
+#endif // GUI_SUPPORT
   inline virtual ~Test_U_EventHandler_T () {}
 
   // implement Stream_ISessionDataNotify_T
@@ -63,10 +67,15 @@ class Test_U_EventHandler_T
   inline bool initialize (const ARDrone_IControlNotify* notify_in) { notify_2_ = const_cast<ARDrone_IControlNotify*> (notify_in); return true; }
 
  private:
-//  ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T ())
+#if defined (GUI_SUPPORT)
+  ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T ())
+#endif // GUI_SUPPORT
   ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T (const Test_U_EventHandler_T&))
   ACE_UNIMPLEMENTED_FUNC (Test_U_EventHandler_T& operator= (const Test_U_EventHandler_T&))
 
+#if defined (GUI_SUPPORT)
+  struct Test_U_UI_CBData*                     CBData_;
+#endif // GUI_SUPPORT
   ARDrone_INavDataNotify*                      notify_;
   ARDrone_IControlNotify*                      notify_2_;
   typename SessionMessageType::DATA_T::DATA_T* sessionData_;

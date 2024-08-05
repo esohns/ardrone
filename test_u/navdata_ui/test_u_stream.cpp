@@ -233,21 +233,18 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
         ACE_ASSERT (option_2);
 
 #if defined (GUI_SUPPORT)
-#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
+//#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
         CBData_->openGLScene.orientation.x =
             option_2->phi; // roll (--> rotation along x)
         CBData_->openGLScene.orientation.y =
             option_2->psi; // yaw (--> rotation along y)
         CBData_->openGLScene.orientation.z =
             option_2->theta; // pitch (--> rotation along z)
-#if defined (_DEBUG)
-        ACE_DEBUG ((LM_DEBUG,
-                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n\n"),
-                    option_2->phi, option_2->psi, option_2->theta));
-#endif // _DEBUG
-#endif
+//#endif // (GTK_USE && GTKGL_SUPPORT) || (WXWIDGETS_USE && WXWIDGETS_GL_SUPPORT)
 #endif // GUI_SUPPORT
-
+        //ACE_DEBUG ((LM_DEBUG,
+        //            ACE_TEXT ("orientation (roll/pitch/yaw): %.2f/%.2f/%.2f\n"),
+        //            option_2->phi, option_2->psi, option_2->theta));
         break;
       }
       case NAVDATA_TIME_TAG: // 1
@@ -448,10 +445,10 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
       }
       default:
       {
-        ACE_DEBUG ((LM_ERROR,
-                    ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
-                    ACE_TEXT (stream_name_string_),
-                    option_p->tag));
+        //ACE_DEBUG ((LM_ERROR,
+        //            ACE_TEXT ("%s: invalid/unknown NavData option (was: %d), continuing\n"),
+        //            ACE_TEXT (stream_name_string_),
+        //            option_p->tag));
         break;
       }
     } // end SWITCH

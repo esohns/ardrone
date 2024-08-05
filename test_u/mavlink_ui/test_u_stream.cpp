@@ -206,11 +206,9 @@ Test_U_Stream::messageCB (const struct __mavlink_message& record_in,
     { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
       struct __mavlink_attitude_t* message_p =
           reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
-#if defined (_DEBUG)
         ACE_DEBUG ((LM_DEBUG,
-                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n\n"),
+                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n"),
                     message_p->roll, message_p->pitch, message_p->yaw));
-#endif // _DEBUG
       break;
     }
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33

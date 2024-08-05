@@ -138,12 +138,6 @@ class ARDrone_Module_NavDataDecoder_T
   virtual bool initialize (const ConfigurationType&,
                            Stream_IAllocator* = NULL);
 
-  // implement (part of) Stream_ITaskBase
-  //virtual void handleDataMessage (DataMessageType*&, // data message handle
-  //                                bool&);            // return value: pass message downstream ?
-  virtual void handleSessionMessage (SessionMessageType*&, // session message handle
-                                     bool&);               // return value: pass message downstream ?
-
   // implement (part of) ARDrone_NavData_IParser
   inline virtual bool initialize (const struct Common_FlexBisonParserConfiguration& configuration_in) { ACE_UNUSED_ARG (configuration_in); return true; }
   inline virtual void dump_state () const {}

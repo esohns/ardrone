@@ -303,7 +303,11 @@ do_work (bool useReactor_in,
   Test_U_UDPConnectionConfiguration_t udp_connection_configuration, udp_connection_configuration_2;
   Test_U_TCPConnectionManager_t* tcp_connection_manager_p = NULL;
   Test_U_UDPConnectionManager_t* udp_connection_manager_p = NULL;
+#if defined (GUI_SUPPORT)
+  Test_U_EventHandler_t ui_event_handler (&CBData_in);
+#else
   Test_U_EventHandler_t ui_event_handler;
+#endif // GUI_SUPPORT
 
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.allocatorConfiguration;
@@ -355,6 +359,7 @@ do_work (bool useReactor_in,
                                                                std::make_pair (&module_configuration,
                                                                                &modulehandler_configuration_io)));
 
+  stream_configuration_2 = stream_configuration;
   configuration_in.streamConfiguration_2.initialize (module_configuration,
                                                      modulehandler_configuration_2,
                                                      stream_configuration_2);
@@ -407,13 +412,14 @@ do_work (bool useReactor_in,
   udp_connection_configuration.socketConfiguration.listenAddress = ip_address;
   udp_connection_configuration.socketConfiguration.listenAddress.set_port_number (ARDRONE_PORT_UDP_NAVDATA,
                                                                                   1);
+  udp_connection_configuration.socketConfiguration.reuseAddress = true;
 
   tcp_connection_configuration.socketConfiguration.address = gateway_address;
   tcp_connection_configuration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                                             1);
-
   tcp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
   tcp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration_2;
+
   udp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
   udp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration;
   udp_connection_configuration_2.allocatorConfiguration = &configuration_in.allocatorConfiguration;
@@ -533,18 +539,35 @@ do_work (bool useReactor_in,
 //      //timer_manager_p->stop ();
 //      return;
 //    } // end IF
-//  control_stream.wait (true, false, false);
-  stream_p->wait (true, false, false);
 
-  // step3: clean up
-  timer_manager_p->stop ();
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+  gtk_manager_p->wait (false);
+#endif // GTK_USE
 
-  tcp_connection_manager_p->stop ();
-  udp_connection_manager_p->stop ();
+  tcp_connection_manager_p->stop (false);  // wait for completion ?
+  udp_connection_manager_p->stop (false);  // wait for completion ?
   tcp_connection_manager_p->abort (false); // wait for completion ?
   udp_connection_manager_p->abort (false); // wait for completion ?
   tcp_connection_manager_p->wait ();
   udp_connection_manager_p->wait ();
+
+  stream_p->wait (true, false, false);
+#else
+  stream_p->wait (true, false, false);
+
+  tcp_connection_manager_p->stop (false);  // wait for completion ?
+  udp_connection_manager_p->stop (false);  // wait for completion ?
+  tcp_connection_manager_p->abort (false); // wait for completion ?
+  udp_connection_manager_p->abort (false); // wait for completion ?
+  tcp_connection_manager_p->wait ();
+  udp_connection_manager_p->wait ();
+#endif // GUI_SUPPORT
+  control_stream.stop (true, false, false);
+
+  // step3: clean up
+  timer_manager_p->stop ();
+
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,  // wait ?
                                              false); // close singletons ?

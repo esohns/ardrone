@@ -350,9 +350,9 @@ target_precompile_headers (${EXECUTABLE}
 set (ui_definition_file "")
 if (GTK_USE)
  if (GTK3_USE)
-  set (ui_definition_file etc/${EXECUTABLE}.gtk3)
+  set (ui_definition_file ${EXECUTABLE}.gtk3)
  elseif (GTK2_USE)
-  set (ui_definition_file etc/${EXECUTABLE}.gtk2)
+  set (ui_definition_file ${EXECUTABLE}.gtk2)
  endif ()
 elseif (QT_USE)
 elseif (WXWIDGETS_USE)
@@ -362,7 +362,7 @@ install (TARGETS ${EXECUTABLE}
          EXPORT ${PROJECT_NAME}Targets
          RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT test_u)
 if (UNIX)
- install (FILES ${ui_definition_file}
+ install (FILES etc/${ui_definition_file}
           DESTINATION "${INSTALL_SHARE_DIR}/${PROJECT_NAME}/${EXECUTABLE}" COMPONENT config)
 elseif (WIN32)
  get_filename_component (ACE_LIB_PATH ${ACE_LIBRARY}
@@ -412,6 +412,7 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
  set (ARGS "${ARGS} -t")
 endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 if (UNIX)
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}" COMMAND)
  if (GUI_SUPPORT)
   if (GTK_USE)
    set (ARGS "-g./etc/${ui_definition_file} ${ARGS}")
@@ -425,6 +426,8 @@ if (UNIX)
  set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
  set (ENVIRONMENT "GDK_BACKEND=x11")
 elseif (WIN32)
+ file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}.exe" COMMAND)
+ string (REPLACE "\\" "\\\\" COMMAND ${COMMAND})
  if (GUI_SUPPORT)
   set (ARGS "-g.\\\\etc\\\\${ui_definition_file} ${ARGS}")
 
@@ -445,19 +448,23 @@ elseif (WIN32)
  else ()
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
- file (TO_CMAKE_PATH $ENV{LIB_ROOT}/ffmpeg/bin FFMPEG_PATH)
+ # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
+ file (TO_CMAKE_PATH "$ENV{VCPKG_INSTALLATION_ROOT}/installed/x64-windows/bin" VCPKG_PATH)
+ file (TO_CMAKE_PATH "${ffmpeg_LIB_DIR}" FFMPEG_PATH)
  file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_PATH)
- file (TO_CMAKE_PATH $ENV{PRJ_ROOT}/ACE_TAO/ACE/lib ACE_PATH)
+ file (TO_CMAKE_PATH "${ACE_LIB_DIR}" ACE_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                           ${VCPKG_PATH}
                            ${FFMPEG_PATH}
                            ${SSL_PATH}
                            ${ACE_PATH})
 endif ()
 create_target_launcher (${EXECUTABLE}
+                        COMMAND ${COMMAND}
                         ARGS ${ARGS}
 #                        FORWARD_ARGS
                         RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../test_u/mavlink_ui
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_u/navdata_ui
                         ENVIRONMENT ${ENVIRONMENT})
 
 ##########################################
