@@ -1,6 +1,5 @@
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
-#include "stdafx.h"
 
 #define YY_STRUCT_YY_BUFFER_STATE
 #include "ardrone_mavlink_scanner.h"

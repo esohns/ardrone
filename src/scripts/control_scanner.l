@@ -64,13 +64,13 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
                      unless there's another quote in the input. ..." */
 CATEGORY               [^:\n]
 COLON                  :
-DOT                    [\x00]
+DOT                    \x00
 EQUALS                 =
 KEY                    [^=\n]
 VALUE                  [^\n]
 OCTET                  [\x00-\xFF]
 
-%s                     dot_or_category
+%s                     category
 %s                     delimiter_1
 %s                     key
 %s                     delimiter_2
@@ -82,55 +82,64 @@ OCTET                  [\x00-\xFF]
 %{
   static std::string current_string;
   static ARDrone_DeviceConfigurationKeyValue_t current_key_value;
+
+  ARDrone_Control_IParser* iparser_p =
+    ARDrone_Control_Scanner_get_extra (yyscanner);
+  ACE_ASSERT (iparser_p);
 %}
 
 <INITIAL>{
-{OCTET}{1}      { yyless (0);
-                  BEGIN (dot_or_category); }
-} // end <INITIAL>
-<dot_or_category>{
-{DOT}           { // sanity check(s)
+{OCTET}{1}      { // sanity check(s)
+                  ACE_ASSERT (yyleng == 1);
+
+                  if (yytext[0] != '\0')
+                  {
+                    yyless (0);
+                    BEGIN (category);
+                    break;
+                  } // end IF
+
+                  // sanity check(s)
                   ACE_ASSERT (yyscanner);
 
-                  ARDrone_Control_IParser* iparser_p =
-                      ARDrone_Control_Scanner_get_extra (yyscanner);
-                  ACE_ASSERT (iparser_p);
+                  iparser_p->offset (1);
+
                   ARDrone_DeviceConfiguration_t* configuration_p =
                       &iparser_p->current ();
-
                   try {
                     iparser_p->record (configuration_p);
                   } catch (...) {
                     ACE_DEBUG ((LM_ERROR,
                                 ACE_TEXT ("caught exception in Net_IYaccStreamParser_T::record(), continuing\n")));
                   }
-                  BEGIN (INITIAL); }
-{CATEGORY}*     { current_string = yytext;
+                }
+} // end <INITIAL>
+<category>{
+{CATEGORY}+     { current_string = yytext;
+                  iparser_p->offset (yyleng);
                   BEGIN (delimiter_1); }
-} // end <dot_or_category>
+} // end <category>
 <delimiter_1>{
-:               { BEGIN (key); }
+:               { iparser_p->offset (1);
+                  BEGIN (key); }
 } // end <delimiter_1>
 <key>{
-{KEY}*          { current_key_value.first = yytext;
+{KEY}+          { iparser_p->offset (yyleng);
+                  current_key_value.first = yytext;
                   current_key_value.first =
                     Common_String_Tools::strip (current_key_value.first);
                   BEGIN (delimiter_2); }
 } // end <key>
 <delimiter_2>{
-=               { BEGIN (value); }
+=               { iparser_p->offset (1);
+                  BEGIN (value); }
 } // end <delimiter_2>
 <value>{
-{VALUE}*/\n     { current_key_value.second = yytext;
+{VALUE}+/\n     { iparser_p->offset (yyleng);
+                  current_key_value.second = yytext;
                   current_key_value.second =
                     Common_String_Tools::strip (current_key_value.second);
 
-                  // sanity check(s)
-                  ACE_ASSERT (yyscanner);
-
-                  ARDrone_Control_IParser* iparser_p =
-                    ARDrone_Control_Scanner_get_extra (yyscanner);
-                  ACE_ASSERT (iparser_p);
                   ARDrone_DeviceConfiguration_t& configuration_r =
                     iparser_p->current ();
 
@@ -152,10 +161,11 @@ OCTET                  [\x00-\xFF]
                   BEGIN (newline); }
 } // end <value>
 <newline>{
-\n               { current_string.clear ();
+\n               { iparser_p->offset (1);
+                   current_string.clear ();
                    current_key_value.first.clear ();
                    current_key_value.second.clear ();
-                   BEGIN (dot_or_category); }
+                   BEGIN (INITIAL); }
 } // end <newline>
 <*><<EOF>>       { return -1; }
 

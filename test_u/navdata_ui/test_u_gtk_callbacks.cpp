@@ -238,7 +238,10 @@ idle_update_info_display_cb (gpointer userData_in)
           break;
         }
         case COMMON_UI_EVENT_ABORT:
+        case COMMON_UI_EVENT_CONNECT:
+        case COMMON_UI_EVENT_DISCONNECT:
         case COMMON_UI_EVENT_STATISTIC:
+        case COMMON_UI_EVENT_STEP:
         {
           spin_button_p =
             GTK_SPIN_BUTTON (gtk_builder_get_object ((*iterator).second.second,
@@ -277,7 +280,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   std::ostringstream converter;
   converter.precision (5);
-  converter << std::ios::fixed << ui_cb_data_p->openGLScene.orientation.x;
+  converter << ui_cb_data_p->openGLScene.orientation.x;
   GtkLabel* label_p =
     GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_ROLL_NAME)));
@@ -287,7 +290,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << std::ios::fixed << ui_cb_data_p->openGLScene.orientation.y;
+  converter << ui_cb_data_p->openGLScene.orientation.y;
   label_p =
       GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                          ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_PITCH_NAME)));
@@ -297,7 +300,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << std::ios::fixed << ui_cb_data_p->openGLScene.orientation.z;
+  converter << ui_cb_data_p->openGLScene.orientation.z;
   label_p =
     GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_YAW_NAME)));

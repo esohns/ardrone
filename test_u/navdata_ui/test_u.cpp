@@ -299,6 +299,7 @@ do_work (bool useReactor_in,
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_source; // NetSource
   struct Test_U_StreamConfiguration stream_configuration;
   struct Test_U_StreamConfiguration stream_configuration_2;
+  struct Test_U_StreamConfiguration stream_configuration_net;
   Test_U_TCPConnectionConfiguration_t tcp_connection_configuration;
   Test_U_UDPConnectionConfiguration_t udp_connection_configuration, udp_connection_configuration_2;
   Test_U_TCPConnectionManager_t* tcp_connection_manager_p = NULL;
@@ -335,8 +336,10 @@ do_work (bool useReactor_in,
   Test_U_MessageHandler_Module message_handler (&stream,
                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
 
+  stream_configuration.dispatchConfiguration =
+    &configuration_in.dispatchConfiguration;
   stream_configuration.messageAllocator = &message_allocator;
-//  configuration_in.streamConfiguration.configuration_.module = &message_handler;
+  stream_configuration.module = &message_handler;
   stream_configuration.initializeNavData = &ui_event_handler;
   stream_configuration.CBData = &CBData_in;
 
@@ -352,20 +355,20 @@ do_work (bool useReactor_in,
   configuration_in.streamConfiguration.initialize (module_configuration,
                                                    modulehandler_configuration,
                                                    stream_configuration);
-  modulehandler_configuration_io = modulehandler_configuration;
-  modulehandler_configuration_io.concurrency =
-      STREAM_HEADMODULECONCURRENCY_CONCURRENT;
-  configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
-                                                               std::make_pair (&module_configuration,
-                                                                               &modulehandler_configuration_io)));
 
   stream_configuration_2 = stream_configuration;
   configuration_in.streamConfiguration_2.initialize (module_configuration,
                                                      modulehandler_configuration_2,
                                                      stream_configuration_2);
-  configuration_in.streamConfiguration_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
-                                                                 std::make_pair (&module_configuration,
-                                                                                 &modulehandler_configuration_io)));
+
+  modulehandler_configuration_io = modulehandler_configuration;
+  modulehandler_configuration_io.concurrency =
+      STREAM_HEADMODULECONCURRENCY_CONCURRENT;
+  stream_configuration_net = stream_configuration;
+  stream_configuration_net.module = NULL;
+  configuration_in.streamConfiguration_net.initialize (module_configuration,
+                                                       modulehandler_configuration_io,
+                                                       stream_configuration_net);
 
   // connection configuration
   tcp_connection_manager_p =
@@ -418,12 +421,12 @@ do_work (bool useReactor_in,
   tcp_connection_configuration.socketConfiguration.address.set_port_number (ARDRONE_PORT_TCP_CONTROL,
                                                                             1);
   tcp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
-  tcp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration_2;
+  tcp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration_net;
 
   udp_connection_configuration.allocatorConfiguration = &configuration_in.allocatorConfiguration;
-  udp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration;
+  udp_connection_configuration.streamConfiguration = &configuration_in.streamConfiguration_net;
   udp_connection_configuration_2.allocatorConfiguration = &configuration_in.allocatorConfiguration;
-  udp_connection_configuration_2.streamConfiguration = &configuration_in.streamConfiguration;
+  udp_connection_configuration_2.streamConfiguration = &configuration_in.streamConfiguration_net;
 
   configuration_in.connectionConfigurations_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (""),
                                                                       &tcp_connection_configuration));

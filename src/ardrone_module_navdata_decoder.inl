@@ -222,11 +222,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to ACE_Task_T::put_next(): \"%m\", returning\n"),
                 inherited::mod_->name ()));
-
-    // clean up
-    buffer_->release ();
-    buffer_ = NULL;
-
+    buffer_->release (); buffer_ = NULL;
     goto error;
   } // end IF
   buffer_ = NULL;

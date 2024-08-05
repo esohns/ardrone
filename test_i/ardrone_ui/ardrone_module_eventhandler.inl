@@ -46,16 +46,16 @@ ARDrone_Module_EventHandler_T<ConfigurationType>::handleDataMessage (ARDrone_Mes
                                 passMessageDownstream_out);
   ACE_ASSERT (message_inout && passMessageDownstream_out);
 
-  enum ARDrone_MessageType message_type_e =
-    static_cast<enum ARDrone_MessageType> (message_inout->type ());
-  if (message_type_e != ARDRONE_MESSAGE_ATCOMMAND)
-  {
-    // sanity check(s)
-    ACE_ASSERT (message_inout);
+  //enum ARDrone_MessageType message_type_e =
+  //  static_cast<enum ARDrone_MessageType> (message_inout->type ());
+  //if (message_type_e != ARDRONE_MESSAGE_ATCOMMAND)
+  //{
+  //  // sanity check(s)
+  //  ACE_ASSERT (message_inout);
 
-    message_inout->release ();
-    passMessageDownstream_out = false;
-  } // end IF
+  //  message_inout->release ();
+  //  passMessageDownstream_out = false;
+  //} // end IF
 }
 
 template <typename ConfigurationType>

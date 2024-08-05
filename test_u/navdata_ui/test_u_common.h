@@ -63,6 +63,7 @@ struct Test_U_Configuration
    , parserConfiguration_2 ()
    , streamConfiguration ()
    , streamConfiguration_2 ()
+   , streamConfiguration_net ()
   {}
 
   struct Stream_AllocatorConfiguration       allocatorConfiguration;
@@ -79,6 +80,7 @@ struct Test_U_Configuration
   // **************************** stream data **********************************
   Test_U_StreamConfiguration_t               streamConfiguration;   // navdata
   Test_U_StreamConfiguration_t               streamConfiguration_2; // control
+  Test_U_StreamConfiguration_t               streamConfiguration_net; // net
 };
 
 //////////////////////////////////////////

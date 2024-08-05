@@ -6,10 +6,6 @@
 #define YY_TYPEDEF_YY_CONTROL_SCANNER_T
 
 #include "ardrone_types.h"
-
-//#define YY_STRUCT_YY_BUFFER_STATE
-//#include "ardrone_control_scanner.h"
-//#undef YY_STRUCT_YY_BUFFER_STATE
 #endif
 
 // forward declarations
@@ -636,7 +632,7 @@ void yyfree ( void * , yyscan_t yyscanner );
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
-#define dot_or_category 1
+#define category 1
 #define delimiter_1 2
 #define key 3
 #define delimiter_2 4

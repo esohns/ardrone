@@ -144,7 +144,7 @@ class ARDrone_Module_ControlDecoder_T
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; }
   virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
-  inline virtual bool hasFinished () const { return !configuration_.empty (); }
+  inline virtual bool hasFinished () const { ACE_ASSERT (buffer_); return buffer_->total_length () == 0; }
 
   // implement (part of) Common_ILexScanner_T
 //  inline virtual const Common_ScannerState& getR_3 () const { ACE_ASSERT (false); ACE_NOTSUP_RETURN (Common_ScannerState ()); ACE_NOTREACHED (return Common_ScannerState ();) }
@@ -159,7 +159,7 @@ class ARDrone_Module_ControlDecoder_T
   virtual void end ();
   virtual bool switchBuffer (bool = false);
   virtual void waitBuffer ();
-  inline virtual void offset (unsigned int offset_in) { ARDrone_Control_Scanner_set_column (offset_in, inherited::state_); }
+  inline virtual void offset (unsigned int offset_in) { offset_ += offset_in; }
   virtual void error (const std::string&);
   inline virtual void setDebug (yyscan_t state_in, bool debug_in) { ACE_ASSERT (state_in); ARDrone_Control_Scanner_set_debug ((debug_in ? 1 : 0), state_in); }
   inline virtual void reset () { ARDrone_Control_Scanner_set_lineno (1, inherited::state_); ARDrone_Control_Scanner_set_column (1, inherited::state_); }
@@ -177,10 +177,12 @@ class ARDrone_Module_ControlDecoder_T
   // override some ACE_Task_T methods
   int svc (void);
 
-  DataMessageType*              buffer_;
+  DataMessageType*              buffer_; // current head
   YY_BUFFER_STATE               bufferState_;
   ARDrone_DeviceConfiguration_t configuration_;
+  ACE_Message_Block*            fragment_; // current-
   bool                          isFirst_;
+  unsigned int                  offset_;
   ARDrone_IDeviceConfiguration* subscriber_;
 };
 

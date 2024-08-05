@@ -63,7 +63,7 @@ Test_U_EventHandler_T<NotificationType,
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::start"));
 
   // sanity check(s)
-  ACE_ASSERT (!sessionData_);
+  //ACE_ASSERT (!sessionData_);
 
   sessionData_ =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (sessionData_in);
@@ -84,11 +84,6 @@ Test_U_EventHandler_T<NotificationType,
   ACE_UNUSED_ARG (sessionId_in);
   ACE_UNUSED_ARG (sessionEvent_in);
   ACE_UNUSED_ARG (expedite_in);
-
-  ACE_ASSERT (false);
-  ACE_NOTSUP;
-
-  ACE_NOTREACHED (return;)
 }
 
 template <typename NotificationType,
@@ -103,8 +98,8 @@ Test_U_EventHandler_T<NotificationType,
 
   ACE_UNUSED_ARG (sessionId_in);
 
-  if (sessionData_)
-    sessionData_ = NULL;
+  //if (sessionData_)
+  //  sessionData_ = NULL;
 }
 
 template <typename NotificationType,
@@ -191,12 +186,24 @@ Test_U_EventHandler_T<NotificationType,
       event_e = COMMON_UI_EVENT_ABORT; break;
     case STREAM_SESSION_MESSAGE_BEGIN:
       event_e = COMMON_UI_EVENT_STARTED; break;
+    case STREAM_SESSION_MESSAGE_LINK:
+    case STREAM_SESSION_MESSAGE_UNLINK:
+      event_e = COMMON_UI_EVENT_STEP; break;
+    case STREAM_SESSION_MESSAGE_CONNECT:
+      event_e = COMMON_UI_EVENT_CONNECT; break;
+    case STREAM_SESSION_MESSAGE_STEP_DATA:
+      event_e = COMMON_UI_EVENT_STEP; break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
       event_e = COMMON_UI_EVENT_STATISTIC; break;
+    case STREAM_SESSION_MESSAGE_DISCONNECT:
+      event_e = COMMON_UI_EVENT_DISCONNECT; break;
     case STREAM_SESSION_MESSAGE_END:
       event_e = COMMON_UI_EVENT_FINISHED; break;
     default:
+    {
+      ACE_ASSERT (false);
       break;
+    }
   } // end SWITCH
 
 #if defined (GUI_SUPPORT)

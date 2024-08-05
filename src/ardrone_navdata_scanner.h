@@ -4,11 +4,6 @@
 
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
-
-//#define YY_STRUCT_YY_BUFFER_STATE
-//#include "ardrone_navdata_scanner.h"
-//#undef YY_STRUCT_YY_BUFFER_STATE
-
 #endif
 
 // forward declarations

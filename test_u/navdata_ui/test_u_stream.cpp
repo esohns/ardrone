@@ -51,14 +51,14 @@ Test_U_Stream::Test_U_Stream ()
  : inherited ()
  , source_ (this,
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
+ , asynchSource_ (this,
+                  ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_NAVDATA_DECODER_NAME_STRING))
 // , report_ (this,
 //            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , controller_ (this,
                 ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING))
- , handler_ (this,
-             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
  , CBData_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
@@ -74,11 +74,13 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   // initialize return value(s)
   delete_out = false;
 
-  layout_inout->append (&source_, NULL, 0);
+  if (inherited::configuration_->configuration_->dispatchConfiguration->dispatch == COMMON_EVENT_DISPATCH_PROACTOR)
+    layout_inout->append (&asynchSource_, NULL, 0);
+  else
+    layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
 //  layout_inout->append (&report_, NULL, 0);
   layout_inout->append (&controller_, NULL, 0);
-  layout_inout->append (&handler_, NULL, 0);
 
   return true;
 }
@@ -117,6 +119,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   ACE_ASSERT (inherited::sessionData_);
   session_data_p =
     &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+  session_data_p->stream = this;
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
@@ -129,14 +132,14 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   // ---------------------------------------------------------------------------
 
   // ******************* Source ************************
-  source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
-  ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  //source_impl_p = dynamic_cast<Test_U_AsynchUDPSource*> (source_.writer ());
+  //ACE_ASSERT (source_impl_p);
+  //source_impl_p->setP (&(inherited::state_));
 
-  // *NOTE*: push()ing the module will open() it
-  //         --> set the argument that is passed along (head module expects a
-  //             handle to the session data)
-  source_.arg (inherited::sessionData_);
+  //// *NOTE*: push()ing the module will open() it
+  ////         --> set the argument that is passed along (head module expects a
+  ////             handle to the session data)
+  //source_.arg (inherited::sessionData_);
 
   if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
@@ -177,7 +180,6 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_Stream::messageCB"));
 
-  //#if defined (_DEBUG)
   //  // dump state
   //  ACE_DEBUG ((LM_DEBUG,
   //              ACE_TEXT ("state:\n\tflying: %s\n\tvideo: %s\n\tvision: %s\n\tcontrol algorithm: %s\n\taltitude control active: %s\n\tstart button state: %s\n\tcontrol command: %s\n\tcamera ready: %s\n\ttravelling: %s\n\tUSB key ready: %s\n\tNavData demo only: %s\n\tbootstrap mode: %s\n\tmotor status: %s\n\tCOM lost: %s\n\tsoftware fault: %s\n\tbattery low: %s\n\temergency landing (user): %s\n\ttimer elapsed: %s\n\tmagnetometer needs calibration: %s\n\tangles out of range: %s\n\twind mask: %s\n\tultrasound mask: %s\n\tcutout system: %s\n\tPIC version number: %s\n\tATcodec thread: %s\n\tNavData thread: %s\n\tvideo thread: %s\n\tacquisition thread: %s\n\tcontrol watchdog: %s\n\tADC watchdog: %s\n\tCOM watchdog: %s\n\temergency landing: %s\n"),
@@ -215,7 +217,6 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
   //              ((record_in.ardrone_state & ARDRONE_EMERGENCY_MASK) ? ACE_TEXT ("yes") : ACE_TEXT ("no"))));
 
   //  // *TODO*: dump options
-  //#endif
 
   struct _navdata_option_t* option_p = NULL;
   for (ARDrone_NavDataOptionOffsetsIterator_t iterator = offsets_in.begin ();
@@ -461,12 +462,12 @@ Test_U_ControlStream::Test_U_ControlStream ()
  : inherited ()
  , source_ (this,
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
+ , asynchSource_ (this,
+                  ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
             ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROL_DECODER_NAME_STRING))
- , report_ (this,
-            ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
- , handler_ (this,
-             ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING))
+ //, report_ (this,
+ //           ACE_TEXT_ALWAYS_CHAR (MODULE_STAT_REPORT_DEFAULT_NAME_STRING))
  , configuration_ (NULL)
 {
   ARDRONE_TRACE (ACE_TEXT ("Test_U_ControlStream::Test_U_ControlStream"));
@@ -482,10 +483,12 @@ Test_U_ControlStream::load (Stream_ILayout* layout_inout,
   // initialize return value(s)
   delete_out = false;
 
-  layout_inout->append (&source_, NULL, 0);
+  if (inherited::configuration_->configuration_->dispatchConfiguration->dispatch == COMMON_EVENT_DISPATCH_PROACTOR)
+    layout_inout->append (&asynchSource_, NULL, 0);
+  else
+    layout_inout->append (&source_, NULL, 0);
   layout_inout->append (&decode_, NULL, 0);
-  layout_inout->append (&report_, NULL, 0);
-//  layout_inout->append (&handler_, NULL, 0);
+  //layout_inout->append (&report_, NULL, 0);
 
   return true;
 }
@@ -524,6 +527,7 @@ Test_U_ControlStream::initialize (const typename inherited::CONFIGURATION_T& con
   ACE_ASSERT (inherited::sessionData_);
   session_data_p =
     &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+  session_data_p->stream = this;
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
@@ -548,14 +552,14 @@ Test_U_ControlStream::initialize (const typename inherited::CONFIGURATION_T& con
   // ---------------------------------------------------------------------------
 
   // ******************* Source ************************
-  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
-  ACE_ASSERT (source_impl_p);
-  source_impl_p->setP (&(inherited::state_));
+  //source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  //ACE_ASSERT (source_impl_p);
+  //source_impl_p->setP (&(inherited::state_));
 
-  // *NOTE*: push()ing the module will open() it
-  //         --> set the argument that is passed along (head module expects a
-  //             handle to the session data)
-  source_.arg (inherited::sessionData_);
+  //// *NOTE*: push()ing the module will open() it
+  ////         --> set the argument that is passed along (head module expects a
+  ////             handle to the session data)
+  //source_.arg (inherited::sessionData_);
 
   if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))
@@ -596,30 +600,28 @@ Test_U_ControlStream::messageCB (const ARDrone_DeviceConfiguration_t& deviceConf
                 ACE_TEXT (control_stream_name_string_)));
   }
 
-//#if defined (_DEBUG)
-//  // debug info
-//  unsigned int number_of_settings = 0;
-//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
-//       iterator != deviceConfiguration_in.end ();
-//       ++iterator)
-//    number_of_settings += (*iterator).second.size ();
-//  ACE_DEBUG ((LM_DEBUG,
-//              ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
-//              number_of_settings, deviceConfiguration_in.size ()));
-//  for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
-//       iterator != deviceConfiguration_in.end ();
-//       ++iterator)
-//  {
-//    ACE_DEBUG ((LM_DEBUG,
-//                ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
-//                ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
-//    for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
-//         iterator_2 != (*iterator).second.end ();
-//         ++iterator_2)
-//      ACE_DEBUG ((LM_DEBUG,
-//                  ACE_TEXT ("\t%s:\t%s\n"),
-//                  ACE_TEXT ((*iterator_2).first.c_str ()),
-//                  ACE_TEXT ((*iterator_2).second.c_str ())));
-//  } // end FOR
-//#endif
+  //// debug info
+  //unsigned int number_of_settings = 0;
+  //for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+  //     iterator != deviceConfiguration_in.end ();
+  //     ++iterator)
+  //  number_of_settings += (*iterator).second.size ();
+  //ACE_DEBUG ((LM_DEBUG,
+  //            ACE_TEXT ("received device configuration (%d setting(s) in %d categories):\n"),
+  //            number_of_settings, deviceConfiguration_in.size ()));
+  //for (ARDrone_DeviceConfigurationConstIterator_t iterator = deviceConfiguration_in.begin ();
+  //     iterator != deviceConfiguration_in.end ();
+  //     ++iterator)
+  //{
+  //  ACE_DEBUG ((LM_DEBUG,
+  //              ACE_TEXT ("--- \"%s\" (%d setting(s) ---):\n"),
+  //              ACE_TEXT ((*iterator).first.c_str ()), (*iterator).second.size ()));
+  //  for (ARDrone_DeviceConfigurationCategoryIterator_t iterator_2 = (*iterator).second.begin ();
+  //       iterator_2 != (*iterator).second.end ();
+  //       ++iterator_2)
+  //    ACE_DEBUG ((LM_DEBUG,
+  //                ACE_TEXT ("\t%s:\t%s\n"),
+  //                ACE_TEXT ((*iterator_2).first.c_str ()),
+  //                ACE_TEXT ((*iterator_2).second.c_str ())));
+  //} // end FOR
 }

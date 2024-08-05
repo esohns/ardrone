@@ -123,6 +123,7 @@ class Test_U_SessionData
                                    struct Stream_UserData> ()
    , connection (NULL)
    , connectionStates ()
+   , stream (NULL)
   {}
 
   Test_U_SessionData& operator= (const Test_U_SessionData& rhs_in)
@@ -135,6 +136,7 @@ class Test_U_SessionData
 
     connection = rhs_in.connection;
     connectionStates = rhs_in.connectionStates;
+    stream = rhs_in.stream ? rhs_in.stream : stream;
 
     return *this;
   }
@@ -150,12 +152,14 @@ class Test_U_SessionData
 
     connection = rhs_in.connection;
     connectionStates = rhs_in.connectionStates;
+    stream = rhs_in.stream ? rhs_in.stream : stream;
 
     return *this;
   }
 
   Test_U_IConnection_t*         connection;
   Stream_Net_ConnectionStates_t connectionStates;
+  Stream_Base_t*                stream;
 
  private:
 //  ACE_UNIMPLEMENTED_FUNC (Test_U_SessionData (const Test_U_SessionData&))
