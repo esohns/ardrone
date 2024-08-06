@@ -356,8 +356,7 @@ struct ARDrone_UI_ProgressData
 #elif defined (WXWIDGETS_USE)
   struct ARDrone_UI_wxWidgets_State* state;
 #endif // WXWIDGETS_USE
-  //struct ARDrone_Statistic           statistic;
-  struct Stream_Statistic            statistic;
+  struct ARDrone_Statistic           statistic;
 };
 
 struct ARDrone_UI_CBData_Base

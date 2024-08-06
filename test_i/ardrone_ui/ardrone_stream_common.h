@@ -26,15 +26,13 @@
 #include <unordered_map>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-//#include <combaseapi.h>
+//#include "combaseapi.h"
 #include "control.h"
 #include "d3d9.h"
 #include "evr.h"
 #include "strmif.h"
 #include "mfidl.h"
-//#include <minwindef.h>
-#else
-//#include "linux/videodev2.h"
+//#include "minwindef.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
@@ -107,15 +105,16 @@ struct ARDrone_UI_CBData_Base;
 //struct ARDrone_UserData;
 
 struct ARDrone_ConnectionState;
+typedef Net_StreamStatistic_T<struct ARDrone_Statistic> ARDrone_NetStatistic_t;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionState,
-                          struct Net_StreamStatistic> ARDrone_IConnection_t;
+                          ARDrone_NetStatistic_t> ARDrone_IConnection_t;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 class ARDrone_DirectShow_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct _AMMediaType,
                                         struct ARDrone_StreamState,
-                                        struct Stream_Statistic,
+                                        struct ARDrone_Statistic,
                                         struct Stream_UserData>
 {
  public:
@@ -123,7 +122,7 @@ class ARDrone_DirectShow_SessionData
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct _AMMediaType,
                                    struct ARDrone_StreamState,
-                                   struct Stream_Statistic,
+                                   struct ARDrone_Statistic,
                                    struct Stream_UserData> ()
    , builder (NULL)
    , connection (NULL)
@@ -142,7 +141,7 @@ class ARDrone_DirectShow_SessionData
     Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                   struct _AMMediaType,
                                   struct ARDrone_StreamState,
-                                  struct Stream_Statistic,
+                                  struct ARDrone_Statistic,
                                   struct Stream_UserData>::operator+= (rhs_in);
 
     //connection = rhs_in.connection;
@@ -209,7 +208,7 @@ class ARDrone_SessionData
  : public Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                         struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                         struct ARDrone_StreamState,
-                                        struct Stream_Statistic,
+                                        struct ARDrone_Statistic,
                                         struct Stream_UserData>
 {
  public:
@@ -217,7 +216,7 @@ class ARDrone_SessionData
    : Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                    struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                    struct ARDrone_StreamState,
-                                   struct Stream_Statistic,
+                                   struct ARDrone_Statistic,
                                    struct Stream_UserData> ()
    , connection (NULL)
    , connectionStates ()
@@ -237,7 +236,7 @@ class ARDrone_SessionData
     Stream_SessionDataMediaBase_T<struct Stream_SessionData,
                                   struct Stream_MediaFramework_FFMPEG_VideoMediaType,
                                   struct ARDrone_StreamState,
-                                  struct Stream_Statistic,
+                                  struct ARDrone_Statistic,
                                   struct Stream_UserData>::operator+= (rhs_in);
 
     stream = rhs_in.stream;

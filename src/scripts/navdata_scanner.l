@@ -78,6 +78,7 @@ HEADER                 \x88\x77\x66\x55
 
   static unsigned int option_offset = 0;
   static struct _navdata_option_t current_option_s;
+  static size_t option_data_bytes_i = 0;
 %}
 
 <INITIAL>{
@@ -153,23 +154,19 @@ HEADER                 \x88\x77\x66\x55
              current_option_s.size =
                ((ACE_BYTE_ORDER != ACE_LITTLE_ENDIAN) ? ACE_SWAP_WORD (*integer_p)
                                                       : *integer_p);
-
+             option_data_bytes_i = current_option_s.size - 4;
              BEGIN (option_data);
            }
 } // end <option_size>
 <option_data>{
-{OCTET}    { yyless (0);
+{OCTET}    { 
+             if (option_data_bytes_i)
+             {
+               --option_data_bytes_i;
+               if (option_data_bytes_i)
+                 break;
+             } // end IF
 
-             // skip ahead current_option_s.size bytes
-             /* undo the effects of YY_DO_BEFORE_ACTION */
-             *yy_cp = yyg->yy_hold_char;
-
-             char c = 0;
-             for (unsigned int i = (current_option_s.size - 4);
-                  i;
-                  --i)
-               c = yyinput (yyscanner);
-             ACE_UNUSED_ARG (c);
              option_offset += current_option_s.size - 4;
 
              if (current_option_s.tag != NAVDATA_CKS_TAG)
@@ -187,8 +184,6 @@ HEADER                 \x88\x77\x66\x55
                }
                BEGIN (INITIAL);
                option_offset = 0;
-
-               return 0;
              } // end ELSE
            }
 } // end <option_data>

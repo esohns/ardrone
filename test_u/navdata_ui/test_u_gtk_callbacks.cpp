@@ -19,8 +19,9 @@
  ***************************************************************************/
 #include "stdafx.h"
 
+#include "test_u_gtk_callbacks.h"
+
 #include "ace/Log_Msg.h"
-//#include "ace/Synch.h"
 
 #include "common_ui_defines.h"
 
@@ -31,8 +32,6 @@
 
 #include "test_u_common.h"
 #include "test_u_defines.h"
-
-#include "test_u_gtk_callbacks.h"
 
 // global variables
 bool un_toggling_start = false;
@@ -279,8 +278,8 @@ idle_update_info_display_cb (gpointer userData_in)
   } // end lock scope
 
   std::ostringstream converter;
-  converter.precision (5);
-  converter << ui_cb_data_p->openGLScene.orientation.x;
+  converter.precision (2);
+  converter << std::fixed << ui_cb_data_p->openGLScene.orientation.x;
   GtkLabel* label_p =
     GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_ROLL_NAME)));
@@ -290,7 +289,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << ui_cb_data_p->openGLScene.orientation.y;
+  converter << std::fixed << ui_cb_data_p->openGLScene.orientation.y;
   label_p =
       GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                          ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_PITCH_NAME)));
@@ -300,7 +299,7 @@ idle_update_info_display_cb (gpointer userData_in)
 
   converter.str (ACE_TEXT_ALWAYS_CHAR (""));
   converter.clear ();
-  converter << ui_cb_data_p->openGLScene.orientation.z;
+  converter << std::fixed << ui_cb_data_p->openGLScene.orientation.z;
   label_p =
     GTK_LABEL (gtk_builder_get_object ((*iterator).second.second,
                                        ACE_TEXT_ALWAYS_CHAR (TEST_U_UI_GTK_LABEL_YAW_NAME)));

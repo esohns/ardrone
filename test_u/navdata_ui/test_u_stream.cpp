@@ -234,18 +234,17 @@ Test_U_Stream::messageCB (const struct _navdata_t& record_in,
         ACE_ASSERT (option_2);
 
 #if defined (GUI_SUPPORT)
-//#if ((defined (GTK_USE) && defined (GTKGL_SUPPORT)) || (defined (WXWIDGETS_USE) && defined (WXWIDGETS_GL_SUPPORT)))
+        // *NOTE*: values are in milli-degrees
         CBData_->openGLScene.orientation.x =
-            option_2->phi; // roll (--> rotation along x)
+            option_2->phi / 1000.0f; // roll (--> rotation along x)
         CBData_->openGLScene.orientation.y =
-            option_2->psi; // yaw (--> rotation along y)
+            option_2->psi / 1000.0f; // yaw (--> rotation along y)
         CBData_->openGLScene.orientation.z =
-            option_2->theta; // pitch (--> rotation along z)
-//#endif // (GTK_USE && GTKGL_SUPPORT) || (WXWIDGETS_USE && WXWIDGETS_GL_SUPPORT)
+            option_2->theta / 1000.0f; // pitch (--> rotation along z)
 #endif // GUI_SUPPORT
         //ACE_DEBUG ((LM_DEBUG,
         //            ACE_TEXT ("orientation (roll/pitch/yaw): %.2f/%.2f/%.2f\n"),
-        //            option_2->phi, option_2->psi, option_2->theta));
+        //            CBData_->openGLScene.orientation.x, CBData_->openGLScene.orientation.y, CBData_->openGLScene.orientation.z));
         break;
       }
       case NAVDATA_TIME_TAG: // 1

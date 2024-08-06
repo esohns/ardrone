@@ -54,10 +54,12 @@ struct ARDrone_ConnectionState
   ARDrone_ConnectionState ()
    : Net_StreamConnectionState ()
    , configuration (NULL)
+   , statistic ()
   {}
 
   // *TODO*: consider making this a separate entity (i.e. a pointer)
   struct ARDrone_Configuration* configuration;
+  ARDrone_NetStatistic_t        statistic;
 };
 
 //struct ARDrone_ConnectionConfiguration
@@ -101,7 +103,7 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_DirectShow_StreamConfigurati
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_DirectShow_UDPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct Net_StreamStatistic,
+                                 ARDrone_NetStatistic_t,
                                  struct Net_UserData> ARDrone_DirectShow_IUDPConnectionManager_t;
 
 typedef Net_StreamConnectionConfiguration_T<ARDrone_MediaFoundation_StreamConfiguration_t,
@@ -109,7 +111,7 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_MediaFoundation_StreamConfig
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_MediaFoundation_UDPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct Net_StreamStatistic,
+                                 ARDrone_NetStatistic_t,
                                  struct Net_UserData> ARDrone_MediaFoundation_IUDPConnectionManager_t;
 #else
 typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,

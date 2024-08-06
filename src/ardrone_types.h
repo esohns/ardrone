@@ -156,16 +156,16 @@ struct ARDrone_Statistic
 {
   ARDrone_Statistic ()
    : Stream_Statistic ()
-   , streamStatistic ()
+   , statistics ()
   {
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_CONTROL,
-                                            Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_MAVLINK,
-                                            Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_NAVDATA,
-                                            Stream_Statistic ()));
-    streamStatistic.insert (std::make_pair (ARDRONE_STREAM_VIDEO,
-                                            Stream_Statistic ()));
+    statistics.insert (std::make_pair (ARDRONE_STREAM_CONTROL,
+                                       Stream_Statistic ()));
+    statistics.insert (std::make_pair (ARDRONE_STREAM_MAVLINK,
+                                       Stream_Statistic ()));
+    statistics.insert (std::make_pair (ARDRONE_STREAM_NAVDATA,
+                                       Stream_Statistic ()));
+    statistics.insert (std::make_pair (ARDRONE_STREAM_VIDEO,
+                                       Stream_Statistic ()));
   }
 
   struct ARDrone_Statistic operator+ ()
@@ -173,13 +173,15 @@ struct ARDrone_Statistic
     // *NOTE*: the idea is to merge the data
 
     Stream_Statistic::operator~ ();
-    for (ARDroneStreamStatisticConstIterator_t iterator = streamStatistic.begin ();
-         iterator != streamStatistic.end ();
+
+    for (ARDroneStreamStatisticConstIterator_t iterator = statistics.begin ();
+         iterator != statistics.end ();
          ++iterator)
     {
       *static_cast<struct Stream_Statistic*> (this) += (*iterator).second;
-      bytesPerSecond += (*iterator).second.bytesPerSecond;
-      messagesPerSecond += (*iterator).second.messagesPerSecond;
+
+      //bytesPerSecond += (*iterator).second.bytesPerSecond;
+      //messagesPerSecond += (*iterator).second.messagesPerSecond;
 
       timeStamp =
           ((timeStamp > (*iterator).second.timeStamp) ? timeStamp
@@ -189,7 +191,7 @@ struct ARDrone_Statistic
     return *this;
   }
 
-  ARDroneStreamStatistic_t streamStatistic;
+  ARDroneStreamStatistic_t statistics;
 };
 
 #endif // #ifndef ARDRONE_TYPES_H
