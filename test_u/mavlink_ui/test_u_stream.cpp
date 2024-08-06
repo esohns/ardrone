@@ -42,6 +42,7 @@
 
 Test_U_Stream::Test_U_Stream ()
  : inherited ()
+ , CBData_ (NULL)
  , source_ (this,
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
@@ -120,6 +121,8 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   configuration_p =
       dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> ((*iterator).second.second);
   ACE_ASSERT (configuration_p);
+
+  CBData_ = configuration_in.configuration_->CBData;
 
   // ---------------------------------------------------------------------------
 
@@ -206,9 +209,12 @@ Test_U_Stream::messageCB (const struct __mavlink_message& record_in,
     { ACE_ASSERT (record_in.len == sizeof (struct __mavlink_attitude_t));
       struct __mavlink_attitude_t* message_p =
           reinterpret_cast<struct __mavlink_attitude_t*> (payload_in);
-        ACE_DEBUG ((LM_DEBUG,
-                    ACE_TEXT ("orientation (roll/pitch/yaw): %f/%f/%f\n"),
-                    message_p->roll, message_p->pitch, message_p->yaw));
+      //ACE_DEBUG ((LM_DEBUG,
+      //            ACE_TEXT ("orientation (roll/pitch/yaw): %.2f/%.2f/%.2f\n"),
+      //            message_p->roll, message_p->pitch, message_p->yaw));
+      CBData_->openGLScene.orientation.x = message_p->roll;
+      CBData_->openGLScene.orientation.y = message_p->pitch;
+      CBData_->openGLScene.orientation.z = message_p->yaw;
       break;
     }
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: // 33

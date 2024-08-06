@@ -51,6 +51,7 @@ void ARDrone_MAVLink_Scanner_set_column (int, yyscan_t);
 %option nounistd nounput noyymore
 
 OCTET                  [\x00-\xFF]
+V20_START_CODE         \xFD
 V10_START_CODE         \xFE
 V09_START_CODE         \x55
 
@@ -75,6 +76,7 @@ V09_START_CODE         \x55
   ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
+  static size_t remaining_data_bytes_i = 0;
 %}
 
 <INITIAL>{
@@ -86,40 +88,36 @@ V09_START_CODE         \x55
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->len =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
+                                    remaining_data_bytes_i = message_p->len;
                                     BEGIN (sequence); }
 } // end <length>
 <sequence>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->seq =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (system_id); }
 } // end <sequence>
 <system_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->sysid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (component_id); }
 } // end <system_id>
 <component_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->compid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (message_id); }
 } // end <component_id>
 <message_id>{
 {OCTET}                           { ACE_ASSERT (message_p);
                                     message_p->msgid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (data); }
 } // end <message_id>
 <message_id_2>{
 {OCTET}{3}                        { ACE_ASSERT (message_p);
-                                    ACE_ASSERT (yyleng == 3 * sizeof (uint8_t));
+                                    ACE_ASSERT (yyleng == 3);
                                     message_p->msgid =
                                       ((*reinterpret_cast<uint8_t*> (yytext[0]))      |
                                        (*reinterpret_cast<uint8_t*> (yytext[1]) << 1) |
@@ -129,20 +127,13 @@ V09_START_CODE         \x55
 } // end <message_id_2>
 <data>{
 {OCTET}                           { ACE_ASSERT (message_p);
-                                    yyless (0);
 
-                                    // skip ahead message_r.len bytes
-                                    /* undo the effects of YY_DO_BEFORE_ACTION */
-                                    *yy_cp = yyg->yy_hold_char;
+                                    if (remaining_data_bytes_i)
+                                      --remaining_data_bytes_i;
 
-                                    char c = 0;
-                                    for (unsigned int i = 0;
-                                         i < message_p->len;
-                                         ++i)
-                                      c = yyinput (yyscanner);
-                                    ACE_UNUSED_ARG (c);
-
-                                    BEGIN (_checksum); }
+                                    if (!remaining_data_bytes_i)
+                                      BEGIN (_checksum);
+                                  }
 } // end <data>
 <_checksum>{
 {OCTET}{2}                        { ACE_ASSERT (message_p);

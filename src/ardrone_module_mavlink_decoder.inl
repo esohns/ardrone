@@ -75,7 +75,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 
   // frame the MAVLink message data
   int result = -1;
-  size_t remaining_bytes = record_inout->len + MAVLINK_NUM_CHECKSUM_BYTES;
+  size_t remaining_bytes =
+    static_cast<size_t> (record_inout->len) + MAVLINK_NUM_CHECKSUM_BYTES;
   size_t remaining_bytes_2 = ARDRPME_PROTOCOL_MAVLINK_HEADER_SIZE;
   size_t length = 0;
   size_t trailing_bytes_total, trailing_bytes = 0;
@@ -133,6 +134,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     message_block_p->rd_ptr (message_block_p->length () - trailing_bytes);
     ACE_ASSERT (message_block_p->total_length () == trailing_bytes_total);
   } // end IF
+  ACE_ASSERT (buffer_->total_length () == (static_cast<size_t> (record_inout->len) + MAVLINK_NUM_CHECKSUM_BYTES));
 
 //  // validate checksum
 //  byte_c = *(buffer_->rd_ptr () + record_inout->len + 1);
@@ -356,9 +358,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   // *IMPORTANT NOTE*: 'this' is the parser thread currently blocked in yylex()
 
   // sanity check(s)
-  ACE_ASSERT (inherited::msg_queue_);
   ACE_ASSERT (inherited::sessionData_);
-  //ACE_ASSERT (blockInParse_);
 
   session_data_p =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (inherited::sessionData_->getR ());
@@ -366,8 +366,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   // 1. wait for data
   do
   {
-    result = inherited::msg_queue_->dequeue_head (message_block_p,
-                                                  NULL);
+    result = inherited::parserQueue_.dequeue_head (message_block_p,
+                                                   NULL);
     if (result == -1)
     {
       int error = ACE_OS::last_error ();
@@ -422,7 +422,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     // requeue message ?
     if (message_block_p)
     {
-      result = inherited::msg_queue_->enqueue_tail (message_block_p, NULL);
+      result = inherited::parserQueue_.enqueue_tail (message_block_p, NULL);
       if (result == -1)
       {
         ACE_DEBUG ((LM_ERROR,

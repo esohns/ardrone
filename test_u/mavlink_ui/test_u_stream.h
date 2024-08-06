@@ -22,15 +22,15 @@
 #define TEST_U_STREAM_H
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#if COMMON_OS_WIN32_TARGET_PLATFORM(0x0602) // _WIN32_WINNT_WIN8
-#include <minwindef.h>
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0602) // _WIN32_WINNT_WIN8
+#include "minwindef.h"
 #else
-#include <windef.h>
-#endif // COMMON_OS_WIN32_TARGET_PLATFORM(0x0602)
-#include <winnt.h>
-#include <guiddef.h>
-#include <mfidl.h>
-#include <mfobjects.h>
+#include "windef.h"
+#endif // COMMON_OS_WIN32_TARGET_PLATFORM (0x0602)
+#include "winnt.h"
+#include "guiddef.h"
+#include "mfidl.h"
+#include "mfobjects.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Global_Macros.h"
@@ -107,11 +107,13 @@ class Test_U_Stream
   ACE_UNIMPLEMENTED_FUNC (Test_U_Stream (const Test_U_Stream&))
   ACE_UNIMPLEMENTED_FUNC (Test_U_Stream& operator= (const Test_U_Stream&))
 
+  struct Test_U_UI_CBData*      CBData_;
+
   // modules
   Test_U_AsynchUDPSource_Module source_;
   Test_U_MAVLinkDecoder_Module  decode_;
 //  Test_U_StatisticReport_Module report_;
-  Test_U_MessageHandler_Module handler_;
+  Test_U_MessageHandler_Module  handler_;
 };
 
 #endif

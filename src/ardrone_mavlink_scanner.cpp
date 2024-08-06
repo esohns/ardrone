@@ -1926,7 +1926,7 @@ static const yy_state_type yy_NUL_trans[35] =
 
 static const flex_int32_t yy_rule_linenum[11] =
     {   0,
-       82,   87,   94,  101,  108,  115,  122,  132,  149,  171
+       83,   88,   94,  100,  106,  112,  118,  128,  145,  167
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2384,8 +2384,7 @@ YY_DECL
   ACE_ASSERT (iparser_p);
 
   struct __mavlink_message* message_p = NULL;
-
-
+  static size_t remaining_data_bytes_i = 0;
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2481,7 +2480,7 @@ YY_RULE_SETUP
 { ACE_ASSERT (message_p);
                                     message_p->len =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
+                                    remaining_data_bytes_i = message_p->len;
                                     BEGIN (sequence); }
 	YY_BREAK
 // end <length>
@@ -2492,7 +2491,6 @@ YY_RULE_SETUP
 { ACE_ASSERT (message_p);
                                     message_p->seq =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (system_id); }
 	YY_BREAK
 // end <sequence>
@@ -2503,7 +2501,6 @@ YY_RULE_SETUP
 { ACE_ASSERT (message_p);
                                     message_p->sysid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (component_id); }
 	YY_BREAK
 // end <system_id>
@@ -2514,7 +2511,6 @@ YY_RULE_SETUP
 { ACE_ASSERT (message_p);
                                     message_p->compid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (message_id); }
 	YY_BREAK
 // end <component_id>
@@ -2525,7 +2521,6 @@ YY_RULE_SETUP
 { ACE_ASSERT (message_p);
                                     message_p->msgid =
                                       *reinterpret_cast<uint8_t*> (yytext);
-
                                     BEGIN (data); }
 	YY_BREAK
 // end <message_id>
@@ -2534,7 +2529,7 @@ case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
 { ACE_ASSERT (message_p);
-                                    ACE_ASSERT (yyleng == 3 * sizeof (uint8_t));
+                                    ACE_ASSERT (yyleng == 3);
                                     message_p->msgid =
                                       ((*reinterpret_cast<uint8_t*> (yytext[0]))      |
                                        (*reinterpret_cast<uint8_t*> (yytext[1]) << 1) |
@@ -2548,20 +2543,11 @@ case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
 { ACE_ASSERT (message_p);
-                                    yyless (0);
+                                    if (remaining_data_bytes_i)
+                                      --remaining_data_bytes_i;
 
-                                    // skip ahead message_r.len bytes
-                                    /* undo the effects of YY_DO_BEFORE_ACTION */
-                                    *yy_cp = yyg->yy_hold_char;
-
-                                    char c = 0;
-                                    for (unsigned int i = 0;
-                                         i < message_p->len;
-                                         ++i)
-                                      c = yyinput (yyscanner);
-                                    ACE_UNUSED_ARG (c);
-
-                                    BEGIN (_checksum); }
+                                    if (!remaining_data_bytes_i)
+                                      BEGIN (_checksum); }
 	YY_BREAK
 // end <data>
 

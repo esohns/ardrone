@@ -21,6 +21,8 @@
 #ifndef TEST_U_COMMON_H
 #define TEST_U_COMMON_H
 
+#include "common_gl_common.h"
+
 #include "common_parser_common.h"
 
 #if defined (GUI_SUPPORT)
@@ -73,17 +75,29 @@ struct Test_U_Configuration
 
 //////////////////////////////////////////
 
-struct Test_U_UI_GTK_CBData
+struct Test_U_UI_CBData
+#if defined (GTK_USE)
  : Common_UI_GTK_CBData
+#elif defined (QT_USE)
+ : Common_UI_Qt_CBData
+#endif
 {
-  Test_U_UI_GTK_CBData ()
+  Test_U_UI_CBData ()
+#if defined (GTK_USE)
    : Common_UI_GTK_CBData ()
+#elif defined (QT_USE)
+   : Common_UI_Qt_CBData ()
+#endif
    , configuration (NULL)
+   , openGLScene ()
    , stream (NULL)
+   , statistic ()
   {}
 
   struct Test_U_Configuration* configuration;
+  struct Common_GL_Scene       openGLScene;
   Stream_IStreamControlBase*   stream;
+  struct Stream_Statistic      statistic;
 };
 
 #endif

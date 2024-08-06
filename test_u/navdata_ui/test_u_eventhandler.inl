@@ -65,8 +65,9 @@ Test_U_EventHandler_T<NotificationType,
   // sanity check(s)
   //ACE_ASSERT (!sessionData_);
 
-  sessionData_ =
-    &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (sessionData_in);
+  if (!sessionData_)
+    sessionData_ =
+      &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (sessionData_in);
 }
 
 template <typename NotificationType,

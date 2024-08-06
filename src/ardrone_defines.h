@@ -228,9 +228,8 @@
 #endif
 
 // mavlink
-// *NOTE*: see mavlink header mavlink_message_t in mavlink_types.h
-//         +4 because of uint32_t msgid
-#define ARDRPME_PROTOCOL_MAVLINK_HEADER_SIZE               MAVLINK_CORE_HEADER_LEN + 4
+// *NOTE*: see e.g.: https://en.wikipedia.org/wiki/MAVLink
+#define ARDRPME_PROTOCOL_MAVLINK_HEADER_SIZE               MAVLINK_CORE_HEADER_MAVLINK1_LEN + 1 // includes start-of-frame
 
 // *** stream-related ***
 //#define ARDRONE_MESSAGE_BUFFER_SIZE                        65535 // bytes

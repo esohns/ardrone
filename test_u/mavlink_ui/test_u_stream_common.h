@@ -215,11 +215,13 @@ struct Test_U_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
    : Stream_Configuration ()
+   , CBData (NULL)
    , initializeMAVLink (NULL)
   {
     printFinalReport = true;
   }
 
+  struct Test_U_UI_CBData*                       CBData;
   Common_IInitializeP_T<ARDrone_IMAVLinkNotify>* initializeMAVLink;
 };
 typedef Stream_IStreamControl_T<enum Stream_ControlType,

@@ -23,8 +23,8 @@
 #include <string>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <initguid.h> // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
-#include <mfapi.h>
+#include "initguid.h" // *NOTE*: this exports DEFINE_GUIDs (see stream_misc_common.h)
+#include "mfapi.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Get_Opt.h"
@@ -276,7 +276,11 @@ do_work (bool useReactor_in,
          bool showConsole_in,
 #endif // ACE_WIN32 || ACE_WIN64
          const struct Common_UI_DisplayDevice& displayDevice_in,
-         struct Test_U_Configuration& configuration_in)
+         struct Test_U_Configuration& configuration_in
+#if defined (GUI_SUPPORT)
+         ,struct Test_U_UI_CBData& CBData_in
+#endif // GUI_SUPPORT
+        )
 {
   STREAM_TRACE (ACE_TEXT ("::do_work"));
 
@@ -286,7 +290,12 @@ do_work (bool useReactor_in,
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
   Test_U_UDPConnectionConfiguration_t connection_configuration;
   Test_U_ConnectionManager_t* connection_manager_p = NULL;
+#if defined (GUI_SUPPORT)
+  Test_U_EventHandler_t ui_event_handler (&CBData_in);
+  stream_configuration.CBData = &CBData_in;
+#else
   Test_U_EventHandler_t ui_event_handler;
+#endif // GUI_SUPPORT
 
   modulehandler_configuration.allocatorConfiguration =
     &configuration_in.allocatorConfiguration;
@@ -304,6 +313,12 @@ do_work (bool useReactor_in,
   Test_U_Stream stream;
   Test_U_MessageHandler_Module message_handler (&stream,
                                                 ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_MESSAGEHANDLER_DEFAULT_NAME_STRING));
+
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
+  CBData_in.stream = &stream;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   stream_configuration.messageAllocator = &message_allocator;
 //  configuration_in.streamConfiguration.configuration_.module = &message_handler;
@@ -622,6 +637,8 @@ ACE_TMAIN (int argc_in,
   struct Test_U_Configuration configuration;
 
 #if defined (GUI_SUPPORT)
+  struct Test_U_UI_CBData ui_cb_data_s;
+  ui_cb_data_s.configuration = &configuration;
 #if defined (GTK_USE)
   Common_UI_GtkBuilderDefinition_t gtk_ui_definition;
   Common_UI_GTK_Manager_t* gtk_manager_p =
@@ -632,8 +649,6 @@ ACE_TMAIN (int argc_in,
   state_r.builders[ACE_TEXT_ALWAYS_CHAR (COMMON_UI_DEFINITION_DESCRIPTOR_MAIN)] =
     std::make_pair (UI_definition_filename, static_cast<GtkBuilder*> (NULL));
 
-  struct Test_U_UI_GTK_CBData ui_cb_data_s;
-  ui_cb_data_s.configuration = &configuration;
   ui_cb_data_s.UIState = &state_r;
 
   configuration.GTKConfiguration.argc = argc_in;
@@ -658,7 +673,11 @@ ACE_TMAIN (int argc_in,
            show_console,
 #endif // ACE_WIN32 || ACE_WIN64
            display_device_s,
-           configuration);
+           configuration
+#if defined (GUI_SUPPORT)
+           ,ui_cb_data_s
+#endif // GUI_SUPPORT
+          );
   timer.stop ();
 
   // debug info

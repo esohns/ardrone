@@ -29,10 +29,21 @@
 template <typename NotificationType,
           typename DataMessageType,
           typename SessionMessageType>
+#if defined (GUI_SUPPORT)
 Test_U_EventHandler_T<NotificationType,
-                                   DataMessageType,
-                                   SessionMessageType>::Test_U_EventHandler_T ()
- : MAVLinkNotify_ (NULL)
+                      DataMessageType,
+                      SessionMessageType>::Test_U_EventHandler_T (struct Test_U_UI_CBData* CBData_in)
+#else
+Test_U_EventHandler_T<NotificationType,
+                      DataMessageType,
+                      SessionMessageType>::Test_U_EventHandler_T ()
+#endif // GUI_SUPPORT
+#if defined (GUI_SUPPORT)
+ : CBData_ (CBData_in)
+ , MAVLinkNotify_ (NULL)
+#else
+ : MAVLinkNotify_(NULL)
+#endif // GUI_SUPPORT
  , sessionData_ (NULL)
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_EventHandler_T::Test_U_EventHandler_T"));
@@ -121,6 +132,14 @@ Test_U_EventHandler_T<NotificationType,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("caught exception in ARDrone_IMAVLinkNotify::messageCB(), returning\n")));
   }
+
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_Thread_Mutex, aGuard, CBData_->UIState->lock);
+    CBData_->UIState->eventStack.push (COMMON_UI_EVENT_DATA);
+  } // end lock scope
+
+  CBData_->statistic = sessionData_->statistic;
+#endif // GUI_SUPPORT
 }
 
 template <typename NotificationType,
@@ -140,19 +159,35 @@ Test_U_EventHandler_T<NotificationType,
   enum Common_UI_EventType event_e = COMMON_UI_EVENT_INVALID;
   switch (sessionMessage_in.type ())
   {
+    case STREAM_SESSION_MESSAGE_ABORT:
+      event_e = COMMON_UI_EVENT_ABORT; break;
+    case STREAM_SESSION_MESSAGE_BEGIN:
+      event_e = COMMON_UI_EVENT_STARTED; break;
+    case STREAM_SESSION_MESSAGE_LINK:
+    case STREAM_SESSION_MESSAGE_UNLINK:
+      event_e = COMMON_UI_EVENT_STEP; break;
+    case STREAM_SESSION_MESSAGE_CONNECT:
+      event_e = COMMON_UI_EVENT_CONNECT; break;
+    case STREAM_SESSION_MESSAGE_STEP_DATA:
+      event_e = COMMON_UI_EVENT_STEP; break;
     case STREAM_SESSION_MESSAGE_STATISTIC:
+      event_e = COMMON_UI_EVENT_STATISTIC; break;
+    case STREAM_SESSION_MESSAGE_DISCONNECT:
+      event_e = COMMON_UI_EVENT_DISCONNECT; break;
+    case STREAM_SESSION_MESSAGE_END:
+      event_e = COMMON_UI_EVENT_FINISHED; break;
+    default:
     {
-      float current_bytes = 0.0F;
-
-      // sanity check(s)
-      if (!sessionData_)
-        goto continue_;
-
-continue_:
-      event_e = COMMON_UI_EVENT_STATISTIC;
+      ACE_ASSERT (false);
       break;
     }
-    default:
-      return;
   } // end SWITCH
+
+#if defined (GUI_SUPPORT)
+  { ACE_GUARD (ACE_Thread_Mutex, aGuard, CBData_->UIState->lock);
+    CBData_->UIState->eventStack.push (event_e);
+  } // end lock scope
+
+  CBData_->statistic = sessionData_->statistic;
+#endif // GUI_SUPPORT
 }
