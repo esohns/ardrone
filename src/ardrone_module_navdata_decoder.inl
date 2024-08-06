@@ -639,6 +639,16 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_NavDataDecoder_T::svc"));
 
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
+#if COMMON_OS_WIN32_TARGET_PLATFORM (0x0A00) // _WIN32_WINNT_WIN10
+    Common_Error_Tools::setThreadName (ACE_TEXT_ALWAYS_CHAR ("NavData decoder"),
+                                       NULL);
+#else
+    Common_Error_Tools::setThreadName (ACE_TEXT_ALWAYS_CHAR ("NavData decoder"),
+                                       0);
+#endif // _WIN32_WINNT_WIN10
+#endif // ACE_WIN32 || ACE_WIN64
+
   // sanity check(s)
   ACE_ASSERT (inherited::sessionData_);
   ACE_ASSERT (inherited::state_);

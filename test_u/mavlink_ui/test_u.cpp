@@ -448,13 +448,16 @@ do_work (bool useReactor_in,
 //      //timer_manager_p->stop ();
 //      return;
 //    } // end IF
-  stream_p->wait (true, false, false);
+  stream_p->wait (true,   // wait for completion ?
+                  false,
+                  false);
 
   // step3: clean up
   timer_manager_p->stop ();
 
-  connection_manager_p->stop ();
-  connection_manager_p->abort (true); // wait for completion ?
+  connection_manager_p->stop (false);  // wait for completion ?
+  connection_manager_p->abort (false); // wait for completion ?
+  connection_manager_p->wait ();
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,  // wait ?
                                              true); // close singletons ?

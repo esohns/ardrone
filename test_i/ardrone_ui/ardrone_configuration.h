@@ -193,17 +193,17 @@ struct ARDrone_SignalConfiguration
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-//typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State> ARDrone_GtkBuilderDefinition_t;
+typedef Common_UI_GtkBuilderDefinition_T<struct ARDrone_UI_GTK_State> ARDrone_GtkBuilderDefinition_t;
 
 struct ARDrone_GTK_Configuration
- : Common_UI_GTK_Configuration
+ : Common_UI_GTK_Configuration_t
 {
   ARDrone_GTK_Configuration ()
-   : Common_UI_GTK_Configuration ()
-   //, definition (NULL)
+   : Common_UI_GTK_Configuration_t ()
+   , definition (NULL)
   {}
 
-  //ARDrone_GtkBuilderDefinition_t::INTERFACE_T* definition;
+  ARDrone_GtkBuilderDefinition_t::INTERFACE_T* definition;
 };
 #endif // GTK_USE
 #endif // GUI_SUPPORT
@@ -234,7 +234,7 @@ struct ARDrone_Configuration_Base
   struct Net_WLAN_MonitorConfiguration                WLANMonitorConfiguration;
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  Common_UI_GTK_Configuration_t                       GTKConfiguration;
+  struct ARDrone_GTK_Configuration                    GTKConfiguration;
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -331,21 +331,21 @@ struct ARDrone_UI_wxWidgets_State
 
   ARDrone_Events_t eventStack;
 };
-#endif
+#endif // GTK_USE || WXWIDGETS_USE
 
 struct ARDrone_UI_ProgressData
 #if defined (GTK_USE)
  : Common_UI_GTK_ProgressData
 #elif defined (WXWIDGETS_USE)
  : Common_UI_wxWidgets_ProgressData
-#endif
+#endif // GTK_USE || WXWIDGETS_USE
 {
   ARDrone_UI_ProgressData ()
 #if defined (GTK_USE)
    : Common_UI_GTK_ProgressData ()
 #elif defined (WXWIDGETS_USE)
    : Common_UI_wxWidgets_ProgressData ()
-#endif
+#endif // GTK_USE || WXWIDGETS_USE
    , state (NULL)
    , statistic ()
   {}
@@ -355,7 +355,7 @@ struct ARDrone_UI_ProgressData
   //struct ARDrone_UI_GTK_State*       state;
 #elif defined (WXWIDGETS_USE)
   struct ARDrone_UI_wxWidgets_State* state;
-#endif // WXWIDGETS_USE
+#endif // GTK_USE || WXWIDGETS_USE
   struct ARDrone_Statistic           statistic;
 };
 
@@ -508,27 +508,12 @@ struct ARDrone_ThreadData
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-//                                Common_UI_GTK_Configuration_t,
-//                                struct ARDrone_UI_GTK_State,
-//                                struct ARDrone_DirectShow_UI_CBData> ARDrone_DirectShow_GTK_Manager_t;
-//typedef ACE_Singleton<ARDrone_DirectShow_GTK_Manager_t,
-//                      ACE_MT_SYNCH::MUTEX> ARDRONE_DIRECTSHOW_GTK_MANAGER_SINGLETON;
-//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-//                                Common_UI_GTK_Configuration_t,
-//                                struct ARDrone_UI_GTK_State,
-//                                struct ARDrone_MediaFoundation_UI_CBData> ARDrone_MediaFoundation_GTK_Manager_t;
-//typedef ACE_Singleton<ARDrone_MediaFoundation_GTK_Manager_t,
-//                      ACE_MT_SYNCH::MUTEX> ARDRONE_MEDIAFOUNDATION_GTK_MANAGER_SINGLETON;
-#else
-//typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
-//                                struct ARDrone_GTK_Configuration,
-//                                struct ARDrone_UI_GTK_State,
-//                                gpointer> ARDrone_UI_GTK_Manager_t;
-//typedef ACE_Singleton<ARDrone_UI_GTK_Manager_t,
-//                      ACE_MT_SYNCH::MUTEX> ARDRONE_GTK_MANAGER_SINGLETON;
-#endif // ACE_WIN32 || ACE_WIN64
+typedef Common_UI_GTK_Manager_T<ACE_MT_SYNCH,
+                                struct ARDrone_GTK_Configuration,
+                                struct ARDrone_UI_GTK_State,
+                                gpointer> ARDrone_GTK_Manager_t;
+typedef ACE_Singleton<ARDrone_GTK_Manager_t,
+                      ACE_MT_SYNCH::MUTEX> ARDRONE_GTK_MANAGER_SINGLETON;
 
 //////////////////////////////////////////
 

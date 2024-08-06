@@ -1763,8 +1763,8 @@ do_work (int argc_in,
   struct ARDrone_StreamConfiguration stream_configuration_5; // Network (i.e. connection stream-)
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  Common_UI_GTK_Manager_t* gtk_manager_p =
-      COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
+  ARDrone_GTK_Manager_t* gtk_manager_p =
+    ARDRONE_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
 #endif // GTK_USE
 #endif // GUI_SUPPORT
@@ -3766,9 +3766,9 @@ ACE_TMAIN (int argc_in,
 #endif // GUI_SUPPORT
 
 #if defined (GTK_USE)
-  Common_UI_GtkBuilderDefinition_t ui_definition;
-  //ARDrone_GtkBuilderDefinition_t ui_definition;
-  Common_UI_GTK_Configuration_t* gtk_configuration_p = NULL;
+  //Common_UI_GtkBuilderDefinition_t ui_definition;
+  ARDrone_GtkBuilderDefinition_t ui_definition;
+  struct ARDrone_GTK_Configuration* gtk_configuration_p = NULL;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   switch (STREAM_LIB_DEFAULT_MEDIAFRAMEWORK)
   {
@@ -3807,11 +3807,11 @@ ACE_TMAIN (int argc_in,
 
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
-  Common_UI_GTK_Manager_t* gtk_manager_p =
-    COMMON_UI_GTK_MANAGER_SINGLETON::instance ();
+  ARDrone_GTK_Manager_t* gtk_manager_p =
+    ARDRONE_GTK_MANAGER_SINGLETON::instance ();
   ACE_ASSERT (gtk_manager_p);
-  Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (gtk_manager_p->getR ());
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (gtk_manager_p->getR ());
   ui_definition.initialize (state_r);
   gtk_manager_p->initialize (*gtk_configuration_p);
 #elif defined (WXWIDGETS_USE)

@@ -2573,7 +2573,9 @@ YY_RULE_SETUP
                                       yyterminate ();
                                     }
 
-                                    BEGIN (INITIAL); }
+                                    BEGIN (INITIAL);
+                                    
+                                    return 0; }
 	YY_BREAK
 // end <checksum>
 case YY_STATE_EOF(INITIAL):

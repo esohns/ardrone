@@ -169,9 +169,11 @@ class ARDrone_Module_MAVLinkDecoder_T
   // override some ACE_Task_T methods
   virtual int svc (void);
 
-  DataMessageType* buffer_;
-  YY_BUFFER_STATE  bufferState_;
-  bool             isFirst_;
+  DataMessageType*   buffer_; // current head-
+  YY_BUFFER_STATE    bufferState_;
+  ACE_Message_Block* fragment_; // current-
+  bool               isFirst_;
+  bool               beginWithFragment_; // not fragment_->cont () (!)
 };
 
 // include template definition

@@ -22,7 +22,6 @@
 #include "ardrone_eventhandler.h"
 
 #include <functional>
-using namespace std::placeholders;
 
 #include "ace/Guard_T.h"
 #include "ace/Synch_Traits.h"
@@ -82,8 +81,8 @@ ARDrone_EventHandler::start (Stream_SessionId_t sessionId_in,
 #if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
 #if defined (GTK_USE)
-  Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR ());
 #endif // GTK_USE
 #endif // GUI_SUPPORT
   ACE_ASSERT (sessionData_in.state);
@@ -136,8 +135,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
   const ARDrone_MessageData_t& data_container_r = message_in.getR ();
   const struct ARDrone_MessageData& data_r = data_container_r.getR ();
 #if defined (GTK_USE)
-  Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+    struct ARDrone_UI_GTK_State& state_r =
+    const_cast<ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR ());
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -155,7 +154,7 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
     case ARDRONE_MESSAGE_ATCOMMAND:
     {
       message_event_b = false; // do not register outbound messages
-      //stream_type_e = ARDRONE_STREAM_NAVDATA;
+      event_s.first = ARDRONE_STREAM_NAVDATA;
       break;
     }
     case ARDRONE_MESSAGE_CONTROL:
@@ -228,13 +227,13 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
     { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
-//    iterator =
-//      CBData_.progressData->statistic.streamStatistic.find (stream_type_e);
-//    ACE_ASSERT (iterator != CBData_.progressData->statistic.streamStatistic.end ());
-//    (*iterator).second.bytes += message_in.total_length ();
-//    ++(*iterator).second.dataMessages;
-//    +CBData_.progressData->statistic;
-      //state_r.eventStack.push (event_s);
+      iterator =
+        CBData_->progressData.statistic.statistics.find (event_s.first);
+      ACE_ASSERT (iterator != CBData_->progressData.statistic.statistics.end ());
+      (*iterator).second.bytes += message_in.total_length ();
+      ++(*iterator).second.dataMessages;
+      +CBData_->progressData.statistic; // merge everything into itself
+      state_r.eventStack.push (event_s);
     } // end lock scope
 #endif // GTK_USE
 #endif // GUI_SUPPORT
@@ -281,8 +280,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #if defined (GUI_SUPPORT)
   ACE_ASSERT (CBData_);
 #if defined (GTK_USE)
-  Common_UI_GTK_State_t& state_r =
-    const_cast<Common_UI_GTK_State_t&> (COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->getR ());
+  struct ARDrone_UI_GTK_State& state_r =
+    const_cast<struct ARDrone_UI_GTK_State&> (ARDRONE_GTK_MANAGER_SINGLETON::instance ()->getR ());
 #endif // GTK_USE
 #endif // GUI_SUPPORT
 
@@ -307,7 +306,8 @@ ARDrone_EventHandler::notify (Stream_SessionId_t sessionId_in,
 #endif // ACE_WIN32 || ACE_WIN64
       iterator =
         std::find_if (streams_.begin (), streams_.end (),
-                      std::bind (SESSIONID_TO_STREAM_MAP_FIND_S (), _1,
+                      std::bind (SESSIONID_TO_STREAM_MAP_FIND_S (),
+                                 std::placeholders::_1,
                                  session_data_r.state->type));
       if (iterator == streams_.end ())
       {
@@ -589,7 +589,7 @@ continue_:
 #if defined (GTK_USE)
       { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
 #endif // GTK_USE
-        //CBData_->progressData.statistic = session_data_r.statistic;
+        CBData_->progressData.statistic = session_data_r.statistic;
 #if defined (GTK_USE)
       } // end lock scope
 #endif // GTK_USE
@@ -617,7 +617,7 @@ continue_:
 #if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
-    //state_r.eventStack.push (event_s);
+    state_r.eventStack.push (event_s);
   } // end lock scope
 #endif // GTK_USE
 #endif // GUI_SUPPORT
