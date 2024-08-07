@@ -3482,12 +3482,7 @@ continue_2:
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
       directshow_tcp_connection_manager_p->stop (false); // wait for completion ?
-      directshow_tcp_connection_manager_p->abort (false); // wait for completion ?
-      directshow_tcp_connection_manager_p->wait ();
-
       directshow_udp_connection_manager_p->stop (false); // wait for completion ?
-      directshow_udp_connection_manager_p->abort (false); // wait for completion ?
-      directshow_udp_connection_manager_p->wait ();
 
       // prevent crash when module falls off the stack before the stream
       directshow_control_stream.stop (true,   // wait for completion ?
@@ -3526,6 +3521,12 @@ continue_2:
                                                true,   // lock ?
                                                false); // reset ?
       } // end ELSE
+
+      directshow_tcp_connection_manager_p->abort (false); // wait for completion ?
+      directshow_tcp_connection_manager_p->wait ();
+
+      directshow_udp_connection_manager_p->abort (false); // wait for completion ?
+      directshow_udp_connection_manager_p->wait ();
 
       break;
     }

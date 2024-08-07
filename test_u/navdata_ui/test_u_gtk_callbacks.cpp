@@ -513,9 +513,9 @@ button_quit_clicked_cb (GtkWidget* widget_in,
   ui_cb_data_p->UIState->eventSourceIds.clear ();
 
   // stop stream
-  ui_cb_data_p->stream->stop (false,
-                              true,
-                              true);
+  ui_cb_data_p->stream->stop (false,  // wait for completion ?
+                              false,  // recurse upstream ?
+                              false); // high priority ?
 
   // step2: initiate shutdown sequence
   COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false); // do not wait for ourselves !

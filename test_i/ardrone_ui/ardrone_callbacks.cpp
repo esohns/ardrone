@@ -25,7 +25,7 @@
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
-#include <ifaddrs.h>
+#include "ifaddrs.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (GLEW_SUPPORT)
@@ -42,11 +42,11 @@
 #include "glm/glm.hpp"
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <cguid.h>
-#include <PhysicalMonitorEnumerationAPI.h>
-#include <mfapi.h>
-#include <mfidl.h>
-#include <wlanapi.h>
+#include "cguid.h"
+#include "PhysicalMonitorEnumerationAPI.h"
+#include "mfapi.h"
+#include "mfidl.h"
+#include "wlanapi.h"
 #endif // ACE_WIN32 || ACE_WIN64
 
 #ifdef __cplusplus
@@ -90,11 +90,6 @@ extern "C"
 #include "common_ui_gtk_manager_common.h"
 
 #include "stream_dec_tools.h"
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dev_directshow_tools.h"
-#include "stream_dev_tools.h"
-#endif // ACE_WIN32 || ACE_WIN64
 
 #include "stream_vis_common.h"
 
@@ -2409,12 +2404,17 @@ idle_session_end_cb (gpointer userData_in)
     GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_TRIM)));
   ACE_ASSERT (toggle_action_p);
-  gtk_action_set_sensitive (action_p, false);
+  gtk_action_set_sensitive (action_p, FALSE);
+  action_p =
+    GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
+                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_LEDS)));
+  ACE_ASSERT (action_p);
+  gtk_action_set_sensitive (action_p, FALSE);
   action_p =
     GTK_ACTION (gtk_builder_get_object ((*iterator).second.second,
                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_ACTION_CALIBRATE)));
   ACE_ASSERT (action_p);
-  gtk_action_set_sensitive (action_p, false);
+  gtk_action_set_sensitive (action_p, FALSE);
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
@@ -2426,7 +2426,7 @@ idle_session_end_cb (gpointer userData_in)
     ACE_ASSERT (window_p);
     gtk_widget_hide (GTK_WIDGET (window_p));
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   if (cb_data_base_p->stateEventId)
   {
@@ -3551,28 +3551,28 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, true);
+    istream_base_p->stop (false, false, false);
     streams_iterator =
       cb_data_base_p->streams.find (mavlink_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, true);
+    istream_base_p->stop (false, false, false);
     streams_iterator =
       cb_data_base_p->streams.find (navdata_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, true);
+    istream_base_p->stop (false, false, false);
     streams_iterator =
       cb_data_base_p->streams.find (video_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, true);
+    istream_base_p->stop (false, false, false);
 
     if (likely (cb_data_base_p->progressData.eventSourceId))
     {
@@ -8433,10 +8433,10 @@ button_quit_clicked_cb (GtkWidget* widget_in,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to kill(%d, SIGINT): \"%m\", continuing\n"),
                 pid));
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   ARDRONE_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
-                                                      false); // N/A
+                                                    false); // N/A
 
   return TRUE; // done (do not propagate further)
 }

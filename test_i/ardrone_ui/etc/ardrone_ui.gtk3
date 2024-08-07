@@ -123,6 +123,7 @@
         <property name="short_label" translatable="yes">Trim</property>
         <property name="tooltip" translatable="yes">trim</property>
         <property name="stock_id">gtk-execute</property>
+        <property name="sensitive">False</property>
         <signal name="activate" handler="action_trim_activate_cb" swapped="no"/>
       </object>
       <accelerator key="r"/>
@@ -310,6 +311,7 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">trim</property>
                                     <property name="relief">half</property>
                                     <property name="use_stock">True</property>
                                     <property name="focus_on_click">False</property>

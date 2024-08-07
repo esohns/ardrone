@@ -368,12 +368,12 @@ button_quit_clicked_cb (GtkWidget* widget_in,
 
   // stop stream ?
   if (ui_cb_data_p->stream->isRunning ())
-    ui_cb_data_p->stream->stop (false,
-                                true,
-                                true);
+    ui_cb_data_p->stream->stop (false,  // wait for completion ?
+                                false,  // recurse upstream ?
+                                false); // high priority ?
 
   // step2: initiate shutdown sequence
-  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop ();
+  COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false); // do not wait for ourselves !
 
   return FALSE;
 } // button_quit_clicked_cb

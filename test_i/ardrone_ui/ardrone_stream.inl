@@ -21,14 +21,11 @@
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "Mferror.h"
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
 #include "ace/Log_Msg.h"
 
 #include "stream_dec_defines.h"
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include "stream_dev_directshow_tools.h"
-#endif
 #include "stream_file_defines.h"
 #include "stream_misc_defines.h"
 #include "stream_net_defines.h"
@@ -54,7 +51,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
  , graphBuilder_ (NULL)
  , mediaSession_ (NULL)
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 {
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_VideoStream_T::ARDrone_VideoStream_T"));
 
@@ -88,7 +85,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
                   ACE_TEXT (Common_Error_Tools::errorToString (result).c_str ())));
     mediaSession_->Release ();
   } // end IF
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   // *NOTE*: this implements an ordered shutdown on destruction
   inherited::shutdown ();
@@ -311,7 +308,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   ACE_ASSERT (module_p);
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   delete_out = true;
 
@@ -2611,7 +2608,7 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   ACE_ASSERT (module_p);
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
-#endif
+#endif // ACE_WIN32 || ACE_WIN64
 
   delete_out = true;
 
@@ -2712,15 +2709,15 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
     goto error;
   } // end IF
 
-  iset_p =
-    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
-  ACE_ASSERT (iset_p);
-  iset_p->setP (&(inherited::state_));
+  //iset_p =
+  //  dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  //ACE_ASSERT (iset_p);
+  //iset_p->setP (&(inherited::state_));
 
-  // enqueue the module
-  // *NOTE*: push()ing the module will open() it
-  // --> set the argument that is passed along
-  module_p->arg (inherited::sessionData_);
+  //// enqueue the module
+  //// *NOTE*: push()ing the module will open() it
+  //// --> set the argument that is passed along
+  //module_p->arg (inherited::sessionData_);
 
   // ---------------------------------------------------------------------------
 

@@ -169,20 +169,5 @@ ARDrone_SignalHandler_T<ConfigurationType,
 
     //ARDRONE_WLANMONITOR_SINGLETON::instance ()->stop (false,  // wait ?
     //                                                  false); // N/A
-
-    // step2: stop UI event dispatch ?
-#if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
-    //ARDRONE_GTK_MANAGER_SINGLETON::instance ()->stop (true,   // wait ?
-    //                                                  false); // N/A
-    // COMMON_UI_GTK_MANAGER_SINGLETON::instance ()->stop (false,  // wait ?
-    //                                                     false); // N/A
-#endif // GTK_USE
-#endif // GUI_SUPPORT
-
-    // step3: stop reactor (&& proactor, if applicable)
-    //Common_Event_Tools::finalizeEventDispatch (*inherited::configuration_->dispatchState,
-    //                                           false,  // wait for completion ?
-    //                                           false); // delete singletons ?
   } // end IF
 }
