@@ -2756,6 +2756,8 @@ YY_RULE_SETUP
                }
                BEGIN (INITIAL);
                option_offset = 0;
+
+               return 0;
              } // end ELSE
            }
 	YY_BREAK

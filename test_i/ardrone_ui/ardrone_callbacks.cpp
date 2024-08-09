@@ -3551,28 +3551,57 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, false);
+    istream_base_p->stop (false, true, false);
     streams_iterator =
       cb_data_base_p->streams.find (mavlink_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, false);
+    istream_base_p->stop (false, true, false);
     streams_iterator =
       cb_data_base_p->streams.find (navdata_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, false);
+    istream_base_p->stop (false, true, false);
     streams_iterator =
       cb_data_base_p->streams.find (video_stream_name_string_);
     ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    istream_base_p->stop (false, false, false);
+    istream_base_p->stop (false, true, false);
+
+    streams_iterator =
+      cb_data_base_p->streams.find (control_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+    streams_iterator =
+      cb_data_base_p->streams.find (mavlink_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+    streams_iterator =
+      cb_data_base_p->streams.find (navdata_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
+    streams_iterator =
+      cb_data_base_p->streams.find (video_stream_name_string_);
+    ACE_ASSERT (streams_iterator != cb_data_base_p->streams.end ());
+    istream_base_p =
+        dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
+    ACE_ASSERT (istream_base_p);
+    istream_base_p->wait (true, false, false);
 
     if (likely (cb_data_base_p->progressData.eventSourceId))
     {

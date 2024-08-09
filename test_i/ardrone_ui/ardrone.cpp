@@ -2461,7 +2461,7 @@ do_work (int argc_in,
       directshow_udp_connection_configuration_2.streamConfiguration =
         &directshow_stream_configuration_5;
 
-      directshow_udp_connection_configurations_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
+      directshow_udp_connection_configurations_2.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING),
                                                                          &directshow_udp_connection_configuration_2));
       directShowConfiguration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
                                                                                   &directshow_udp_connection_configurations_2));
@@ -3067,7 +3067,7 @@ do_work (int argc_in,
         directshow_navdata_stream.initialize (directshow_stream_configuration_3);
 
       Stream_Module_t* module_p =
-        const_cast<Stream_Module_t*> (directshow_navdata_stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
+        const_cast<Stream_Module_t*> (directshow_navdata_stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)));
       ACE_ASSERT (module_p);
       stream_configuration.deviceConfiguration =
         dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());

@@ -184,6 +184,8 @@ HEADER                 \x88\x77\x66\x55
                }
                BEGIN (INITIAL);
                option_offset = 0;
+
+               return 0;
              } // end ELSE
            }
 } // end <option_data>

@@ -132,7 +132,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     {
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_DirectShow_PaVEDecoder_Module (this,
-                                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING)),
+                                                                    ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_PAVE_DECODER_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -203,7 +203,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     {
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_MediaFoundation_PaVEDecoder_Module (this,
-                                                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING)),
+                                                                         ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_PAVE_DECODER_NAME_STRING)),
                       false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -1031,12 +1031,12 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
       if (inherited::configuration_->configuration_->dispatch == COMMON_EVENT_DISPATCH_REACTOR)
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_Controller_Module (this,
-                                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)),
+                                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)),
                         false);
       else
         ACE_NEW_RETURN (module_p,
                         ARDrone_Module_DirectShow_AsynchController_Module (this,
-                                                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)),
+                                                                           ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)),
                         false);
       ACE_ASSERT (module_p);
       layout_in->append (module_p, NULL, 0);
@@ -1461,7 +1461,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
           ACE_ASSERT (configuration_iterator != inherited::configuration_->end ());
           ACE_ASSERT ((*configuration_iterator).second.second->connectionConfigurations);
           connection_iterator =
-            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING));
+            (*configuration_iterator).second.second->connectionConfigurations->find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING));
           ACE_ASSERT (connection_iterator != (*configuration_iterator).second.second->connectionConfigurations->end ());
           socket_configuration_p =
             &NET_CONFIGURATION_UDP_CAST ((*connection_iterator).second)->socketConfiguration;

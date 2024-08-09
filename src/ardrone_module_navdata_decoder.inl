@@ -692,8 +692,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
       }
       default:
       { ACE_ASSERT (!buffer_);
-        buffer_ = dynamic_cast<DataMessageType*> (message_block_p);
-        ACE_ASSERT (buffer_);
+        buffer_ = static_cast<DataMessageType*> (message_block_p);
+        //ACE_ASSERT (buffer_);
 
         if (buffer_->isInitialized ())
         {
