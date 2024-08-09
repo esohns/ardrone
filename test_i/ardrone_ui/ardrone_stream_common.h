@@ -225,6 +225,8 @@ class ARDrone_SessionData
   {
     struct Stream_MediaFramework_FFMPEG_VideoMediaType format_s;
     format_s.format = AV_PIX_FMT_RGBA;
+    format_s.frameRate.num = 30;
+    format_s.frameRate.den = 1;
     ARDroneVideoModeToResolution (ARDRONE_DEFAULT_VIDEO_MODE,
                                   format_s.resolution);
     formats.push_back (format_s);
@@ -239,7 +241,7 @@ class ARDrone_SessionData
                                   struct ARDrone_Statistic,
                                   struct Stream_UserData>::operator+= (rhs_in);
 
-    stream = rhs_in.stream;
+    stream = (stream ? stream : rhs_in.stream);
     targetFileName =
       (!targetFileName.empty () ? targetFileName : rhs_in.targetFileName);
 
@@ -482,18 +484,18 @@ typedef Net_StreamConnectionConfiguration_T<ARDrone_StreamConfiguration_t,
                                             NET_TRANSPORTLAYER_UDP> ARDrone_UDPConnectionConfiguration_t;
 typedef Net_IConnection_T<ACE_INET_Addr,
                           struct ARDrone_ConnectionState,
-                          struct Net_StreamStatistic> ARDrone_IConnection_t;
+                          ARDrone_NetStatistic_t> ARDrone_IConnection_t;
 // typedef std::unordered_map<std::string, // module name
 //                            ARDrone_TCPConnectionConfiguration_t> ARDrone_TCPConnectionConfigurations_t;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_TCPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct Net_StreamStatistic,
+                                 ARDrone_NetStatistic_t,
                                  struct Net_UserData> ARDrone_ITCPConnectionManager_t;
 typedef Net_IConnectionManager_T<ACE_INET_Addr,
                                  ARDrone_UDPConnectionConfiguration_t,
                                  struct ARDrone_ConnectionState,
-                                 struct Net_StreamStatistic,
+                                 ARDrone_NetStatistic_t,
                                  struct Net_UserData> ARDrone_IUDPConnectionManager_t;
 struct ARDrone_ModuleHandlerConfiguration
  : Stream_ModuleHandlerConfiguration
@@ -509,7 +511,7 @@ struct ARDrone_ModuleHandlerConfiguration
    , connectionConfigurations (NULL)
    // , connectionManager (NULL)
    , display ()
-   , frameRate ()
+   // , frameRate ()
 #if defined (GUI_SUPPORT)
    , fullScreen (false)
    , outputFormat ()
@@ -535,7 +537,7 @@ struct ARDrone_ModuleHandlerConfiguration
   ARDrone_IConnection_t*                             connection;               // net source/IO module
   Net_ConnectionConfigurations_t*                    connectionConfigurations; // net source/target modules
   struct Common_UI_DisplayDevice                     display;
-  struct AVRational                                  frameRate;                // AVI encoder module
+  // struct AVRational                                  frameRate;                // AVI encoder module
 #if defined (GUI_SUPPORT)
   bool                                               fullScreen;
   struct Stream_MediaFramework_FFMPEG_VideoMediaType outputFormat;

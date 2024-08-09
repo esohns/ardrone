@@ -44,12 +44,15 @@
 
 #include "stream_stat_statistic_report.h"
 
+#if defined (GTK_SUPPORT)
 #include "stream_vis_gtk_window.h"
+#endif // GTK_SUPPORT
 #include "stream_vis_libav_resize.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #include "stream_vis_target_direct3d.h"
 #include "stream_vis_target_directshow.h"
 #else
+#include "stream_vis_wayland_window.h"
 #include "stream_vis_x11_window.h"
 #endif // ACE_WIN32 || ACE_WIN64
 #include "stream_vis_opencv_classifier.h"
@@ -178,13 +181,23 @@ typedef Stream_Vis_Target_DirectShow_T<ACE_MT_SYNCH,
                                        Test_U_DirectShowFilter_t,
                                        struct _AMMediaType> Test_U_DirectShow_DirectShowDisplay;
 #else
+#if defined (GTK_SUPPORT)
 typedef Stream_Module_Vis_GTK_Window_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct Test_U_ModuleHandlerConfiguration,
                                        Stream_ControlMessage_t,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
-                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_Display_2;
+                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_GTKDisplay;
+#endif // GTK_SUPPORT
+typedef Stream_Module_Vis_Wayland_Window_T<ACE_MT_SYNCH,
+                                           Common_TimePolicy_t,
+                                           struct Test_U_ModuleHandlerConfiguration,
+                                           Stream_ControlMessage_t,
+                                           Test_U_Message_t,
+                                           Test_U_SessionMessage_t,
+                                           Test_U_SessionData_t,
+                                           struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_WaylandDisplay;
 typedef Stream_Module_Vis_X11_Window_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct Test_U_ModuleHandlerConfiguration,
@@ -192,7 +205,7 @@ typedef Stream_Module_Vis_X11_Window_T<ACE_MT_SYNCH,
                                        Test_U_Message_t,
                                        Test_U_SessionMessage_t,
                                        Test_U_SessionData_t,
-                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_Display;
+                                       struct Stream_MediaFramework_FFMPEG_VideoMediaType> Test_U_X11Display;
 #endif // ACE_WIN32 || ACE_WIN64
 
 typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
@@ -265,18 +278,26 @@ DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                // session data
                               Stream_INotify_t,                                 // stream notification interface type
                               Test_U_DirectShow_DirectShowDisplay);     // writer type
 #else
-DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
-                              enum Stream_SessionMessageType,                   // session event type
-                              struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
+#if defined (GTK_SUPPORT)
+DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                                     // session data type
+                              enum Stream_SessionMessageType,                         // session event type
+                              struct Test_U_ModuleHandlerConfiguration,               // module handler configuration type
                               libacestream_default_vis_gtk_window_module_name_string,
-                              Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_Display_2);                        // writer type
+                              Stream_INotify_t,                                       // stream notification interface type
+                              Test_U_GTKDisplay);                                     // writer type
+#endif // GTK_SUPPORT
+DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                                    // session data type
+                             enum Stream_SessionMessageType,                         // session event type
+                             struct Test_U_ModuleHandlerConfiguration,               // module handler configuration type
+                             libacestream_default_vis_wayland_window_module_name_string,
+                             Stream_INotify_t,                                       // stream notification interface type
+                             Test_U_WaylandDisplay);                                 // writer type
 DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                   // session data type
                               enum Stream_SessionMessageType,                   // session event type
                               struct Test_U_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_vis_x11_window_module_name_string,
                               Stream_INotify_t,                                 // stream notification interface type
-                              Test_U_Display);                          // writer type
+                              Test_U_X11Display);                          // writer type
 #endif // ACE_WIN32 || ACE_WIN64
 
 DATASTREAM_MODULE_INPUT_ONLY (Test_U_SessionData,                           // session data type

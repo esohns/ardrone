@@ -419,8 +419,8 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
   // 1. wait for data
   do
   {
-    result = inherited::msg_queue_->dequeue_head (message_block_p,
-                                                  NULL);
+    result = inherited::parserQueue_.dequeue_head (message_block_p,
+                                                   NULL);
     if (result == -1)
     {
       int error = ACE_OS::last_error ();
@@ -475,7 +475,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
     // requeue message ?
     if (message_block_p)
     {
-      result = inherited::msg_queue_->enqueue_tail (message_block_p, NULL);
+      result = inherited::parserQueue_.enqueue_tail (message_block_p, NULL);
       if (result == -1)
       {
         ACE_DEBUG ((LM_ERROR,

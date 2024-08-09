@@ -1926,7 +1926,7 @@ static const yy_state_type yy_NUL_trans[35] =
 
 static const flex_int32_t yy_rule_linenum[11] =
     {   0,
-       83,   88,   94,  100,  106,  112,  118,  128,  145,  167
+       84,   89,   96,  102,  108,  114,  120,  130,  140,  162
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2386,6 +2386,8 @@ YY_DECL
   struct __mavlink_message* message_p = NULL;
   static size_t remaining_data_bytes_i = 0;
 
+
+
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 /* %% [8.0] yymore()-related code goes here */
@@ -2543,11 +2545,13 @@ case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
 { ACE_ASSERT (message_p);
+
                                     if (remaining_data_bytes_i)
                                       --remaining_data_bytes_i;
 
                                     if (!remaining_data_bytes_i)
-                                      BEGIN (_checksum); }
+                                      BEGIN (_checksum);
+                                  }
 	YY_BREAK
 // end <data>
 
@@ -2574,7 +2578,7 @@ YY_RULE_SETUP
                                     }
 
                                     BEGIN (INITIAL);
-                                    
+
                                     return 0; }
 	YY_BREAK
 // end <checksum>

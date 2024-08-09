@@ -24,4 +24,4 @@
 #include "ardrone_defines.h"
 
 const char ardrone_default_pave_decoder_module_name_string[] =
-  ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING);
+  ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_PAVE_DECODER_NAME_STRING);

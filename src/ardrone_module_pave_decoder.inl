@@ -372,6 +372,8 @@ ARDrone_Module_PaVEDecoder_T<ACE_SYNCH_USE,
         format_s.format = AV_PIX_FMT_NONE; // video is header- + H.264-encoded
         ARDroneVideoModeToResolution (videoMode_,
                                       format_s.resolution);
+        format_s.frameRate.num = 30;
+        format_s.frameRate.den = 1;
         MediaType media_type_s;
         ACE_OS::memset (&media_type_s, 0, sizeof (MediaType));
         inherited2::getMediaType (format_s,

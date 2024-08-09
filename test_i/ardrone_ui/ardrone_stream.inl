@@ -263,7 +263,7 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
 #else
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_PaVEDecoder_Module (this,
-                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING)),
+                                                     ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_PAVE_DECODER_NAME_STRING)),
                   false);
   ACE_ASSERT (module_p);
   layout_in->append (module_p, NULL, 0);
@@ -293,21 +293,40 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
 
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_AVIEncoder_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
-                  false);
-  ACE_ASSERT (module_p);
-  layout_in->append (module_p, NULL, 0);
-  module_p = NULL;
+  if (!(*iterator).second.second->targetFileName.empty ())
+  {
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_Distributor_Module (this,
+                                                       ACE_TEXT_ALWAYS_CHAR (STREAM_MISC_DISTRIBUTOR_DEFAULT_NAME_STRING)),
+                    false);
+    ACE_ASSERT (module_p);
+    layout_in->append (module_p, NULL, 0);
 
-  ACE_NEW_RETURN (module_p,
-                  ARDrone_Module_FileWriter_Module (this,
-                                                    ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
-                  false);
-  ACE_ASSERT (module_p);
-  layout_in->append (module_p, NULL, 0);
-  module_p = NULL;
+    branch_p = module_p;
+    branches_a.push_back (ACE_TEXT_ALWAYS_CHAR (STREAM_SUBSTREAM_SAVE_NAME));
+    Stream_IDistributorModule* idistributor_p =
+      dynamic_cast<Stream_IDistributorModule*> (module_p->writer ());
+    ACE_ASSERT (idistributor_p);
+    idistributor_p->initialize (branches_a);
+
+    module_p = NULL;
+
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_AVIEncoder_Module (this,
+                                                      ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_ENCODER_AVI_DEFAULT_NAME_STRING)),
+                    false);
+    ACE_ASSERT (module_p);
+    layout_in->append (module_p, branch_p, index_i);
+    module_p = NULL;
+
+    ACE_NEW_RETURN (module_p,
+                    ARDrone_Module_FileWriter_Module (this,
+                                                      ACE_TEXT_ALWAYS_CHAR (STREAM_FILE_SINK_DEFAULT_NAME_STRING)),
+                    false);
+    ACE_ASSERT (module_p);
+    layout_in->append (module_p, branch_p, index_i);
+    module_p = NULL;
+  } // end IF
 #endif // ACE_WIN32 || ACE_WIN64
 
   delete_out = true;
@@ -760,10 +779,10 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
                 ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
     goto error;
   } // end IF
-  iset_p =
-    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
-  ACE_ASSERT (iset_p);
-  iset_p->setP (&(inherited::state_));
+  // iset_p =
+  //   dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  // ACE_ASSERT (iset_p);
+  // iset_p->setP (&(inherited::state_));
 
   //// enqueue the module
   //// *NOTE*: push()ing the module will open() it
@@ -1162,7 +1181,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     {
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_AsynchController_Module (this,
-                                                              ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                                                              ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)),
                       false);
       break;
     }
@@ -1170,7 +1189,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     {
       ACE_NEW_RETURN (module_p,
                       ARDrone_Module_Controller_Module (this,
-                                                        ACE_TEXT_ALWAYS_CHAR (MODULE_NET_TARGET_DEFAULT_NAME_STRING)),
+                                                        ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)),
                       false);
       break;
     }
@@ -1969,7 +1988,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
                         SessionMessageType>::getP () const
 {
   Stream_Module_t* module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
+    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING),
                                                    true,
                                                    false));
   if (!module_p)
@@ -1977,7 +1996,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
                 ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
+                ACE_TEXT (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)));
     return NULL;
   } // end IF
 
@@ -2183,7 +2202,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   if (!inherited::configuration_)
     return;
 #if defined (GUI_SUPPORT)
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
 #if defined (GTK_USE)
   guint event_source_id =
     g_idle_add (idle_associated_SSID_cb,
@@ -2208,7 +2226,6 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
     state_r.eventStack.push (event_s);
   } // end lock scope
 #endif
-#endif // ACE_WIN32 || ACE_WIN64
 #endif // GUI_SUPPORT
 }
 

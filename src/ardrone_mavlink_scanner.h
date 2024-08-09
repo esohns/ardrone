@@ -4,7 +4,6 @@
 
 #ifndef YY_TYPEDEF_YY_MAVLINK_SCANNER_T
 #define YY_TYPEDEF_YY_MAVLINK_SCANNER_T
-
 #endif
 
 // forward declarations

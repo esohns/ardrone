@@ -24,4 +24,4 @@
 #include "ardrone_defines.h"
 
 const char ardrone_default_navdata_decoder_module_name_string[] =
-ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_NAVDATA_DECODER_NAME_STRING);
+ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_NAVDATA_DECODER_NAME_STRING);

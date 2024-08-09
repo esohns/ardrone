@@ -2084,7 +2084,7 @@ static const yy_state_type yy_NUL_trans[40] =
 
 static const flex_int32_t yy_rule_linenum[9] =
     {   0,
-       85,   96,  107,  118,  130,  151,  162,  197
+       86,   97,  108,  119,  131,  152,  163,  192
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2546,6 +2546,8 @@ YY_DECL
   static struct _navdata_option_t current_option_s;
   static size_t option_data_bytes_i = 0;
 
+
+
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 /* %% [8.0] yymore()-related code goes here */
@@ -2729,7 +2731,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-{
+{ 
              if (option_data_bytes_i)
              {
                --option_data_bytes_i;
@@ -2754,8 +2756,6 @@ YY_RULE_SETUP
                }
                BEGIN (INITIAL);
                option_offset = 0;
-
-               return 0;
              } // end ELSE
            }
 	YY_BREAK

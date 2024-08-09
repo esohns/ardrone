@@ -155,7 +155,9 @@ V09_START_CODE         \x55
                                       yyterminate ();
                                     }
 
-                                    BEGIN (INITIAL); }
+                                    BEGIN (INITIAL);
+
+                                    return 0; }
 } // end <checksum>
 <<EOF>>                { return -1; }
 <*>{OCTET}             { /* *TODO*: use (?s:.) ? */

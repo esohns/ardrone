@@ -111,8 +111,11 @@ class Test_U_Stream
   Test_U_DirectShow_Direct3DDisplay_Module   direct3DDisplay_;
   Test_U_DirectShow_DirectShowDisplay_Module directShowDisplay_;
 #else
-  Test_U_Display_Module                      display_;
-//  Test_U_Display_2_Module       display_2_;
+#if defined (GTK_SUPPORT)
+  Test_U_GTKDisplay_Module                   GTKDisplay_;
+#endif // GTK_SUPPORT
+  Test_U_WaylandDisplay_Module               WaylandDisplay_;
+  Test_U_X11Display_Module                   X11Display_;
 #endif // ACE_WIN32 || ACE_WIN64
 };
 

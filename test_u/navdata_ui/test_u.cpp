@@ -443,7 +443,7 @@ do_work (bool useReactor_in,
   ACE_DEBUG ((LM_DEBUG,
               ACE_TEXT ("control peer: %s\n"),
               ACE_TEXT (Net_Common_Tools::IPAddressToString (udp_connection_configuration_2.socketConfiguration.peerAddress).c_str ())));
-  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING),
+  configuration_in.connectionConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING),
                                                                     &udp_connection_configuration_2));
 //  Net_ConnectionConfigurationsIterator_t connection_configurations_iterator =
 //      configuration_in.connectionConfigurations.find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -506,7 +506,7 @@ do_work (bool useReactor_in,
     return;
   } // end IF
   Stream_Module_t* module_p =
-      const_cast<Stream_Module_t*> (stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_CONTROLLER_NAME_STRING)));
+      const_cast<Stream_Module_t*> (stream.find (ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_CONTROLLER_NAME_STRING)));
   ACE_ASSERT (module_p);
   stream_configuration_2.deviceConfiguration =
     dynamic_cast<ARDrone_IDeviceConfiguration*> (module_p->writer ());

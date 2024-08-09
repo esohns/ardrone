@@ -276,7 +276,7 @@ Test_U_Stream::Test_U_Stream ()
  , source_ (this,
             ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING))
  , decode_ (this,
-            ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MDOULE_PAVE_DECODER_NAME_STRING))
+            ACE_TEXT_ALWAYS_CHAR (ARDRONE_STREAM_MODULE_PAVE_DECODER_NAME_STRING))
  , decode_2 (this,
              ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_DECODER_DEFAULT_NAME_STRING))
 // , report_ (this,
@@ -287,10 +287,14 @@ Test_U_Stream::Test_U_Stream ()
             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_OPENCV_CLASSIFIER_DEFAULT_NAME_STRING))
  , resize_ (this,
             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_LIBAV_RESIZE_DEFAULT_NAME_STRING))
- , display_ (this,
-             ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_X11_WINDOW_DEFAULT_NAME_STRING))
-// , display_2_ (this,
-//               ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_WINDOW_DEFAULT_NAME_STRING))
+#if defined (GTK_SUPPORT)
+ , GTKDisplay_ (this,
+                ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_WINDOW_DEFAULT_NAME_STRING))
+#endif // GTK_SUPPORT
+ , WaylandDisplay_ (this,
+                    ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_WAYLAND_WINDOW_DEFAULT_NAME_STRING))
+ , X11Display_ (this,
+                ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_X11_WINDOW_DEFAULT_NAME_STRING))
 {
   STREAM_TRACE (ACE_TEXT ("Test_U_Stream::Test_U_Stream"));
 
@@ -322,11 +326,14 @@ Test_U_Stream::load (Stream_ILayout* layout_inout,
   layout_inout->append (&decode_2, NULL, 0);
   //  layout_inout.append (&report_, NULL, 0);
 //  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-  layout_inout->append (&convert_, NULL, 0);
-  layout_inout->append (&detect_, NULL, 0);
+
+  // layout_inout->append (&convert_, NULL, 0);
+  // layout_inout->append (&detect_, NULL, 0);
+
 //  layout_inout.append (&resize_, NULL, 0); // output is window size/fullscreen
 //  if (configuration_->configuration_.renderer != STREAM_VISUALIZATION_VIDEORENDERER_GTK_WINDOW)
-   layout_inout->append (&display_, NULL, 0);
+//   layout_inout->append (&X11Display_, NULL, 0);
+  layout_inout->append (&WaylandDisplay_, NULL, 0);
 //  else
 //    layout_inout->append (&display_2_, NULL, 0);
 

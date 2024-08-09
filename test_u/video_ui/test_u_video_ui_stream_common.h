@@ -219,6 +219,8 @@ struct Test_U_ModuleHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
    , window (NULL)
 #else
+   , surface (NULL)
+   , waylandDisplay (NULL)
    , window (0)
    , X11Display (NULL)
 #endif // ACE_WIN32 || ACE_WIN64
@@ -253,6 +255,8 @@ struct Test_U_ModuleHandlerConfiguration
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   HWND                                          window;
 #else
+  struct wl_surface*                            surface;
+  struct wl_display*                            waylandDisplay;
   XID                                           window;
   Display*                                      X11Display;
 #endif // ACE_WIN32 || ACE_WIN64

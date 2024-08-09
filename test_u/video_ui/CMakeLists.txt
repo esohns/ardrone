@@ -45,6 +45,9 @@ if (UNIX)
 # check_library_exists (pthread pthread_create "" HAVE_LIB_PTHREAD)
  set (CMAKE_THREAD_PREFER_PTHREAD ON)
  find_package (Threads)
+
+ set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};$ENV{PRJ_ROOT}/Common/scripts")
+ include ($ENV{PRJ_ROOT}/ACEStream/src/modules/vis/scripts/wayland.cmake)
 endif ()
 
 include (FindPkgConfig)

@@ -1702,7 +1702,7 @@ static const yy_state_type yy_NUL_trans[28] =
 
 static const flex_int32_t yy_rule_linenum[8] =
     {   0,
-       93,  119,  124,  128,  135,  139,  165
+       94,  120,  125,  129,  136,  140,  166
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1732,6 +1732,7 @@ static const flex_int32_t yy_rule_linenum[8] =
 /* *IMPORTANT NOTE*: flex 2.5.4 does not recognize 'reentrant, nounistd,
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
+/*%option nounistd nounput noyymore nodefault*/
 #define YY_NO_UNISTD_H 1
 /* *IMPORTANT NOTE*: "...A negated character class such as the example "[^A-Z]"
                      above will match a newline unless "\n" (or an equivalent
@@ -2364,7 +2365,7 @@ case YY_STATE_EOF(newline):
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-YY_FATAL_ERROR( "flex scanner jammed" );
+ECHO;
 	YY_BREAK
 
 	case YY_END_OF_BUFFER:

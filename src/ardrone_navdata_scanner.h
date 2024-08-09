@@ -4,6 +4,7 @@
 
 #ifndef YY_TYPEDEF_YY_NAVDATA_SCANNER_T
 #define YY_TYPEDEF_YY_NAVDATA_SCANNER_T
+
 #endif
 
 // forward declarations

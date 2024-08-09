@@ -607,6 +607,14 @@ typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    ARDrone_Message,
                                    ARDrone_DirectShow_SessionMessage> ARDrone_Module_MediaFoundation_FileWriter;
 #else
+typedef Stream_Miscellaneous_Distributor_WriterTask_T<ACE_MT_SYNCH,
+                                                      Common_TimePolicy_t,
+                                                      struct ARDrone_ModuleHandlerConfiguration,
+                                                      Stream_ControlMessage_t,
+                                                      ARDrone_Message,
+                                                      ARDrone_SessionMessage,
+                                                      typename ARDrone_SessionMessage::DATA_T> ARDrone_Module_DistributorWriter_t;
+
 typedef Stream_Module_FileWriter_T<ACE_MT_SYNCH,
                                    Common_TimePolicy_t,
                                    struct ARDrone_ModuleHandlerConfiguration,
@@ -1004,6 +1012,15 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_SessionData,                // session dat
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_Dump);                      // writer type
 #endif // _DEBUG
+
+DATASTREAM_MODULE_DUPLEX (ARDrone_SessionData,                               // session data type
+                          enum Stream_SessionMessageType,                               // session event type
+                          struct ARDrone_ModuleHandlerConfiguration,         // module handler configuration type
+                          libacestream_default_misc_distributor_module_name_string,
+                          Stream_INotify_t,                                             // stream notification interface type
+                          ARDrone_Module_DistributorWriter_t::READER_TASK_T, // reader type
+                          ARDrone_Module_DistributorWriter_t,                // writer type
+                          ARDrone_Module_Distributor);                       // module name prefix
 
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type

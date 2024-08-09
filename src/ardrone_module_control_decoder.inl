@@ -109,10 +109,8 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
   typename DataMessageType::DATA_T::DATA_T& message_data_r =
     const_cast<typename DataMessageType::DATA_T::DATA_T&> (message_data_container_r.getR ());
 
-  // sanity check(s)
-  ACE_ASSERT (message_data_r.messageType == ARDRONE_MESSAGE_CONTROL);
-
   message_data_r.controlData = configuration_;
+  message_data_r.messageType = ARDRONE_MESSAGE_CONTROL;
 
   if (subscriber_)
     subscriber_->setP (&configuration_);
@@ -123,6 +121,8 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
                                                               fragment_));
   ACE_ASSERT (buffer_->total_length () == offset_);
   offset_ = 0;
+
+  buffer_->set (ARDRONE_MESSAGE_CONTROL);
 
   result = inherited::put_next (buffer_, NULL);
   if (result == -1)

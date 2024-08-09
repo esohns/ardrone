@@ -36,7 +36,7 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
 %}
 
 %option header-file="ardrone_control_scanner.h" outfile="ardrone_control_scanner.cpp"
-%option batch 8bit nodefault never-interactive nostdinit yylineno yywrap
+%option batch 8bit never-interactive nostdinit yylineno yywrap
 /* %option c++ yyclass="ARDrone_Control_Scanner" */
 /* *NOTE*: the 'line' directives confuse gdb */
 /* *NOTE*: 'noline' not supported (on Linux, flex 2.5.39)
@@ -51,6 +51,7 @@ void ARDrone_Control_Scanner_set_column (int, yyscan_t);
                      ansi-definitions, ansi-prototypes, header-file extra-type'
 */
 %option extra-type="ARDrone_Control_IParser*"
+/*%option nounistd nounput noyymore nodefault*/
 %option nounistd nounput noyymore
 
 /* *IMPORTANT NOTE*: "...A negated character class such as the example "[^A-Z]"

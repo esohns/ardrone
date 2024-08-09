@@ -271,8 +271,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::switchBuffer"));
 
   // sanity check(s)
-  ACE_ASSERT (configuration_);
-  ACE_ASSERT (configuration_->parserConfiguration);
+  ACE_ASSERT (inherited::configuration_);
+  ACE_ASSERT (inherited::configuration_->parserConfiguration);
   if (!fragment_)
     goto wait;
 
@@ -283,7 +283,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
     //            fragment_->length ()));
 
     // sanity check(s)
-    if (!configuration_->parserConfiguration->block)
+    if (!inherited::configuration_->parserConfiguration->block)
       return false; // not enough data, cannot proceed
   } // end IF
 
@@ -476,9 +476,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
       return;
     } // end IF
     message_data_p->messageType = ARDRONE_MESSAGE_MAVLINK;
-    ACE_OS::memset (&message_data_p->MAVLinkData,
-                    0,
-                    sizeof (struct __mavlink_message));
+    ACE_OS::memset (&message_data_p->MAVLinkData, 0, sizeof (struct __mavlink_message));
     ACE_NEW_NORETURN (message_data_container_p,
                       typename DataMessageType::DATA_T (message_data_p));
     if (!message_data_container_p)
@@ -566,6 +564,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
   ARDRONE_TRACE (ACE_TEXT ("ARDrone_Module_MAVLinkDecoder_T::end"));
 
   // sanity check(s)
+  ACE_ASSERT (inherited::state_);
   ACE_ASSERT (bufferState_);
 
   // clean state

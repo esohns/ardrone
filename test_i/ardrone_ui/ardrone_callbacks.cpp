@@ -682,7 +682,7 @@ stream_processing_function (void* arg_in)
     istream_base_p =
         dynamic_cast<Stream_IStreamControlBase*> ((*streams_iterator).second);
     ACE_ASSERT (istream_base_p);
-    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
+//    result_2 = iinitialize_p->initialize (*(*iterator_4).second);
     if (!result_2)
     {
       ACE_DEBUG ((LM_ERROR,
@@ -3171,9 +3171,9 @@ idle_update_video_display_cb (gpointer userData_in)
                                                                                              : ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_WIDGET_NAME_DRAWINGAREA_VIDEO)));
   ACE_ASSERT (drawing_area_p);
 
-  gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (drawing_area_p)),
-                              NULL,
-                              0);
+  // gdk_window_invalidate_rect (gtk_widget_get_window (GTK_WIDGET (drawing_area_p)),
+  //                             NULL,
+  //                             0);
 
   return G_SOURCE_REMOVE;
 }
@@ -3600,7 +3600,7 @@ toggleaction_connect_toggled_cb (GtkToggleAction* toggleAction_in,
   struct ARDrone_ThreadData* thread_data_p = NULL;
   ACE_thread_t thread_id = -1;
   ACE_hthread_t thread_handle;
-  ACE_TCHAR thread_name[BUFSIZ];
+  char thread_name[BUFSIZ];
   const char* thread_name_p = NULL;
   ACE_Thread_Manager* thread_manager_p = NULL;
   int result = -1;
@@ -4591,26 +4591,15 @@ continue_:
   } // end IF
   thread_data_p->CBData = cb_data_base_p;
 
-  ACE_OS::memset (thread_name, 0, sizeof (thread_name));
-  //  char* thread_name_p = NULL;
-  //  ACE_NEW_NORETURN (thread_name_p,
-  //                    ACE_TCHAR[BUFSIZ]);
-  //  if (!thread_name_p)
-  //  {
-  //    ACE_DEBUG ((LM_CRITICAL,
-  //                ACE_TEXT ("failed to allocate memory: \"%m\", returning\n")));
-
-  //    // clean up
-  //    delete thread_data_p;
-
-  //    return;
-  //  } // end IF
-  //  ACE_OS::memset (thread_name_p, 0, sizeof (thread_name_p));
-  //  ACE_OS::strcpy (thread_name_p,
-  //                  ACE_TEXT (TEST_I_STREAM_FILECOPY_THREAD_NAME));
-  //  const char* thread_name_2 = thread_name_p;
+  ACE_OS::memset (thread_name, 0, sizeof (char[BUFSIZ]));
+#if defined (ACE_WIN32) || defined (ACE_WIN64)
   ACE_OS::strcpy (thread_name,
                   ACE_TEXT (ARDRONE_UI_PROCESSING_THREAD_NAME));
+#else
+  ACE_OS::strncpy (thread_name,
+                   ACE_TEXT_ALWAYS_CHAR (ARDRONE_UI_PROCESSING_THREAD_NAME),
+                   (COMMON_THREAD_PTHREAD_NAME_MAX_LENGTH - 1));
+#endif // ACE_WIN32 || ACE_WIN64
   thread_name_p = thread_name;
   thread_manager_p = ACE_Thread_Manager::instance ();
   ACE_ASSERT (thread_manager_p);
@@ -8013,7 +8002,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
                                cb_data_p->pixelBuffer,
                                0.0, 0.0);
 
-  { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, FALSE);
+  // { ACE_GUARD_RETURN (ACE_SYNCH_MUTEX, aGuard, state_r.lock, FALSE);
     // *IMPORTANT NOTE*: potentially, this involves tranfer of image data to an
     //                   X server running on a different host
     //gdk_draw_pixbuf (GDK_DRAWABLE (window_p), NULL,
@@ -8021,7 +8010,7 @@ drawingarea_video_draw_cb (GtkWidget* widget_in,
     //                 0, 0, 0, 0, allocation.width, allocation.height,
     //                 GDK_RGB_DITHER_NONE, 0, 0);
     cairo_paint (context_in);
-  } // end lock scope
+  // } // end lock scope
 #endif
 
   return TRUE;
