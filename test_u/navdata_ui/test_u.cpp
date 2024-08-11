@@ -463,7 +463,17 @@ do_work (bool useReactor_in,
   timer_manager_p->start (NULL);
 
   // event dispatch
-  configuration_in.dispatchConfiguration.numberOfProactorThreads =
+  if (useReactor_in)
+  {
+    configuration_in.dispatchConfiguration.dispatch =
+      COMMON_EVENT_DISPATCH_REACTOR;
+    configuration_in.dispatchConfiguration.numberOfReactorThreads =
+      NET_CLIENT_DEFAULT_NUMBER_OF_PROACTOR_DISPATCH_THREADS;
+    configuration_in.dispatchConfiguration.reactorType =
+      (configuration_in.dispatchConfiguration.numberOfReactorThreads > 1) ? COMMON_REACTOR_THREAD_POOL : COMMON_REACTOR_ACE_DEFAULT;
+  } // end IF
+  else
+    configuration_in.dispatchConfiguration.numberOfProactorThreads =
       NET_CLIENT_DEFAULT_NUMBER_OF_PROACTOR_DISPATCH_THREADS;
   if (!Common_Event_Tools::initializeEventDispatch (configuration_in.dispatchConfiguration))
   {
@@ -607,6 +617,16 @@ ACE_TMAIN (int argc_in,
   ACE_Profile_Timer process_profile;
   // start profile timer...
   process_profile.start ();
+
+  ACE_Sig_Set signal_set (false);
+  Common_SignalActions_t previous_signal_actions_a;
+  ACE_Sig_Set previous_signal_mask;
+  Common_Signal_Tools::preInitialize (signal_set,
+                                      COMMON_SIGNAL_DISPATCH_PROACTOR,
+                                      true,
+                                      false,
+                                      previous_signal_actions_a,
+                                      previous_signal_mask);
 
   std::string configuration_path =
     Common_File_Tools::getWorkingDirectory ();

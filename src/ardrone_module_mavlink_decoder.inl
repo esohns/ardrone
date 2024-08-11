@@ -600,6 +600,8 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 #endif // ACE_WIN32 || ACE_WIN64
 
   // sanity check(s)
+  ACE_ASSERT (inherited::configuration_);
+  ACE_ASSERT (inherited::configuration_->parserConfiguration);
   ACE_ASSERT (inherited::state_);
 
   ACE_Message_Block* message_block_p = NULL;
@@ -702,6 +704,9 @@ continue_:
         if (isFirst_)
         {
           isFirst_ = false;
+
+          setDebug (inherited::state_,
+                    inherited::configuration_->parserConfiguration->debugScanner);
 
           /* column is only valid if an input buffer exists. */
           ARDrone_MAVLink_Scanner_set_column (1, inherited::state_);

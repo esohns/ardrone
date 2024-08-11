@@ -936,12 +936,12 @@ if (UNIX)
  else ()
   set (ARGS "-u ${ARGS}")
  endif (GUI_SUPPORT)
- set (ENVIRONMENT "GDK_BACKEND=x11")
- set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
-                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
-                           ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
+# set (ENVIRONMENT "GDK_BACKEND=x11")
+# set (RUNTIME_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/../ffmpeg/libavcodec
+#                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libavutil
+#                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswresample
+#                           ${PROJECT_SOURCE_DIR}/../ffmpeg/libswscale
+#                           ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
 elseif (WIN32)
  string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_i/${EXECUTABLE}) 
 # if (LIBXML2_USE)

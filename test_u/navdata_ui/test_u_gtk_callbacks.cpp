@@ -514,7 +514,7 @@ button_quit_clicked_cb (GtkWidget* widget_in,
 
   // stop stream
   ui_cb_data_p->stream->stop (false,  // wait for completion ?
-                              false,  // recurse upstream ?
+                              true,   // recurse upstream ?
                               false); // high priority ?
 
   // step2: initiate shutdown sequence

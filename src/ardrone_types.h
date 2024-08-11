@@ -27,7 +27,6 @@
 #include <utility>
 #include <vector>
 
-#include "ace/config-lite.h"
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 /* PaVE signature represented as a 32-bit integer in little and big endian */
 #define PAVE_INT32LE_SIGNATURE (0x45566150)
@@ -74,10 +73,10 @@ enum ARDrone_StreamType : int
 #endif // __llvm__
 {
   ARDRONE_STREAM_INVALID = -1,
-  ARDRONE_STREAM_CONTROL,
-  ARDRONE_STREAM_MAVLINK,
-  ARDRONE_STREAM_NAVDATA,
-  ARDRONE_STREAM_VIDEO,
+  ARDRONE_STREAM_CONTROL = 1,
+  ARDRONE_STREAM_MAVLINK = 2,
+  ARDRONE_STREAM_NAVDATA = 4,
+  ARDRONE_STREAM_VIDEO = 8,
   ///////////////////////////////////////
   ARDRONE_STREAM_MAX
 };

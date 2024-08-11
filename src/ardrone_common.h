@@ -24,8 +24,8 @@
 #include <string>
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-#include <mfobjects.h>
-#include <strmif.h>
+#include "mfobjects.h"
+#include "strmif.h"
 #else
 #include <cstdint>
 #endif // ACE_WIN32 || ACE_WIN64

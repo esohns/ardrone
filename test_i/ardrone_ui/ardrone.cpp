@@ -668,10 +668,17 @@ do_printUsage (const std::string& programName_in)
             << ACE_TEXT_ALWAYS_CHAR ("])")
             << std::endl;
 #endif // ACE_WIN32 || ACE_WIN64
-  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug parser(s)/ffmpeg [")
+#if defined (_DEBUG)
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-d          : debug ffmpeg [")
+            << false
+            << ACE_TEXT_ALWAYS_CHAR ("]")
+            << std::endl;
+  // *NOTE*: 1: control, 2: mavlink, 4: navdata
+  std::cout << ACE_TEXT_ALWAYS_CHAR ("-e [stream#]: debug flex parser(s) [")
             << COMMON_PARSER_DEFAULT_LEX_TRACE
             << ACE_TEXT_ALWAYS_CHAR ("]")
             << std::endl;
+#endif // _DEBUG
   std::cout << ACE_TEXT_ALWAYS_CHAR ("-f          : display video full-screen (: windowed) [")
             << ARDRONE_DEFAULT_VIDEO_FULLSCREEN
             << ACE_TEXT_ALWAYS_CHAR ("]")
@@ -778,7 +785,7 @@ do_processArguments (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (_DEBUG)
                      bool& debugFfmpeg_out,
-                     bool& debugScanner_out,
+                     int& debugScanner_out,
 #endif // _DEBUG
                      bool& fullScreen_out,
                      std::string& displayInterfaceIdentifier_out, // fullscreen-
@@ -840,8 +847,10 @@ do_processArguments (int argc_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   showConsole_out             = false;
 #endif // ACE_WIN32 || ACE_WIN64
+#if defined (_DEBUG)
   debugFfmpeg_out             = false;
-  debugScanner_out            = COMMON_PARSER_DEFAULT_LEX_TRACE;
+  debugScanner_out            = 0;
+#endif // _DEBUG
   fullScreen_out              = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   displayInterfaceIdentifier_out =
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -890,16 +899,16 @@ do_processArguments (int argc_in,
   ACE_Get_Opt argument_parser (argc_in,
                                argv_in,
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-                               ACE_TEXT ("a:b:cdfi:lm:p:rs:tu::v"),
+                               ACE_TEXT ("a:b:cde:fi:lm:p:rs:tu::v"),
 #else
 #if defined (NL80211_USE)
 #if defined (_DEBUG)
-                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxyz"),
+                               ACE_TEXT ("a:b:de:fi:lm:p:rs:tu::vwxyz"),
 #else
-                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxy"),
+                               ACE_TEXT ("a:b:de:fi:lm:p:rs:tu::vwxy"),
 #endif // _DEBUG
 #else
-                               ACE_TEXT ("a:b:dfi:lm:p:rs:tu::vwxy"),
+                               ACE_TEXT ("a:b:de:fi:lm:p:rs:tu::vwxy"),
 #endif // NL80211_USE
 #endif // ACE_WIN32 || ACE_WIN64
                                1,                          // skip command name
@@ -951,7 +960,17 @@ do_processArguments (int argc_in,
       case 'd':
       {
         debugFfmpeg_out = true;
-        debugScanner_out = true;
+        break;
+      }
+      case 'e':
+      {
+        int stream_i = 0;
+        converter.clear ();
+        converter.str (ACE_TEXT_ALWAYS_CHAR (""));
+        converter << ACE_TEXT_ALWAYS_CHAR (argument_parser.opt_arg ());
+        converter >> stream_i;
+
+        debugScanner_out |= stream_i;
         break;
       }
 #endif // _DEBUG
@@ -1486,7 +1505,7 @@ do_work (int argc_in,
          unsigned int bufferSize_in,
 #if defined (_DEBUG)
          bool debugFfmpeg_in,
-         bool debugScanner_in,
+         int debugScanner_in,
 #endif // _DEBUG
          bool fullScreen_in,
          const std::string& displayInterfaceIdentifier_in,
@@ -1862,9 +1881,9 @@ do_work (int argc_in,
   struct Common_FlexBisonParserConfiguration parser_configuration_2; // MAVLink
   struct Common_FlexBisonParserConfiguration parser_configuration_3; // NavData
 
-  parser_configuration.debugScanner = debugScanner_in;
-  parser_configuration_2 = parser_configuration;
-  parser_configuration_3 = parser_configuration;
+  parser_configuration.debugScanner = debugScanner_in & ARDRONE_STREAM_CONTROL;
+  parser_configuration_2.debugScanner = debugScanner_in & ARDRONE_STREAM_MAVLINK;
+  parser_configuration_3.debugScanner = debugScanner_in & ARDRONE_STREAM_NAVDATA;
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   ARDrone_Module_DirectShow_EventHandler_Module directshow_event_handler_module (NULL,
@@ -2847,18 +2866,18 @@ do_work (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 
   // step3: initialize event dispatch
-  dispatch_configuration_p->reactorType =
-    (dispatch_configuration_p->numberOfReactorThreads > 1) ? COMMON_REACTOR_THREAD_POOL : COMMON_REACTOR_ACE_DEFAULT;
   if (useReactor_in)
   {
     dispatch_configuration_p->numberOfReactorThreads =
       ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
+    dispatch_configuration_p->reactorType =
+      (dispatch_configuration_p->numberOfReactorThreads > 1) ? COMMON_REACTOR_THREAD_POOL : COMMON_REACTOR_ACE_DEFAULT;
   } // end IF
   else
   {
-    // dispatch_configuration_p->proactorType = COMMON_PROACTOR_POSIX_AIOCB;
+//    dispatch_configuration_p->proactorType = COMMON_PROACTOR_POSIX_AIOCB;
     dispatch_configuration_p->numberOfProactorThreads =
-        ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
+      ARDRONE_DEFAULT_NUMBER_OF_DISPATCH_THREADS;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
 #else
     // *TODO*: reuse the reactor from ace/Asynch_Pseudo_Task
@@ -3609,7 +3628,7 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (_DEBUG)
   bool debug_ffmpeg;
-  bool debug_scanner;
+  int debug_scanner_i;
 #endif // _DEBUG
   bool fullscreen;
   std::string display_interface_identifier;
@@ -3883,7 +3902,7 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (_DEBUG)
   debug_ffmpeg           = false;
-  debug_scanner          = COMMON_PARSER_DEFAULT_LEX_TRACE;
+  debug_scanner_i        = 0;
 #endif // _DEBUG
   fullscreen             = ARDRONE_DEFAULT_VIDEO_FULLSCREEN;
   display_interface_identifier =
@@ -3968,7 +3987,7 @@ ACE_TMAIN (int argc_in,
 #endif // ACE_WIN32 || ACE_WIN64
 #if defined (_DEBUG)
                             debug_ffmpeg,
-                            debug_scanner,
+                            debug_scanner_i,
 #endif // _DEBUG
                             fullscreen,
                             display_interface_identifier,
@@ -4437,7 +4456,7 @@ ACE_TMAIN (int argc_in,
              buffer_size,
 #if defined (_DEBUG)
              debug_ffmpeg,
-             debug_scanner,
+             debug_scanner_i,
 #endif // _DEBUG
              fullscreen,
              display_interface_identifier,

@@ -556,6 +556,9 @@ do_work (bool useReactor_in,
 //      //timer_manager_p->stop ();
 //      return;
 //    } // end IF
+
+  connection_manager_p->wait (true); // N/A
+
   stream_p->wait (true,   // wait for thread(s) ?
                   true,   // wait for upstream ?
                   false); // wait for downstream ?
@@ -563,7 +566,7 @@ do_work (bool useReactor_in,
   // step3: clean up
   timer_manager_p->stop ();
 
-  connection_manager_p->stop ();
+  connection_manager_p->stop (false); // wait for completion ?
   connection_manager_p->abort (true); // wait for completion ?
   Common_Event_Tools::finalizeEventDispatch (dispatch_state_s,
                                              true,   // wait ?
@@ -789,9 +792,17 @@ ACE_TMAIN (int argc_in,
 
   // event dispatch
   if (use_reactor_b)
-    configuration.dispatchConfiguration.numberOfReactorThreads = 3;
+  {
+    configuration.dispatchConfiguration.dispatch =
+      COMMON_EVENT_DISPATCH_REACTOR;
+    configuration.dispatchConfiguration.numberOfReactorThreads =
+      NET_CLIENT_DEFAULT_NUMBER_OF_PROACTOR_DISPATCH_THREADS;
+    configuration.dispatchConfiguration.reactorType =
+      (configuration.dispatchConfiguration.numberOfReactorThreads > 1) ? COMMON_REACTOR_THREAD_POOL : COMMON_REACTOR_ACE_DEFAULT;
+  } // end IF
   else
-    configuration.dispatchConfiguration.numberOfProactorThreads = 3;
+    configuration.dispatchConfiguration.numberOfProactorThreads =
+      NET_CLIENT_DEFAULT_NUMBER_OF_PROACTOR_DISPATCH_THREADS;
   if (!Common_Event_Tools::initializeEventDispatch (configuration.dispatchConfiguration))
   {
     ACE_DEBUG ((LM_ERROR,
