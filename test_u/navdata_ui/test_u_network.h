@@ -34,6 +34,7 @@
 #include "stream_configuration.h"
 #include "stream_control_message.h"
 #include "stream_session_data.h"
+#include "stream_session_manager.h"
 #include "common_statistic_handler.h"
 
 #include "stream_net_io_stream.h"
@@ -65,9 +66,17 @@
 #include "test_u_network_common.h"
 #include "test_u_stream_common.h"
 
+// forward declarations
+typedef Stream_Session_Manager_T<ACE_MT_SYNCH,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_SessionManager_Configuration,
+                                 Test_U_SessionData,
+                                 struct Stream_Statistic,
+                                 struct Stream_UserData> Test_U_SessionManager_t;
+
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
-                                      libacestream_default_net_stream_name_string,
+                                      libacestream_default_net_io_stream_name_string,
                                       enum Stream_ControlType,
                                       enum Stream_SessionMessageType,
                                       enum Stream_StateMachine_ControlState,
@@ -76,8 +85,7 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct Stream_Statistic,
                                       Common_Timer_Manager_t,
                                       struct Test_U_ModuleHandlerConfiguration,
-                                      Test_U_SessionData,
-                                      Test_U_SessionData_t,
+                                      Test_U_SessionManager_t,
                                       Stream_ControlMessage_t,
                                       Test_U_Message_t,
                                       Test_U_SessionMessage_t,
@@ -86,7 +94,7 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct Stream_UserData> Test_U_NetTCPStream_t;
 typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       Common_TimePolicy_t,
-                                      libacestream_default_net_stream_name_string,
+                                      libacestream_default_net_io_stream_name_string,
                                       enum Stream_ControlType,
                                       enum Stream_SessionMessageType,
                                       enum Stream_StateMachine_ControlState,
@@ -95,8 +103,7 @@ typedef Stream_Module_Net_IO_Stream_T<ACE_MT_SYNCH,
                                       struct Stream_Statistic,
                                       Common_Timer_Manager_t,
                                       struct Test_U_ModuleHandlerConfiguration,
-                                      Test_U_SessionData,
-                                      Test_U_SessionData_t,
+                                      Test_U_SessionManager_t,
                                       Stream_ControlMessage_t,
                                       Test_U_Message_t,
                                       Test_U_SessionMessage_t,

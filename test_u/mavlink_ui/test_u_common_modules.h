@@ -67,8 +67,7 @@ typedef Stream_Statistic_StatisticReport_ReaderTask_T<ACE_MT_SYNCH,
                                                       Stream_CommandType_t,
                                                       struct Stream_Statistic,
                                                       Common_Timer_Manager_t,
-                                                      Test_U_SessionData,
-                                                      Test_U_SessionData_t> Test_U_Statistic_ReaderTask_t;
+                                                      struct Stream_UserData> Test_U_Statistic_ReaderTask_t;
 typedef Stream_Statistic_StatisticReport_WriterTask_T<ACE_MT_SYNCH,
                                                       Common_TimePolicy_t,
                                                       struct Test_U_ModuleHandlerConfiguration,
@@ -78,8 +77,7 @@ typedef Stream_Statistic_StatisticReport_WriterTask_T<ACE_MT_SYNCH,
                                                       Stream_CommandType_t,
                                                       struct Stream_Statistic,
                                                       Common_Timer_Manager_t,
-                                                      Test_U_SessionData,
-                                                      Test_U_SessionData_t> Test_U_Statistic_WriterTask_t;
+                                                      struct Stream_UserData> Test_U_Statistic_WriterTask_t;
 
 typedef Stream_Module_MessageHandler_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,

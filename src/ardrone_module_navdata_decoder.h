@@ -82,16 +82,19 @@ class ARDrone_NavData_IParser
     return true;
   }
   inline virtual bool parse (ACE_Message_Block*) { ACE_ASSERT (false); ACE_NOTSUP_RETURN (false); ACE_NOTREACHED (return false;) }
-  inline virtual const struct Common_FlexScannerState& getR () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
+  inline virtual const struct Common_FlexBisonParserConfiguration& getR () const { ACE_ASSERT (false); static struct Common_FlexBisonParserConfiguration dummy; return dummy; }
+  inline virtual const struct Common_FlexScannerState& getR_2 () const { ACE_ASSERT (false); static struct Common_FlexScannerState dummy; return dummy; }
   //  using Common_IScanner::error;
 
   virtual void addOption (unsigned int) = 0; // offset
 
   ARDrone_NavData_IParser ()
-   : finished_ (false)
+   : error_ (false)
+   , finished_ (false)
    , state_ (NULL)
   {}
 
+  bool     error_;
   bool     finished_;
   yyscan_t state_;
 };

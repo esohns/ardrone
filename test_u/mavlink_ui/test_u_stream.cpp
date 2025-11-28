@@ -91,7 +91,7 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
 
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
-  Test_U_SessionData* session_data_p = NULL;
+  //Test_U_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct Test_U_ModuleHandlerConfiguration* configuration_p = NULL;
   Test_U_AsynchUDPSource* source_impl_p = NULL;
@@ -112,14 +112,14 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
-  session_data_p =
-    &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+  //ACE_ASSERT (inherited::sessionData_);
+  //session_data_p =
+  //  &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
   iterator =
-      const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
+    const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
   ACE_ASSERT (iterator != configuration_in.end ());
   configuration_p =
-      dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> ((*iterator).second.second);
+    dynamic_cast<struct Test_U_ModuleHandlerConfiguration*> ((*iterator).second.second);
   ACE_ASSERT (configuration_p);
 
   CBData_ = configuration_in.configuration_->CBData;

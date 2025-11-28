@@ -27,6 +27,7 @@
 #include "common_timer_manager_common.h"
 
 #include "stream_common.h"
+#include "stream_session_manager.h"
 #include "stream_streammodule_base.h"
 
 #include "stream_net_source.h"
@@ -36,6 +37,13 @@
 #include "test_u_network.h"
 #include "test_u_network_common.h"
 #include "test_u_stream_common.h"
+
+typedef Stream_Session_Manager_T<ACE_MT_SYNCH,
+                                 enum Stream_SessionMessageType,
+                                 struct Stream_SessionManager_Configuration,
+                                 Test_U_SessionData,
+                                 struct Stream_Statistic,
+                                 struct Stream_UserData> Test_U_SessionManager_t;
 
 // declare module(s)
 typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
@@ -47,6 +55,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
                                     struct Stream_Statistic,
+                                    Test_U_SessionManager_t,
                                     Common_Timer_Manager_t,
                                     Test_U_TCPConnector_t,
                                     struct Stream_UserData> Test_U_TCPSource;
@@ -59,6 +68,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
                                     struct Stream_Statistic,
+                                    Test_U_SessionManager_t,
                                     Common_Timer_Manager_t,
                                     Test_U_AsynchTCPConnector_t,
                                     struct Stream_UserData> Test_U_AsynchTCPSource;
@@ -72,6 +82,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
                                     struct Stream_Statistic,
+                                    Test_U_SessionManager_t,
                                     Common_Timer_Manager_t,
                                     Test_U_UDPConnector_t,
                                     struct Stream_UserData> Test_U_UDPSource;
@@ -84,6 +95,7 @@ typedef Stream_Module_Net_SourceH_T<ACE_MT_SYNCH,
                                     enum Stream_SessionMessageType,
                                     struct Test_U_StreamState,
                                     struct Stream_Statistic,
+                                    Test_U_SessionManager_t,
                                     Common_Timer_Manager_t,
                                     Test_U_AsynchUDPConnector_t,
                                     struct Stream_UserData> Test_U_AsynchUDPSource;

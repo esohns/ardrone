@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 2.8)
+﻿cmake_minimum_required (VERSION 3.5)
 
 # global options
 #set (CMAKE_VERBOSE_MAKEFILE ON)
@@ -140,8 +140,8 @@ if (WIN32)
 endif (WIN32)
 list (APPEND CMAKE_MODULE_PATH "${LIB_ROOT}/cmake-modules")
 include (UseBackportedModules)
-cmake_policy (SET CMP0026 OLD)
-cmake_policy (SET CMP0053 OLD)
+#cmake_policy (SET CMP0026 OLD)
+#cmake_policy (SET CMP0053 OLD)
 include (CreateLaunchers)
 
 add_subdirectory (src)

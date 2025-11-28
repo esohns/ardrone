@@ -35,10 +35,12 @@
 #include "common_tools.h"
 
 #include "common_ui_common.h"
+#include "common_ui_windowtype_converter.h"
 
 #include "stream_common.h"
 #include "stream_configuration.h"
 #include "stream_control_message.h"
+#include "stream_data_message_base.h"
 #include "stream_inotify.h"
 #include "stream_isessionnotify.h"
 #include "stream_istreamcontrol.h"
@@ -217,13 +219,12 @@ struct Test_U_ModuleHandlerConfiguration
    , subscriber (NULL)
    , subscribers (NULL)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-   , window (NULL)
 #else
    , surface (NULL)
    , waylandDisplay (NULL)
-   , window (0)
    , X11Display (NULL)
 #endif // ACE_WIN32 || ACE_WIN64
+   , window ()
   {}
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -253,13 +254,12 @@ struct Test_U_ModuleHandlerConfiguration
   Test_U_ISessionNotify_t*                      subscriber;
   Test_U_Subscribers_t*                         subscribers;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
-  HWND                                          window;
 #else
   struct wl_surface*                            surface;
   struct wl_display*                            waylandDisplay;
-  XID                                           window;
   Display*                                      X11Display;
 #endif // ACE_WIN32 || ACE_WIN64
+  struct Common_UI_Window                       window;
 };
 //extern const char stream_name_string_[];
 struct Test_U_StreamConfiguration;

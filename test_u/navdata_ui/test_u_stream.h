@@ -66,11 +66,11 @@ class Test_U_Stream
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
                         struct Test_U_ModuleHandlerConfiguration,
-                        Test_U_SessionData,
-                        Test_U_SessionData_t,
+                        Test_U_SessionManager_t,
                         Stream_ControlMessage_t,
                         Test_U_Message_t,
-                        Test_U_SessionMessage_t>
+                        Test_U_SessionMessage_t,
+                        struct Stream_UserData>
  , public ARDrone_INavDataNotify
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
@@ -83,11 +83,11 @@ class Test_U_Stream
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
                         struct Test_U_ModuleHandlerConfiguration,
-                        Test_U_SessionData,
-                        Test_U_SessionData_t,
+                        Test_U_SessionManager_t,
                         Stream_ControlMessage_t,
                         Test_U_Message_t,
-                        Test_U_SessionMessage_t> inherited;
+                        Test_U_SessionMessage_t,
+                        struct Stream_UserData> inherited;
 
  public:
   Test_U_Stream ();
@@ -132,11 +132,11 @@ class Test_U_ControlStream
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
                         struct Test_U_ModuleHandlerConfiguration,
-                        Test_U_SessionData,
-                        Test_U_SessionData_t,
+                        Test_U_SessionManager_t,
                         Stream_ControlMessage_t,
                         Test_U_Message_t,
-                        Test_U_SessionMessage_t>
+                        Test_U_SessionMessage_t,
+                        struct Stream_UserData>
  , public ARDrone_IControlNotify
 {
   typedef Stream_Base_T<ACE_MT_SYNCH,
@@ -149,11 +149,11 @@ class Test_U_ControlStream
                         struct Test_U_StreamConfiguration,
                         struct Stream_Statistic,
                         struct Test_U_ModuleHandlerConfiguration,
-                        Test_U_SessionData,
-                        Test_U_SessionData_t,
+                        Test_U_SessionManager_t,
                         Stream_ControlMessage_t,
                         Test_U_Message_t,
-                        Test_U_SessionMessage_t> inherited;
+                        Test_U_SessionMessage_t,
+                        struct Stream_UserData> inherited;
 
  public:
   Test_U_ControlStream ();

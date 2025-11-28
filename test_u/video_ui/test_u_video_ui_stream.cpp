@@ -165,6 +165,7 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   Test_U_AsynchTCPSource* source_impl_p = NULL;
   //struct _AMMediaType media_type_s;
   struct _AMMediaType* media_type_p = NULL, *media_type_2 = NULL;
+  Test_U_SessionManager_t* session_manager_p = NULL;
 
   iterator =
     const_cast<inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
@@ -191,11 +192,13 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
+  //ACE_ASSERT (inherited::sessionData_);
   //ACE_ASSERT ((*iterator).second.second.direct3DConfiguration);
 
+  session_manager_p = Test_U_SessionManager_t::SINGLETON_T::instance ();
+  ACE_ASSERT (session_manager_p);
   session_data_p =
-    &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+    &const_cast<Test_U_SessionData&> (session_manager_p->getR (inherited::id_));
   // *TODO*: remove type inferences
   //if ((*iterator).second.second.direct3DConfiguration->handle)
   //{
@@ -208,14 +211,14 @@ Test_U_Stream::initialize (const inherited::CONFIGURATION_T& configuration_in)
   // step4: initialize module(s)
 
   // ******************* Queue Source ************************
-  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
-  if (!source_impl_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: dynamic_cast<Test_U_AsynchTCPSource> failed, aborting\n"),
-                ACE_TEXT (stream_name_string_)));
-    goto error;
-  } // end IF
+  //source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  //if (!source_impl_p)
+  //{
+  //  ACE_DEBUG ((LM_ERROR,
+  //              ACE_TEXT ("%s: dynamic_cast<Test_U_AsynchTCPSource> failed, aborting\n"),
+  //              ACE_TEXT (stream_name_string_)));
+  //  goto error;
+  //} // end IF
 
   // ---------------------------------------------------------------------------
   // step5: update session data

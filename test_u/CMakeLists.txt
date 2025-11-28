@@ -86,15 +86,17 @@ add_subdirectory (navdata_ui)
 add_subdirectory (video_ui)
 
 # phonies
-add_custom_target (test_u ALL
+add_custom_target (ardrone_test_u ALL
                    COMMENT "building test_u...")
-add_dependencies (test_u mavlink_ui navdata_ui video_ui)
+set_property (TARGET ardrone_test_u PROPERTY FOLDER "test_u")
+
+add_dependencies (ardrone_test_u mavlink_ui navdata_ui video_ui)
 
 if (NOT BUILD_TEST_U)
- set_target_properties (test_u PROPERTIES EXCLUDE_FROM_ALL 1)
+ set_target_properties (ardrone_test_u PROPERTIES EXCLUDE_FROM_ALL 1)
  cmake_policy (SET CMP0012 NEW)
  if (WIN32)
-  set_target_properties (test_u PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+  set_target_properties (ardrone_test_u PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE)
  endif (WIN32)
 endif ()
 
