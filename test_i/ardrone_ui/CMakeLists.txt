@@ -846,6 +846,7 @@ target_link_libraries (${EXECUTABLE} ACEStream_Statistic)
 target_link_libraries (${EXECUTABLE} ACEStream_Visualization)
 
 target_link_libraries (${EXECUTABLE} ACENetwork)
+target_link_libraries (${EXECUTABLE} ACENetwork_Server)
 target_link_libraries (${EXECUTABLE} ACENetwork_Protocol_DHCP)
 target_link_libraries (${EXECUTABLE} ACENetwork_WLAN)
 

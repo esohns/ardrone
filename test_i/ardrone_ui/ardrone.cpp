@@ -1754,14 +1754,14 @@ do_work (int argc_in,
   ARDrone_DirectShow_NavDataStream_t directshow_navdata_stream;
   ARDrone_DirectShow_AsynchVideoStream_t directshow_asynch_video_stream;
   ARDrone_DirectShow_VideoStream_t directshow_video_stream;
-  ARDrone_MediaFoundation_ControlStream_t mediafoundation_control_stream;
-  ARDrone_MediaFoundation_MAVLinkStream_t mediafoundation_mavlink_stream;
+  //ARDrone_MediaFoundation_ControlStream_t mediafoundation_control_stream;
+  //ARDrone_MediaFoundation_MAVLinkStream_t mediafoundation_mavlink_stream;
   // *TODO*: some AR drones use flashed firmware that supports 'MAVLink'
   //         communications instead of the 'NavData' stream documented in the
   //         developer guide (this is a total mess, apparently)
-  ARDrone_MediaFoundation_NavDataStream_t mediafoundation_navdata_stream;
-  ARDrone_MediaFoundation_AsynchVideoStream_t mediafoundation_asynch_video_stream;
-  ARDrone_MediaFoundation_VideoStream_t mediafoundation_video_stream;
+  //ARDrone_MediaFoundation_NavDataStream_t mediafoundation_navdata_stream;
+  //ARDrone_MediaFoundation_AsynchVideoStream_t mediafoundation_asynch_video_stream;
+  //ARDrone_MediaFoundation_VideoStream_t mediafoundation_video_stream;
 #else
   ARDrone_ControlStream_t control_stream;
   ARDrone_MAVLinkStream_t mavlink_stream;
@@ -1993,7 +1993,7 @@ do_work (int argc_in,
       directshow_stream_configuration_5.initialize (module_configuration_2,
                                                     directshow_modulehandler_configuration_5,
                                                     stream_configuration_5);
-      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+      directShowConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_IO_DEFAULT_NAME_STRING),
                                                                               &directshow_stream_configuration_5));
 
       //directshow_control_streamconfiguration_iterator =
@@ -2106,7 +2106,7 @@ do_work (int argc_in,
       mediafoundation_stream_configuration_5.initialize (module_configuration_2,
                                                          mediafoundation_modulehandler_configuration_5,
                                                          stream_configuration_5);
-      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+      mediaFoundationConfiguration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_IO_DEFAULT_NAME_STRING),
                                                                                    &mediafoundation_stream_configuration_5));
 
       //mediafoundation_control_streamconfiguration_iterator =
@@ -2355,7 +2355,7 @@ do_work (int argc_in,
         ARDRONE_DEFAULT_WLAN_SSID_AUTOASSOCIATE;
       wlan_monitor_configuration_p->enableMediaStreamingMode =
         ARDRONE_DEFAULT_WLAN_ENABLE_MEDIASTREAMING;
-      wlan_monitor_configuration_p->subscriber = &mediafoundation_navdata_stream;
+      //wlan_monitor_configuration_p->subscriber = &mediafoundation_navdata_stream;
       //wlan_monitor_configuration_p->userData =
       //  mediaFoundationConfiguration_in.userData;
       break;
@@ -2701,7 +2701,7 @@ do_work (int argc_in,
       module_configuration_2.generateUniqueNames = true;
       directshow_modulehandler_configuration_5 = directshow_modulehandler_configuration;
       directshow_modulehandler_configuration_5.concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
-      directshow_stream_configuration_5.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+      directshow_stream_configuration_5.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_INPUT_DEFAULT_NAME_STRING),
                                                                                       std::make_pair (&module_configuration_2,
                                                                                                       &directshow_modulehandler_configuration_5)));
 
@@ -2769,22 +2769,23 @@ do_work (int argc_in,
       //  network
       module_configuration_2.generateUniqueNames = true;
       mediafoundation_modulehandler_configuration_5 = mediafoundation_modulehandler_configuration;
-      mediafoundation_stream_configuration_5.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+      mediafoundation_modulehandler_configuration_5.concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
+      mediafoundation_stream_configuration_5.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_INPUT_DEFAULT_NAME_STRING),
                                                                      std::make_pair (&module_configuration_2,
                                                                                      &mediafoundation_modulehandler_configuration_5)));
 
-      CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
-                                                 &mediafoundation_control_stream));
-      CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
-                                                 &mediafoundation_mavlink_stream));
-      CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
-                                                 &mediafoundation_navdata_stream));
-      if (useReactor_in)
-        CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
-                                                   &mediafoundation_video_stream));
-      else
-        CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
-                                                   &mediafoundation_asynch_video_stream));
+      //CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_CONTROL_STREAM_NAME_STRING),
+      //                                           &mediafoundation_control_stream));
+      //CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_MAVLINK_STREAM_NAME_STRING),
+      //                                           &mediafoundation_mavlink_stream));
+      //CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING),
+      //                                           &mediafoundation_navdata_stream));
+      //if (useReactor_in)
+      //  CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
+      //                                             &mediafoundation_video_stream));
+      //else
+      //  CBData_in->streams.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (ARDRONE_VIDEO_STREAM_NAME_STRING),
+      //                                             &mediafoundation_asynch_video_stream));
 
       // step2: initialize connection manager
       mediafoundation_tcp_connection_manager_p->set (mediafoundation_tcp_connection_configuration,
@@ -3102,9 +3103,9 @@ do_work (int argc_in,
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      stream_name_string = mediafoundation_navdata_stream.name ();
-      result_2 =
-        mediafoundation_navdata_stream.initialize (mediafoundation_stream_configuration_3);
+      //stream_name_string = mediafoundation_navdata_stream.name ();
+      //result_2 =
+      //  mediafoundation_navdata_stream.initialize (mediafoundation_stream_configuration_3);
       break;
     }
     default:
@@ -3201,22 +3202,22 @@ do_work (int argc_in,
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
       {
-        stream_name_string = mediafoundation_control_stream.name ();
-        result_2 =
-          mediafoundation_control_stream.initialize (mediafoundation_stream_configuration);
-        if (!result_2)
-          break;
-        stream_name_string = mediafoundation_mavlink_stream.name ();
-        result_2 =
-          mediafoundation_mavlink_stream.initialize (mediafoundation_stream_configuration_2);
-        if (!result_2)
-          break;
-        stream_name_string =
-          (useReactor_in ? mediafoundation_video_stream.name ()
-                         : mediafoundation_asynch_video_stream.name ());
-        result_2 =
-          (useReactor_in ? mediafoundation_video_stream.initialize (*(*mediafoundation_video_streamconfiguration_iterator).second)
-                         : mediafoundation_asynch_video_stream.initialize (*(*mediafoundation_video_streamconfiguration_iterator).second));
+        //stream_name_string = mediafoundation_control_stream.name ();
+        //result_2 =
+        //  mediafoundation_control_stream.initialize (mediafoundation_stream_configuration);
+        //if (!result_2)
+        //  break;
+        //stream_name_string = mediafoundation_mavlink_stream.name ();
+        //result_2 =
+        //  mediafoundation_mavlink_stream.initialize (mediafoundation_stream_configuration_2);
+        //if (!result_2)
+        //  break;
+        //stream_name_string =
+        //  (useReactor_in ? mediafoundation_video_stream.name ()
+        //                 : mediafoundation_asynch_video_stream.name ());
+        //result_2 =
+        //  (useReactor_in ? mediafoundation_video_stream.initialize (*(*mediafoundation_video_streamconfiguration_iterator).second)
+        //                 : mediafoundation_asynch_video_stream.initialize (*(*mediafoundation_video_streamconfiguration_iterator).second));
         break;
       }
       default:
@@ -3284,33 +3285,33 @@ continue_:
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
       {
-        stream_name_string = mediafoundation_control_stream.name ();
-        istream_control_p = &mediafoundation_control_stream;
-        istream_control_p->start ();
-        result_2 = istream_control_p->isRunning ();
-        if (!result_2)
-          break;
-        stream_name_string = mediafoundation_mavlink_stream.name ();
-        istream_control_p = &mediafoundation_mavlink_stream;
-        istream_control_p->start ();
-        result_2 = istream_control_p->isRunning ();
-        if (!result_2)
-          break;
-        stream_name_string = mediafoundation_navdata_stream.name ();
-        istream_control_p = &mediafoundation_navdata_stream;
-        istream_control_p->start ();
-        result_2 = istream_control_p->isRunning ();
-        if (!result_2)
-          break;
-        stream_name_string =
-          (useReactor_in ? mediafoundation_video_stream.name ()
-                         : mediafoundation_asynch_video_stream.name ());
-        if (useReactor_in)
-          istream_control_p = &mediafoundation_video_stream;
-        else
-          istream_control_p = &mediafoundation_asynch_video_stream;
-        istream_control_p->start ();
-        result_2 = istream_control_p->isRunning ();
+        //stream_name_string = mediafoundation_control_stream.name ();
+        //istream_control_p = &mediafoundation_control_stream;
+        //istream_control_p->start ();
+        //result_2 = istream_control_p->isRunning ();
+        //if (!result_2)
+        //  break;
+        //stream_name_string = mediafoundation_mavlink_stream.name ();
+        //istream_control_p = &mediafoundation_mavlink_stream;
+        //istream_control_p->start ();
+        //result_2 = istream_control_p->isRunning ();
+        //if (!result_2)
+        //  break;
+        //stream_name_string = mediafoundation_navdata_stream.name ();
+        //istream_control_p = &mediafoundation_navdata_stream;
+        //istream_control_p->start ();
+        //result_2 = istream_control_p->isRunning ();
+        //if (!result_2)
+        //  break;
+        //stream_name_string =
+        //  (useReactor_in ? mediafoundation_video_stream.name ()
+        //                 : mediafoundation_asynch_video_stream.name ());
+        //if (useReactor_in)
+        //  istream_control_p = &mediafoundation_video_stream;
+        //else
+        //  istream_control_p = &mediafoundation_asynch_video_stream;
+        //istream_control_p->start ();
+        //result_2 = istream_control_p->isRunning ();
         break;
       }
       default:
@@ -3386,25 +3387,25 @@ continue_2:
       }
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
       {
-        istream_control_p = &mediafoundation_control_stream;
-        istream_control_p->wait (true,
-                                 false,
-                                 false);
-        istream_control_p = &mediafoundation_mavlink_stream;
-        istream_control_p->wait (true,
-                                 false,
-                                 false);
-        istream_control_p = &mediafoundation_navdata_stream;
-        istream_control_p->wait (true,
-                                 false,
-                                 false);
-        if (useReactor_in)
-          istream_control_p = &mediafoundation_video_stream;
-        else
-          istream_control_p = &mediafoundation_asynch_video_stream;
-        istream_control_p->wait (true,
-                                 false,
-                                 false);
+        //istream_control_p = &mediafoundation_control_stream;
+        //istream_control_p->wait (true,
+        //                         false,
+        //                         false);
+        //istream_control_p = &mediafoundation_mavlink_stream;
+        //istream_control_p->wait (true,
+        //                         false,
+        //                         false);
+        //istream_control_p = &mediafoundation_navdata_stream;
+        //istream_control_p->wait (true,
+        //                         false,
+        //                         false);
+        //if (useReactor_in)
+        //  istream_control_p = &mediafoundation_video_stream;
+        //else
+        //  istream_control_p = &mediafoundation_asynch_video_stream;
+        //istream_control_p->wait (true,
+        //                         false,
+        //                         false);
         break;
       }
       default:

@@ -387,7 +387,7 @@ do_work (bool useReactor_in,
   // ********************** module configuration data **************************
   struct Stream_ModuleConfiguration module_configuration;
   struct Test_U_ModuleHandlerConfiguration modulehandler_configuration;
-  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_io;
+  struct Test_U_ModuleHandlerConfiguration modulehandler_configuration_input;
   struct Test_U_StreamConfiguration stream_configuration;
   Test_U_TCPConnectionConfiguration_t connection_configuration;
   Test_U_TCPConnectionManager_t* connection_manager_p = NULL;
@@ -457,8 +457,8 @@ do_work (bool useReactor_in,
 #endif // ACE_WIN32 || ACE_WIN64
   modulehandler_configuration.outputFormat.frameRate.num = 30;
 
-  modulehandler_configuration_io = modulehandler_configuration;
-  modulehandler_configuration_io.concurrency =
+  modulehandler_configuration_input = modulehandler_configuration;
+  modulehandler_configuration_input.concurrency =
     STREAM_HEADMODULECONCURRENCY_CONCURRENT;
 
   stream_configuration.format = modulehandler_configuration.outputFormat;
@@ -470,9 +470,9 @@ do_work (bool useReactor_in,
   configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_DEC_DECODER_LIBAV_CONVERTER_DEFAULT_NAME_STRING),
                                                                std::make_pair (&module_configuration,
                                                                                &modulehandler_configuration)));
-  configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+  configuration_in.streamConfiguration.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_INPUT_DEFAULT_NAME_STRING),
                                                                std::make_pair (&module_configuration,
-                                                                               &modulehandler_configuration_io)));
+                                                                               &modulehandler_configuration_input)));
 
   v4l_stream_iterator =
     configuration_in.streamConfiguration.find (ACE_TEXT_ALWAYS_CHAR (""));

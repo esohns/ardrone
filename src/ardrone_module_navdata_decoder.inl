@@ -373,7 +373,7 @@ continue_:
 //  // *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
   if (!begin (message_block_2->rd_ptr (),
-              message_block_2->length ()))
+              static_cast<unsigned int> (message_block_2->length ())))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to begin(), aborting\n"),
@@ -744,7 +744,7 @@ ARDrone_Module_NavDataDecoder_T<ACE_SYNCH_USE,
 
 continue_:
         if (!begin (buffer_->rd_ptr (),
-                    buffer_->length ()))
+                    static_cast<unsigned int> (buffer_->length ())))
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to Common_IScannerBase::begin(), aborting\n"),

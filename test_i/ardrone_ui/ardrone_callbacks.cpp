@@ -2038,7 +2038,7 @@ idle_initialize_ui_cb (gpointer userData_in)
   {
     case STREAM_MEDIAFRAMEWORK_DIRECTSHOW:
     {
-      ACE_ASSERT (!(*directshow_iterator_4).second.second->window);
+      ACE_ASSERT (!(*directshow_iterator_4).second.second->window.win32_hwnd);
       //(*iterator_4).second.window =
       //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
       //gdk_win32_window_get_impl_hwnd (window_p);
@@ -2047,7 +2047,7 @@ idle_initialize_ui_cb (gpointer userData_in)
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
     {
-      ACE_ASSERT (!(*mediafoundation_iterator_4).second.second->window);
+      ACE_ASSERT (!(*mediafoundation_iterator_4).second.second->window.win32_hwnd);
       //(*iterator_4).second.window =
       //  static_cast<HWND> (GDK_WINDOW_HWND (window_p));
       //gdk_win32_window_get_impl_hwnd (window_p);
@@ -4339,7 +4339,7 @@ continue_:
         (*directshow_iterator_5).second.second->area.bottom =
           std::abs (video_info_header_p->bmiHeader.biHeight);
 
-        window_h = (*directshow_iterator_5).second.second->window;
+        window_h = (*directshow_iterator_5).second.second->window.win32_hwnd;
         device_name_string =
           ACE_TEXT ((*directshow_iterator_5).second.second->interfaceIdentifier.c_str ());
         break;
@@ -4347,7 +4347,7 @@ continue_:
       case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
       {
         ACE_ASSERT (false); // *TODO*
-        window_h = (*mediafoundation_iterator_5).second.second->window;
+        window_h = (*mediafoundation_iterator_5).second.second->window.win32_hwnd;
         device_name_string =
           ACE_TEXT ((*mediafoundation_iterator_5).second.second->interfaceIdentifier.c_str ());
         break;
@@ -4496,7 +4496,7 @@ continue_:
                    (*directshow_iterator_5).second.second->area.left),
                   ((*directshow_iterator_5).second.second->area.bottom -
                    (*directshow_iterator_5).second.second->area.top)));
-      ACE_ASSERT ((*directshow_iterator_5).second.second->window);
+      ACE_ASSERT ((*directshow_iterator_5).second.second->window.win32_hwnd);
       break;
     }
     case STREAM_MEDIAFRAMEWORK_MEDIAFOUNDATION:
@@ -4512,7 +4512,7 @@ continue_:
                    (*mediafoundation_iterator_5).second.second->area.left),
                   ((*mediafoundation_iterator_5).second.second->area.bottom -
                    (*mediafoundation_iterator_5).second.second->area.top)));
-      ACE_ASSERT ((*mediafoundation_iterator_5).second.second->window);
+      ACE_ASSERT ((*mediafoundation_iterator_5).second.second->window.win32_hwnd);
       break;
     }
     default:

@@ -283,10 +283,10 @@ struct Test_U_StreamState
 };
 
 struct Test_U_StreamConfiguration
- : Stream_Configuration
+ : Stream_Net_StreamConfiguration
 {
   Test_U_StreamConfiguration ()
-   : Stream_Configuration ()
+   : Stream_Net_StreamConfiguration ()
    , format ()
 //   , renderer (STREAM_VIS_RENDERER_VIDEO_DEFAULT)
    , userData (NULL)

@@ -221,7 +221,7 @@ continue_:
   end ();
 
   if (!begin (fragment_->rd_ptr (),
-              fragment_->length ()))
+              static_cast<unsigned int> (fragment_->length ())))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("%s: failed to begin(), aborting\n"),
@@ -585,7 +585,7 @@ ARDrone_Module_ControlDecoder_T<ACE_SYNCH_USE,
 
 continue_:
         if (!begin (buffer_->rd_ptr (),
-                    buffer_->length ()))
+                    static_cast<unsigned int> (buffer_->length ())))
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to begin(), aborting\n"),

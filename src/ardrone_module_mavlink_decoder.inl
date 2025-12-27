@@ -335,7 +335,7 @@ continue_:
   //// *NOTE*: DO NOT adjust the write pointer --> length() must stay as it was
 
   if (!begin (fragment_->rd_ptr (),
-              fragment_->length ()))
+              static_cast<unsigned int> (fragment_->length ())))
   {
     ACE_DEBUG ((LM_ERROR,
                 ACE_TEXT ("failed to Common_IScannerBase::begin(), aborting\n")));
@@ -691,7 +691,7 @@ ARDrone_Module_MAVLinkDecoder_T<ACE_SYNCH_USE,
 continue_:
         ACE_ASSERT (!bufferState_);
         if (!begin (buffer_->rd_ptr (),
-                    buffer_->length ()))
+                    static_cast<unsigned int> (buffer_->length ())))
         {
           ACE_DEBUG ((LM_ERROR,
                       ACE_TEXT ("%s: failed to ARDrone_Module_MAVLinkDecoder_T::scan_begin(), aborting\n"),

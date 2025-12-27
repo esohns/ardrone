@@ -55,6 +55,7 @@ extern "C"
 #if defined (GUI_SUPPORT)
 #include "common_ui_common.h"
 #include "common_ui_defines.h"
+#include "common_ui_windowtype_converter.h"
 #endif // GUI_SUPPORT
 
 #include "stream_base.h"
@@ -399,7 +400,7 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
    , filterConfiguration (NULL)
    , parserConfiguration (NULL)
    , push (STREAM_LIB_DIRECTSHOW_FILTER_SOURCE_DEFAULT_PUSH)
-   , window (NULL)
+   , window ()
    , windowController (NULL)
    , windowController2 (NULL)
   {
@@ -418,7 +419,7 @@ struct ARDrone_DirectShow_ModuleHandlerConfiguration
   struct ARDrone_DirectShow_FilterConfiguration* filterConfiguration;      // display module
   struct Common_FlexBisonParserConfiguration*    parserConfiguration;
   bool                                           push;                     // display module
-  HWND                                           window;                   // display module
+  struct Common_UI_Window                        window;                   // display module
   IVideoWindow*                                  windowController;         // display module
   IMFVideoDisplayControl*                        windowController2;        // display module (EVR)
 };
@@ -453,7 +454,7 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
    , parserConfiguration (NULL)
    , rendererNodeId (0)
    , session (NULL)
-   , window (NULL)
+   , window ()
    , windowController (NULL)
   {
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
@@ -467,7 +468,7 @@ struct ARDrone_MediaFoundation_ModuleHandlerConfiguration
   struct Common_FlexBisonParserConfiguration*        parserConfiguration;
   TOPOID                                             rendererNodeId;
   IMFMediaSession*                                   session;
-  HWND                                               window;                   // display module
+  struct Common_UI_Window                            window;                   // display module
   IMFVideoDisplayControl*                            windowController;
 };
 #else
@@ -519,8 +520,8 @@ struct ARDrone_ModuleHandlerConfiguration
 #if defined (GTK_USE)
    , pixelBuffer (NULL)
    , pixelBufferLock (NULL)
-#endif // GTK_USE
    , window (NULL)
+#endif // GTK_USE
 #endif // GUI_SUPPORT
   {
     concurrency = STREAM_HEADMODULECONCURRENCY_CONCURRENT;
@@ -545,14 +546,8 @@ struct ARDrone_ModuleHandlerConfiguration
 #if defined (GTK_USE)
   GdkPixbuf*                                         pixelBuffer;              // display module
   ACE_SYNCH_MUTEX*                                   pixelBufferLock;          // display module
-#endif // GTK_USE
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  HWND                                               window;
-#else
-#if defined (GTK_USE)
   GdkWindow*                                         window;
 #endif // GTK_USE
-#endif // ACE_WIN32 || ACE_WIN64
 #endif // GUI_SUPPORT
 };
 #endif // ACE_WIN32 || ACE_WIN64
@@ -561,10 +556,10 @@ typedef Common_IInitializeP_T<ARDrone_IMAVLinkNotify> ARDrone_IMAVLinkInitialize
 typedef Common_IInitializeP_T<ARDrone_INavDataNotify> ARDrone_INavDataInitialize_t;
 struct ARDrone_UserData;
 struct ARDrone_StreamConfiguration
- : Stream_Configuration
+ : Stream_Net_StreamConfiguration
 {
   ARDrone_StreamConfiguration ()
-   : Stream_Configuration ()
+   : Stream_Net_StreamConfiguration ()
 #if defined (GUI_SUPPORT)
    , CBData (NULL)
 #endif // GUI_SUPPORT
