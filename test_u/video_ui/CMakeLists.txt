@@ -93,9 +93,6 @@ find_package (ACEStream
 if (NOT EXISTS ${ACEStream_DIR})
  message (FATAL_ERROR "could not find package \"ACEStream\", aborting")
 endif ()
-add_definitions (-DSTREAM_HAS_DLL)
-#add_definitions (-DSTREAM_DEC_HAS_DLL)
-#add_definitions (-DOPENCV_SUPPORT)
 
 find_package (ACENetwork
               REQUIRED
@@ -106,7 +103,6 @@ find_package (ACENetwork
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
 endif ()
-#add_definitions (-DNET_HAS_DLL)
 
 find_package (${PROJECT_NAME}
               REQUIRED
@@ -117,7 +113,6 @@ find_package (${PROJECT_NAME}
 if (NOT EXISTS ${${PROJECT_NAME}_DIR})
  message (FATAL_ERROR "could not find package \"${PROJECT_NAME}\", aborting")
 endif ()
-add_definitions (-DARDRONE_HAS_DLL)
 
 add_definitions (-DHAVE_CONFIG_H)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
@@ -205,7 +200,7 @@ elseif (WIN32)
  include_directories ($ENV{PRJ_ROOT}/Common/src/timer)
  include_directories ($ENV{PRJ_ROOT}/Common/src/ui)
 
- include_directories ($ENV{PRJ_ROOT}/Common/test_u)
+# include_directories ($ENV{PRJ_ROOT}/Common/test_u)
 
 include_directories ($ENV{PRJ_ROOT}/ACEStream/src)
 include_directories ($ENV{PRJ_ROOT}/ACEStream/src/modules/dec)
@@ -319,15 +314,16 @@ elseif (WIN32)
 #  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Debug/strmbasd.lib)
   target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/build/msvc/baseclasses/Debug/BaseClassesd.lib)
  else ()
-#  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/cmake/baseclasses/Release/strmbase.lib)
+  target_link_libraries (${EXECUTABLE} ${DIRECTSHOW_BASECLASSES_DIRECTORY}/build/msvc/baseclasses/Release/BaseClasses.lib)
  endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 
-# *TODO*: repair WIN32 pkgconfig support
+ if (GTK_SUPPORT)
+  target_link_libraries (${EXECUTABLE} ${GTK_LIBRARIES})
+ endif (GTK_SUPPORT)
+ if (WXWIDGETS_SUPPORT)
+  target_link_libraries (${EXECUTABLE} ${wxWidgets_LIBRARIES})
+ endif (WXWIDGETS_SUPPORT)
  target_link_libraries (${EXECUTABLE} ${ffmpeg_LIBRARIES})
-# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavformat/avformat.lib)
-# target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avformat.lib)
-# target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ffmpeg/libavcodec/avcodec.lib)
-# target_link_libraries (${EXECUTABLE} $ENV{LIB_ROOT}/ffmpeg/lib/avcodec.lib)
 endif ()
 target_link_libraries (${EXECUTABLE} ${ACE_LIBRARY})
 
@@ -436,6 +432,8 @@ elseif (WIN32)
  file (TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${EXECUTABLE}.exe" COMMAND)
  string (REPLACE "\\" "\\\\" COMMAND ${COMMAND})
 #file (TO_CMAKE_PATH $ENV{LIB_ROOT}/libpng/cmake/${CMAKE_BUILD_TYPE} LIBPNG_PATH)
+ file (TO_CMAKE_PATH "${GTK_LIB_DIRS}" GTK_PATH)
+ file (TO_CMAKE_PATH "${wxWidgets_LIB_DIR}" WXWIDGETS_PATH)
  # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
  file (TO_CMAKE_PATH "$ENV{VCPKG_INSTALLATION_ROOT}/installed/x64-windows/bin" VCPKG_PATH)
  file (TO_CMAKE_PATH "${ffmpeg_LIB_DIR}" FFMPEG_PATH)
@@ -445,7 +443,9 @@ elseif (WIN32)
  file (TO_CMAKE_PATH "${OPENCV_LIB_DIR}" OPENCV_PATH)
  file (TO_CMAKE_PATH "${ACE_LIB_DIR}" ACE_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                           ${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
+                           #${PROJECT_SOURCE_DIR}/../libpng-1.6.25/cmake/${CMAKE_BUILD_TYPE}
+                           ${GTK_PATH}
+                           ${WXWIDGETS_PATH}
                            ${VCPKG_PATH}
                            ${FFMPEG_PATH}
                            ${IMAGEMAGICK_PATH}

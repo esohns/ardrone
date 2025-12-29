@@ -936,26 +936,26 @@ if (UNIX)
 #                           ${PROJECT_SOURCE_DIR}/modules/ATCD/ACE/lib)
 elseif (WIN32)
  string (REPLACE "/" "\\\\" WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_i/${EXECUTABLE}) 
-# if (LIBXML2_USE)
-  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
-                            ${PROJECT_SOURCE_DIR}/../libiconv-1.9.2-1/bin
-                            ${PROJECT_SOURCE_DIR}/../libxml2/win32/bin.msvc)
-# endif (LIBXML2_USE)
+ file (TO_CMAKE_PATH "${LIBXML2_LIB_DIR}" LIBXML2_PATH)
+ set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
+                           ${LIBXML2_PATH})
  if (GUI_SUPPORT)
   set (ARGS "-u.\\\\etc\\\\${ui_definition_file} ${ARGS}")
 
-  if (GTK_USE)
+  if (GTK_SUPPORT)
    file (TO_CMAKE_PATH "${GTK_LIB_DIRS}" GTK_PATH)
    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                               ${GTK_PATH})
-  elseif (WXWIDGETS_USE)
+  endif (GTK_SUPPORT)
+  if (WXWIDGETS_SUPPORT)
    set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                              ${wxWidgets_LIB_DIR})
-  endif ()
+  endif (WXWIDGETS_SUPPORT)
  else ()
   set (ARGS "-g ${ARGS}")
  endif (GUI_SUPPORT)
  file (TO_CMAKE_PATH "${GLEW_LIB_DIR}" GLEW_PATH)
+ file (TO_CMAKE_PATH "${GLUT_LIB_DIR}" GLUT_PATH)
  file (TO_CMAKE_PATH "${ASSIMP_LIB_DIR}" ASSIMP_PATH)
  file (TO_CMAKE_PATH "${PNG_LIB_DIR}" PNG_PATH)
   # *NOTE*: ffmpeg was built with (vcpkg-)"libpng" support, so now there is a new dependency to zlib1.dll, liblzma.dll, iconv-2.dll :-(
@@ -966,6 +966,7 @@ elseif (WIN32)
  file (TO_CMAKE_PATH $ENV{LIB_ROOT}/openssl SSL_LIB_PATH)
  set (RUNTIME_LIBRARY_DIRS ${RUNTIME_LIBRARY_DIRS}
                            ${GLEW_PATH}
+                           ${GLUT_PATH}
                            ${ASSIMP_PATH}
                            ${PNG_PATH}
                            ${VCPKG_PATH}

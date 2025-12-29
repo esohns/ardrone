@@ -3626,6 +3626,23 @@ ACE_TMAIN (int argc_in,
   ARDRONE_TRACE (ACE_TEXT ("::main"));
 
   int result;
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  // step-1: initialize ACE ?
+//  result = ACE::init ();
+//  if (result == -1)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
+//    return EXIT_FAILURE;
+//  } // end IF
+//#endif // ACE_WIN32 || ACE_WIN64
+
+#if defined (VALGRIND_SUPPORT)
+  if (RUNNING_ON_VALGRIND)
+    ACE_DEBUG ((LM_DEBUG,
+                ACE_TEXT ("running on valgrind...\n")));
+#endif // VALGRIND_SUPPORT
+
   bool result_2;
   std::string configuration_path;
   std::string path;
@@ -3723,24 +3740,6 @@ ACE_TMAIN (int argc_in,
   bind_textdomain_codeset (PACKAGE, "UTF-8");
   textdomain (PACKAGE);
 #endif // ENABLE_NLS
-
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  // step-1: initialize ACE ?
-  result = ACE::init ();
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE::init(): \"%m\", aborting\n")));
-
-    return EXIT_FAILURE;
-  } // end IF
-#endif // ACE_WIN32 || ACE_WIN64
-
-#if defined (VALGRIND_SUPPORT)
-  if (RUNNING_ON_VALGRIND)
-    ACE_DEBUG ((LM_DEBUG,
-                ACE_TEXT ("running on valgrind...\n")));
-#endif // VALGRIND_SUPPORT
 
   // initialize framework(s)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -4634,27 +4633,27 @@ done:
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
   Stream_MediaFramework_DirectDraw_Tools::finalize ();
 
-  result = ACE::fini ();
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
-    return EXIT_FAILURE;
-  } // end IF
+  //result = ACE::fini ();
+  //if (result == -1)
+  //{
+  //  ACE_DEBUG ((LM_ERROR,
+  //              ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
+  //  return EXIT_FAILURE;
+  //} // end IF
 #endif
 
   return EXIT_SUCCESS;
 
 error:
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  result = ACE::fini ();
-  if (result == -1)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
-    return EXIT_FAILURE;
-  } // end IF
-#endif
+//#if defined (ACE_WIN32) || defined (ACE_WIN64)
+//  result = ACE::fini ();
+//  if (result == -1)
+//  {
+//    ACE_DEBUG ((LM_ERROR,
+//                ACE_TEXT ("failed to ACE::fini(): \"%m\", aborting\n")));
+//    return EXIT_FAILURE;
+//  } // end IF
+//#endif
 
   return EXIT_FAILURE;
 } // end main

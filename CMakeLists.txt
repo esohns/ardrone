@@ -144,6 +144,14 @@ include (UseBackportedModules)
 #cmake_policy (SET CMP0053 OLD)
 include (CreateLaunchers)
 
+if (UNIX)
+ list (APPEND CMAKE_MODULE_PATH "./modules/Common/scripts")
+elseif (WIN32)
+# list (APPEND CMAKE_MODULE_PATH "../Common/scripts")
+ set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../Common/scripts")
+endif ()
+include (libraries_init)
+
 add_subdirectory (src)
 
 ################################################################################

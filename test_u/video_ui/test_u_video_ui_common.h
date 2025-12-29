@@ -21,7 +21,7 @@
 #ifndef TEST_U_VIDEO_UI_COMMON_H
 #define TEST_U_VIDEO_UI_COMMON_H
 
-#include "common_test_u_common.h"
+//#include "common_test_u_common.h"
 
 #include "test_u_video_ui_network_common.h"
 #include "test_u_video_ui_stream_common.h"
