@@ -29,7 +29,7 @@
 //#cmakedefine VERSION "@VERSION@"
 
 // options
-#cmakedefine01 DEBUG_DEBUGGER
+//#cmakedefine01 DEBUG_DEBUGGER
 #cmakedefine TRACING
 #cmakedefine VALGRIND_SUPPORT
 // sub-options - src
@@ -39,6 +39,6 @@
 #cmakedefine WEXT_SUPPORT
 #cmakedefine NL80211_SUPPORT
 #cmakedefine DBUS_SUPPORT
-#cmakedefine DHCLIENT_SUPPORT
+//##cmakedefine DHCLIENT_SUPPORT
 #cmakedefine WLANAPI_SUPPORT
 #cmakedefine WINXP_SUPPORT

@@ -285,6 +285,9 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
 
+
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   ACE_NEW_RETURN (module_p,
                   ARDrone_Module_Display_Module (this,
                                                  ACE_TEXT_ALWAYS_CHAR (STREAM_VIS_GTK_PIXBUF_DEFAULT_NAME_STRING)),
@@ -292,6 +295,8 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   ACE_ASSERT (module_p);
   layout_in->append (module_p, NULL, 0);
   module_p = NULL;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   if (!(*iterator).second.second->targetFileName.empty ())
   {
@@ -365,11 +370,9 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
   bool reset_setup_pipeline = false;
   typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
-#if defined (ACE_WIN32) || defined (ACE_WIN64)
-  //ModuleConfigurationType* configuration_p = NULL;
-#endif
   typename inherited::ISTREAM_T::MODULE_T* module_p = NULL;
   typename SourceModuleType::WRITER_T* sourceWriter_impl_p = NULL;
+  SessionManagerType* session_manager_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
@@ -386,9 +389,8 @@ ARDrone_VideoStream_T<ModuleConfigurationType,
     setup_pipeline;
   reset_setup_pipeline = false;
 
-  SessionManagerType* session_manager_p =
-    SessionManagerType::SINGLETON_T::instance ();
   // sanity check(s)
+  session_manager_p = SessionManagerType::SINGLETON_T::instance ();
   ACE_ASSERT (session_manager_p);
   session_data_p =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (session_manager_p->getR (inherited::id_));
@@ -708,14 +710,13 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
     configuration_ = NULL;
   } // end IF
 
-//  bool result = false;
   bool setup_pipeline = configuration_in.configuration_->setupPipeline;
   bool reset_setup_pipeline = false;
   typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
-  //ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
+  SessionManagerType* session_manager_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
@@ -733,9 +734,7 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  SessionManagerType* session_manager_p =
-    SessionManagerType::SINGLETON_T::instance ();
-  // sanity check(s)
+  session_manager_p = SessionManagerType::SINGLETON_T::instance ();
   ACE_ASSERT (session_manager_p);
   session_data_p =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (session_manager_p->getR (inherited::id_));
@@ -744,21 +743,10 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
 
   // sanity check(s)
   ACE_ASSERT (configuration_in.configuration_->deviceConfiguration);
-
   configuration_ = configuration_in.configuration_->deviceConfiguration;
-
   iterator =
     const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
-
-  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
-
-  //configuration_p =
-    //dynamic_cast<ModuleConfigurationType*> (&((*iterator).second.second));
-
-  // sanity check(s)
-  //ACE_ASSERT (configuration_p);
-  //ACE_ASSERT (configuration_p->subscribers);
   ACE_ASSERT ((*iterator).second.second->subscribers);
 
   //configuration_p->subscribers->push_back (this);
@@ -771,27 +759,18 @@ ARDrone_ControlStream_T<ModuleConfigurationType,
   // ---------------------------------------------------------------------------
 
   // ******************************** Source ***********************************
-  module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
-                                                   true,
-                                                   false));
-  if (!module_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (control_stream_name_string_),
-                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
-    goto error;
-  } // end IF
-  // iset_p =
-  //   dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
-  // ACE_ASSERT (iset_p);
-  // iset_p->setP (&(inherited::state_));
-
-  //// enqueue the module
-  //// *NOTE*: push()ing the module will open() it
-  //// --> set the argument that is passed along
-  //module_p->arg (inherited::sessionData_);
+  // module_p =
+  //   const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+  //                                                  true,
+  //                                                  false));
+  // if (!module_p)
+  // {
+  //   ACE_DEBUG ((LM_ERROR,
+  //               ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+  //               ACE_TEXT (control_stream_name_string_),
+  //               ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+  //   goto error;
+  // } // end IF
 
   // ---------------------------------------------------------------------------
 
@@ -1241,6 +1220,7 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   ModuleConfigurationType* configuration_p = NULL;
   Stream_Module_t* module_p = NULL;
   Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
+  SessionManagerType* session_manager_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
@@ -1264,21 +1244,15 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   } // end lock scope
 
   // sanity check(s)
-  SessionManagerType* session_manager_p =
-    SessionManagerType::SINGLETON_T::instance ();
-  // sanity check(s)
+  session_manager_p = SessionManagerType::SINGLETON_T::instance ();
   ACE_ASSERT (session_manager_p);
   session_data_p =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (session_manager_p->getR (inherited::id_));
   ACE_ASSERT (session_data_p);
   session_data_p->stream = this;
-
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
-
-  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
-
   configuration_p = (*iterator).second.second;
 
   // sanity check(s)
@@ -1292,23 +1266,23 @@ ARDrone_NavDataStream_T<ModuleConfigurationType,
   // ---------------------------------------------------------------------------
 
   // ******************************** Source ***********************************
-  module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
-                                                   true,
-                                                   false));
-  if (!module_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (navdata_stream_name_string_),
-                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
-    goto error;
-  } // end IF
+  // module_p =
+  //   const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+  //                                                  true,
+  //                                                  false));
+  // if (!module_p)
+  // {
+  //   ACE_DEBUG ((LM_ERROR,
+  //               ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+  //               ACE_TEXT (navdata_stream_name_string_),
+  //               ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+  //   goto error;
+  // } // end IF
 
-  iset_p =
-    dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
-  ACE_ASSERT (iset_p);
-  iset_p->setP (&(inherited::state_));
+  // iset_p =
+  //   dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
+  // ACE_ASSERT (iset_p);
+  // iset_p->setP (&(inherited::state_));
 
   //// enqueue the module
   //// *NOTE*: push()ing the module will open() it
@@ -2669,8 +2643,9 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   typename SessionMessageType::DATA_T::DATA_T* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   ModuleConfigurationType* configuration_p = NULL;
-  Stream_Module_t* module_p = NULL;
-  Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
+  // Stream_Module_t* module_p = NULL;
+  // Common_ISetP_T<struct ARDrone_StreamState>* iset_p = NULL;
+  SessionManagerType* session_manager_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
@@ -2688,24 +2663,16 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  SessionManagerType* session_manager_p =
-    SessionManagerType::SINGLETON_T::instance ();
-  // sanity check(s)
+  session_manager_p = SessionManagerType::SINGLETON_T::instance ();
   ACE_ASSERT (session_manager_p);
   session_data_p =
     &const_cast<typename SessionMessageType::DATA_T::DATA_T&> (session_manager_p->getR (inherited::id_));
   ACE_ASSERT (session_data_p);
   session_data_p->stream = this;
-
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
-
-  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
-
   configuration_p = (*iterator).second.second;
-
-  // sanity check(s)
   ACE_ASSERT (configuration_p);
   ACE_ASSERT (configuration_p->subscribers);
 
@@ -2715,47 +2682,19 @@ ARDrone_MAVLinkStream_T<ModuleConfigurationType,
 
   // ---------------------------------------------------------------------------
 
-  // ***************************** Statistic **********************************
-//  ARDrone_Module_Statistic_WriterTask_t* statistic_impl_p =
-//    dynamic_cast<ARDrone_Module_Statistic_WriterTask_t*> (statistic_.writer ());
-//  if (!statistic_impl_p)
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("dynamic_cast<ARDrone_Module_RuntimeStatistic> failed, aborting\n")));
-//    return false;
-//  } // end IF
-//  if (!statistic_impl_p->initialize (configuration_in.statisticReportingInterval,
-//                                     configuration_in.messageAllocator))
-//  {
-//    ACE_DEBUG ((LM_ERROR,
-//                ACE_TEXT ("%s: failed to initialize module writer, aborting\n"),
-//                statistic_.name ()));
-//    return false;
-//  } // end IF
-
   // ******************************** Source ***********************************
-  module_p =
-    const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
-                                                   true,
-                                                   false));
-  if (!module_p)
-  {
-    ACE_DEBUG ((LM_ERROR,
-                ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
-                ACE_TEXT (mavlink_stream_name_string_),
-                ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
-    goto error;
-  } // end IF
-
-  //iset_p =
-  //  dynamic_cast<Common_ISetP_T<struct ARDrone_StreamState>*> (module_p->writer ());
-  //ACE_ASSERT (iset_p);
-  //iset_p->setP (&(inherited::state_));
-
-  //// enqueue the module
-  //// *NOTE*: push()ing the module will open() it
-  //// --> set the argument that is passed along
-  //module_p->arg (inherited::sessionData_);
+  // module_p =
+  //   const_cast<Stream_Module_t*> (inherited::find (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_SOURCE_DEFAULT_NAME_STRING),
+  //                                                  true,
+  //                                                  false));
+  // if (!module_p)
+  // {
+  //   ACE_DEBUG ((LM_ERROR,
+  //               ACE_TEXT ("%s: failed to retrieve \"%s\" module handle, aborting\n"),
+  //               ACE_TEXT (mavlink_stream_name_string_),
+  //               ACE_TEXT (MODULE_NET_SOURCE_DEFAULT_NAME_STRING)));
+  //   goto error;
+  // } // end IF
 
   // ---------------------------------------------------------------------------
 

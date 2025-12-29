@@ -219,9 +219,11 @@ struct ARDrone_Configuration_Base
    , streamSubscribers ()
    , streamSubscribersLock ()
    , WLANMonitorConfiguration ()
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
    , GTKConfiguration ()
-   //, streamUserData (NULL)
-   //, netUserData (NULL)
+#endif // GTK_USE
+#endif // GUI_SUPPORT
   {}
 
   struct ARDrone_AllocatorConfiguration               allocatorConfiguration;
@@ -237,9 +239,6 @@ struct ARDrone_Configuration_Base
   struct ARDrone_GTK_Configuration                    GTKConfiguration;
 #endif // GTK_USE
 #endif // GUI_SUPPORT
-
-  //struct Stream_UserData*                             streamUserData;
-  //struct Net_UserData*                                netUserData;
 };
 
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -346,8 +345,12 @@ struct ARDrone_UI_ProgressData
 #elif defined (WXWIDGETS_USE)
    : Common_UI_wxWidgets_ProgressData ()
 #endif // GTK_USE || WXWIDGETS_USE
+#if defined (GTK_USE) || defined (WXWIDGETS_USE)
    , state (NULL)
    , statistic ()
+#else
+   : statistic ()
+#endif // GTK_USE || WXWIDGETS_USE
   {}
 
 #if defined (GTK_USE)

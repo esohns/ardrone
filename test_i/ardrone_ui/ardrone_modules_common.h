@@ -552,6 +552,8 @@ typedef Stream_Vis_Target_Direct3D_T<ACE_MT_SYNCH,
 //                                            ARDrone_SessionData_t,
 //                                            struct Stream_UserData> ARDrone_Module_MediaFoundation_Display;
 #else
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 typedef Stream_Module_Vis_GTK_Pixbuf_T<ACE_MT_SYNCH,
                                        Common_TimePolicy_t,
                                        struct ARDrone_ModuleHandlerConfiguration,
@@ -560,6 +562,8 @@ typedef Stream_Module_Vis_GTK_Pixbuf_T<ACE_MT_SYNCH,
                                        ARDrone_SessionMessage,
                                        ARDrone_SessionData_t,
                                        struct Stream_MediaFramework_FFMPEG_VideoMediaType> ARDrone_Module_Display;
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 #endif // ACE_WIN32 || ACE_WIN64
 
 #if defined (_DEBUG)
@@ -1003,12 +1007,16 @@ DATASTREAM_MODULE_INPUT_ONLY (ARDrone_SessionData,                // session dat
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_AsynchController);          // writer type
 
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_SessionData,                // session data type
                               enum Stream_SessionMessageType,            // session event type
                               struct ARDrone_ModuleHandlerConfiguration, // module handler configuration type
                               libacestream_default_vis_gtk_pixbuf_module_name_string,
                               Stream_INotify_t,                          // stream notification interface type
                               ARDrone_Module_Display);                   // writer type
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
 #if defined (_DEBUG)
 DATASTREAM_MODULE_INPUT_ONLY (ARDrone_SessionData,                // session data type

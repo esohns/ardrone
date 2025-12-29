@@ -8,8 +8,8 @@ include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ACE.cmake)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/scripts/ffmpeg.cmake)
 
-set (ACE_XML_LIB_FILE libACEXML.so)
 if (UNIX)
+ set (ACE_XML_LIB_FILE libACEXML.so)
  find_library (ACE_XML_LIBRARY ${ACE_XML_LIB_FILE}
                HINTS $ENV{ACE_ROOT}
                PATHS $ENV{ACE_ROOT}
@@ -85,7 +85,6 @@ endif (WIN32)
 string (REPLACE ${CMAKE_SOURCE_DIR} "" BUILD_PATH_SUFFIX ${CMAKE_BINARY_DIR})
 string (SUBSTRING ${BUILD_PATH_SUFFIX} 1 -1 BUILD_PATH_SUFFIX)
 message (STATUS "BUILD_PATH_SUFFIX: ${BUILD_PATH_SUFFIX}")
-#find_package (Common 0.0.1 EXACT
 find_package (Common
               REQUIRED
               CONFIG
@@ -95,12 +94,7 @@ find_package (Common
 if (NOT EXISTS ${Common_DIR})
  message (FATAL_ERROR "could not find package \"Common\", aborting")
 endif ()
-add_definitions (-DCOMMON_HAS_DLL)
-if (DBUS_SUPPORT)
- add_definitions (-DCOMMON_DBUS_HAS_DLL)
-endif ()
 
-#find_package (ACEStream 0.0.1 EXACT
 find_package (ACEStream
               REQUIRED
               CONFIG
@@ -110,10 +104,7 @@ find_package (ACEStream
 if (NOT EXISTS ${ACEStream_DIR})
  message (FATAL_ERROR "could not find package \"ACEStream\", aborting")
 endif ()
-add_definitions (-DSTREAM_HAS_DLL)
-add_definitions (-DSTREAM_DEC_HAS_DLL)
 
-#find_package (ACENetwork 0.0.1 EXACT
 find_package (ACENetwork
               REQUIRED
               CONFIG
@@ -123,8 +114,6 @@ find_package (ACENetwork
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
 endif ()
-add_definitions (-DNETWORK_HAS_DLL)
-add_definitions (-DNETWORK_WLAN_HAS_DLL)
 
 add_definitions (-DHAVE_CONFIG_H)
 #set_property (SOURCE PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)

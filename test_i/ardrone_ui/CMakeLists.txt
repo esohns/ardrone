@@ -68,13 +68,13 @@ if (UNIX)
   elseif (FRAMEWORK_DHCP_USE)
    add_definitions (-DFRAMEWORK_DHCP_USE)
   else ()
-   message (FATAL_ERROR "select a DHCP client implementation")
+#   message (FATAL_ERROR "select a DHCP client implementation")
   endif ()
 # elseif (WIN32)
 #  if (WLANAPI_USE)
 #   add_definitions (-DWLANAPI_SUPPORT -DWLANAPI_USE)
 #  else ()
-#   message (FATAL_ERROR "select a WLAN monitor implementation")
+#   message (FATAL_ERROR "select a DHCP client implementation")
 #  endif ()
  endif ()
 endif (UNIX)
@@ -308,7 +308,6 @@ endif (GUI_SUPPORT)
 
 get_filename_component (BUILD_PATH ${CMAKE_CURRENT_BINARY_DIR}/.. REALPATH DIRECTORY)
 get_filename_component (BUILD_PATH_SUFFIX ${BUILD_PATH} NAME)
-#find_package (Common 0.0.1 EXACT
 find_package (Common
               REQUIRED
               CONFIG
@@ -318,12 +317,7 @@ find_package (Common
 if (NOT EXISTS ${Common_DIR})
  message (FATAL_ERROR "could not find package \"Common\", aborting")
 endif ()
-add_definitions (-DCOMMON_HAS_DLL)
-if (DBUS_SUPPORT)
- add_definitions (-DCOMMON_DBUS_HAS_DLL)
-endif ()
 
-#find_package (ACEStream 0.0.1 EXACT
 find_package (ACEStream
               REQUIRED
               CONFIG
@@ -333,10 +327,7 @@ find_package (ACEStream
 if (NOT EXISTS ${ACEStream_DIR})
  message (FATAL_ERROR "could not find package \"ACEStream\", aborting")
 endif ()
-add_definitions (-DSTREAM_HAS_DLL)
-add_definitions (-DSTREAM_DEC_HAS_DLL)
 
-#find_package (ACENetwork 0.0.1 EXACT
 find_package (ACENetwork
               REQUIRED
               CONFIG
@@ -346,11 +337,8 @@ find_package (ACENetwork
 if (NOT EXISTS ${ACENetwork_DIR})
  message (FATAL_ERROR "could not find package \"ACENetwork\", aborting")
 endif ()
-add_definitions (-DNETWORK_HAS_DLL)
-add_definitions (-DNETWORK_WLAN_HAS_DLL)
 
 add_definitions (-DHAVE_CONFIG_H)
-#add_definitions (-DLIBGLADE_SUPPORT)
 if (GUI_SUPPORT)
  if (GTK_USE)
   if (GTKGL_SUPPORT)
@@ -676,7 +664,9 @@ if (UNIX)
 # if (CMAKE_COMPILER_IS_GNUCXX)
  if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   set (CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
- endif ()
+ endif (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+
+ target_link_options (${EXECUTABLE} PUBLIC "-rdynamic")
 endif (UNIX)
 
 target_link_libraries (${EXECUTABLE} ${CMAKE_THREAD_LIBS_INIT})
@@ -731,17 +721,17 @@ if (UNIX)
  target_link_libraries (${EXECUTABLE} X11)
  target_link_libraries (${EXECUTABLE} dl)
  if (GUI_SUPPORT)
-  if (GTK_USE)
-   if (GTK3_SUPPORT)
+  if (GTK_SUPPORT)
+   if (GTK3_USE)
     target_link_libraries (${EXECUTABLE} ${PKG_GTK3_LIBRARIES})
-   elseif (GTK2_SUPPORT)
+   elseif (GTK2_USE)
     target_link_libraries (${EXECUTABLE} ${PKG_GTK2_LIBRARIES})
    endif ()
    if (GTKGL_SUPPORT)
     target_link_libraries (${EXECUTABLE} ${PKG_OPENGL_LIBRARIES})
     target_link_libraries (${EXECUTABLE} ${GLUT_LIBRARIES})
    endif (GTKGL_SUPPORT)
-  endif (GTK_USE)
+  endif (GTK_SUPPORT)
  endif (GUI_SUPPORT)
 # target_link_libraries (${EXECUTABLE} ${PKG_LIBPNG_LIBRARIES})
 elseif (WIN32)
@@ -777,7 +767,7 @@ elseif (WIN32)
 # endif ()
 
  if (GUI_SUPPORT)
-  if (GTK_USE)
+  if (GTK_SUPPORT)
    if (GTKGL_SUPPORT)
 #    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimpd.lib)
 # target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../assimp/cmake/code/${CMAKE_BUILD_TYPE}/assimp-vc140-mt.lib)
@@ -787,9 +777,10 @@ elseif (WIN32)
 #    target_link_libraries (${EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../libepoxy/cmake/${CMAKE_BUILD_TYPE}/epoxy1_static.lib)
  #   target_link_libraries (${EXECUTABLE} "C:/Documents and Settings/Erik/My Documents/Visual Studio 2010/Projects/gtkglarea/${CMAKE_BUILD_TYPE}/gtkglarea.lib")
    endif (GTKGL_SUPPORT)
-  elseif (WXWIDGETS_USE)
+  endif (GTK_SUPPORT)
+  if (WXWIDGETS_SUPPORT)
    target_link_libraries (${EXECUTABLE} ${wxWidgets_LIBRARIES})
-  endif ()
+  endif (WXWIDGETS_SUPPORT)
  endif (GUI_SUPPORT)
 endif ()
 

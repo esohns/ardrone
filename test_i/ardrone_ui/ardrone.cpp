@@ -68,12 +68,17 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "Common_config.h"
 #endif // HAVE_CONFIG_H
+
 #include "common.h"
 #include "common_defines.h"
 #include "common_macros.h"
 #include "common_os_tools.h"
 #include "common_process_tools.h"
 #include "common_tools.h"
+
+#if defined (ACE_LINUX)
+#include "common_dbus_tools.h"
+#endif // ACE_LINUX
 
 #include "common_error_tools.h"
 
@@ -91,18 +96,19 @@ extern "C"
 #include "common_timer_tools.h"
 
 #if defined (GUI_SUPPORT)
-#if defined (GTK_USE)
 #include "common_ui_defines.h"
 #include "common_ui_tools.h"
 
+#if defined (GTK_SUPPORT)
 #include "common_ui_gtk_builder_definition.h"
 #include "common_ui_gtk_manager_common.h"
-#endif // GTK_USE
+#endif // GTK_SUPPORT
 #endif // GUI_SUPPORT
 
 #if defined (HAVE_CONFIG_H)
 #include "ACEStream_config.h"
 #endif // HAVE_CONFIG_H
+
 #include "stream_allocatorheap.h"
 
 #include "stream_dec_tools.h"
@@ -115,8 +121,12 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "ACENetwork_config.h"
 #endif // HAVE_CONFIG_H
+
 #include "net_common_tools.h"
 #include "net_defines.h"
+#if defined (ACE_LINUX)
+#include "net_os_tools.h"
+#endif // ACE_LINUX
 
 #include "net_client_connector.h"
 #include "net_client_asynchconnector.h"
@@ -128,6 +138,7 @@ extern "C"
 #if defined (HAVE_CONFIG_H)
 #include "ardrone_config.h"
 #endif // HAVE_CONFIG_H
+
 #include "ardrone_configuration.h"
 #include "ardrone_defines.h"
 #include "ardrone_eventhandler.h"
@@ -2258,7 +2269,7 @@ do_work (int argc_in,
   stream_configuration_5_.initialize (module_configuration_2,
                                       modulehandler_configuration_5,
                                       stream_configuration_5);
-  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_DEFAULT_NAME_STRING),
+  configuration_in.streamConfigurations.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (STREAM_NET_IO_DEFAULT_NAME_STRING),
                                                                 &stream_configuration_5_));
 
   // control_streamconfiguration_iterator =
@@ -2846,7 +2857,7 @@ do_work (int argc_in,
 
   //  network
   module_configuration_2.generateUniqueNames = true;
-  stream_configuration_5_.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_IO_DEFAULT_NAME_STRING),
+  stream_configuration_5_.insert (std::make_pair (ACE_TEXT_ALWAYS_CHAR (MODULE_NET_INPUT_DEFAULT_NAME_STRING),
                                                   std::make_pair (&module_configuration_2,
                                                                   &modulehandler_configuration_5)));
 
@@ -4074,11 +4085,9 @@ ACE_TMAIN (int argc_in,
 
   // step4: initialize logging and/or tracing
   if (log_to_file)
-    log_file_name =
-      Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
-                                        ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR)));
-  if (!Common_Log_Tools::initialize (ACE::basename (argv_in[0],
-                                                    ACE_DIRECTORY_SEPARATOR_CHAR),    // program name
+    log_file_name = Common_Log_Tools::getLogFilename (ACE_TEXT_ALWAYS_CHAR (ARDRONE_PACKAGE_NAME),
+                                                      ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR)));
+  if (!Common_Log_Tools::initialize (ACE_TEXT_ALWAYS_CHAR (ACE::basename (argv_in[0], ACE_DIRECTORY_SEPARATOR_CHAR)), // program name
                                      log_file_name,                                   // log file name
                                      false,                                           // log to syslog ?
                                      false,                                           // trace messages ?

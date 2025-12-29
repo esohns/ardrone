@@ -356,7 +356,8 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   Test_U_SessionData* session_data_p = NULL;
   typename inherited::CONFIGURATION_T::ITERATOR_T iterator;
   struct Test_U_ModuleHandlerConfiguration* configuration_p = NULL;
-  Test_U_AsynchTCPSource* source_impl_p = NULL;
+  // Test_U_AsynchTCPSource* source_impl_p = NULL;
+  Test_U_SessionManager_t* session_manager_p = NULL;
 
   // allocate a new session state, reset stream
   const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).configuration_->setupPipeline =
@@ -374,35 +375,25 @@ Test_U_Stream::initialize (const typename inherited::CONFIGURATION_T& configurat
   reset_setup_pipeline = false;
 
   // sanity check(s)
-  ACE_ASSERT (inherited::sessionData_);
-
+  session_manager_p = Test_U_SessionManager_t::SINGLETON_T::instance ();
+  ACE_ASSERT (session_manager_p);
   session_data_p =
-    &const_cast<Test_U_SessionData&> (inherited::sessionData_->getR ());
+    &const_cast<Test_U_SessionData&> (session_manager_p->getR (inherited::id_));
   iterator =
       const_cast<typename inherited::CONFIGURATION_T&> (configuration_in).find (ACE_TEXT_ALWAYS_CHAR (""));
-
-  // sanity check(s)
   ACE_ASSERT (iterator != configuration_in.end ());
-
   configuration_p = (*iterator).second.second;
-  // sanity check(s)
   ACE_ASSERT (configuration_p);
-
   // *TODO*: remove type inferences
   ACE_ASSERT (session_data_p->formats.empty ());
+
   session_data_p->formats.push_back (configuration_in.configuration_->format);
 
   // ---------------------------------------------------------------------------
 
   // ******************* Camera Source ************************
-  source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
-  ACE_ASSERT (source_impl_p);
-  // source_impl_p->setP (&(inherited::state_));
-
-  // // *NOTE*: push()ing the module will open() it
-  // //         --> set the argument that is passed along (head module expects a
-  // //             handle to the session data)
-  // source_.arg (inherited::sessionData_);
+  // source_impl_p = dynamic_cast<Test_U_AsynchTCPSource*> (source_.writer ());
+  // ACE_ASSERT (source_impl_p);
 
   if (configuration_in.configuration_->setupPipeline)
     if (!inherited::setup (NULL))

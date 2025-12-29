@@ -641,7 +641,11 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
   Stream_IStreamControlBase* istream_base_p = NULL;
 
   SESSIONID_TO_STREAM_MAP_ITERATOR_T iterator;
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   { ACE_GUARD (ACE_SYNCH_MUTEX, aGuard, state_r.lock);
+#endif // GTK_USE
+#endif // GUI_SUPPORT
     iterator = streams_.find (sessionId_in);
     if (iterator != streams_.end ())
     {
@@ -652,7 +656,11 @@ ARDrone_EventHandler::end (Stream_SessionId_t sessionId_in)
                   ACE_TEXT (ARDroneStreamTypeToString (stream_type_e).c_str ()),
                   sessionId_in));
     } // end IF
+#if defined (GUI_SUPPORT)
+#if defined (GTK_USE)
   } // end lock scope
+#endif // GTK_USE
+#endif // GUI_SUPPORT
 
   switch (stream_type_e)
   {

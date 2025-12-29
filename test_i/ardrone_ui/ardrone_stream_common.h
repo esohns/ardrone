@@ -506,11 +506,12 @@ struct ARDrone_ModuleHandlerConfiguration
    : Stream_ModuleHandlerConfiguration ()
    , ARDrone_ModuleHandlerConfigurationBase ()
 #if defined (GUI_SUPPORT)
+#if defined (GTK_USE) || defined (WXWIDGETS_USE)
    , area ()
+#endif // GTK_USE || WXWIDGETS_USE
 #endif // GUI_SUPPORT
    , connection (NULL)
    , connectionConfigurations (NULL)
-   // , connectionManager (NULL)
    , display ()
    // , frameRate ()
 #if defined (GUI_SUPPORT)
@@ -533,7 +534,7 @@ struct ARDrone_ModuleHandlerConfiguration
   GdkRectangle                                       area;
 #elif defined (WXWIDGETS_USE)
   wxRect                                             area;
-#endif
+#endif // GTK_USE || WXWIDGETS_USE
 #endif // GUI_SUPPORT
   ARDrone_IConnection_t*                             connection;               // net source/IO module
   Net_ConnectionConfigurations_t*                    connectionConfigurations; // net source/target modules

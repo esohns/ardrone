@@ -84,7 +84,7 @@ class ARDrone_VideoStream_T
                         struct ARDrone_StreamConfiguration,
                         struct ARDrone_Statistic,
                         ModuleConfigurationType,
-                        ARDrone_DirectShow_SessionManager_t,
+                        SessionManagerType,
                         Stream_ControlMessage_t,
                         ARDrone_Message,
                         SessionMessageType,

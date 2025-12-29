@@ -53,7 +53,6 @@
 #define ARDRONE_OPENGL_SHADER_FRAGMENT_FILE                "ardrone_ui.frag"
 #define ARDRONE_OPENGL_SHADER_VERTEX_FILE                  "ardrone_ui.vert"
 
-#if defined (GUI_SUPPORT)
 #if defined (GTK_USE)
 #if defined (GTK3_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone_ui.gtk3"
@@ -62,7 +61,9 @@
 #endif
 #elif defined (WXWIDGETS_USE)
 #define ARDRONE_UI_DEFINITION_FILE_NAME                    "ardrone.xrc"
-#endif // GUI_SUPPORT
+#else
+#define ARDRONE_UI_DEFINITION_FILE_NAME                    ""
+#endif // GTK_USE || WXWIDGETS_USE
 
 #define ARDRONE_UI_INITIALIZATION_DELAY                    100 // ms
 //#define ARDRONE_UI_WIDGET_CURVE_MAXIMUM_Y                 100.0F
@@ -145,8 +146,7 @@
 #elif defined (WXWIDGETS_USE)
 #define ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_NAME          "dialog_main"
 #define ARDRONE_UI_WXWIDGETS_TOPLEVEL_WIDGET_CLASS_NAME    "wxDialog"
-#endif // WXWIDGETS_SUPPORT
-#endif // GUI_SUPPORT
+#endif // GTK_USE || WXWIDGETS_SUPPORT
 
 // *** network-related ***
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
