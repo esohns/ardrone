@@ -324,7 +324,7 @@ ARDrone_Module_Controller_T<ACE_SYNCH_USE,
           static_cast<typename ConnectorType::CONFIGURATION_T*> ((*iterator_2).second);
       ACE_ASSERT (configuration_p);
 
-      ConnectorType connector (true);
+      ConnectorType connector;
       typename ConnectorType::ADDRESS_T peer_SAP;
       ACE_HANDLE handle_h;
        typename ConnectionManagerType::INTERFACE_T* iconnection_manager_p =

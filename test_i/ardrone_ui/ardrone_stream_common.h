@@ -78,6 +78,7 @@ extern "C"
 
 #include "stream_vis_common.h"
 #include "stream_vis_defines.h"
+#include "stream_vis_iresize.h"
 
 #include "net_configuration.h"
 #include "net_connection_configuration.h"
@@ -344,6 +345,7 @@ struct ARDrone_ModuleHandlerConfigurationBase
    , interfaceIdentifier ()
    , outboundStreamName (ACE_TEXT_ALWAYS_CHAR (ARDRONE_NAVDATA_STREAM_NAME_STRING))
    , printProgressDot (false)
+   , resize (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
    //, subscribersLock (NULL)
@@ -367,6 +369,7 @@ struct ARDrone_ModuleHandlerConfigurationBase
   std::string                                             interfaceIdentifier; // wireless-/display-
   std::string                                             outboundStreamName;  // event handler module
   bool                                                    printProgressDot;    // file writer module
+  Stream_Visualization_IResize*                           resize;
   ARDrone_Notification_t*                                 subscriber;          // event handler module
   ARDrone_Subscribers_t*                                  subscribers;         // event handler module
   //ACE_Thread_Mutex*                                       subscribersLock;

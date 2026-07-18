@@ -1348,7 +1348,8 @@ do_initialize_directshow (IGraphBuilder*& IGraphBuilder_out,
     (video_info_header_p->bmiHeader.biWidth * video_info_header_p->bmiHeader.biHeight) * 4 * 30 * 8;
   //video_info_header_p->dwBitErrorRate = 0;
   video_info_header_p->AvgTimePerFrame =
-    MILLISECONDS_TO_100NS_UNITS (1000 / 30); // --> 30 fps
+    static_cast<REFERENCE_TIME> (1 / 30.0f * 100000000000000.0f) / NANOSECONDS;
+    //MILLISECONDS_TO_100NS_UNITS (1000 / 30); // --> 30 fps
 
   //video_info_header_p->dwInterlaceFlags = 0; // --> progressive
   //video_info_header_p->dwCopyProtectFlags = 0; // --> not protected
@@ -1436,9 +1437,9 @@ do_finalize_directshow (IGraphBuilder*& IGraphBuilder_inout,
   } // end IF
   Stream_MediaFramework_DirectShow_Tools::free (mediaType_inout);
 
-#if defined (_DEBUG)
-  DbgTerminate ();
-#endif // _DEBUG
+//#if defined (_DEBUG)
+//  DbgTerminate ();
+//#endif // _DEBUG
 
   Stream_MediaFramework_DirectShow_Tools::finalize ();
 }

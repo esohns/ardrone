@@ -38,11 +38,23 @@
 // forward declaration(s)
 class ACE_Message_Block;
 class Stream_IAllocator;
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
 
 extern const char ardrone_default_navdata_decoder_module_name_string[];
 
 class ARDrone_NavData_IParser
  : public Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct YYLTYPE,
                                      struct _navdata_t>
  , virtual public Common_ILexScanner_T<struct Common_FlexScannerState,
                                        void>
@@ -50,6 +62,7 @@ class ARDrone_NavData_IParser
  public:
   // convenient types
   typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct YYLTYPE,
                                      struct _navdata_t> IPARSER_T;
   typedef Common_ILexScanner_T<struct Common_FlexScannerState,
                                void> ISCANNER_T;
@@ -149,6 +162,7 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual struct _navdata_t& current () { ACE_ASSERT (buffer_); return const_cast<struct _navdata_t&> (buffer_->getR ().getR ().NavData.NavData); }
   virtual void record (struct _navdata_t*&); // record handle
+  inline virtual void finished () { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual bool hasFinished () const { return false; }
   inline virtual void addOption (unsigned int offset_in) { ACE_ASSERT (buffer_); const_cast<typename DataMessageType::DATA_T::DATA_T&> (buffer_->getR ().getR ()).NavData.NavDataOptionOffsets.push_back (offset_in); }
 
@@ -160,6 +174,7 @@ class ARDrone_Module_NavDataDecoder_T
   inline virtual bool debug () const { return ARDrone_NavData_Scanner_get_debug (inherited::state_); }
   inline virtual bool isBlocking () const { return true; }
   inline virtual unsigned int offset () const { return ARDrone_NavData_Scanner_get_column (inherited::state_); }
+  inline virtual ACE_Message_Block* head () { return inherited::headFragment_; }
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();

@@ -64,6 +64,7 @@
 
 #include "stream_vis_common.h"
 #include "stream_vis_defines.h"
+#include "stream_vis_iresize.h"
 
 #include "net_connection_manager.h"
 
@@ -216,6 +217,7 @@ struct Test_U_ModuleHandlerConfiguration
    , display_2 ()
    , fullScreen (false)
    , outputFormat ()
+   , resize (NULL)
    , subscriber (NULL)
    , subscribers (NULL)
 #if defined (ACE_WIN32) || defined (ACE_WIN64)
@@ -251,6 +253,7 @@ struct Test_U_ModuleHandlerConfiguration
   struct Common_UI_Display                      display_2; // display module
   bool                                          fullScreen;
   struct Stream_MediaFramework_FFMPEG_VideoMediaType outputFormat;
+  Stream_Visualization_IResize*                 resize;
   Test_U_ISessionNotify_t*                      subscriber;
   Test_U_Subscribers_t*                         subscribers;
 #if defined (ACE_WIN32) || defined (ACE_WIN64)

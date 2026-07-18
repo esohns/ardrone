@@ -35,11 +35,23 @@
 // forward declaration(s)
 class ACE_Message_Block;
 class Stream_IAllocator;
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
 
 extern const char ardrone_default_control_decoder_module_name_string[];
 
 class ARDrone_Control_IParser
  : public Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct YYLTYPE,
                                      ARDrone_DeviceConfiguration_t>
  , virtual public Common_ILexScanner_T<struct Common_FlexScannerState,
                                        void>
@@ -47,6 +59,7 @@ class ARDrone_Control_IParser
  public:
   // convenient types
   typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct YYLTYPE,
                                      ARDrone_DeviceConfiguration_t> IPARSER_T;
   typedef Common_ILexScanner_T<struct Common_FlexScannerState,
                                void> ISCANNER_T;
@@ -128,6 +141,7 @@ class ARDrone_Module_ControlDecoder_T
  public:
   // convenient types
   typedef Common_IYaccRecordParser_T<struct Common_FlexBisonParserConfiguration,
+                                     struct YYLTYPE,
                                      ARDrone_DeviceConfiguration_t> IPARSER_T;
 
 //  // *TODO*: on MSVC 2015u3 the accurate declaration does not compile
@@ -147,6 +161,7 @@ class ARDrone_Module_ControlDecoder_T
   inline virtual void error (const yy::location& location_in, const std::string& string_in) { ACE_UNUSED_ARG (location_in); error (string_in); }
   inline virtual ARDrone_DeviceConfiguration_t& current () { return configuration_; }
   virtual void record (ARDrone_DeviceConfiguration_t*&); // record handle
+  inline virtual void finished () { ACE_ASSERT (false); ACE_NOTSUP; ACE_NOTREACHED (return;) };
   inline virtual bool hasFinished () const { ACE_ASSERT (buffer_); return buffer_->total_length () == 0; }
 
   // implement (part of) Common_ILexScanner_T
@@ -157,6 +172,7 @@ class ARDrone_Module_ControlDecoder_T
   inline virtual bool debug () const { return ARDrone_Control_Scanner_get_debug (inherited::state_); }
   inline virtual bool isBlocking () const { return true; }
   inline virtual unsigned int offset () const { return ARDrone_Control_Scanner_get_column (inherited::state_); }
+  inline virtual ACE_Message_Block* head () { return inherited::headFragment_; }
   virtual bool begin (const char*,   // buffer handle
                       unsigned int); // buffer size
   virtual void end ();
